@@ -533,6 +533,9 @@ function setActiveNav(id) {
   if (target) {
     target.classList.add('is-active');
 
+    /* Collapse all nav items first, then expand only the active path */
+    collapseAllNavItems();
+
     /* Ensure all ancestor groups are open - this is critical for deep linking */
     let parent = target.closest('.nav-item')?.parentElement?.closest('.nav-item');
     while (parent) {
@@ -551,11 +554,29 @@ function setActiveNav(id) {
   state.activeNavId = id;
 }
 
-/* Auto-expand first level items on load */
-function autoExpandFirstLevel() {
-  elLeftNav.querySelectorAll(':scope > ul > .nav-item').forEach(item => {
-    item.classList.add('is-open');
+/* Collapse all navigation items on load - only active branch will be expanded */
+function collapseAllNavItems() {
+  elLeftNav.querySelectorAll('.nav-item').forEach(item => {
+    item.classList.remove('is-open');
   });
+}
+
+/* Expand only the navigation path to the active item */
+function expandActiveNavPath(activeId) {
+  if (!activeId) return;
+
+  const activeRow = elLeftNav.querySelector(`.nav-row[data-id="${activeId}"]`);
+  if (!activeRow) return;
+
+  // First, collapse everything
+  collapseAllNavItems();
+
+  // Then expand only the parent chain for the active item
+  let parent = activeRow.closest('.nav-item')?.parentElement?.closest('.nav-item');
+  while (parent) {
+    parent.classList.add('is-open');
+    parent = parent.parentElement?.closest('.nav-item');
+  }
 }
 
 /* ═══════════════════════════════════════════════════════════════
@@ -772,7 +793,7 @@ function init() {
 
   /* Build left nav */
   elLeftNav.appendChild(buildNavTree(NAV_DATA));
-  autoExpandFirstLevel();
+  collapseAllNavItems();
 
   /* Restore collapse state from localStorage */
   initCollapseState();
