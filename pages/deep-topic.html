@@ -1,0 +1,269 @@
+<div class="content-body">
+
+  <h1 id="deep-topic">Deep Topic</h1>
+
+  <p>
+    This page demonstrates the deepest topics in the DevDocs configuration system —
+    custom theming, navigation model extension, scroll-spy tuning, and build optimisation.
+    It also serves as a living example of all supported content elements.
+  </p>
+
+  <!-- ─── CUSTOM THEMING ───────────────────── -->
+  <h2 id="custom-theming">Custom Theming</h2>
+
+  <p>
+    DevDocs uses a single set of CSS custom properties (variables) to control every colour
+    and visual token. Override them to match your brand without touching any existing CSS rules.
+  </p>
+
+  <h3 id="theme-file-structure">Token Anatomy</h3>
+
+  <p>Tokens are grouped into seven categories inside <code>styles.css</code>:</p>
+
+  <ul>
+    <li><strong>Backgrounds</strong> — body, header, sidebar, content area, code blocks.</li>
+    <li><strong>Text</strong> — base, muted, links, nav states, code.</li>
+    <li><strong>Borders</strong> — default border and focus ring.</li>
+    <li><strong>Accents</strong> — primary and light accent colours.</li>
+    <li><strong>Callout colours</strong> — per variant (info, warning, danger).</li>
+    <li><strong>Resize &amp; interactive elements</strong> — handles, hover, drag states.</li>
+    <li><strong>Navigation decoration</strong> — indent lines, active indicator bar.</li>
+  </ul>
+
+  <h3 id="overriding-tokens">Overriding Tokens</h3>
+
+  <p>Add a <code>&lt;style&gt;</code> block at the bottom of <code>index.html</code> (or create a
+  <code>theme.css</code> and link it after <code>styles.css</code>):</p>
+
+  <pre><code>/* theme.css — custom brand overrides */
+:root {
+  --accent:       #7c3aed;   /* purple primary */
+  --accent-light: #ede9fe;
+  --nav-active-bar: #7c3aed;
+  --callout-border: #7c3aed;
+  --bg-callout:   #f5f3ff;
+}
+
+[data-theme="dark"] {
+  --accent:       #a78bfa;
+  --accent-light: #2e1065;
+  --nav-active-bar: #a78bfa;
+  --callout-border: #a78bfa;
+  --bg-callout:   #1e1030;
+}</code></pre>
+
+  <h4 id="font-replacement">Replacing the base font</h4>
+
+  <p>
+    The body font is set via a system font stack. To use a custom typeface, load it from Google Fonts
+    or a local file, then override the <code>font-family</code> on <code>body</code>:
+  </p>
+
+  <pre><code>&lt;link rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&amp;display=swap" /&gt;
+
+&lt;style&gt;
+  body { font-family: 'Inter', sans-serif; }
+&lt;/style&gt;</code></pre>
+
+  <!-- ─── NAVIGATION MODEL ──────────────────── -->
+  <h2 id="navigation-model">Extending the Navigation Model</h2>
+
+  <p>
+    The <code>NAV_DATA</code> array in <code>app.js</code> is the single source of truth for the
+    entire left-sidebar tree. The renderer is recursive, so any depth is technically supported
+    (though four levels is the practical limit for usability).
+  </p>
+
+  <h3 id="nav-item-shape">Nav Item Shape</h3>
+
+  <pre><code>// Leaf item  (has a page, no children)
+{ id: 'unique-id', label: 'Display Name', page: 'pages/my-page.html' }
+
+// Group item  (has children, may or may not have a page)
+{
+  id: 'group-id',
+  label: 'Group Label',
+  children: [
+    { id: 'child-a', label: 'Child A', page: 'pages/child-a.html' },
+    { id: 'child-b', label: 'Child B', page: 'pages/child-b.html' },
+  ]
+}</code></pre>
+
+  <h3 id="mixed-group-page">Groups with their own page</h3>
+
+  <p>
+    A group can have both <code>children</code> <em>and</em> a <code>page</code> property.
+    Clicking saves the active state and loads the page; the toggle arrow expands/collapses
+    the children independently. This is useful for section overview pages:
+  </p>
+
+  <pre><code>{
+  id: 'advanced-overview',
+  label: 'Advanced Topics',
+  page: 'pages/advanced.html',   // ← loads on click
+  children: [
+    { id: 'config',  label: 'Configuration', page: 'pages/config.html' },
+    { id: 'plugins', label: 'Plugins',        page: 'pages/plugins.html' },
+  ]
+}</code></pre>
+
+  <!-- ─── SCROLL SPY ────────────────────────── -->
+  <h2 id="scroll-spy-tuning">Scroll Spy Tuning</h2>
+
+  <p>
+    Scroll spy is implemented with an <code>IntersectionObserver</code> rooted to the center
+    scroll container. The default <code>rootMargin</code> is <code>0px 0px -70% 0px</code>,
+    which means a heading triggers the active state as soon as its top edge enters the top 30 % of
+    the scroll area.
+  </p>
+
+  <h3 id="changing-threshold">Changing the Threshold</h3>
+
+  <p>
+    Find the <code>setupScrollSpy()</code> function in <code>app.js</code> and adjust the
+    <code>rootMargin</code>:
+  </p>
+
+  <pre><code>const observer = new IntersectionObserver(callback, {
+  root:       elContentScroll,
+  rootMargin: '0px 0px -60% 0px',  // ← increase % to trigger earlier
+  threshold:  0
+});</code></pre>
+
+  <h4 id="scroll-offset-caveat">Sticky header offset</h4>
+
+  <p>
+    The CSS rule <code>scroll-margin-top: 68px</code> is applied to all heading IDs to account for
+    the sticky header. If you change the header height, update this value in <code>styles.css</code>:
+  </p>
+
+  <pre><code>.content-body h1[id],
+.content-body h2[id],
+.content-body h3[id],
+.content-body h4[id] {
+  scroll-margin-top: 68px; /* ← match your header height */
+}</code></pre>
+
+  <!-- ─── AJAX LOADING ──────────────────────── -->
+  <h2 id="ajax-page-loading">Ajax Page Loading Details</h2>
+
+  <p>
+    Pages are fetched with the native <code>fetch()</code> API. The HTML response is parsed with
+    <code>DOMParser</code> and the <code>&lt;body&gt;</code> content is extracted before injection,
+    so full HTML documents, fragments, and partial templates all work equally well.
+  </p>
+
+  <h3 id="error-handling">Error Handling</h3>
+
+  <p>
+    If a fetch fails (404, network error, CORS), the center column displays an inline error card
+    with the status code and a remediation hint. The left nav active state is still set so the user
+    knows which link failed.
+  </p>
+
+  <div class="callout warning">
+    <div class="callout-title">⚠ Security Note</div>
+    <p>
+      Scripts inside fetched fragments are stripped before injection. Only trusted, local HTML
+      fragments should be referenced in <code>NAV_DATA</code>. Do not point pages at arbitrary
+      third-party URLs.
+    </p>
+  </div>
+
+  <h3 id="pre-post-load-hooks">Pre / Post-Load Hooks</h3>
+
+  <p>
+    To run your own code before or after a page loads, add it to the <code>loadPage()</code> function
+    in <code>app.js</code>. The function is async and returns a Promise:
+  </p>
+
+  <pre><code>async function loadPage(url) {
+  // Pre-load hook
+  document.dispatchEvent(new CustomEvent('page:before-load', { detail: { url } }));
+
+  // ... existing fetch logic ...
+
+  // Post-load hook  (inside the try block, after injection)
+  document.dispatchEvent(new CustomEvent('page:loaded', { detail: { url } }));
+}</code></pre>
+
+  <!-- ─── PERFORMANCE ───────────────────────── -->
+  <h2 id="performance">Performance &amp; Optimisation</h2>
+
+  <p>Because there is no build step, optimisation is straightforward:</p>
+
+  <ul>
+    <li><strong>Minify assets</strong> — run <code>styles.css</code> and <code>app.js</code> through
+        any minifier (e.g., <code>terser</code>, <code>cssnano</code>) before deploying to production.</li>
+    <li><strong>Compression</strong> — enable gzip or Brotli on your web server; HTML and CSS compress
+        exceptionally well.</li>
+    <li><strong>Caching</strong> — set aggressive <code>Cache-Control</code> headers on page fragments
+        once content is stable.</li>
+    <li><strong>Image optimisation</strong> — use <code>webp</code> format and the
+        <code>&lt;picture&gt;</code> element for responsive images.</li>
+  </ul>
+
+  <h3 id="preloading-pages">Prefetching Pages</h3>
+
+  <p>
+    For instant navigation, add <code>&lt;link rel="prefetch"&gt;</code> hints in the document head
+    for pages the user is likely to visit next. Browsers will download them in the background
+    during idle time:
+  </p>
+
+  <pre><code>&lt;!-- index.html &lt;head&gt; --&gt;
+&lt;link rel="prefetch" href="pages/installation.html" /&gt;
+&lt;link rel="prefetch" href="pages/first-steps.html" /&gt;</code></pre>
+
+  <h4 id="bundle-size">Bundle Size</h4>
+
+  <p>
+    The un-minified assets weigh approximately:
+  </p>
+
+  <ul>
+    <li><code>styles.css</code> — ~9 KB</li>
+    <li><code>app.js</code> — ~6 KB</li>
+    <li><code>index.html</code> — ~5 KB</li>
+  </ul>
+
+  <p>
+    After minification and gzip compression, total transfer for the shell is well under 10 KB.
+    Page fragments are loaded on demand and are typically a few KB each.
+  </p>
+
+  <!-- ─── DEPLOYMENT ────────────────────────── -->
+  <h2 id="deployment">Deploying to Production</h2>
+
+  <p>
+    DevDocs can be hosted on any static hosting platform: GitHub Pages, Netlify, Vercel,
+    Cloudflare Pages, AWS S3 + CloudFront, or a traditional web server.
+  </p>
+
+  <h3 id="github-pages">GitHub Pages</h3>
+
+  <ol>
+    <li>Push your project to a GitHub repository.</li>
+    <li>In repository Settings → Pages, set the source branch to <code>main</code> and the folder to <code>/root</code>.</li>
+    <li>GitHub Pages will serve <code>index.html</code> at <code>https://&lt;username&gt;.github.io/&lt;repo&gt;/</code>.</li>
+  </ol>
+
+  <div class="callout danger">
+    <div class="callout-title">✖ Trailing-slash paths</div>
+    <p>
+      On GitHub Pages, make sure all <code>page</code> paths in <code>NAV_DATA</code> use a relative
+      path from the repository root (e.g., <code>pages/intro.html</code>), not an absolute
+      path starting with <code>/</code>, or your fetches will fail.
+    </p>
+  </div>
+
+  <h3 id="netlify-redirects">Netlify &amp; SPA Redirects</h3>
+
+  <p>
+    Since DevDocs is not a single-page app with client-side routing — all navigation is internal
+    fetch-based, not URL-based — you do <em>not</em> need a <code>_redirects</code> file or
+    fallback rule. Serve the project as-is.
+  </p>
+
+</div>

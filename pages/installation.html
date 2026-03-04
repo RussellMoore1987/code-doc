@@ -1,0 +1,171 @@
+<div class="content-body">
+
+  <h1 id="installation">Installation</h1>
+
+  <p>
+    This guide walks you through getting DevDocs running locally on your machine. There is no build step,
+    no package manager, and no framework — just a few files and a local HTTP server.
+  </p>
+
+  <!-- ─── PREREQUISITES ────────────────────── -->
+  <h2 id="prerequisites">Prerequisites</h2>
+
+  <p>Before you begin, make sure you have one of the following available:</p>
+
+  <ul>
+    <li><strong>VS Code</strong> with the <em>Live Server</em> extension installed, <em>or</em></li>
+    <li><strong>Python 3.x</strong> — ships with a built-in HTTP server, <em>or</em></li>
+    <li><strong>Node.js</strong> — use the <code>npx serve</code> package if preferred.</li>
+  </ul>
+
+  <div class="callout">
+    <div class="callout-title">ℹ Tip</div>
+    <p>
+      Any HTTP server will do. The only real requirement is that files are served over
+      <code>http://</code> or <code>https://</code> so the Fetch API works correctly. A
+      <code>file://</code> origin will fail with CORS errors.
+    </p>
+  </div>
+
+  <!-- ─── DOWNLOAD ──────────────────────────── -->
+  <h2 id="download-the-project">Download the Project</h2>
+
+  <p>Clone this repository or download the ZIP and extract it to a local folder:</p>
+
+  <pre><code># Using git
+git clone https://github.com/example/devdocs.git
+cd devdocs
+
+# Or download the ZIP and extract:
+unzip devdocs.zip
+cd devdocs</code></pre>
+
+  <p>The project directory should look like this after extraction:</p>
+
+  <pre><code>devdocs/
+├── index.html
+├── styles.css
+├── app.js
+└── pages/
+    ├── intro.html
+    ├── installation.html
+    ├── first-steps.html
+    └── deep-topic.html</code></pre>
+
+  <!-- ─── STARTING THE SERVER ──────────────── -->
+  <h2 id="starting-the-server">Starting a Local Server</h2>
+
+  <h3 id="vscode-live-server">Option A — VS Code Live Server</h3>
+
+  <ol>
+    <li>Open the <code>devdocs</code> folder in VS Code.</li>
+    <li>Install the <strong>Live Server</strong> extension (ms-vscode.live-server) if you haven't already.</li>
+    <li>Right-click <code>index.html</code> in the Explorer panel and choose <em>Open with Live Server</em>.</li>
+    <li>Your browser will open automatically at <code>http://127.0.0.1:5500</code>.</li>
+  </ol>
+
+  <figure class="img-block">
+    <div class="img-placeholder" aria-label="VS Code Live Server menu screenshot placeholder">
+      <svg viewBox="0 0 48 48" width="48" height="48" aria-hidden="true"><rect x="4" y="8" width="40" height="32" rx="3" stroke="currentColor" stroke-width="2" fill="none"/><circle cx="24" cy="24" r="8" stroke="currentColor" stroke-width="2" fill="none"/><line x1="24" y1="16" x2="24" y2="10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      <span>Screenshot — Right-click context menu in VS Code Explorer</span>
+    </div>
+    <figcaption>Right-click <code>index.html</code> and select "Open with Live Server".</figcaption>
+  </figure>
+
+  <h3 id="python-server">Option B — Python HTTP Server</h3>
+
+  <p>From inside the project folder, run:</p>
+
+  <pre><code># Python 3
+python -m http.server 8080
+
+# Then open in your browser:
+# http://localhost:8080</code></pre>
+
+  <h3 id="node-serve">Option C — Node.js <code>serve</code></h3>
+
+  <pre><code>npx serve .
+# Opens at http://localhost:3000 (or the next available port)</code></pre>
+
+  <!-- ─── CONFIGURATION ─────────────────────── -->
+  <h2 id="configuration">Initial Configuration</h2>
+
+  <p>
+    Once the server is running and you can see the app in your browser, there are two things you will
+    typically want to customise right away.
+  </p>
+
+  <h3 id="site-title">Site Title</h3>
+
+  <p>
+    Open <code>index.html</code> and change the <code>&lt;title&gt;</code> tag and the
+    <code>.brand-title</code> span text to match your project name:
+  </p>
+
+  <pre><code>&lt;title&gt;My Project Docs&lt;/title&gt;
+...
+&lt;span class="brand-title"&gt;My Project&lt;/span&gt;</code></pre>
+
+  <h3 id="nav-structure">Navigation Structure</h3>
+
+  <p>
+    Open <code>app.js</code> and edit the <code>NAV_DATA</code> array near the top of the file.
+    Each section group has a <code>label</code> and a <code>children</code> array.
+    Each leaf item needs an <code>id</code>, a <code>label</code>, and a <code>page</code> path.
+  </p>
+
+  <pre><code>const NAV_DATA = [
+  {
+    id: 'my-section',
+    label: 'My Section',
+    children: [
+      { id: 'page-one', label: 'Page One', page: 'pages/page-one.html' },
+      { id: 'page-two', label: 'Page Two', page: 'pages/page-two.html' },
+    ]
+  }
+];</code></pre>
+
+  <h4 id="nav-depth-note">Note on nesting depth</h4>
+
+  <p>
+    The tree renderer supports up to four levels of nesting. Beyond that, indentation will continue to work
+    but may become visually tight at narrower sidebar widths. Three levels is recommended for most projects.
+  </p>
+
+  <!-- ─── ADDING PAGES ──────────────────────── -->
+  <h2 id="adding-pages">Adding Pages</h2>
+
+  <p>Each documentation page is a plain HTML file inside the <code>pages/</code> directory. Pages must:</p>
+
+  <ol>
+    <li>Be wrapped in a single <code>&lt;div class="content-body"&gt;</code> element.</li>
+    <li>Use heading tags (<code>h1</code>–<code>h4</code>) with unique <code>id</code> attributes
+        (or let <code>app.js</code> auto-generate them from the heading text).</li>
+    <li>Contain only the page body — no <code>&lt;html&gt;</code>, <code>&lt;head&gt;</code>,
+        or <code>&lt;body&gt;</code> tags.</li>
+  </ol>
+
+  <pre><code>&lt;!-- pages/my-page.html --&gt;
+&lt;div class="content-body"&gt;
+  &lt;h1&gt;My Page Title&lt;/h1&gt;
+  &lt;p&gt;Your content here.&lt;/p&gt;
+  &lt;h2 id="section-one"&gt;Section One&lt;/h2&gt;
+  &lt;p&gt;More content.&lt;/p&gt;
+&lt;/div&gt;</code></pre>
+
+  <div class="callout warning">
+    <div class="callout-title">⚠ Heads up</div>
+    <p>
+      If you omit <code>id</code> attributes from headings, <code>app.js</code> will auto-generate them
+      from the heading text using a slug algorithm. This is convenient but means IDs can change if you rename
+      headings. Use explicit IDs for any anchor links you share with others.
+    </p>
+  </div>
+
+  <!-- ─── NEXT STEPS ─────────────────────────── -->
+  <h2 id="what-next">What Next?</h2>
+
+  <p>Now that your server is running, move on to the <strong>First Steps</strong> guide to learn how to
+  structure content, use callout boxes, and make the most of the built-in layout features.</p>
+
+</div>

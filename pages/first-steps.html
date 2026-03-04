@@ -1,0 +1,216 @@
+<div class="content-body">
+
+  <h1 id="first-steps">First Steps</h1>
+
+  <p>
+    With DevDocs installed and your local server running, this guide walks you through the
+    most common day-to-day tasks: writing content, organising navigation, using callout styles,
+    and embedding code samples.
+  </p>
+
+  <!-- ─── WRITING CONTENT ───────────────────── -->
+  <h2 id="writing-content">Writing Content</h2>
+
+  <p>
+    Documentation pages are standard HTML wrapped in a <code>&lt;div class="content-body"&gt;</code>.
+    You can use any HTML you like inside — the stylesheet provides sensible defaults for all
+    common elements.
+  </p>
+
+  <h3 id="headings">Headings</h3>
+
+  <p>
+    Use <code>h1</code> once per page as the page title. Use <code>h2</code>–<code>h4</code> for
+    sections and sub-sections. Headings are automatically picked up by the right-hand outline and
+    scroll-spy system:
+  </p>
+
+  <ul>
+    <li><code>h1</code> — Page title (one per page)</li>
+    <li><code>h2</code> — Major section</li>
+    <li><code>h3</code> — Sub-section</li>
+    <li><code>h4</code> — Minor sub-section (displayed in uppercase with letter-spacing in the default style)</li>
+  </ul>
+
+  <div class="callout">
+    <div class="callout-title">ℹ Best Practice</div>
+    <p>Always give headings unique, descriptive <code>id</code> attributes. This ensures stable deep-link
+    URLs and predictable scroll-spy behaviour.</p>
+  </div>
+
+  <h3 id="paragraphs-and-lists">Paragraphs &amp; Lists</h3>
+
+  <p>Standard <code>&lt;p&gt;</code>, <code>&lt;ul&gt;</code>, and <code>&lt;ol&gt;</code> elements
+  all receive default spacing and support nesting:</p>
+
+  <ol>
+    <li>Ordered lists are great for sequential steps.</li>
+    <li>Numbers are automatic — just add <code>&lt;li&gt;</code> items.
+      <ul>
+        <li>Nested <code>&lt;ul&gt;</code> elements indent automatically.</li>
+        <li>You can mix ordered and unordered at any level.</li>
+      </ul>
+    </li>
+    <li>Keep individual list items concise — one idea per bullet.</li>
+  </ol>
+
+  <!-- ─── CODE BLOCKS ───────────────────────── -->
+  <h2 id="code-blocks">Code Blocks</h2>
+
+  <h3 id="inline-code">Inline Code</h3>
+
+  <p>Wrap short identifiers, filenames, and command fragments in <code>&lt;code&gt;</code> tags:
+  <code>const x = 42</code>, <code>index.html</code>, <code>npm install</code>.</p>
+
+  <h3 id="fenced-code-blocks">Fenced Code Blocks</h3>
+
+  <p>Use a <code>&lt;pre&gt;&lt;code&gt;</code> pair for multi-line samples. The default style provides
+  a subtle background, rounded corners, and horizontal scroll on overflow:</p>
+
+  <pre><code>// JavaScript example
+function greet(name) {
+  if (!name) throw new Error('Name is required');
+  return `Hello, ${name}!`;
+}
+
+const message = greet('DevDocs');
+console.log(message); // "Hello, DevDocs!"</code></pre>
+
+  <pre><code># Shell / Bash example
+cd my-project
+python -m http.server 8080 &amp;
+echo "Server started on port 8080"
+open http://localhost:8080</code></pre>
+
+  <h4 id="code-styling-note">Syntax colouring</h4>
+
+  <p>
+    The default stylesheet does not include a syntax highlighter to keep dependencies at zero.
+    If you need syntax colouring, drop in <a href="https://highlightjs.org" target="_blank" rel="noopener">highlight.js</a>
+    or <a href="https://prismjs.com" target="_blank" rel="noopener">Prism.js</a> — both work
+    without a build step.
+  </p>
+
+  <!-- ─── CALLOUT BOXES ─────────────────────── -->
+  <h2 id="callout-boxes">Callout Boxes</h2>
+
+  <p>
+    Three callout variants are provided out of the box. Add the <code>callout</code> class plus an
+    optional modifier to a <code>&lt;div&gt;</code>, then include a <code>.callout-title</code>
+    element inside.
+  </p>
+
+  <h3 id="callout-info">Info (default)</h3>
+
+  <div class="callout">
+    <div class="callout-title">ℹ Info</div>
+    <p>Use this for general notes and supplementary information that readers may find helpful
+    but can skip without missing critical steps.</p>
+  </div>
+
+  <pre><code>&lt;div class="callout"&gt;
+  &lt;div class="callout-title"&gt;ℹ Info&lt;/div&gt;
+  &lt;p&gt;Your note here.&lt;/p&gt;
+&lt;/div&gt;</code></pre>
+
+  <h3 id="callout-warning">Warning</h3>
+
+  <div class="callout warning">
+    <div class="callout-title">⚠ Warning</div>
+    <p>Use this for actions that could have unintended consequences or commonly trip people up.
+    Don't overuse warnings — readers learn to ignore them if they appear too often.</p>
+  </div>
+
+  <h3 id="callout-danger">Danger</h3>
+
+  <div class="callout danger">
+    <div class="callout-title">✖ Danger</div>
+    <p>Use this sparingly for irreversible or destructive actions, such as deleting data
+    or overwriting configuration without a backup.</p>
+  </div>
+
+  <!-- ─── IMAGES ────────────────────────────── -->
+  <h2 id="images">Images &amp; Figures</h2>
+
+  <p>
+    Wrap images in a <code>&lt;figure class="img-block"&gt;</code> to get the default border,
+    rounded corners, and caption style. Use <code>&lt;figcaption&gt;</code> for an optional caption.
+  </p>
+
+  <figure class="img-block">
+    <div class="img-placeholder" aria-label="Diagram placeholder">
+      <svg viewBox="0 0 48 48" width="48" height="48" aria-hidden="true">
+        <rect x="4" y="4" width="40" height="40" rx="4" stroke="currentColor" stroke-width="2" fill="none"/>
+        <circle cx="16" cy="16" r="5" stroke="currentColor" stroke-width="2" fill="none"/>
+        <path d="M4 32 l12-12 8 8 8-10 12 14" stroke="currentColor" stroke-width="2" fill="none" stroke-linejoin="round" stroke-linecap="round"/>
+      </svg>
+      <span>Figure — Replace with an &lt;img&gt; tag pointing to your image file</span>
+    </div>
+    <figcaption>Caption goes here — describe what the image shows in one short sentence.</figcaption>
+  </figure>
+
+  <pre><code>&lt;figure class="img-block"&gt;
+  &lt;img src="images/screenshot.png" alt="Application screenshot" /&gt;
+  &lt;figcaption&gt;The three-column layout at 1440 px wide.&lt;/figcaption&gt;
+&lt;/figure&gt;</code></pre>
+
+  <!-- ─── SIDEBAR LAYOUT ────────────────────── -->
+  <h2 id="sidebar-layout">Sidebar Layout &amp; Resizing</h2>
+
+  <p>Both sidebars can be collapsed and resized interactively at any time:</p>
+
+  <ul>
+    <li><strong>Collapse</strong> — click the arrow icon (‹ / ›) in the sidebar header.</li>
+    <li><strong>Expand</strong> — click the arrow icon in the narrow strip that appears when collapsed.</li>
+    <li><strong>Resize</strong> — drag the 5 px divider between the sidebar and the center content area.
+        Widths are persisted to <code>localStorage</code> so your preference is remembered across page loads.</li>
+  </ul>
+
+  <h3 id="minimum-widths">Minimum Widths</h3>
+
+  <p>
+    The left and right sidebars each enforce a minimum width of <strong>220 px</strong>.
+    If you drag a sidebar below that threshold it will spring back to the minimum.
+    You can adjust the <code>MIN_SIDEBAR_WIDTH</code> constant in <code>app.js</code>.
+  </p>
+
+  <!-- ─── RESPONSIVE ────────────────────────── -->
+  <h2 id="responsive-layout">Responsive Layout</h2>
+
+  <p>
+    DevDocs automatically collapses sidebars on narrow viewports to protect the center content area:
+  </p>
+
+  <ul>
+    <li>Below <strong>1200 px</strong> — the right sidebar collapses automatically.</li>
+    <li>Below <strong>800 px</strong> — the left sidebar also collapses.</li>
+  </ul>
+
+  <p>
+    On touch devices you can still expand either sidebar manually using the strip expand button.
+    The responsive collapse only triggers once on load; after that, user preference takes over.
+  </p>
+
+  <h4 id="customising-breakpoints">Customising breakpoints</h4>
+
+  <p>
+    Edit the <code>checkResponsiveCollapse()</code> function in <code>app.js</code> and the matching
+    media queries in <code>styles.css</code> to suit your content.
+  </p>
+
+  <!-- ─── NEXT STEPS ─────────────────────────── -->
+  <h2 id="summary">Summary</h2>
+
+  <p>You now know how to:</p>
+
+  <ul>
+    <li>Write and structure documentation pages</li>
+    <li>Use inline code, code blocks, and callout boxes</li>
+    <li>Include images with captions</li>
+    <li>Navigate and resize the sidebar layout</li>
+  </ul>
+
+  <p>For advanced customisation — including custom themes, deep-linked anchors, and extending the
+  navigation data model — see the <strong>Deep Topic</strong> guide.</p>
+
+</div>

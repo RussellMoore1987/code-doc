@@ -1,0 +1,154 @@
+<div class="content-body">
+
+  <h1 id="introduction">Introduction</h1>
+
+  <p>
+    Welcome to <strong>DevDocs</strong> — a lightweight, generic documentation platform built for
+    teams who need fast, structured technical content without heavy toolchain overhead.
+    This guide walks you through the core concepts and helps you understand how everything fits together.
+  </p>
+
+  <div class="callout">
+    <div class="callout-title">ℹ Note</div>
+    <p>
+      This documentation site is served as a static project. No server-side rendering or framework is
+      required. All you need is a basic local HTTP server or your IDE's Live Server extension.
+    </p>
+  </div>
+
+  <!-- ─── WHAT IS DEVDOCS ─────────────────── -->
+  <h2 id="what-is-devdocs">What is DevDocs?</h2>
+
+  <p>
+    DevDocs is a three-column documentation layout inspired by modern developer portals. It features
+    a collapsible left navigation tree, a dynamic content area, and a context-sensitive "On this page"
+    outline on the right.
+  </p>
+
+  <p>Key design goals include:</p>
+
+  <ul>
+    <li>Keep dependencies to zero — pure HTML, CSS, and vanilla JavaScript.</li>
+    <li>Make it trivial to add or reorganise content by editing a single data structure in <code>app.js</code>.</li>
+    <li>Support light and dark themes with a single CSS variable system.</li>
+    <li>Provide a responsive layout that degrades gracefully on smaller screens.</li>
+  </ul>
+
+  <!-- ─── ARCHITECTURE ─────────────────────── -->
+  <h2 id="architecture">Architecture Overview</h2>
+
+  <p>
+    The app consists of three files at the root level plus a <code>pages/</code> directory that holds
+    HTML fragments. The host page (<code>index.html</code>) loads <code>styles.css</code> and
+    <code>app.js</code>; everything else happens at runtime.
+  </p>
+
+  <figure class="img-block">
+    <div class="img-placeholder" aria-label="Architecture diagram placeholder">
+      <svg viewBox="0 0 48 48" width="48" height="48" aria-hidden="true"><rect x="4" y="4" width="40" height="40" rx="6" stroke="currentColor" stroke-width="2" fill="none"/><path d="M16 4v40M32 4v40M4 24h40" stroke="currentColor" stroke-width="1.5" stroke-dasharray="3 2"/></svg>
+      <span>Figure 1 — Three-column layout schematic</span>
+    </div>
+    <figcaption>The three-column layout with left nav, center content, and right outline.</figcaption>
+  </figure>
+
+  <h3 id="file-structure">File Structure</h3>
+
+  <p>All project files live in a flat directory with no build step required:</p>
+
+  <pre><code>doc/
+├── index.html          ← Shell HTML (header, layout chrome, footer)
+├── styles.css          ← All styles + CSS custom properties for theming
+├── app.js              ← All behaviour: nav tree, Ajax, scroll spy, resize
+└── pages/
+    ├── intro.html      ← This page
+    ├── installation.html
+    ├── first-steps.html
+    └── deep-topic.html</code></pre>
+
+  <h3 id="content-loading">Content Loading</h3>
+
+  <p>
+    Each page in <code>pages/</code> is an <em>HTML fragment</em> — just a <code>&lt;div class="content-body"&gt;</code>
+    wrapper with your content inside. When a user clicks a left-nav link, <code>app.js</code> fetches that
+    fragment via the Fetch API and injects it into the center column.
+  </p>
+
+  <div class="callout warning">
+    <div class="callout-title">⚠ Important</div>
+    <p>
+      Because pages are loaded via <code>fetch()</code>, you must serve this project through a local HTTP server.
+      Opening <code>index.html</code> directly as a <code>file://</code> URL will fail due to browser CORS restrictions.
+      Use <strong>VS Code Live Server</strong> or run <code>python -m http.server 8080</code> from the project folder.
+    </p>
+  </div>
+
+  <!-- ─── CORE CONCEPTS ─────────────────────── -->
+  <h2 id="core-concepts">Core Concepts</h2>
+
+  <h3 id="nav-data">Navigation Data</h3>
+
+  <p>
+    All navigation is defined in a single <code>NAV_DATA</code> array in <code>app.js</code>. Each entry
+    is a plain JavaScript object with <code>id</code>, <code>label</code>, and optionally <code>page</code>
+    (path to an HTML fragment) or <code>children</code> (nested items).
+  </p>
+
+  <pre><code>const NAV_DATA = [
+  {
+    id: 'getting-started',
+    label: 'Getting Started',
+    children: [
+      { id: 'intro', label: 'Introduction', page: 'pages/intro.html' },
+      { id: 'installation', label: 'Installation', page: 'pages/installation.html' },
+    ]
+  }
+];</code></pre>
+
+  <h3 id="theming">Theming</h3>
+
+  <p>
+    All colours and spacing tokens are defined as CSS custom properties on <code>:root</code>
+    (light mode) and <code>[data-theme="dark"]</code> (dark mode). Switching themes is a single
+    attribute change on <code>&lt;html&gt;</code>, which the browser handles in a single style pass.
+  </p>
+
+  <h4 id="adding-tokens">Adding custom tokens</h4>
+
+  <p>
+    Open <code>styles.css</code> and add your token to both the <code>:root</code> and
+    <code>[data-theme="dark"]</code> blocks, then reference it anywhere with <code>var(--my-token)</code>.
+  </p>
+
+  <!-- ─── BROWSER SUPPORT ─────────────────────── -->
+  <h2 id="browser-support">Browser Support</h2>
+
+  <p>
+    DevDocs targets evergreen browsers. The following APIs are used without polyfills:
+  </p>
+
+  <ul>
+    <li><code>fetch()</code> — page loading</li>
+    <li><code>IntersectionObserver</code> — scroll spy</li>
+    <li><code>CSS Custom Properties</code> — theming</li>
+    <li><code>DOMParser</code> — HTML fragment parsing</li>
+    <li><code>localStorage</code> — theme &amp; sidebar persistence</li>
+  </ul>
+
+  <div class="callout danger">
+    <div class="callout-title">✖ Not supported</div>
+    <p>Internet Explorer is not supported. No polyfills are provided or planned.</p>
+  </div>
+
+  <!-- ─── NEXT STEPS ─────────────────────────── -->
+  <h2 id="next-steps">Next Steps</h2>
+
+  <p>Ready to set up DevDocs for your own project? Head to the <strong>Installation</strong> page to
+  get your local environment running in minutes.</p>
+
+  <ul>
+    <li><a href="#" onclick="return false;">Installation</a> — clone, serve, customise</li>
+    <li><a href="#" onclick="return false;">First Steps</a> — add your first pages and nav entries</li>
+    <li><a href="#" onclick="return false;">Deep Topic</a> — advanced configuration</li>
+  </ul>
+
+</div>

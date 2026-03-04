@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Docs App</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+  <!-- ═══════════════════════════════════════════ HEADER -->
+  <header class="site-header" role="banner">
+    <div class="header-inner">
+      <div class="header-brand">
+        <svg class="brand-icon" viewBox="0 0 32 32" aria-hidden="true">
+          <rect x="2" y="2" width="28" height="28" rx="4" fill="currentColor" opacity=".15"/>
+          <path d="M8 10h16M8 16h10M8 22h13" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
+        </svg>
+        <span class="brand-title">DevDocs</span>
+      </div>
+      <nav class="header-nav" aria-label="Header navigation">
+        <a href="#" class="header-nav-link">Guides</a>
+        <a href="#" class="header-nav-link">API</a>
+        <a href="#" class="header-nav-link">Community</a>
+      </nav>
+      <div class="header-actions">
+        <button id="theme-toggle" class="btn-icon" aria-label="Toggle light/dark mode" title="Toggle theme">
+          <span class="icon-light" aria-hidden="true">
+            <!-- Sun -->
+            <svg viewBox="0 0 24 24" width="18" height="18"><circle cx="12" cy="12" r="4.5" stroke="currentColor" stroke-width="2" fill="none"/><line x1="12" y1="2" x2="12" y2="5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="12" y1="19" x2="12" y2="22" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="2" y1="12" x2="5" y2="12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="19" y1="12" x2="22" y2="12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="4.22" y1="4.22" x2="6.34" y2="6.34" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="17.66" y1="17.66" x2="19.78" y2="19.78" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="4.22" y1="19.78" x2="6.34" y2="17.66" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="17.66" y1="6.34" x2="19.78" y2="4.22" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+          </span>
+          <span class="icon-dark" aria-hidden="true">
+            <!-- Moon -->
+            <svg viewBox="0 0 24 24" width="18" height="18"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- ═══════════════════════════════════════════ MAIN WRAPPER -->
+  <div class="page-body">
+    <div class="app-wrapper" id="app-wrapper">
+
+      <!-- ─── LEFT SIDEBAR ─── -->
+      <aside class="sidebar sidebar-left" id="sidebar-left" aria-label="Primary navigation">
+        <div class="sidebar-header">
+          <span class="sidebar-label">Contents</span>
+          <button class="btn-icon sidebar-collapse-btn" id="collapse-left" aria-label="Collapse left sidebar" title="Collapse">
+            <svg viewBox="0 0 24 24" width="16" height="16"><polyline points="15 18 9 12 15 6" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+        </div>
+        <nav class="left-nav" id="left-nav" aria-label="Documentation sections">
+          <!-- Built by app.js -->
+        </nav>
+      </aside>
+
+      <!-- LEFT COLLAPSE STRIP (shown when left sidebar is collapsed) -->
+      <div class="sidebar-strip sidebar-strip-left" id="strip-left" aria-hidden="true">
+        <button class="btn-icon sidebar-expand-btn" id="expand-left" aria-label="Expand left sidebar" title="Expand navigation">
+          <svg viewBox="0 0 24 24" width="16" height="16"><polyline points="9 18 15 12 9 6" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+      </div>
+
+      <!-- LEFT RESIZE HANDLE -->
+      <div class="resize-handle resize-handle-left" id="resize-left" role="separator" aria-orientation="vertical" aria-label="Resize left sidebar" tabindex="0"></div>
+
+      <!-- ─── CENTER CONTENT ─── -->
+      <main class="content-main" id="content-main" role="main" aria-label="Documentation content">
+        <div class="content-scroll" id="content-scroll" tabindex="0">
+          <div class="content-body" id="content-body">
+            <!-- Loaded via Ajax -->
+            <div class="welcome-screen">
+              <div class="welcome-inner">
+                <svg viewBox="0 0 48 48" width="64" height="64" aria-hidden="true" class="welcome-icon">
+                  <rect x="4" y="4" width="40" height="40" rx="6" fill="currentColor" opacity=".1"/>
+                  <path d="M12 16h24M12 24h16M12 32h19" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
+                </svg>
+                <h1>Welcome to DevDocs</h1>
+                <p>Select a topic from the navigation on the left to get started.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </main>
+
+      <!-- RIGHT RESIZE HANDLE -->
+      <div class="resize-handle resize-handle-right" id="resize-right" role="separator" aria-orientation="vertical" aria-label="Resize right sidebar" tabindex="0"></div>
+
+      <!-- RIGHT COLLAPSE STRIP (shown when right sidebar is collapsed) -->
+      <div class="sidebar-strip sidebar-strip-right" id="strip-right" aria-hidden="true">
+        <button class="btn-icon sidebar-expand-btn" id="expand-right" aria-label="Expand right sidebar" title="Expand on this page">
+          <svg viewBox="0 0 24 24" width="16" height="16"><polyline points="15 18 9 12 15 6" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+      </div>
+
+      <!-- ─── RIGHT SIDEBAR ─── -->
+      <aside class="sidebar sidebar-right" id="sidebar-right" aria-label="On this page">
+        <div class="sidebar-header">
+          <span class="sidebar-label">On this page</span>
+          <button class="btn-icon sidebar-collapse-btn" id="collapse-right" aria-label="Collapse right sidebar" title="Collapse">
+            <svg viewBox="0 0 24 24" width="16" height="16"><polyline points="9 18 15 12 9 6" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+        </div>
+        <nav class="right-nav" id="right-nav" aria-label="Page sections">
+          <p class="right-nav-empty">Load a page to see its outline.</p>
+        </nav>
+      </aside>
+
+    </div><!-- /.app-wrapper -->
+  </div><!-- /.page-body -->
+
+  <!-- ═══════════════════════════════════════════ FOOTER -->
+  <footer class="site-footer" role="contentinfo">
+    <div class="footer-inner">
+      <span class="footer-copy">&copy; 2026 DevDocs. All rights reserved.</span>
+      <nav class="footer-nav" aria-label="Footer navigation">
+        <a href="#">Privacy</a>
+        <a href="#">Terms</a>
+        <a href="#">Contact</a>
+      </nav>
+    </div>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>
