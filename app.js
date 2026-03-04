@@ -206,6 +206,16 @@ async function navigateTo(navId, sectionId = null, pushHistory = true, smooth = 
       targetNavId = state.activeNavId;
     }
     
+    // Validate navigation item exists
+    if (targetNavId) {
+      const navItem = findNavItemById(targetNavId);
+      if (!navItem) {
+        console.warn(`Navigation item not found: ${targetNavId}`);
+        state.isNavigating = false;
+        return;
+      }
+    }
+    
     // Update URL if requested
     if (pushHistory) {
       const newUrl = generateRoute(targetNavId, sectionId);
@@ -219,13 +229,17 @@ async function navigateTo(navId, sectionId = null, pushHistory = true, smooth = 
       const navItem = findNavItemById(targetNavId);
       if (navItem && navItem.page) {
         setActiveNav(targetNavId);
-        await loadPage(navItem.page);
+        const success = await loadPage(navItem.page);
+        if (!success) {
+          state.isNavigating = false;
+          return;
+        }
       }
     }
     
     // Scroll to section if provided
     if (sectionId) {
-      // Wait a bit for content to render
+      // Wait a bit for content to render and scrollspy to initialize
       setTimeout(() => {
         const target = elContentBody.querySelector(`#${sectionId}`);
         if (target) {
@@ -242,12 +256,16 @@ async function navigateTo(navId, sectionId = null, pushHistory = true, smooth = 
             });
             rightNavLink.classList.add('is-active');
           }
+        } else {
+          console.warn(`Section not found: ${sectionId}`);
         }
-      }, 100);
+      }, 150);
     }
     
     state.currentRoute = { navId: targetNavId, sectionId };
     
+  } catch (error) {
+    console.error('Navigation error:', error);
   } finally {
     state.isNavigating = false;
   }
@@ -268,16 +286,24 @@ function initRouting() {
   // Handle popstate for browser navigation
   window.addEventListener('popstate', handlePopState);
   
+  // Also handle hashchange as backup
+  window.addEventListener('hashchange', (event) => {
+    if (!state.isNavigating) {
+      const route = parseRoute();
+      navigateTo(route.navId, route.sectionId, false, false);
+    }
+  });
+  
   // Parse initial route
   const route = parseRoute();
   if (route.navId || route.sectionId) {
     // Navigate to the route from URL
     navigateTo(route.navId, route.sectionId, false, false);
   } else {
-    // Load default page
+    // Load default page and update URL
     const firstPage = findFirstPage(NAV_DATA);
     if (firstPage) {
-      navigateTo(firstPage.id, null, false, false);
+      navigateTo(firstPage.id, null, true, false);
     }
   }
 }
@@ -680,9 +706,13 @@ function setupScrollSpy() {
     });
 
     // Update URL to reflect current section (without pushing to history)
-    if (!state.isNavigating && state.activeNavId) {
+    // Only update if we're not in the middle of a navigation operation
+    if (!state.isNavigating && state.activeNavId && id) {
       const newUrl = generateRoute(state.activeNavId, id);
-      if (newUrl !== window.location.hash) {
+      const currentHash = window.location.hash;
+      
+      // Only update if the URL actually changed to avoid unnecessary history entries
+      if (newUrl && newUrl !== currentHash) {
         history.replaceState({ navId: state.activeNavId, sectionId: id }, '', newUrl);
         state.currentRoute = { navId: state.activeNavId, sectionId: id };
       }
