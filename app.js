@@ -98,6 +98,8 @@ const state = {
   rightCollapsed:  false,
   leftWidth:       parseInt(localStorage.getItem(STORAGE_KEY_LEFT_W))  || DEFAULT_LEFT_WIDTH,
   rightWidth:      parseInt(localStorage.getItem(STORAGE_KEY_RIGHT_W)) || DEFAULT_RIGHT_WIDTH,
+  currentRoute:    null,
+  isNavigating:    false // Prevent recursion during navigation
 };
 
 /* ═══════════════════════════════════════════════════════════════
@@ -121,6 +123,164 @@ const elStripLeft    = document.getElementById('strip-left');
 const elStripRight   = document.getElementById('strip-right');
 const elThemeToggle  = document.getElementById('theme-toggle');
 const elAppWrapper   = document.getElementById('app-wrapper');
+
+/* ═══════════════════════════════════════════════════════════════
+   URL ROUTING & STATE MANAGEMENT
+   ═══════════════════════════════════════════════════════════════ */
+
+/**
+ * Parse URL hash into navigation state
+ * Supports formats:
+ * - #navId (page only, left nav item) 
+ * - #navId#sectionId (page + section right nav item)
+ */
+function parseRoute(url = window.location.hash) {
+  if (!url || !url.startsWith('#')) {
+    return { navId: null, sectionId: null };
+  }
+  
+  const hash = url.substring(1); // Remove '#'
+  const parts = hash.split('#');
+  
+  if (parts.length === 1) {
+    // Either #navId or #sectionId - need to determine which
+    const navId = parts[0];
+    const navItem = findNavItemById(navId);
+    
+    if (navItem && navItem.page) {
+      // It's a nav item
+      return { navId, sectionId: null };
+    } else {
+      // It's a section on current page
+      return { navId: state.activeNavId, sectionId: navId };
+    }
+  } else if (parts.length === 2) {
+    // #navId#sectionId
+    return { navId: parts[0], sectionId: parts[1] };
+  }
+  
+  return { navId: null, sectionId: null };
+}
+
+/**
+ * Generate URL hash from navigation state
+ */
+function generateRoute(navId, sectionId = null) {
+  if (!navId && !sectionId) return '';
+  if (navId && sectionId) return `#${navId}#${sectionId}`;
+  if (navId) return `#${navId}`;
+  if (sectionId) return `#${sectionId}`;
+  return '';
+}
+
+/**
+ * Find nav item by ID (recursive search)
+ */
+function findNavItemById(id, items = NAV_DATA) {
+  for (const item of items) {
+    if (item.id === id) return item;
+    if (item.children) {
+      const found = findNavItemById(id, item.children);
+      if (found) return found;
+    }
+  }
+  return null;
+}
+
+/**
+ * Central navigation function - single source of truth
+ * @param {string} navId - Navigation item ID
+ * @param {string} sectionId - Section ID within the page
+ * @param {boolean} pushHistory - Whether to update browser history
+ * @param {boolean} smooth - Whether to use smooth scrolling
+ */
+async function navigateTo(navId, sectionId = null, pushHistory = true, smooth = true) {
+  if (state.isNavigating) return;
+  state.isNavigating = true;
+
+  try {
+    let targetNavId = navId;
+    
+    // If only sectionId provided, use current page
+    if (!navId && sectionId && state.activeNavId) {
+      targetNavId = state.activeNavId;
+    }
+    
+    // Update URL if requested
+    if (pushHistory) {
+      const newUrl = generateRoute(targetNavId, sectionId);
+      if (newUrl !== window.location.hash) {
+        history.pushState({ navId: targetNavId, sectionId }, '', newUrl || '#');
+      }
+    }
+    
+    // Load page if navigation changed
+    if (targetNavId && targetNavId !== state.activeNavId) {
+      const navItem = findNavItemById(targetNavId);
+      if (navItem && navItem.page) {
+        setActiveNav(targetNavId);
+        await loadPage(navItem.page);
+      }
+    }
+    
+    // Scroll to section if provided
+    if (sectionId) {
+      // Wait a bit for content to render
+      setTimeout(() => {
+        const target = elContentBody.querySelector(`#${sectionId}`);
+        if (target) {
+          target.scrollIntoView({ 
+            behavior: smooth ? 'smooth' : 'auto', 
+            block: 'start' 
+          });
+          
+          // Update right nav active state
+          const rightNavLink = elRightNav.querySelector(`[data-target="${sectionId}"]`);
+          if (rightNavLink) {
+            elRightNav.querySelectorAll('.right-nav-link').forEach(a => {
+              a.classList.remove('is-active');
+            });
+            rightNavLink.classList.add('is-active');
+          }
+        }
+      }, 100);
+    }
+    
+    state.currentRoute = { navId: targetNavId, sectionId };
+    
+  } finally {
+    state.isNavigating = false;
+  }
+}
+
+/**
+ * Handle browser back/forward buttons
+ */
+function handlePopState(event) {
+  const route = parseRoute();
+  navigateTo(route.navId, route.sectionId, false, false);
+}
+
+/**
+ * Initialize routing on page load
+ */
+function initRouting() {
+  // Handle popstate for browser navigation
+  window.addEventListener('popstate', handlePopState);
+  
+  // Parse initial route
+  const route = parseRoute();
+  if (route.navId || route.sectionId) {
+    // Navigate to the route from URL
+    navigateTo(route.navId, route.sectionId, false, false);
+  } else {
+    // Load default page
+    const firstPage = findFirstPage(NAV_DATA);
+    if (firstPage) {
+      navigateTo(firstPage.id, null, false, false);
+    }
+  }
+}
 
 /* ═══════════════════════════════════════════════════════════════
    THEME
@@ -324,17 +484,17 @@ elLeftNav.addEventListener('click', (e) => {
   if (!row) return;
 
   const navItem = row.closest('.nav-item');
-  const page    = row.dataset.page;
+  const navId = row.dataset.id;
+  const page = row.dataset.page;
 
   /* Toggle expand/collapse if has children */
   if (navItem.querySelector('.nav-children')) {
     navItem.classList.toggle('is-open');
   }
 
-  /* Load page if has one */
-  if (page) {
-    setActiveNav(row.dataset.id);
-    loadPage(page);
+  /* Navigate to page if has one */
+  if (page && navId) {
+    navigateTo(navId, null, true, true);
   }
 });
 
@@ -347,11 +507,19 @@ function setActiveNav(id) {
   if (target) {
     target.classList.add('is-active');
 
-    /* Ensure all ancestor groups are open */
+    /* Ensure all ancestor groups are open - this is critical for deep linking */
     let parent = target.closest('.nav-item')?.parentElement?.closest('.nav-item');
     while (parent) {
       parent.classList.add('is-open');
       parent = parent.parentElement?.closest('.nav-item');
+    }
+
+    /* Scroll the active nav item into view if it's outside the visible area */
+    const sidebarRect = elLeftSidebar.getBoundingClientRect();
+    const targetRect = target.getBoundingClientRect();
+    
+    if (targetRect.top < sidebarRect.top || targetRect.bottom > sidebarRect.bottom) {
+      target.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     }
   }
   state.activeNavId = id;
@@ -395,7 +563,7 @@ async function loadPage(url) {
     /* Strip scripts from fragment for safety */
     fragment.querySelectorAll('script').forEach(s => s.remove());
 
-    /* Inject — move all body children (not the <body> element itself) */
+    /* Inject - move all body children (not the <body> element itself) */
     elContentBody.innerHTML = '';
     const transfer = document.createDocumentFragment();
     while (fragment.firstChild) {
@@ -411,6 +579,8 @@ async function loadPage(url) {
     buildRightNav();
     setupScrollSpy();
 
+    return true; // Success
+
   } catch (err) {
     elContentBody.innerHTML = `
       <div class="content-body">
@@ -421,6 +591,7 @@ async function loadPage(url) {
         </div>
       </div>`;
     buildRightNav(); /* clear right nav */
+    return false; // Failed
   }
 }
 
@@ -470,7 +641,7 @@ function buildRightNav() {
   list.className = 'right-nav-list';
 
   headings.forEach(h => {
-    const level = parseInt(h.tagName[1], 10); /* 1–4 */
+    const level = parseInt(h.tagName[1], 10); /* 1-4 */
     const li    = document.createElement('li');
     const a     = document.createElement('a');
     a.href             = '#' + h.id;
@@ -482,10 +653,7 @@ function buildRightNav() {
 
     a.addEventListener('click', (e) => {
       e.preventDefault();
-      const target = elContentBody.querySelector('#' + h.id);
-      if (target) {
-        target.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      }
+      navigateTo(null, h.id, true, true);
     });
 
     li.appendChild(a);
@@ -497,7 +665,7 @@ function buildRightNav() {
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   SCROLL SPY  –  IntersectionObserver with content container root
+   SCROLL SPY  -  IntersectionObserver with content container root
    ═══════════════════════════════════════════════════════════════ */
 
 function setupScrollSpy() {
@@ -510,6 +678,15 @@ function setupScrollSpy() {
       const isMatch = a.dataset.target === id;
       a.classList.toggle('is-active', isMatch);
     });
+
+    // Update URL to reflect current section (without pushing to history)
+    if (!state.isNavigating && state.activeNavId) {
+      const newUrl = generateRoute(state.activeNavId, id);
+      if (newUrl !== window.location.hash) {
+        history.replaceState({ navId: state.activeNavId, sectionId: id }, '', newUrl);
+        state.currentRoute = { navId: state.activeNavId, sectionId: id };
+      }
+    }
   };
 
   /* Use IntersectionObserver rooted to the scroll container */
@@ -578,12 +755,8 @@ function init() {
   checkResponsiveCollapse();
   window.addEventListener('resize', debounce(checkResponsiveCollapse, 250));
 
-  /* Load default page */
-  const firstPage = findFirstPage(NAV_DATA);
-  if (firstPage) {
-    setActiveNav(firstPage.id);
-    loadPage(firstPage.page);
-  }
+  /* Initialize routing system */
+  initRouting();
 }
 
 /* Find the first nav item with a page */
