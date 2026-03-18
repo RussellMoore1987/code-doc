@@ -1,12 +1,12 @@
 /**
- * app.js  –  Documentation App
+ * app.js  -  Documentation App
  * Vanilla JS: navigation tree, Ajax content loading,
  * right-nav generation, scroll spy, sidebar resize & collapse,
- * light/dark theme toggle.
+ * light/dark theme toggle, copy-to-clipboard for code blocks.
  */
 
 /* ═══════════════════════════════════════════════════════════════
-   NAVIGATION DATA  –  4 levels deep
+   NAVIGATION DATA  -  4 levels deep
    ═══════════════════════════════════════════════════════════════ */
 
 const NAV_DATA = [
@@ -35,7 +35,7 @@ const NAV_DATA = [
           },
           {
             id: 'step1-group',
-            label: 'Step 1 – Configure',
+            label: 'Step 1 - Configure',
             children: [
               {
                 id: 'step1-env',
@@ -51,7 +51,7 @@ const NAV_DATA = [
           },
           {
             id: 'step2',
-            label: 'Step 2 – Build & Run',
+            label: 'Step 2 - Build & Run',
             page: 'pages/first-steps.html'
           }
         ]
@@ -625,6 +625,7 @@ async function loadPage(url) {
     ensureHeadingIds();
     buildRightNav();
     setupScrollSpy();
+    setupCopyButtons();
 
     return true; // Success
 
@@ -781,6 +782,108 @@ function checkResponsiveCollapse() {
 }
 
 /* ═══════════════════════════════════════════════════════════════
+   COPY TO CLIPBOARD FUNCTIONALITY
+   ═══════════════════════════════════════════════════════════════ */
+
+function setupCopyButtons() {
+  /* Find all pre > code blocks and add copy buttons */
+  const codeBlocks = document.querySelectorAll('.content-body pre code');
+  
+  codeBlocks.forEach(codeElement => {
+    const preElement = codeElement.parentElement;
+    
+    /* Skip if button already exists */
+    if (preElement.querySelector('.copy-btn')) {
+      return;
+    }
+    
+    /* Create copy button */
+    const copyBtn = document.createElement('button');
+    copyBtn.className = 'copy-btn';
+    copyBtn.textContent = 'Copy';
+    copyBtn.setAttribute('aria-label', 'Copy code to clipboard');
+    copyBtn.setAttribute('title', 'Copy code to clipboard');
+    
+    /* Add click handler */
+    copyBtn.addEventListener('click', () => copyCodeToClipboard(codeElement, copyBtn));
+    
+    /* Insert button into pre element */
+    preElement.appendChild(copyBtn);
+  });
+}
+
+async function copyCodeToClipboard(codeElement, buttonElement) {
+  const codeText = codeElement.textContent;
+  
+  try {
+    /* Try modern Clipboard API first */
+    if (navigator.clipboard && window.isSecureContext) {
+      await navigator.clipboard.writeText(codeText);
+    } else {
+      /* Fallback for older browsers or non-secure contexts */
+      copyTextFallback(codeText);
+    }
+    
+    /* Show success feedback */
+    showCopyFeedback(buttonElement, true);
+    
+  } catch (err) {
+    console.warn('Copy to clipboard failed:', err);
+    /* Try fallback method */
+    try {
+      copyTextFallback(codeText);
+      showCopyFeedback(buttonElement, true);
+    } catch (fallbackErr) {
+      console.error('All copy methods failed:', fallbackErr);
+      showCopyFeedback(buttonElement, false);
+    }
+  }
+}
+
+function copyTextFallback(text) {
+  /* Create temporary textarea for fallback copy */
+  const textarea = document.createElement('textarea');
+  textarea.value = text;
+  textarea.style.position = 'fixed';
+  textarea.style.opacity = '0';
+  textarea.style.left = '-9999px';
+  document.body.appendChild(textarea);
+  
+  /* Select and copy */
+  textarea.select();
+  textarea.setSelectionRange(0, 99999); /* For mobile devices */
+  
+  const successful = document.execCommand('copy');
+  document.body.removeChild(textarea);
+  
+  if (!successful) {
+    throw new Error('document.execCommand copy failed');
+  }
+}
+
+function showCopyFeedback(buttonElement, success) {
+  const originalText = buttonElement.textContent;
+  
+  if (success) {
+    buttonElement.textContent = 'Copied!';
+    buttonElement.classList.add('copied');
+    
+    /* Reset after 2 seconds */
+    setTimeout(() => {
+      buttonElement.textContent = originalText;
+      buttonElement.classList.remove('copied');
+    }, 2000);
+  } else {
+    buttonElement.textContent = 'Failed';
+    
+    /* Reset after 2 seconds */
+    setTimeout(() => {
+      buttonElement.textContent = originalText;
+    }, 2000);
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════
    INIT
    ═══════════════════════════════════════════════════════════════ */
 
@@ -808,6 +911,9 @@ function init() {
 
   /* Initialize routing system */
   initRouting();
+  
+  /* Setup copy buttons for any pre-existing code blocks */
+  setupCopyButtons();
 }
 
 /* Find the first nav item with a page */

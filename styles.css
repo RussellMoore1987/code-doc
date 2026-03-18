@@ -577,6 +577,45 @@ button {
   color: var(--text-code);
 }
 
+/* Copy to clipboard button */
+.content-body pre {
+  position: relative;
+}
+
+.copy-btn {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: var(--bg-sidebar);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 4px 8px;
+  font-size: 11px;
+  font-family: inherit;
+  font-weight: 500;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  user-select: none;
+  z-index: 10;
+}
+
+.copy-btn:hover {
+  background: var(--bg-hover);
+  color: var(--text-base);
+  border-color: var(--border-focus);
+}
+
+.copy-btn:active {
+  background: var(--bg-active);
+}
+
+.copy-btn.copied {
+  background: var(--accent-light);
+  color: var(--text-link);
+  border-color: var(--border-focus);
+}
+
 /* Callout boxes */
 .callout {
   border-left: 4px solid var(--callout-border);
