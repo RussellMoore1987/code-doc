@@ -1,9 +1,12 @@
 /* ═══════════════════════════════════════════════════════════════
-   CSS CUSTOM PROPERTIES  –  THEME TOKENS
+   CSS CUSTOM PROPERTIES  -  THEME TOKENS
    ═══════════════════════════════════════════════════════════════ */
 
 :root,
 [data-theme="light"] {
+  --primary-color: #309eff;
+  --off-primary-color: #2a8ee6;
+
   /* Backgrounds */
   --bg-body:          #f5f6f8;
   --bg-header:        #ffffff;
@@ -22,23 +25,23 @@
   /* Text */
   --text-base:        #1e2025;
   --text-muted:       #6b7280;
-  --text-link:        #2563eb;
+  --text-link:        var(--primary-color);
   --text-nav:         #374151;
-  --text-nav-active:  #1d4ed8;
+  --text-nav-active:  var(--off-primary-color);
   --text-code:        #374151;
-  --text-brand:       #1d4ed8;
+  --text-brand:       var(--off-primary-color);
 
   /* Borders */
   --border:           #e2e4e8;
-  --border-focus:     #2563eb;
+  --border-focus:     var(--primary-color);
 
   /* Accents */
-  --accent:           #2563eb;
+  --accent:           var(--primary-color);
   --accent-light:     #dbeafe;
 
   /* Sidebar controls */
   --sidebar-header-bg:#f9fafb;
-  --callout-border:   #3b82f6;
+  --callout-border:   var(--primary-color);
   --callout-warn-border: #f59e0b;
   --callout-danger-border: #ef4444;
 
@@ -47,10 +50,13 @@
 
   /* Nav indent accent */
   --nav-indent-line:  #e5e7eb;
-  --nav-active-bar:   #2563eb;
+  --nav-active-bar:   var(--primary-color);
 }
 
 [data-theme="dark"] {
+  --primary-color: #0088E6;
+  --off-primary-color: #008ef3;
+
   --bg-body:          #0f1117;
   --bg-header:        #161b22;
   --bg-footer:        #161b22;
@@ -67,27 +73,27 @@
 
   --text-base:        #e6edf3;
   --text-muted:       #8b949e;
-  --text-link:        #58a6ff;
+  --text-link:        var(--primary-color);
   --text-nav:         #cdd9e5;
-  --text-nav-active:  #79c0ff;
+  --text-nav-active:  var(--off-primary-color);
   --text-code:        #e2e8f0;
-  --text-brand:       #79c0ff;
+  --text-brand:       var(--off-primary-color);
 
   --border:           #30363d;
-  --border-focus:     #58a6ff;
+  --border-focus:     var(--primary-color);
 
-  --accent:           #58a6ff;
+  --accent:           var(--primary-color);
   --accent-light:     #1e3a5f;
 
   --sidebar-header-bg:#161b22;
-  --callout-border:   #58a6ff;
+  --callout-border:   var(--primary-color);
   --callout-warn-border: #d29922;
   --callout-danger-border: #f85149;
 
   --resize-hover:     #1f6feb;
 
   --nav-indent-line:  #30363d;
-  --nav-active-bar:   #58a6ff;
+  --nav-active-bar:   var(--primary-color);
 }
 
 /* ═══════════════════════════════════════════════════════════════
@@ -218,6 +224,12 @@ button {
 [data-theme="light"] .icon-light { display: flex; }
 [data-theme="dark"]  .icon-light { display: none; }
 [data-theme="dark"]  .icon-dark  { display: flex; }
+
+/* logo visibility */
+[data-theme="light"] .light-logo { display: block; }
+[data-theme="light"] .dark-logo { display: none; }
+[data-theme="dark"] .light-logo { display: none; }
+[data-theme="dark"] .dark-logo { display: block; }
 
 /* ═══════════════════════════════════════════════════════════════
    PAGE BODY & APP WRAPPER
