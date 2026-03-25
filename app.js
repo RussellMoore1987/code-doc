@@ -124,6 +124,737 @@ const elStripRight   = document.getElementById('strip-right');
 const elThemeToggle  = document.getElementById('theme-toggle');
 const elAppWrapper   = document.getElementById('app-wrapper');
 
+// Search DOM References
+const elSearchContainer = document.getElementById('search-container');
+const elSearchToggle = document.getElementById('search-toggle');
+const elSearchInputWrapper = document.getElementById('search-input-wrapper');
+const elSearchInput = document.getElementById('search-input');
+const elSearchClose = document.getElementById('search-close');
+const elSearchResults = document.getElementById('search-results');
+const elSearchErrorMessage = document.getElementById('search-error-message');
+const elSearchNavControls = document.getElementById('search-nav-controls');
+const elSearchMatchInfo = document.getElementById('search-match-info');
+const elSearchPrevBtn = document.getElementById('search-prev-btn');
+const elSearchNextBtn = document.getElementById('search-next-btn');
+const elSearchClearBtn = document.getElementById('search-clear-btn');
+
+/* ═══════════════════════════════════════════════════════════════
+   SEARCH FUNCTIONALITY
+   ═══════════════════════════════════════════════════════════════ */
+
+const searchState = {
+  isOpen: false,
+  index: [],
+  currentQuery: '',
+  selectedResult: -1,
+  results: [],
+  // Page highlighting state
+  currentHighlights: [],
+  currentMatchIndex: -1
+};
+
+/**
+ * Build search index by loading and parsing all pages
+ */
+async function buildSearchIndex() {
+  console.log('Building search index...');
+  searchState.index = [];
+  
+  try {
+    // Get all unique pages from NAV_DATA
+    const pages = new Set();
+    function extractPages(items) {
+      for (const item of items) {
+        if (item.page) {
+          pages.add(item.page);
+        }
+        if (item.children) {
+          extractPages(item.children);
+        }
+      }
+    }
+    extractPages(NAV_DATA);
+    
+    if (pages.size === 0) {
+      console.warn('No pages found in NAV_DATA for indexing');
+      return;
+    }
+    
+    // Load and index each page
+    const promises = Array.from(pages).map(async (pageUrl) => {
+      try {
+        const response = await fetch(pageUrl);
+        if (!response.ok) {
+          console.warn(`Failed to fetch ${pageUrl}: ${response.status} ${response.statusText}`);
+          return null;
+        }
+        
+        const html = await response.text();
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(html, 'text/html');
+        
+        // Extract title (first h1)
+        const titleEl = doc.querySelector('h1');
+        const title = titleEl ? titleEl.textContent.trim() : 'Untitled';
+        
+        // Extract all headings and sections for indexing
+        const headings = Array.from(doc.querySelectorAll('h1, h2, h3, h4, h5, h6'));
+        const sections = [];
+        
+        headings.forEach((heading, index) => {
+          const id = heading.id || `section-${index}`;
+          const level = parseInt(heading.tagName.charAt(1));
+          const text = heading.textContent.trim();
+          
+          if (!text) return; // Skip empty headings
+          
+          // Get text content of section (until next heading of same or higher level)
+          let content = '';
+          let nextEl = heading.nextElementSibling;
+          while (nextEl && content.length < 500) {
+            const tagName = nextEl.tagName.toLowerCase();
+            if (tagName.match(/^h[1-6]$/)) {
+              const nextLevel = parseInt(tagName.charAt(1));
+              if (nextLevel <= level) break;
+            }
+            if (nextEl.innerHTML && nextEl.innerHTML.trim()) {
+              // Use innerHTML to capture all content, then strip HTML properly later
+              content += nextEl.innerHTML.trim() + ' ';
+            }
+            nextEl = nextEl.nextElementSibling;
+          }
+          
+          sections.push({
+            id,
+            title: text,
+            content: content.trim().substring(0, 500), // Limit content length
+            level
+          });
+        });
+        
+        // Return page data for index
+        return {
+          url: pageUrl,
+          title,
+          sections,
+          // Get nav item info for this page
+          navInfo: findNavItemByPage(pageUrl)
+        };
+        
+      } catch (error) {
+        console.warn(`Failed to index page ${pageUrl}:`, error);
+        return null;
+      }
+    });
+    
+    // Wait for all pages to be processed
+    const results = await Promise.all(promises);
+    
+    // Filter out failed pages and add to index
+    searchState.index = results.filter(page => page !== null);
+    
+    console.log(`Search index built with ${searchState.index.length} pages`);
+    
+  } catch (error) {
+    console.error('Failed to build search index:', error);
+  }
+}
+
+/**
+ * Find navigation item by page URL
+ */
+function findNavItemByPage(pageUrl, items = NAV_DATA) {
+  for (const item of items) {
+    if (item.page === pageUrl) {
+      return item;
+    }
+    if (item.children) {
+      const found = findNavItemByPage(pageUrl, item.children);
+      if (found) return found;
+    }
+  }
+  return null;
+}
+
+/**
+ * Perform search query with validation
+ */
+function performSearch(query) {
+  // Hide any existing error messages
+  if (elSearchErrorMessage) {
+    elSearchErrorMessage.classList.remove('visible');
+  }
+  
+  if (!query.trim()) {
+    searchState.results = [];
+    return;
+  }
+  
+  // Validate search length
+  if (query.length > 25) {
+    searchState.results = [];
+    showSearchError('Search text is too long. Please reduce to 25 characters or fewer.');
+    return;
+  }
+  
+  query = query.toLowerCase().trim();
+  searchState.currentQuery = query;
+  searchState.results = [];
+  
+  // Search through index
+  for (const page of searchState.index) {
+    // Search in page title
+    if (page.title.toLowerCase().includes(query)) {
+      searchState.results.push({
+        type: 'page',
+        page: page,
+        section: null,
+        title: page.title,
+        snippet: getSnippet(page.title, query),
+        navId: page.navInfo ? page.navInfo.id : null
+      });
+    }
+    
+    // Search in sections
+    for (const section of page.sections) {
+      const titleMatch = section.title.toLowerCase().includes(query);
+      const contentMatch = section.content.toLowerCase().includes(query);
+      
+      if (titleMatch || contentMatch) {
+        const matchText = titleMatch ? section.title : section.content;
+        searchState.results.push({
+          type: 'section',
+          page: page,
+          section: section,
+          title: section.title,
+          snippet: getSnippet(matchText, query),
+          navId: page.navInfo ? page.navInfo.id : null,
+          sectionId: section.id
+        });
+      }
+    }
+  }
+  
+  // Sort results by relevance (title matches first, then content matches)
+  searchState.results.sort((a, b) => {
+    const aIsTitle = a.type === 'page' || a.title.toLowerCase().includes(query);
+    const bIsTitle = b.type === 'page' || b.title.toLowerCase().includes(query);
+    
+    if (aIsTitle && !bIsTitle) return -1;
+    if (!aIsTitle && bIsTitle) return 1;
+    return 0;
+  });
+  
+  // Limit results
+  searchState.results = searchState.results.slice(0, 10);
+}
+
+/**
+ * Strip HTML tags and preserve readable spacing
+ */
+function stripHtml(text) {
+  if (!text) return '';
+  
+  // Create a temporary element to use browser's HTML parsing
+  const temp = document.createElement('div');
+  temp.innerHTML = text;
+  
+  // Get text content and normalize whitespace
+  let cleanText = temp.textContent || temp.innerText || '';
+  
+  // Replace multiple whitespace with single space and trim
+  cleanText = cleanText.replace(/\s+/g, ' ').trim();
+  
+  return cleanText;
+}
+
+/**
+ * Generate snippet with highlighted query terms
+ */
+function getSnippet(text, query, maxLength = 150) {
+  // Strip HTML first to get clean text
+  const cleanText = stripHtml(text);
+  
+  const queryIndex = cleanText.toLowerCase().indexOf(query.toLowerCase());
+  if (queryIndex === -1) {
+    return cleanText.length > maxLength ? cleanText.substring(0, maxLength) + '...' : cleanText;
+  }
+  
+  // Try to center the query in the snippet
+  const start = Math.max(0, queryIndex - Math.floor((maxLength - query.length) / 2));
+  const end = Math.min(cleanText.length, start + maxLength);
+  
+  let snippet = cleanText.substring(start, end);
+  if (start > 0) snippet = '...' + snippet;
+  if (end < cleanText.length) snippet = snippet + '...';
+  
+  // Highlight query terms (case insensitive)
+  const regex = new RegExp(`(${escapeRegex(query)})`, 'gi');
+  return snippet.replace(regex, '<mark>$1</mark>');
+}
+
+/**
+ * Escape special regex characters
+ */
+function escapeRegex(string) {
+  return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+/**
+ * Show search error message
+ */
+function showSearchError(message) {
+  if (!elSearchErrorMessage) return;
+  
+  elSearchErrorMessage.textContent = message;
+  elSearchErrorMessage.classList.add('visible');
+  elSearchResults.classList.remove('visible');
+}
+
+/**
+ * Hide search error message
+ */
+function hideSearchError() {
+  if (!elSearchErrorMessage) return;
+  
+  elSearchErrorMessage.classList.remove('visible');
+}
+
+/**
+ * Render search results
+ */
+function renderSearchResults() {
+  hideSearchError(); // Clear any error messages
+  
+  if (!searchState.currentQuery.trim()) {
+    elSearchResults.classList.remove('visible');
+    return;
+  }
+  
+  if (searchState.results.length === 0) {
+    elSearchResults.innerHTML = `
+      <div class="search-no-results">
+        No results found for "${escapeHtml(searchState.currentQuery)}"
+      </div>
+    `;
+    elSearchResults.classList.add('visible');
+    return;
+  }
+  
+  const resultsHTML = searchState.results.map((result, index) => {
+    const pageName = result.page.navInfo ? result.page.navInfo.label : result.page.title;
+    const isHighlighted = index === searchState.selectedResult ? ' highlighted' : '';
+    
+    return `
+      <div class="search-result-item${isHighlighted}" data-index="${index}" role="option">
+        <div class="search-result-title">${escapeHtml(result.title)}</div>
+        <div class="search-result-page">${escapeHtml(pageName)}</div>
+        <div class="search-result-snippet">${result.snippet}</div>
+      </div>
+    `;
+  }).join('');
+  
+  elSearchResults.innerHTML = resultsHTML;
+  elSearchResults.classList.add('visible');
+}
+
+/**
+ * Escape HTML to prevent XSS
+ */
+function escapeHtml(text) {
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   PAGE HIGHLIGHTING & NAVIGATION
+   ═══════════════════════════════════════════════════════════════ */
+
+/**
+ * Clear all existing highlights on the page
+ */
+function clearPageHighlights() {
+  const highlights = document.querySelectorAll('.search-highlight');
+  highlights.forEach(highlight => {
+    const parent = highlight.parentNode;
+    parent.replaceChild(document.createTextNode(highlight.textContent), highlight);
+    parent.normalize(); // Merge adjacent text nodes
+  });
+  
+  searchState.currentHighlights = [];
+  searchState.currentMatchIndex = -1;
+  
+  // Hide navigation controls
+  if (elSearchNavControls) {
+    elSearchNavControls.classList.remove('visible');
+  }
+}
+
+/**
+ * Highlight search terms on the current page
+ */
+function highlightSearchTermsOnPage(query) {
+  if (!query || !query.trim()) return;
+  
+  // Clear existing highlights first
+  clearPageHighlights();
+  
+  const searchTerms = query.toLowerCase().trim();
+  const walker = document.createTreeWalker(
+    elContentBody,
+    NodeFilter.SHOW_TEXT,
+    {
+      acceptNode: function(node) {
+        // Skip if parent is already a highlight or is a script tag
+        if (node.parentNode.classList && node.parentNode.classList.contains('search-highlight')) {
+          return NodeFilter.FILTER_REJECT;
+        }
+        if (node.parentNode.tagName === 'SCRIPT' || node.parentNode.tagName === 'STYLE') {
+          return NodeFilter.FILTER_REJECT;
+        }
+        // Only accept nodes that contain the search term
+        return node.textContent.toLowerCase().includes(searchTerms) 
+          ? NodeFilter.FILTER_ACCEPT 
+          : NodeFilter.FILTER_REJECT;
+      }
+    }
+  );
+  
+  const textNodes = [];
+  let node;
+  while (node = walker.nextNode()) {
+    textNodes.push(node);
+  }
+  
+  // Process text nodes to add highlights
+  textNodes.forEach(textNode => {
+    const text = textNode.textContent;
+    const regex = new RegExp(`(${escapeRegex(searchTerms)})`, 'gi');
+    
+    if (regex.test(text)) {
+      const highlightedHtml = text.replace(regex, '<span class="search-highlight">$1</span>');
+      
+      // Create a temporary container to parse the HTML
+      const temp = document.createElement('div');
+      temp.innerHTML = highlightedHtml;
+      
+      // Replace the text node with the highlighted content
+      const fragment = document.createDocumentFragment();
+      while (temp.firstChild) {
+        if (temp.firstChild.classList && temp.firstChild.classList.contains('search-highlight')) {
+          searchState.currentHighlights.push(temp.firstChild);
+        }
+        fragment.appendChild(temp.firstChild);
+      }
+      
+      textNode.parentNode.replaceChild(fragment, textNode);
+    }
+  });
+  
+  // Update highlights array with the actual DOM elements
+  searchState.currentHighlights = Array.from(document.querySelectorAll('.search-highlight'));
+  
+  if (searchState.currentHighlights.length > 0) {
+    searchState.currentMatchIndex = 0;
+    showSearchNavigation();
+    scrollToHighlight(0);
+  }
+}
+
+/**
+ * Update search navigation positioning based on sidebar state
+ */
+function updateSearchNavPosition() {
+  if (!elSearchNavControls) return;
+  
+  // The positioning is now handled via CSS classes based on sidebar state
+  // This function ensures the controls remain visible and properly positioned
+  
+  const rightSidebarCollapsed = state.rightCollapsed || elRightSidebar.classList.contains('collapsed');
+  
+  if (rightSidebarCollapsed) {
+    elSearchNavControls.classList.add('sidebar-collapsed');
+  } else {
+    elSearchNavControls.classList.remove('sidebar-collapsed');
+  }
+}
+
+/**
+ * Show search navigation controls
+ */
+function showSearchNavigation() {
+  if (!elSearchNavControls || searchState.currentHighlights.length === 0) return;
+  
+  updateSearchMatchInfo();
+  updateSearchNavPosition(); // Ensure proper positioning
+  elSearchNavControls.classList.add('visible');
+}
+
+/**
+ * Update the match info and button states
+ */
+function updateSearchMatchInfo() {
+  if (!elSearchMatchInfo) return;
+  
+  const total = searchState.currentHighlights.length;
+  const current = searchState.currentMatchIndex + 1;
+  
+  elSearchMatchInfo.textContent = total > 0 ? `${current} of ${total} matches` : 'No matches';
+  
+  // Update button states
+  if (elSearchPrevBtn) {
+    elSearchPrevBtn.disabled = total === 0 || searchState.currentMatchIndex === 0;
+  }
+  if (elSearchNextBtn) {
+    elSearchNextBtn.disabled = total === 0 || searchState.currentMatchIndex >= total - 1;
+  }
+}
+
+/**
+ * Navigate to the next highlight
+ */
+function navigateToNextHighlight() {
+  if (searchState.currentHighlights.length === 0) return;
+  
+  searchState.currentMatchIndex = Math.min(
+    searchState.currentMatchIndex + 1,
+    searchState.currentHighlights.length - 1
+  );
+  
+  scrollToHighlight(searchState.currentMatchIndex);
+  updateSearchMatchInfo();
+}
+
+/**
+ * Navigate to the previous highlight
+ */
+function navigateToPreviousHighlight() {
+  if (searchState.currentHighlights.length === 0) return;
+  
+  searchState.currentMatchIndex = Math.max(searchState.currentMatchIndex - 1, 0);
+  
+  scrollToHighlight(searchState.currentMatchIndex);
+  updateSearchMatchInfo();
+}
+
+/**
+ * Scroll to a specific highlight
+ */
+function scrollToHighlight(index) {
+  if (!searchState.currentHighlights[index]) return;
+  
+  // Remove active class from all highlights
+  searchState.currentHighlights.forEach(highlight => {
+    highlight.classList.remove('active');
+  });
+  
+  // Add active class to current highlight
+  const activeHighlight = searchState.currentHighlights[index];
+  activeHighlight.classList.add('active');
+  
+  // Scroll to the highlight
+  activeHighlight.scrollIntoView({
+    behavior: 'smooth',
+    block: 'center',
+    inline: 'nearest'
+  });
+}
+
+/**
+ * Handle search result selection
+ */
+function selectSearchResult(index) {
+  const result = searchState.results[index];
+  if (!result) return;
+  
+  // Store the search query for highlighting on the page
+  const query = searchState.currentQuery;
+  
+  // Close search
+  closeSearch();
+  
+  // Navigate using the existing navigation system
+  if (result.navId) {
+    navigateTo(result.navId, result.sectionId).then(() => {
+      // Small delay to ensure page is loaded before highlighting
+      setTimeout(() => highlightSearchTermsOnPage(query), 200);
+    });
+  } else {
+    console.warn('Could not navigate to result - no nav ID found');
+  }
+}
+
+/**
+ * Open search interface
+ */
+function openSearch() {
+  if (searchState.isOpen) return;
+  
+  searchState.isOpen = true;
+  searchState.selectedResult = -1;
+  
+  elSearchInputWrapper.classList.add('expanded');
+  elSearchResults.classList.remove('visible');
+  
+  // Focus input after animation
+  setTimeout(() => {
+    elSearchInput.focus();
+  }, 100);
+}
+
+/**
+ * Close search interface
+ */
+function closeSearch() {
+  if (!searchState.isOpen) return;
+  
+  searchState.isOpen = false;
+  searchState.selectedResult = -1;
+  searchState.currentQuery = '';
+  
+  elSearchInputWrapper.classList.remove('expanded', 'focused');
+  elSearchResults.classList.remove('visible');
+  hideSearchError(); // Clear any error messages
+  elSearchInput.value = '';
+  
+  // Return focus to search button
+  elSearchToggle.focus();
+}
+
+/**
+ * Initialize search functionality
+ */
+function initSearch() {
+  // Verify all search elements exist
+  if (!elSearchToggle || !elSearchInputWrapper || !elSearchInput || 
+      !elSearchClose || !elSearchResults || !elSearchContainer) {
+    console.warn('Search elements not found - search functionality disabled');
+    return;
+  }
+  
+  // Build search index on load (asynchronously to not block page loading)
+  setTimeout(() => buildSearchIndex(), 100);
+  
+  // Search toggle button
+  elSearchToggle.addEventListener('click', (e) => {
+    e.preventDefault();
+    openSearch();
+  });
+  
+  // Close button
+  elSearchClose.addEventListener('click', (e) => {
+    e.preventDefault();
+    closeSearch();
+  });
+  
+  // Input events with validation
+  elSearchInput.addEventListener('input', debounce((e) => {
+    const query = e.target.value;
+    performSearch(query);
+    renderSearchResults();
+    searchState.selectedResult = -1;
+  }, 300)); // Debounce search for better performance
+  
+  // Input focus/blur
+  elSearchInput.addEventListener('focus', () => {
+    elSearchInputWrapper.classList.add('focused');
+  });
+  
+  elSearchInput.addEventListener('blur', () => {
+    elSearchInputWrapper.classList.remove('focused');
+  });
+  
+  // Keyboard navigation
+  elSearchInput.addEventListener('keydown', (e) => {
+    const { key } = e;
+    const resultsCount = searchState.results.length;
+    
+    if (key === 'Escape') {
+      e.preventDefault();
+      closeSearch();
+    } else if (key === 'ArrowDown') {
+      e.preventDefault();
+      searchState.selectedResult = Math.min(searchState.selectedResult + 1, resultsCount - 1);
+      renderSearchResults();
+    } else if (key === 'ArrowUp') {
+      e.preventDefault();
+      searchState.selectedResult = Math.max(searchState.selectedResult - 1, -1);
+      renderSearchResults();
+    } else if (key === 'Enter') {
+      e.preventDefault();
+      if (searchState.selectedResult >= 0) {
+        selectSearchResult(searchState.selectedResult);
+      } else if (searchState.results.length > 0) {
+        selectSearchResult(0);
+      }
+    }
+  });
+  
+  // Click on results
+  elSearchResults.addEventListener('click', (e) => {
+    const resultItem = e.target.closest('.search-result-item');
+    if (resultItem) {
+      const index = parseInt(resultItem.dataset.index);
+      selectSearchResult(index);
+    }
+  });
+  
+  // Click outside to close
+  document.addEventListener('click', (e) => {
+    if (searchState.isOpen && !elSearchContainer.contains(e.target)) {
+      closeSearch();
+    }
+  });
+  
+  // Global keyboard shortcuts
+  document.addEventListener('keydown', (e) => {
+    // Ctrl/Cmd + K to open search
+    if (e.key === 'k' && (e.ctrlKey || e.metaKey)) {
+      e.preventDefault();
+      if (!searchState.isOpen) {
+        openSearch();
+      }
+    }
+    
+    // Escape key to close search globally
+    if (e.key === 'Escape' && searchState.isOpen) {
+      closeSearch();
+    }
+    
+    // Additional keyboard shortcuts for page navigation
+    if (searchState.currentHighlights.length > 0 && !searchState.isOpen) {
+      if (e.key === 'F3' || (e.key === 'g' && e.ctrlKey)) {
+        e.preventDefault();
+        if (e.shiftKey) {
+          navigateToPreviousHighlight();
+        } else {
+          navigateToNextHighlight();
+        }
+      }
+    }
+  });
+  
+  // Search navigation controls
+  if (elSearchPrevBtn) {
+    elSearchPrevBtn.addEventListener('click', () => {
+      navigateToPreviousHighlight();
+    });
+  }
+  
+  if (elSearchNextBtn) {
+    elSearchNextBtn.addEventListener('click', () => {
+      navigateToNextHighlight();
+    });
+  }
+  
+  if (elSearchClearBtn) {
+    elSearchClearBtn.addEventListener('click', () => {
+      clearPageHighlights();
+    });
+  }
+}
+
 /* ═══════════════════════════════════════════════════════════════
    URL ROUTING & STATE MANAGEMENT
    ═══════════════════════════════════════════════════════════════ */
@@ -348,6 +1079,7 @@ function collapseLeft() {
   elStripLeft.classList.add('is-visible');
   elStripLeft.setAttribute('aria-hidden', 'false');
   localStorage.setItem(STORAGE_KEY_LEFT_C, '1');
+  updateSearchNavPosition(); // Update search nav positioning
 }
 
 function expandLeft() {
@@ -357,6 +1089,7 @@ function expandLeft() {
   elStripLeft.classList.remove('is-visible');
   elStripLeft.setAttribute('aria-hidden', 'true');
   localStorage.removeItem(STORAGE_KEY_LEFT_C);
+  updateSearchNavPosition(); // Update search nav positioning
 }
 
 function collapseRight() {
@@ -366,6 +1099,7 @@ function collapseRight() {
   elStripRight.classList.add('is-visible');
   elStripRight.setAttribute('aria-hidden', 'false');
   localStorage.setItem(STORAGE_KEY_RIGHT_C, '1');
+  updateSearchNavPosition(); // Update search nav positioning
 }
 
 function expandRight() {
@@ -375,6 +1109,7 @@ function expandRight() {
   elStripRight.classList.remove('is-visible');
   elStripRight.setAttribute('aria-hidden', 'true');
   localStorage.removeItem(STORAGE_KEY_RIGHT_C);
+  updateSearchNavPosition(); // Update search nav positioning
 }
 
 function initCollapseState() {
@@ -424,6 +1159,7 @@ function initResize(handle, side) {
       document.body.classList.remove('is-resizing');
       document.removeEventListener('mousemove', onMove);
       document.removeEventListener('mouseup',   onUp);
+      updateSearchNavPosition(); // Update search nav positioning after resize
     };
 
     document.addEventListener('mousemove', onMove);
@@ -445,6 +1181,7 @@ function initResize(handle, side) {
         elRightSidebar.style.width = state.rightWidth + 'px';
         localStorage.setItem(STORAGE_KEY_RIGHT_W, state.rightWidth);
       }
+      updateSearchNavPosition(); // Update search nav positioning after keyboard resize
     }
   });
 }
@@ -626,6 +1363,7 @@ async function loadPage(url) {
     buildRightNav();
     setupScrollSpy();
     setupCopyButtons();
+    clearPageHighlights(); // Clear any previous search highlights
 
     return true; // Success
 
@@ -779,6 +1517,9 @@ function checkResponsiveCollapse() {
   if (vw < 800 && !state.leftCollapsed) {
     collapseLeft();
   }
+  
+  // Update search navigation position on resize
+  updateSearchNavPosition();
 }
 
 /* ═══════════════════════════════════════════════════════════════
@@ -911,6 +1652,9 @@ function init() {
 
   /* Initialize routing system */
   initRouting();
+  
+  /* Initialize search functionality */
+  initSearch();
   
   /* Setup copy buttons for any pre-existing code blocks */
   setupCopyButtons();
