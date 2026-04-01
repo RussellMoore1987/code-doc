@@ -148,6 +148,7 @@ const searchState = {
   currentQuery: '',
   selectedResult: -1,
   results: [],
+  hasValidationError: false,
   // Page highlighting state
   currentHighlights: [],
   currentMatchIndex: -1
@@ -287,15 +288,20 @@ function performSearch(query) {
   
   if (!query.trim()) {
     searchState.results = [];
+    searchState.hasValidationError = false;
     return;
   }
   
   // Validate search length
   if (query.length > 25) {
     searchState.results = [];
+    searchState.hasValidationError = true;
     showSearchError('Search text is too long. Please reduce to 25 characters or fewer.');
     return;
   }
+  
+  // Clear validation error flag if we get here
+  searchState.hasValidationError = false;
   
   query = query.toLowerCase().trim();
   searchState.currentQuery = query;
@@ -424,9 +430,18 @@ function hideSearchError() {
  * Render search results
  */
 function renderSearchResults() {
-  hideSearchError(); // Clear any error messages
+  // Only hide error messages if there's no validation error
+  if (!searchState.hasValidationError) {
+    hideSearchError(); // Clear any error messages
+  }
   
   if (!searchState.currentQuery.trim()) {
+    elSearchResults.classList.remove('visible');
+    return;
+  }
+  
+  // If there's a validation error, don't show results
+  if (searchState.hasValidationError) {
     elSearchResults.classList.remove('visible');
     return;
   }
@@ -712,6 +727,7 @@ function closeSearch() {
   searchState.isOpen = false;
   searchState.selectedResult = -1;
   searchState.currentQuery = '';
+  searchState.hasValidationError = false;
   
   elSearchInputWrapper.classList.remove('expanded', 'focused');
   elSearchResults.classList.remove('visible');
