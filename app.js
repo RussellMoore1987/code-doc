@@ -99,7 +99,8 @@ const state = {
   leftWidth:       parseInt(localStorage.getItem(STORAGE_KEY_LEFT_W))  || DEFAULT_LEFT_WIDTH,
   rightWidth:      parseInt(localStorage.getItem(STORAGE_KEY_RIGHT_W)) || DEFAULT_RIGHT_WIDTH,
   currentRoute:    null,
-  isNavigating:    false // Prevent recursion during navigation
+  isNavigating:    false, // Prevent recursion during navigation
+  abortController: null   // For cleanup of event listeners
 };
 
 /* ═══════════════════════════════════════════════════════════════
@@ -158,7 +159,6 @@ const searchState = {
  * Build search index by loading and parsing all pages
  */
 async function buildSearchIndex() {
-  console.log('Building search index...');
   searchState.index = [];
   
   try {
@@ -253,9 +253,6 @@ async function buildSearchIndex() {
     
     // Filter out failed pages and add to index
     searchState.index = results.filter(page => page !== null);
-    
-    console.log(`Search index built with ${searchState.index.length} pages`);
-    
   } catch (error) {
     console.error('Failed to build search index:', error);
   }
@@ -455,22 +452,45 @@ function renderSearchResults() {
     elSearchResults.classList.add('visible');
     return;
   }
-  
+
   const resultsHTML = searchState.results.map((result, index) => {
     const pageName = result.page.navInfo ? result.page.navInfo.label : result.page.title;
     const isHighlighted = index === searchState.selectedResult ? ' highlighted' : '';
+    const textOnly = stripHtmlExceptMark(result.snippet);
     
     return `
       <div class="search-result-item${isHighlighted}" data-index="${index}" role="option">
         <div class="search-result-title">${escapeHtml(result.title)}</div>
         <div class="search-result-page">${escapeHtml(pageName)}</div>
-        <div class="search-result-snippet">${result.snippet}</div>
+        <div class="search-result-snippet">${textOnly}</div>
       </div>
     `;
   }).join('');
   
   elSearchResults.innerHTML = resultsHTML;
   elSearchResults.classList.add('visible');
+}
+
+function stripHtmlExceptMark(html) {
+  const div = document.createElement('div');
+  div.innerHTML = html;
+
+  function clean(node) {
+    [...node.childNodes].forEach(child => {
+      if (child.nodeType === Node.ELEMENT_NODE) {
+        if (child.tagName !== 'MARK') {
+          // Replace the element with its children (unwrap it)
+          child.replaceWith(...child.childNodes);
+        } else {
+          // Keep <mark>, but clean inside it too
+          clean(child);
+        }
+      }
+    });
+  }
+
+  clean(div);
+  return div.innerHTML;
 }
 
 /**
@@ -821,6 +841,8 @@ function initSearch() {
     if (searchState.isOpen && !elSearchContainer.contains(e.target)) {
       closeSearch();
     }
+  }, {
+    signal: state.abortController.signal
   });
   
   // Global keyboard shortcuts
@@ -849,6 +871,8 @@ function initSearch() {
         }
       }
     }
+  }, {
+    signal: state.abortController.signal
   });
   
   // Search navigation controls
@@ -1031,7 +1055,9 @@ function handlePopState(event) {
  */
 function initRouting() {
   // Handle popstate for browser navigation
-  window.addEventListener('popstate', handlePopState);
+  window.addEventListener('popstate', handlePopState, {
+    signal: state.abortController.signal
+  });
   
   // Also handle hashchange as backup
   window.addEventListener('hashchange', (event) => {
@@ -1039,6 +1065,8 @@ function initRouting() {
       const route = parseRoute();
       navigateTo(route.navId, route.sectionId, false, false);
     }
+  }, {
+    signal: state.abortController.signal
   });
   
   // Parse initial route
@@ -1645,6 +1673,9 @@ function showCopyFeedback(buttonElement, success) {
    ═══════════════════════════════════════════════════════════════ */
 
 function init() {
+  /* Initialize AbortController for managed event listeners */
+  state.abortController = new AbortController();
+  
   /* Theme */
   initTheme();
 
@@ -1664,7 +1695,10 @@ function init() {
 
   /* Responsive collapse check on load + resize */
   checkResponsiveCollapse();
-  window.addEventListener('resize', debounce(checkResponsiveCollapse, 250));
+  window.debouncedResize = debounce(checkResponsiveCollapse, 250);
+  window.addEventListener('resize', window.debouncedResize, {
+    signal: state.abortController.signal
+  });
 
   /* Initialize routing system */
   initRouting();
@@ -1688,14 +1722,70 @@ function findFirstPage(items) {
   return null;
 }
 
-/* Debounce utility */
+/* Debounce utility with cleanup support */
 function debounce(fn, delay) {
   let timer;
-  return (...args) => {
+  const debouncedFn = (...args) => {
     clearTimeout(timer);
     timer = setTimeout(() => fn(...args), delay);
   };
+  
+  // Add cleanup method
+  debouncedFn.cancel = () => {
+    clearTimeout(timer);
+    timer = null;
+  };
+  
+  return debouncedFn;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   MEMORY MANAGEMENT & CLEANUP
+   ═══════════════════════════════════════════════════════════════ */
+
+/**
+ * Clean up all observers, timers, and state to prevent memory leaks
+ */
+function cleanup() {
+  try {
+    // Disconnect IntersectionObserver
+    if (state.scrollSpyObserver) {
+      state.scrollSpyObserver.disconnect();
+      state.scrollSpyObserver = null;
+    }
+    
+    // Abort all managed event listeners
+    if (state.abortController) {
+      state.abortController.abort();
+      state.abortController = null;
+    }
+    
+    // Clear search state and cache
+    searchState.index = [];
+    searchState.currentHighlights = [];
+    searchState.results = [];
+    searchState.currentQuery = '';
+    
+    // Clear any pending highlights
+    clearPageHighlights();
+    
+    // Cancel any pending debounced functions
+    if (window.debouncedResize && window.debouncedResize.cancel) {
+      window.debouncedResize.cancel();
+    }
+    
+    console.log('App cleanup completed');
+    
+  } catch (error) {
+    console.warn('Error during cleanup:', error);
+  }
 }
 
 /* ─── Run ─── */
 document.addEventListener('DOMContentLoaded', init);
+
+// Cleanup on page unload to prevent memory leaks
+window.addEventListener('beforeunload', cleanup);
+
+// Also cleanup on page hide (for back/forward cache)
+window.addEventListener('pagehide', cleanup);
