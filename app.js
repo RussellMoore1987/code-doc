@@ -304,8 +304,11 @@ function performSearch(query) {
   searchState.currentQuery = query;
   searchState.results = [];
   
+  const pageQueryIndex = {};
   // Search through index
   for (const page of searchState.index) {
+    pageQueryIndex[page.url] = -1;
+
     // Search in page title
     if (page.title.toLowerCase().includes(query)) {
       searchState.results.push({
@@ -314,7 +317,8 @@ function performSearch(query) {
         section: null,
         title: page.title,
         snippet: getSnippet(page.title, query),
-        navId: page.navInfo ? page.navInfo.id : null
+        navId: page.navInfo ? page.navInfo.id : null,
+        instanceIndex: pageQueryIndex[page.url]++
       });
     }
     
@@ -332,7 +336,8 @@ function performSearch(query) {
           title: section.title,
           snippet: getSnippet(matchText, query),
           navId: page.navInfo ? page.navInfo.id : null,
-          sectionId: section.id
+          sectionId: section.id,
+          instanceIndex: pageQueryIndex[page.url]++
         });
       }
     }
@@ -459,7 +464,7 @@ function renderSearchResults() {
     const textOnly = stripHtmlExceptMark(result.snippet);
     
     return `
-      <div class="search-result-item${isHighlighted}" data-index="${index}" role="option">
+      <div class="search-result-item${isHighlighted}" data-index="${index}" data-instance-index="${result.instanceIndex}" role="option">
         <div class="search-result-title">${escapeHtml(result.title)}</div>
         <div class="search-result-page">${escapeHtml(pageName)}</div>
         <div class="search-result-snippet">${textOnly}</div>
@@ -529,7 +534,7 @@ function clearPageHighlights() {
 /**
  * Highlight search terms on the current page
  */
-function highlightSearchTermsOnPage(query) {
+function highlightSearchTermsOnPage(query, instanceIndex) {
   if (!query || !query.trim()) return;
   
   // Clear existing highlights first
@@ -591,9 +596,9 @@ function highlightSearchTermsOnPage(query) {
   searchState.currentHighlights = Array.from(document.querySelectorAll('.search-highlight'));
   
   if (searchState.currentHighlights.length > 0) {
-    searchState.currentMatchIndex = 0;
+    searchState.currentMatchIndex = instanceIndex;
     showSearchNavigation();
-    scrollToHighlight(0);
+    scrollToHighlight(instanceIndex);
   }
 }
 
@@ -713,7 +718,7 @@ function selectSearchResult(index) {
   if (result.navId) {
     navigateTo(result.navId, result.sectionId).then(() => {
       // Small delay to ensure page is loaded before highlighting
-      setTimeout(() => highlightSearchTermsOnPage(query), 200);
+      setTimeout(() => highlightSearchTermsOnPage(query, result.instanceIndex), 200);
     });
   } else {
     console.warn('Could not navigate to result - no nav ID found');
@@ -831,8 +836,10 @@ function initSearch() {
   elSearchResults.addEventListener('click', (e) => {
     const resultItem = e.target.closest('.search-result-item');
     if (resultItem) {
+      console.log(resultItem);
+      
       const index = parseInt(resultItem.dataset.index);
-      selectSearchResult(index);
+      selectSearchResult(index); // starts here
     }
   });
   
