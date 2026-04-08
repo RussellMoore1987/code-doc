@@ -40,7 +40,7 @@ const NAV_DATA = [
               {
                 id: 'step1-env',
                 label: 'Environment Setup',
-                page: 'pages/installation.html'
+                page: 'pages/environment-setup.html'
               },
               {
                 id: 'deep-topic',
@@ -52,7 +52,7 @@ const NAV_DATA = [
           {
             id: 'step2',
             label: 'Step 2 - Build & Run',
-            page: 'pages/first-steps.html'
+            page: 'pages/step2-build-run.html'
           }
         ]
       }
@@ -62,18 +62,18 @@ const NAV_DATA = [
     id: 'advanced',
     label: 'Advanced Topics',
     children: [
-      { id: 'config',   label: 'Configuration', page: 'pages/deep-topic.html' },
-      { id: 'plugins',  label: 'Plugins',        page: 'pages/intro.html'      },
-      { id: 'perf',     label: 'Performance',    page: 'pages/installation.html' }
+      { id: 'config',   label: 'Configuration', page: 'pages/configuration.html' },
+      { id: 'plugins',  label: 'Plugins',        page: 'pages/plugins.html'      },
+      { id: 'perf',     label: 'Performance',    page: 'pages/performance.html' }
     ]
   },
   {
     id: 'reference',
     label: 'Reference',
     children: [
-      { id: 'api-ref',  label: 'API Reference',  page: 'pages/deep-topic.html' },
-      { id: 'cli-ref',  label: 'CLI Reference',  page: 'pages/first-steps.html' },
-      { id: 'faq',      label: 'FAQ',            page: 'pages/intro.html'      }
+      { id: 'api-ref',  label: 'API Reference',  page: 'pages/api-reference.html' },
+      { id: 'cli-ref',  label: 'CLI Reference',  page: 'pages/cli-reference.html' },
+      { id: 'faq',      label: 'FAQ',            page: 'pages/faq.html'      }
     ]
   }
 ];
@@ -1559,12 +1559,12 @@ function setupScrollSpy() {
 function checkResponsiveCollapse() {
   const vw = window.innerWidth;
 
-  /* Below 1200px — collapse right sidebar if user hasn't explicitly set it */
+  /* Below 1200px - collapse right sidebar if user hasn't explicitly set it */
   if (vw < 1200 && !state.rightCollapsed) {
     collapseRight();
   }
 
-  /* Below 800px — also collapse left sidebar */
+  /* Below 800px - also collapse left sidebar */
   if (vw < 800 && !state.leftCollapsed) {
     collapseLeft();
   }

@@ -1,0 +1,402 @@
+<div class="content-body">
+
+  <h1 id="faq">Frequently Asked Questions</h1>
+
+  <p>
+    This FAQ addresses the most commonly asked questions about DevDocs, from basic setup
+    to advanced troubleshooting. If you don't find your question here, check our
+    community forums or GitHub issues for additional help.
+  </p>
+
+  <div class="callout">
+    <div class="callout-title">🆘 Quick Help</div>
+    <p>
+      For immediate assistance, use the search function above to find relevant documentation,
+      or browse the troubleshooting section at the bottom of this page for common issues
+      and their solutions.
+    </p>
+  </div>
+
+  <!-- ─── GETTING STARTED ─────────────────── -->
+  <h2 id="getting-started-questions">Getting Started</h2>
+
+  <h3 id="what-is-devdocs">What is DevDocs?</h3>
+
+  <p>
+    DevDocs is a lightweight, static documentation platform built with vanilla HTML, CSS,
+    and JavaScript. It features a three-column layout with collapsible navigation,
+    real-time search, and responsive design. Unlike complex documentation generators,
+    DevDocs requires no build step or framework dependencies.
+  </p>
+
+  <h3 id="do-i-need-nodejs">Do I need Node.js or any build tools?</h3>
+
+  <p>
+    No! DevDocs runs entirely in the browser with static files. You only need:
+  </p>
+
+  <ul>
+    <li>A basic HTTP server (VS Code Live Server, Python's `http.server`, or any web server)</li>
+    <li>A modern web browser that supports ES6+ JavaScript</li>
+    <li>A text editor for creating content</li>
+  </ul>
+
+  <p>
+    The optional CLI tools require Node.js, but they're not necessary for basic usage.
+  </p>
+
+  <h3 id="how-do-i-add-new-pages">How do I add new pages?</h3>
+
+  <p>
+    Adding new pages is a two-step process:
+  </p>
+
+  <ol>
+    <li><strong>Create the HTML file</strong> in the `pages/` directory</li>
+    <li><strong>Add it to navigation</strong> by updating the `NAV_DATA` array in `app.js`</li>
+  </ol>
+
+  <p>The search index will automatically include new pages when it rebuilds.</p>
+
+  <h3 id="can-i-use-markdown">Can I use Markdown instead of HTML?</h3>
+
+  <p>
+    DevDocs uses HTML by design for maximum control and performance. However, you can:
+  </p>
+
+  <ul>
+    <li>Convert existing Markdown with tools like Pandoc</li>
+    <li>Use the optional CLI converter: `devdocs convert markdown`</li>
+    <li>Write Markdown and manually convert to HTML as needed</li>
+  </ul>
+
+  <!-- ─── CUSTOMIZATION ───────────────────── -->
+  <h2 id="customization-questions">Customization</h2>
+
+  <h3 id="how-to-change-colors">How do I change colors and theming?</h3>
+
+  <p>
+    DevDocs uses CSS custom properties for theming. Override them in your own CSS file
+    or add a <code>&lt;style&gt;</code> block to <code>index.html</code>:
+  </p>
+
+  <pre><code>:root {
+  --accent: #your-primary-color;
+  --accent-light: #your-light-color;
+  --bg-header: #your-header-bg;
+}
+
+[data-theme="dark"] {
+  --accent: #your-dark-theme-primary;
+}</code></pre>
+
+  <h3 id="can-i-modify-layout">Can I modify the three-column layout?</h3>
+
+  <p>
+    Yes, but it requires CSS modifications. The layout uses CSS Grid and custom properties
+    for sizing. Common modifications include:
+  </p>
+
+  <ul>
+    <li><strong>Hide right sidebar</strong> - Set `--right-sidebar-width: 0`</li>
+    <li><strong>Change default widths</strong> - Modify width constants in `app.js`</li>
+    <li><strong>Add more columns</strong> - Extend the CSS Grid template areas</li>
+  </ul>
+
+  <h3 id="how-to-add-logo">How do I add my own logo and branding?</h3>
+
+  <p>
+    Replace the logo files in the `images/` directory and update the references in
+    `index.html`:
+  </p>
+
+  <pre><code>&lt;div class="header-brand"&gt;
+  &lt;img src="/images/your-logo.svg" alt="Your Logo" class="logo"&gt;
+  &lt;span class="brand-title"&gt;Your Project&lt;/span&gt;
+&lt;/div&gt;</code></pre>
+
+  <p>
+    Update the page title, footer, and any other branding elements in the same file.
+  </p>
+
+  <!-- ─── CONTENT MANAGEMENT ─────────────── -->
+  <h2 id="content-questions">Content Management</h2>
+
+  <h3 id="how-big-can-pages-be">How big can individual pages be?</h3>
+
+  <p>
+    For optimal performance, keep pages under 50KB. Pages over 100KB may cause
+    noticeable loading delays. Consider splitting large pages into multiple
+    smaller pages for better user experience.
+  </p>
+
+  <h3 id="how-to-organize-navigation">How should I organize my navigation structure?</h3>
+
+  <p>
+    Follow these best practices:
+  </p>
+
+  <ul>
+    <li><strong>Maximum 4 levels deep</strong> - Deeper nesting becomes hard to navigate</li>
+    <li><strong>7±2 items per section</strong> - Based on cognitive load principles</li>
+    <li><strong>Logical grouping</strong> - Group related concepts together</li>
+    <li><strong>Progressive disclosure</strong> - Start with basics, progress to advanced</li>
+  </ul>
+
+  <h3 id="can-i-include-images">Can I include images and media?</h3>
+
+  <p>
+    Yes! Place images in the `images/` directory and reference them in your HTML:
+  </p>
+
+  <pre><code>&lt;!-- Standard image --&gt;
+&lt;img src="/images/diagram.png" alt="Architecture diagram"&gt;
+
+&lt;!-- Responsive image with DevDocs styling --&gt;
+&lt;figure class="img-block"&gt;
+  &lt;img src="/images/screenshot.png" alt="Interface screenshot"&gt;
+  &lt;figcaption&gt;Figure 1 - Main interface&lt;/figcaption&gt;
+&lt;/figure&gt;</code></pre>
+
+  <p>For best performance, optimize images and consider using SVG for diagrams and icons.</p>
+
+  <!-- ─── SEARCH ──────────────────────────── -->
+  <h2 id="search-questions">Search</h2>
+
+  <h3 id="how-does-search-work">How does the search functionality work?</h3>
+
+  <p>
+    DevDocs builds a client-side search index by fetching all pages and extracting
+    text content. The search index includes:
+  </p>
+
+  <ul>
+    <li>Page titles (highest weight)</li>
+    <li>Heading text (medium weight)</li>
+    <li>Body content (lower weight)</li>
+    <li>Section context for better results</li>
+  </ul>
+
+  <h3 id="search-not-working">Why isn't search working?</h3>
+
+  <p>Common search issues and solutions:</p>
+
+  <ul>
+    <li><strong>CORS errors</strong> - Make sure you're using an HTTP server, not opening files directly</li>
+    <li><strong>Empty results</strong> - Check browser console for fetch errors or navigation data issues</li>
+    <li><strong>Slow search</strong> - Large sites may need search optimization or pagination</li>
+  </ul>
+
+  <h3 id="how-to-improve-search">How can I improve search results?</h3>
+
+  <p>
+    Improve search by:
+  </p>
+
+  <ul>
+    <li><strong>Using descriptive headings</strong> - Clear, keyword-rich headings rank higher</li>
+    <li><strong>Adding meta content</strong> - Include relevant keywords in introductory paragraphs</li>
+    <li><strong>Structuring content well</strong> - Proper heading hierarchy improves context</li>
+    <li><strong>Avoiding duplicate content</strong> - Each page should have unique, focused content</li>
+  </ul>
+
+  <!-- ─── PERFORMANCE ─────────────────────── -->
+  <h2 id="performance-questions">Performance</h2>
+
+  <h3 id="site-loading-slowly">My documentation site is loading slowly. How can I fix this?</h3>
+
+  <p>
+    Common performance fixes:
+  </p>
+
+  <ul>
+    <li><strong>Optimize images</strong> - Compress PNGs, use WebP, or switch to SVG for graphics</li>
+    <li><strong>Split large pages</strong> - Break content over 50KB into multiple pages</li>
+    <li><strong>Enable HTTP caching</strong> - Configure proper cache headers on your server</li>
+    <li><strong>Check network requests</strong> - Use browser DevTools to identify slow requests</li>
+  </ul>
+
+  <h3 id="many-pages-performance">I have hundreds of pages. Will performance suffer?</h3>
+
+  <p>
+    DevDocs is designed to handle large documentation sites. Performance optimizations include:
+  </p>
+
+  <ul>
+    <li><strong>Lazy search indexing</strong> - Index builds only when needed</li>
+    <li><strong>Efficient navigation</strong> - Virtual scrolling for large navigation trees</li>
+    <li><strong>Memory management</strong> - Content is loaded on-demand and cached intelligently</li>
+  </ul>
+
+  <p>
+    Sites with 200+ pages should consider the optional build optimizations for production.
+  </p>
+
+  <!-- ─── DEPLOYMENT ──────────────────────── -->
+  <h2 id="deployment-questions">Deployment</h2>
+
+  <h3 id="where-can-i-host">Where can I host my DevDocs site?</h3>
+
+  <p>
+    DevDocs works on any static hosting platform:
+  </p>
+
+  <ul>
+    <li><strong>GitHub Pages</strong> - Free, automatic deployments from git repos</li>
+    <li><strong>Netlify</strong> - Easy drag-and-drop deployment with preview builds</li>
+    <li><strong>Vercel</strong> - Fast global CDN with branch previews</li>
+    <li><strong>AWS S3</strong> - Scalable hosting with CloudFront CDN</li>
+    <li><strong>Traditional web hosting</strong> - Any host that serves static files</li>
+  </ul>
+
+  <h3 id="https-requirement">Do I need HTTPS?</h3>
+
+  <p>
+    While DevDocs works over HTTP, HTTPS is recommended (and required) for:
+  </p>
+
+  <ul>
+    <li>Modern browser features and security</li>
+    <li>SEO benefits and browser trust indicators</li>
+    <li>Service worker functionality (if added)</li>
+    <li>Integration with analytics and external services</li>
+  </ul>
+
+  <p>Most static hosting platforms provide free HTTPS automatically.</p>
+
+  <!-- ─── BROWSER SUPPORT ─────────────────── -->
+  <h2 id="browser-support-questions">Browser Support</h2>
+
+  <h3 id="which-browsers-supported">Which browsers are supported?</h3>
+
+  <p>
+    DevDocs supports all modern browsers:
+  </p>
+
+  <ul>
+    <li><strong>Chrome 90+</strong> (and Chromium-based browsers)</li>
+    <li><strong>Firefox 85+</strong></li>
+    <li><strong>Safari 14+</strong></li>
+    <li><strong>Edge 90+</strong> (Chromium-based)</li>
+  </ul>
+
+  <p>
+    Internet Explorer is not supported due to its lack of modern JavaScript features.
+  </p>
+
+  <h3 id="mobile-support">Does it work on mobile devices?</h3>
+
+  <p>
+    Yes! DevDocs is fully responsive and works well on:
+  </p>
+
+  <ul>
+    <li>Mobile phones (sidebars collapse to overlays)</li>
+    <li>Tablets (adaptive layout based on screen size)</li>
+    <li>Touch interfaces (touch-friendly navigation and interactions)</li>
+  </ul>
+
+  <!-- ─── TROUBLESHOOTING ─────────────────── -->
+  <h2 id="troubleshooting">Common Issues & Troubleshooting</h2>
+
+  <h3 id="cors-errors">CORS Errors</h3>
+
+  <p>
+    <strong>Problem:</strong> Getting "Cross-Origin Request Blocked" errors in the console.
+  </p>
+
+  <p>
+    <strong>Solution:</strong> You're opening HTML files directly in the browser (`file://` protocol).
+    Start an HTTP server instead:
+  </p>
+
+  <pre><code># Python 3
+python -m http.server 8000
+
+# Python 2  
+python -m SimpleHTTPServer 8000
+
+# VS Code
+Use Live Server extension
+
+# Node.js
+npx serve .</code></pre>
+
+  <h3 id="navigation-not-building">Navigation Not Building</h3>
+
+  <p>
+    <strong>Problem:</strong> Left sidebar shows "Loading..." indefinitely.
+  </p>
+
+  <p>
+    <strong>Solutions:</strong>
+  </p>
+
+  <ul>
+    <li>Check browser console for JavaScript errors</li>
+    <li>Verify `NAV_DATA` array syntax in `app.js`</li>
+    <li>Ensure all referenced page files exist</li>
+    <li>Clear browser cache and reload</li>
+  </ul>
+
+  <h3 id="pages-not-loading">Pages Not Loading</h3>
+
+  <p>
+    <strong>Problem:</strong> Clicking navigation items doesn't load content.
+  </p>
+
+  <p>
+    <strong>Solutions:</strong>
+  </p>
+
+  <ul>
+    <li>Check that page paths in `NAV_DATA` are correct</li>
+    <li>Verify files exist in the specified locations</li>
+    <li>Look for 404 errors in browser DevTools Network tab</li>
+    <li>Ensure proper file permissions on your web server</li>
+  </ul>
+
+  <h3 id="search-index-errors">Search Index Errors</h3>
+
+  <p>
+    <strong>Problem:</strong> Search returns no results or console shows index errors.
+  </p>
+
+  <p>
+    <strong>Solutions:</strong>
+  </p>
+
+  <ul>
+    <li>Wait for indexing to complete (check console messages)</li>
+    <li>Verify all pages in `NAV_DATA` are accessible</li>
+    <li>Check for malformed HTML that breaks content parsing</li>
+    <li>Reduce page sizes if memory errors occur</li>
+  </ul>
+
+  <h3 id="styling-issues">Styling Issues</h3>
+
+  <p>
+    <strong>Problem:</strong> Layout looks broken or CSS isn't applying.
+  </p>
+
+  <p>
+    <strong>Solutions:</strong>
+  </p>
+
+  <ul>
+    <li>Verify `styles.css` is loading correctly</li>
+    <li>Check for CSS conflicts with custom styles</li>
+    <li>Use browser DevTools to inspect computed styles</li>
+    <li>Clear browser cache to reload stylesheets</li>
+  </ul>
+
+  <div class="callout">
+    <div class="callout-title">💡 Still Need Help?</div>
+    <p>
+      If your question isn't answered here, try searching the exists documentation or check our
+      GitHub repository for issues and discussions. The community is active and helpful for
+      troubleshooting specific problems.
+    </p>
+  </div>
+
+</div>

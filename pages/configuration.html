@@ -1,0 +1,452 @@
+<div class="content-body">
+
+  <h1 id="configuration">Configuration</h1>
+
+  <p>
+    DevDocs offers extensive configuration options to customize appearance, behavior, and functionality.
+    This comprehensive guide covers all configuration aspects, from basic theming to advanced
+    customization techniques.
+  </p>
+
+  <div class="callout">
+    <div class="callout-title">⚙️ Configuration Philosophy</div>
+    <p>
+      DevDocs follows a "configuration over convention" approach for customization while maintaining
+      sensible defaults. Most changes require only CSS custom property overrides or JavaScript
+      configuration object modifications.
+    </p>
+  </div>
+
+  <!-- ─── BASIC CONFIGURATION ────────────── -->
+  <h2 id="basic-configuration">Basic Configuration</h2>
+
+  <p>
+    Start with these fundamental configuration options to personalize your DevDocs installation
+    without modifying core files.
+  </p>
+
+  <h3 id="site-identity">Site Identity</h3>
+
+  <p>
+    Configure basic site information in <code>index.html</code>:
+  </p>
+
+  <pre><code>&lt;!-- Update page title and branding --&gt;
+&lt;title&gt;YourProject Docs&lt;/title&gt;
+
+&lt;div class="header-brand"&gt;
+  &lt;img src="/images/your-logo.svg" alt="Your Logo" class="logo"&gt;
+  &lt;span class="brand-title"&gt;YourProject&lt;/span&gt;
+&lt;/div&gt;
+
+&lt;!-- Update footer information --&gt;
+&lt;span class="footer-copy"&gt;&amp;copy; 2026 YourProject. All rights reserved.&lt;/span&gt;</code></pre>
+
+  <h3 id="navigation-configuration">Navigation Configuration</h3>
+
+  <p>
+    Configure the navigation structure in <code>app.js</code> by modifying the <code>NAV_DATA</code> array:
+  </p>
+
+  <pre><code>const NAV_DATA = [
+  {
+    id: 'getting-started',
+    label: 'Getting Started',
+    children: [
+      {
+        id: 'intro',
+        label: 'Introduction',
+        page: 'pages/intro.html'
+      },
+      {
+        id: 'setup',
+        label: 'Setup Guide',
+        page: 'pages/setup.html'
+      }
+    ]
+  },
+  {
+    id: 'api-docs',
+    label: 'API Documentation',
+    children: [
+      { id: 'endpoints', label: 'Endpoints', page: 'pages/endpoints.html' },
+      { id: 'auth', label: 'Authentication', page: 'pages/auth.html' }
+    ]
+  }
+];</code></pre>
+
+  <h3 id="default-settings">Default Settings</h3>
+
+  <p>
+    Customize application defaults by modifying constants in <code>app.js</code>:
+  </p>
+
+  <pre><code>// Sidebar configuration
+const MIN_SIDEBAR_WIDTH = 200;    // Minimum sidebar width (px)
+const DEFAULT_LEFT_WIDTH = 320;   // Initial left sidebar width
+const DEFAULT_RIGHT_WIDTH = 280;  // Initial right sidebar width
+
+// Storage keys (change to avoid conflicts)
+const STORAGE_KEY_THEME = 'yourproject-theme';
+const STORAGE_KEY_LEFT_W = 'yourproject-left-w';
+const STORAGE_KEY_RIGHT_W = 'yourproject-right-w';</code></pre>
+
+  <!-- ─── THEMING CONFIGURATION ──────────── -->
+  <h2 id="theming-configuration">Theming Configuration</h2>
+
+  <p>
+    DevDocs uses CSS custom properties for comprehensive theming support. All visual
+    aspects can be customized without touching the core stylesheet.
+  </p>
+
+  <h3 id="color-scheme-customization">Color Scheme Customization</h3>
+
+  <p>
+    Override color tokens to match your brand:
+  </p>
+
+  <pre><code>/* Custom theme - add to index.html or separate CSS file */
+:root {
+  /* Primary colors */
+  --accent: #2563eb;           /* Blue primary */
+  --accent-light: #dbeafe;     /* Light blue background */
+  
+  /* Brand colors */
+  --bg-header: #1f2937;        /* Dark header */
+  --text-brand: #ffffff;       /* White brand text */
+  
+  /* Navigation */
+  --nav-active-bar: #2563eb;   /* Active page indicator */
+  --nav-hover: #f3f4f6;        /* Navigation hover state */
+  
+  /* Callouts */
+  --callout-border: #2563eb;   /* Callout border color */
+  --bg-callout: #eff6ff;       /* Callout background */
+}
+
+/* Dark theme overrides */
+[data-theme="dark"] {
+  --accent: #60a5fa;
+  --accent-light: #1e3a8a;
+  --bg-header: #111827;
+  --nav-hover: #374151;
+  --bg-callout: #1e3a8a;
+}</code></pre>
+
+  <h3 id="typography-configuration">Typography Configuration</h3>
+
+  <p>
+    Customize fonts and typography scales:
+  </p>
+
+  <pre><code>:root {
+  /* Font families */
+  --font-family: 'Inter', -apple-system, system-ui, sans-serif;
+  --font-family-mono: 'JetBrains Mono', 'Fira Code', monospace;
+  
+  /* Font sizes */
+  --font-size-xs: 0.75rem;     /* 12px */
+  --font-size-sm: 0.875rem;    /* 14px */
+  --font-size-base: 1rem;      /* 16px */
+  --font-size-lg: 1.125rem;    /* 18px */
+  --font-size-xl: 1.25rem;     /* 20px */
+  
+  /* Line heights */
+  --line-height-tight: 1.25;
+  --line-height-normal: 1.5;
+  --line-height-relaxed: 1.75;
+}</code></pre>
+
+  <h3 id="layout-configuration">Layout Configuration</h3>
+
+  <p>
+    Adjust spacing and layout proportions:
+  </p>
+
+  <pre><code>:root {
+  /* Spacing scale */
+  --spacing-xs: 0.25rem;       /* 4px */
+  --spacing-sm: 0.5rem;        /* 8px */
+  --spacing-md: 1rem;          /* 16px */
+  --spacing-lg: 1.5rem;        /* 24px */
+  --spacing-xl: 2rem;          /* 32px */
+  
+  /* Layout dimensions */
+  --header-height: 60px;
+  --footer-height: 50px;
+  --sidebar-border-width: 1px;
+  --content-max-width: 1200px;
+}</code></pre>
+
+  <!-- ─── ADVANCED CONFIGURATION ──────── -->
+  <h2 id="advanced-configuration">Advanced Configuration</h2>
+
+  <p>
+    Advanced configuration options for power users who need deeper customization control.
+  </p>
+
+  <h3 id="search-configuration">Search Configuration</h3>
+
+  <p>
+    Customize search behavior and indexing:
+  </p>
+
+  <pre><code>// Search configuration object
+const SEARCH_CONFIG = {
+  // Indexing options
+  maxIndexSize: 1000,           // Maximum number of indexed items
+  minWordLength: 3,             // Minimum word length for indexing
+  stopWords: ['the', 'and', 'or', 'but'], // Words to exclude
+  
+  // Search behavior
+  fuzzyThreshold: 0.6,          // Fuzzy matching sensitivity (0-1)
+  maxResults: 20,               // Maximum search results shown
+  highlightMatches: true,       // Highlight search terms in results
+  
+  // Performance settings
+  searchDebounceMs: 300,        // Delay before search execution
+  minQueryLength: 2             // Minimum characters before searching
+};</code></pre>
+
+  <h3 id="scroll-spy-configuration">Scroll Spy Configuration</h3>
+
+  <p>
+    Configure the right sidebar outline behavior:
+  </p>
+
+  <pre><code>const SCROLL_SPY_CONFIG = {
+  // Intersection observer options
+  rootMargin: '-20% 0px -35% 0px', // Trigger zone for active sections
+  threshold: [0, 0.25, 0.5, 0.75, 1], // Intersection thresholds
+  
+  // Behavior settings  
+  smoothScroll: true,           // Enable smooth scrolling to sections
+  updateURL: true,              // Update URL hash on section change
+  highlightDuration: 2000,      // How long to highlight clicked sections (ms)
+  
+  // Performance settings
+  throttleMs: 100               // Throttle scroll event handling
+};</code></pre>
+
+  <h3 id="sidebar-configuration">Sidebar Configuration</h3>
+
+  <p>
+    Configure sidebar behavior and constraints:
+  </p>
+
+  <pre><code>const SIDEBAR_CONFIG = {
+  // Width constraints
+  minWidth: 200,                // Minimum sidebar width (px)
+  maxWidth: 500,                // Maximum sidebar width (px)
+  snapThreshold: 50,            // Distance for auto-collapse (px)
+  
+  // Responsive behavior
+  autoCollapseWidth: 768,       // Screen width for auto-collapse (px)
+  showOnHover: true,            // Show collapsed sidebar on hover
+  
+  // Animation settings
+  transitionDuration: 250,      // Collapse/expand animation (ms)
+  easing: 'cubic-bezier(0.4, 0, 0.2, 1)' // Animation easing function
+};</code></pre>
+
+  <!-- ─── PLUGIN CONFIGURATION ───────── -->
+  <h2 id="plugin-configuration">Plugin Configuration</h2>
+
+  <p>
+    Configure and manage plugins through a centralized configuration system.
+  </p>
+
+  <h3 id="plugin-registry">Plugin Registry</h3>
+
+  <p>
+    Register and configure plugins in a dedicated configuration file:
+  </p>
+
+  <pre><code>// plugins.config.js
+export const PLUGIN_CONFIG = {
+  // Code copy functionality
+  codeCopy: {
+    enabled: true,
+    buttonText: 'Copy',
+    successText: 'Copied!',
+    errorText: 'Failed to copy',
+    timeout: 2000,
+    position: 'top-right'
+  },
+  
+  // Reading time estimates
+  readingTime: {
+    enabled: true,
+    wordsPerMinute: 200,
+    showIcon: true,
+    template: '📖 ${time} min read'
+  },
+  
+  // External link handling
+  externalLinks: {
+    enabled: true,
+    openInNewTab: true,
+    showIcon: true,
+    excludeDomains: ['localhost', '127.0.0.1']
+  },
+  
+  // Analytics integration
+  analytics: {
+    enabled: false,  // Disabled by default
+    provider: 'none',
+    trackingId: null,
+    anonymizeIp: true,
+    respectDoNotTrack: true
+  }
+};</code></pre>
+
+  <h3 id="conditional-plugin-loading">Conditional Plugin Loading</h3>
+
+  <p>
+    Load plugins conditionally based on environment or user preferences:
+  </p>
+
+  <pre><code>// Conditional plugin loading
+const plugins = [];
+
+// Always load core functionality plugins
+plugins.push(new CodeCopyPlugin(PLUGIN_CONFIG.codeCopy));
+plugins.push(new ExternalLinksPlugin(PLUGIN_CONFIG.externalLinks));
+
+// Load analytics only in production
+if (location.hostname !== 'localhost' && PLUGIN_CONFIG.analytics.enabled) {
+  plugins.push(new AnalyticsPlugin(PLUGIN_CONFIG.analytics));
+}
+
+// Load development plugins in dev mode
+if (location.search.includes('debug=true')) {
+  plugins.push(new DebugPlugin());
+  plugins.push(new PerformanceMonitorPlugin());
+}</code></pre>
+
+  <!-- ─── ENVIRONMENT CONFIGURATION ────── -->
+  <h2 id="environment-configuration">Environment Configuration</h2>
+
+  <p>
+    Configure DevDocs for different deployment environments and use cases.
+  </p>
+
+  <h3 id="deployment-environments">Deployment Environments</h3>
+
+  <p>
+    Set up environment-specific configurations:
+  </p>
+
+  <pre><code>// config/environments.js
+const ENVIRONMENTS = {
+  development: {
+    debug: true,
+    analytics: false,
+    caching: false,
+    hotReload: true,
+    performanceMonitoring: true
+  },
+  
+  staging: {
+    debug: false,
+    analytics: false,
+    caching: true,
+    hotReload: false,
+    performanceMonitoring: true
+  },
+  
+  production: {
+    debug: false,
+    analytics: true,
+    caching: true,
+    hotReload: false,
+    performanceMonitoring: false
+  }
+};
+
+// Auto-detect environment
+const currentEnv = location.hostname === 'localhost' ? 'development' :
+                  location.hostname.includes('staging') ? 'staging' : 'production';
+
+export const ENV_CONFIG = ENVIRONMENTS[currentEnv];</code></pre>
+
+  <h3 id="build-configuration">Build Configuration</h3>
+
+  <p>
+    Configure build-time optimizations for production deployment:
+  </p>
+
+  <pre><code>// build.config.js
+export const BUILD_CONFIG = {
+  // Asset optimization
+  minifyCSS: true,
+  minifyJS: true,
+  optimizeImages: true,
+  generateSourceMaps: false,
+  
+  // Cache configuration
+  enableServiceWorker: true,
+  cacheStrategy: 'networkFirst', // or 'cacheFirst'
+  cacheDuration: '1day',
+  
+  // Bundle configuration
+  bundleAssets: false,          // Keep separate files for DevDocs
+  inlineSmallAssets: true,      // Inline small SVGs and CSS
+  generateManifest: true        // PWA manifest generation
+};</code></pre>
+
+  <!-- ─── SECURITY CONFIGURATION ─────── -->
+  <h2 id="security-configuration">Security Configuration</h2>
+
+  <p>
+    Configure security-related settings for production deployments.
+  </p>
+
+  <h3 id="content-security-policy">Content Security Policy</h3>
+
+  <p>
+    Recommended CSP headers for DevDocs:
+  </p>
+
+  <pre><code>&lt;!-- Add to index.html head section --&gt;
+&lt;meta http-equiv="Content-Security-Policy" content="
+  default-src 'self';
+  script-src 'self' 'unsafe-inline';
+  style-src 'self' 'unsafe-inline';
+  img-src 'self' data: https:;
+  font-src 'self' https://fonts.gstatic.com;
+  connect-src 'self';
+  frame-ancestors 'none';
+  base-uri 'self';
+  form-action 'none';
+"&gt;</code></pre>
+
+  <h3 id="cors-configuration">CORS Configuration</h3>
+
+  <p>
+    Configure CORS headers for Ajax content loading:
+  </p>
+
+  <pre><code># .htaccess example
+&lt;IfModule mod_headers.c&gt;
+  # Allow same-origin requests
+  Header always set Access-Control-Allow-Origin "*"
+  Header always set Access-Control-Allow-Methods "GET, OPTIONS"
+  Header always set Access-Control-Allow-Headers "Content-Type"
+  
+  # Security headers
+  Header always set X-Content-Type-Options nosniff
+  Header always set X-Frame-Options DENY
+  Header always set X-XSS-Protection "1; mode=block"
+&lt;/IfModule&gt;</code></pre>
+
+  <div class="callout">
+    <div class="callout-title">🔒 Security Best Practices</div>
+    <p>
+      Always validate configuration input, sanitize dynamic content, and regularly update
+      dependencies. Consider implementing subresource integrity (SRI) for any external
+      resources you may add to DevDocs.
+    </p>
+  </div>
+
+</div>

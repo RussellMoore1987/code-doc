@@ -1,0 +1,360 @@
+<div class="content-body">
+
+  <h1 id="performance">Performance</h1>
+
+  <p>
+    DevDocs is designed for speed and efficiency, but as your documentation grows, maintaining
+    optimal performance becomes crucial. This guide covers performance monitoring, optimization
+    techniques, and best practices for keeping your documentation fast and responsive.
+  </p>
+
+  <div class="callout">
+    <div class="callout-title">⚡ Performance First</div>
+    <p>
+      DevDocs aims for sub-second page loads and instant navigation. By following these
+      performance guidelines, you can maintain excellent user experience even with hundreds
+      of documentation pages.
+    </p>
+  </div>
+
+  <!-- ─── PERFORMANCE METRICS ────────────── -->
+  <h2 id="performance-metrics">Key Performance Metrics</h2>
+
+  <p>
+    Monitor these essential metrics to ensure your DevDocs installation performs optimally
+    across different devices and network conditions.
+  </p>
+
+  <h3 id="core-web-vitals">Core Web Vitals</h3>
+
+  <p>Google's Core Web Vitals provide standardized metrics for user experience:</p>
+
+  <ul>
+    <li><strong>Largest Contentful Paint (LCP)</strong> - Target: &lt; 2.5 seconds</li>
+    <li><strong>First Input Delay (FID)</strong> - Target: &lt; 100 milliseconds</li>
+    <li><strong>Cumulative Layout Shift (CLS)</strong> - Target: &lt; 0.1</li>
+  </ul>
+
+  <h3 id="devdocs-specific-metrics">DevDocs-Specific Metrics</h3>
+
+  <p>Additional metrics important for documentation sites:</p>
+
+  <ul>
+    <li><strong>Navigation Response Time</strong> - Time from click to content display</li>
+    <li><strong>Search Query Time</strong> - Milliseconds from keystroke to results</li>
+    <li><strong>Sidebar Interaction Lag</strong> - Responsiveness of resize/collapse actions</li>
+    <li><strong>Right-Nav Generation Time</strong> - Speed of outline creation for large pages</li>
+  </ul>
+
+  <pre><code>// Performance measurement example
+performance.mark('nav-start');
+// ... navigation logic ...
+performance.mark('nav-end');
+performance.measure('navigation', 'nav-start', 'nav-end');
+
+const navTime = performance.getEntriesByName('navigation')[0].duration;
+console.log(`Navigation took ${navTime.toFixed(2)}ms`);</code></pre>
+
+  <!-- ─── CONTENT OPTIMIZATION ───────────── -->
+  <h2 id="content-optimization">Content Optimization</h2>
+
+  <p>
+    Optimizing your content files is the most effective way to improve DevDocs performance.
+    Small changes in content structure can yield significant performance gains.
+  </p>
+
+  <h3 id="page-size-management">Page Size Management</h3>
+
+  <p>
+    Keep individual page files lightweight for faster Ajax loading:
+  </p>
+
+  <ul>
+    <li><strong>Target Size</strong> - 30-50KB per page (including HTML markup)</li>
+    <li><strong>Maximum Size</strong> - 100KB (beyond this, consider splitting content)</li>
+    <li><strong>Image Optimization</strong> - Use SVG for icons, WebP for photos when possible</li>
+  </ul>
+
+  <div class="callout">
+    <div class="callout-title">📊 Size Analysis</div>
+    <p>
+      Use browser DevTools Network tab to monitor page load sizes. Filter by "XHR/Fetch"
+      to see Ajax-loaded content sizes. Pages consistently over 50KB may benefit from splitting.
+    </p>
+  </div>
+
+  <h3 id="content-structure-optimization">Content Structure Optimization</h3>
+
+  <p>
+    Optimize HTML structure for faster parsing and rendering:
+  </p>
+
+  <pre><code><!-- ❌ Avoid: Deep nesting slows DOM parsing -->
+&lt;div class="section"&gt;
+  &lt;div class="container"&gt;
+    &lt;div class="content"&gt;
+      &lt;div class="text"&gt;
+        &lt;p&gt;Content here&lt;/p&gt;
+      &lt;/div&gt;
+    &lt;/div&gt;
+  &lt;/div&gt;
+&lt;/div&gt;
+
+<!-- ✅ Better: Flatter structure -->
+&lt;section class="content-section"&gt;
+  &lt;p&gt;Content here&lt;/p&gt;
+&lt;/section&gt;</code></pre>
+
+  <h3 id="code-block-optimization">Code Block Optimization</h3>
+
+  <p>
+    Large code examples can slow page rendering. Optimize with these techniques:
+  </p>
+
+  <ul>
+    <li><strong>Syntax Highlighting</strong> - Use lightweight libraries or CSS-only highlighting</li>
+    <li><strong>Code Folding</strong> - Hide verbose examples behind expand/collapse controls</li>
+    <li><strong>External Examples</strong> - Link to GitHub gists for very long code samples</li>
+  </ul>
+
+  <!-- ─── JAVASCRIPT OPTIMIZATION ─────── -->
+  <h2 id="javascript-optimization">JavaScript Optimization</h2>
+
+  <p>
+    DevDocs JavaScript handles navigation, search, and UI interactions. Optimizing these
+    systems improves overall application responsiveness.
+  </p>
+
+  <h3 id="lazy-loading">Lazy Loading Strategies</h3>
+
+  <p>
+    Implement lazy loading for expensive operations:
+  </p>
+
+  <pre><code>// Lazy load search index  
+let searchIndex = null;
+
+async function ensureSearchIndex() {
+  if (!searchIndex) {
+    console.log('Building search index...');
+    searchIndex = await buildSearchIndex();
+  }
+  return searchIndex;
+}
+
+// Only build index when user opens search
+document.getElementById('search-toggle').addEventListener('click', async () => {
+  const index = await ensureSearchIndex();
+  // Show search UI
+});</code></pre>
+
+  <h3 id="debouncing-throttling">Debouncing and Throttling</h3>
+
+  <p>
+    Control expensive operations with debouncing and throttling:
+  </p>
+
+  <pre><code>// Debounce search input
+const debounce = (func, wait) => {
+  let timeout;
+  return function executedFunction(...args) {
+    const later = () => {
+      clearTimeout(timeout);
+      func(...args);
+    };
+    clearTimeout(timeout);
+    timeout = setTimeout(later, wait);
+  };
+};
+
+const debouncedSearch = debounce(performSearch, 300);
+searchInput.addEventListener('input', debouncedSearch);
+
+// Throttle scroll events
+const throttledScrollSpy = throttle(updateScrollSpy, 100);
+contentArea.addEventListener('scroll', throttledScrollSpy);</code></pre>
+
+  <h3 id="memory-management">Memory Management</h3>
+
+  <p>
+    Prevent memory leaks in long-running documentation sessions:
+  </p>
+
+  <ul>
+    <li><strong>Event Listener Cleanup</strong> - Remove listeners when navigating between pages</li>
+    <li><strong>Observer Management</strong> - Disconnect IntersectionObserver and ResizeObserver instances</li>
+    <li><strong>DOM References</strong> - Clear references to removed DOM elements</li>
+  </ul>
+
+  <!-- ─── CSS PERFORMANCE ──────────────── -->
+  <h2 id="css-performance">CSS Performance</h2>
+
+  <p>
+    CSS optimization focuses on reducing paint time and layout thrashing while maintaining
+    the visual quality of your documentation.
+  </p>
+
+  <h3 id="css-selector-efficiency">Selector Efficiency</h3>
+
+  <p>
+    Write efficient CSS selectors that browsers can resolve quickly:
+  </p>
+
+  <pre><code>/* ❌ Inefficient: Browser reads right-to-left */
+.content-body div p span.highlight { ... }
+
+/* ✅ Better: More specific, faster matching */
+.content-body .highlight { ... }
+
+/* ✅ Best: Class-based, minimal hierarchy */
+.text-highlight { ... }</code></pre>
+
+  <h3 id="css-custom-properties-performance">CSS Custom Properties Performance</h3>
+
+  <p>
+    DevDocs relies heavily on CSS custom properties. Optimize their usage:
+  </p>
+
+  <ul>
+    <li><strong>Scope Variables</strong> - Define variables at the most specific scope needed</li>
+    <li><strong>Avoid Inheritance Chains</strong> - Deep nesting can slow property resolution</li>
+    <li><strong>Group Related Properties</strong> - Update multiple properties atomically</li>
+  </ul>
+
+  <h3 id="layout-optimization">Layout Optimization</h3>
+
+  <p>
+    Prevent layout thrashing during interactive operations:
+  </p>
+
+  <pre><code>/* Use transform instead of changing width/height */
+.sidebar-resizing {
+  will-change: transform;
+  transform: translateX(0);  /* GPU acceleration */
+}
+
+/* Prefer opacity changes over display toggling */
+.search-results {
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.2s ease;
+}
+
+.search-results.visible {
+  opacity: 1;
+  visibility: visible;
+}</code></pre>
+
+  <!-- ─── NETWORK OPTIMIZATION ───────────── -->
+  <h2 id="network-optimization">Network Optimization</h2>
+
+  <p>
+    Optimize network requests for faster content loading and better offline experience.
+  </p>
+
+  <h3 id="http-caching">HTTP Caching Strategy</h3>
+
+  <p>
+    Configure appropriate caching headers for different file types:
+  </p>
+
+  <pre><code># .htaccess example
+&lt;IfModule mod_expires.c&gt;
+  ExpiresActive On
+  
+  # HTML pages - short cache (content changes frequently)
+  ExpiresByType text/html "access plus 1 hour"
+  
+  # CSS/JS - medium cache (updated less frequently)  
+  ExpiresByType text/css "access plus 1 day"
+  ExpiresByType text/javascript "access plus 1 day"
+  
+  # Images - long cache (rarely change)
+  ExpiresByType image/svg+xml "access plus 1 month"
+  ExpiresByType image/png "access plus 1 month"
+&lt;/IfModule&gt;</code></pre>
+
+  <h3 id="request-optimization">Request Optimization</h3>
+
+  <p>
+    Minimize and optimize HTTP requests:
+  </p>
+
+  <ul>
+    <li><strong>Bundle Static Assets</strong> - Combine CSS files if serving multiple themes</li>
+    <li><strong>Preload Critical Resources</strong> - Use <code>&lt;link rel="preload"&gt;</code> for fonts</li>
+    <li><strong>Avoid Request Chains</strong> - Don't load content that immediately triggers more requests</li>
+  </ul>
+
+  <!-- ─── MONITORING & DEBUGGING ──────── -->
+  <h2 id="monitoring-debugging">Performance Monitoring & Debugging</h2>
+
+  <p>
+    Establish monitoring systems to catch performance regressions before they impact users.
+  </p>
+
+  <h3 id="browser-devtools">Browser DevTools Profiling</h3>
+
+  <p>
+    Use Chrome DevTools Performance tab to identify bottlenecks:
+  </p>
+
+  <ol>
+    <li><strong>Start Recording</strong> - Open Performance tab, click record</li>
+    <li><strong>Perform Actions</strong> - Navigate, search, resize sidebars</li>
+    <li><strong>Stop and Analyze</strong> - Look for long tasks, layout thrashing, memory spikes</li>
+    <li><strong>Identify Bottlenecks</strong> - Focus on JavaScript execution time and rendering</li>
+  </ol>
+
+  <h3 id="performance-budgets">Performance Budgets</h3>
+
+  <p>
+    Set and monitor performance budgets to prevent regressions:
+  </p>
+
+  <pre><code>// performance-budget.js
+const PERFORMANCE_BUDGET = {
+  // Page load budgets
+  maxPageSize: 50 * 1024,        // 50KB per page
+  maxInitialLoad: 2000,          // 2s for initial app load
+  maxNavigationTime: 500,        // 500ms for page navigation
+  
+  // Search performance budgets  
+  maxSearchIndexSize: 1024 * 1024, // 1MB search index
+  maxSearchTime: 100,             // 100ms for search results
+  
+  // JavaScript budgets
+  maxJSHeapSize: 10 * 1024 * 1024, // 10MB JavaScript heap
+  maxDOMNodes: 3000                 // 3000 DOM nodes max
+};
+
+// Monitor and alert on budget violations
+function checkPerformanceBudget() {
+  const navigation = performance.getEntriesByType('navigation')[0];
+  if (navigation.loadEventEnd > PERFORMANCE_BUDGET.maxInitialLoad) {
+    console.warn('⚠️ Initial load time exceeds budget');
+  }
+}</code></pre>
+
+  <h3 id="automated-performance-testing">Automated Performance Testing</h3>
+
+  <p>
+    Include performance tests in your development workflow:
+  </p>
+
+  <ul>
+    <li><strong>Lighthouse CI</strong> - Automated Lighthouse audits in your deployment pipeline</li>
+    <li><strong>WebPageTest</strong> - Regular performance monitoring from different locations</li>
+    <li><strong>Core Web Vitals Monitoring</strong> - Track real user metrics over time</li>
+  </ul>
+
+  <div class="callout">
+    <div class="callout-title">🎯 Performance Goals</div>
+    <p>
+      Aim for Lighthouse Performance scores of 90+ and ensure your documentation loads
+      quickly even on slower 3G connections. Remember that performance is a feature that
+      directly impacts user experience and documentation adoption.
+    </p>
+  </div>
+
+</div>

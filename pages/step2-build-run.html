@@ -1,0 +1,401 @@
+<div class="content-body">
+
+  <h1 id="step2-build-run">Step 2 - Build & Run</h1>
+
+  <p>
+    Now that you have DevDocs installed and your environment configured, this guide walks you
+    through building your first documentation site and running it locally. You'll learn the
+    essential workflow for creating, testing, and deploying your documentation.
+  </p>
+
+  <div class="callout">
+    <div class="callout-title">🎯 What You'll Learn</div>
+    <p>
+      By the end of this step, you'll have a running DevDocs site with custom content,
+      understand the development workflow, and know how to prepare your documentation
+      for production deployment.
+    </p>
+  </div>
+
+  <!-- ─── STARTING YOUR FIRST PROJECT ────── -->
+  <h2 id="starting-first-project">Starting Your First Project</h2>
+
+  <p>
+    Let's create a new DevDocs project from scratch and get it running locally.
+  </p>
+
+  <h3 id="project-setup">Project Setup</h3>
+
+  <p>
+    Create a new directory and set up the basic DevDocs structure:
+  </p>
+
+  <pre><code># Create a new project directory
+mkdir my-documentation
+cd my-documentation
+
+# Create the basic structure
+mkdir pages images
+touch index.html app.js styles.css
+
+# Copy DevDocs files (or download from repository)
+# - index.html (main application shell)
+# - app.js (navigation and functionality)  
+# - styles.css (all styling)
+# - pages/ (content directory)
+# - images/ (assets directory)</code></pre>
+
+  <h3 id="first-content-page">Creating Your First Content Page</h3>
+
+  <p>
+    Create a welcome page to test your setup:
+  </p>
+
+  <pre><code>&lt;!-- pages/welcome.html --&gt;
+&lt;div class="content-body"&gt;
+  &lt;h1 id="welcome"&gt;Welcome to My Documentation&lt;/h1&gt;
+  
+  &lt;p&gt;
+    This is your first DevDocs page! You can write any HTML content here,
+    including headings, paragraphs, lists, and code blocks.
+  &lt;/p&gt;
+  
+  &lt;h2 id="getting-started"&gt;Getting Started&lt;/h2&gt;
+  
+  &lt;p&gt;Here are some things you can try:&lt;/p&gt;
+  
+  &lt;ul&gt;
+    &lt;li&gt;Edit this content and save to see changes&lt;/li&gt;
+    &lt;li&gt;Add more pages to the navigation&lt;/li&gt;
+    &lt;li&gt;Customize the theme and colors&lt;/li&gt;
+    &lt;li&gt;Test the search functionality&lt;/li&gt;
+  &lt;/ul&gt;
+  
+  &lt;div class="callout"&gt;
+    &lt;div class="callout-title"&gt;💡 Tip&lt;/div&gt;
+    &lt;p&gt;
+      Remember to always wrap your content in a &lt;code&gt;&amp;lt;div class="content-body"&amp;gt;&lt;/code&gt;
+      element for proper styling and functionality.
+    &lt;/p&gt;
+  &lt;/div&gt;
+&lt;/div&gt;</code></pre>
+
+  <h3 id="updating-navigation">Updating Navigation</h3>
+
+  <p>
+    Add your new page to the navigation in <code>app.js</code>:
+  </p>
+
+  <pre><code>const NAV_DATA = [
+  {
+    id: 'getting-started',
+    label: 'Getting Started', 
+    children: [
+      {
+        id: 'welcome',
+        label: 'Welcome',
+        page: 'pages/welcome.html'
+      }
+    ]
+  }
+];</code></pre>
+
+  <!-- ─── RUNNING LOCALLY ─────────────────── -->
+  <h2 id="running-locally">Running Locally</h2>
+
+  <p>
+    DevDocs requires a local HTTP server to function properly due to browser security
+    restrictions on file:// URLs.
+  </p>
+
+  <h3 id="development-server-options">Development Server Options</h3>
+
+  <h4 id="vs-code-live-server">VS Code Live Server (Recommended)</h4>
+
+  <p>
+    If you're using VS Code, the Live Server extension provides the easiest development experience:
+  </p>
+
+  <ol>
+    <li>Install the "Live Server" extension in VS Code</li>
+    <li>Right-click on <code>index.html</code> in the file explorer</li>
+    <li>Select "Open with Live Server"</li>
+    <li>Your documentation will open automatically at <code>http://localhost:5500</code></li>
+  </ol>
+
+  <p>Live Server automatically reloads the page when you save changes to any file.</p>
+
+  <h4 id="python-http-server">Python HTTP Server</h4>
+
+  <p>
+    If you have Python installed (most systems do), you can use the built-in HTTP server:
+  </p>
+
+  <pre><code># Python 3 (recommended)
+python -m http.server 8000
+
+# Python 2 (legacy)
+python -m SimpleHTTPServer 8000
+
+# Then open http://localhost:8000 in your browser</code></pre>
+
+  <h4 id="nodejs-serve">Node.js Serve</h4>
+
+  <p>
+    If you have Node.js installed, you can use the `serve` package:
+  </p>
+
+  <pre><code># Install serve globally (one-time setup)
+npm install -g serve
+
+# Or use npx to run without installing
+npx serve
+
+# Then open http://localhost:3000 in your browser</code></pre>
+
+  <h3 id="testing-functionality">Testing Core Functionality</h3>
+
+  <p>
+    Once your server is running, test these key features:
+  </p>
+
+  <ul>
+    <li><strong>Navigation</strong> - Click items in the left sidebar to load content</li>
+    <li><strong>Search</strong> - Use the search icon in the header to find content</li>
+    <li><strong>Right Sidebar</strong> - Verify the "On this page" outline appears</li>
+    <li><strong>Theme Toggle</strong> - Switch between light and dark themes</li>
+    <li><strong>Responsive Design</strong> - Resize the browser window to test mobile layout</li>
+  </ul>
+
+  <!-- ─── DEVELOPMENT WORKFLOW ───────────── -->
+  <h2 id="development-workflow">Development Workflow</h2>
+
+  <p>
+    Follow this workflow for efficient documentation development and maintenance.
+  </p>
+
+  <h3 id="content-creation-cycle">Content Creation Cycle</h3>
+
+  <ol>
+    <li><strong>Plan Structure</strong> - Outline your documentation sections and pages</li>
+    <li><strong>Create Pages</strong> - Write HTML files in the <code>pages/</code> directory</li>
+    <li><strong>Update Navigation</strong> - Add new pages to <code>NAV_DATA</code> in <code>app.js</code></li>
+    <li><strong>Test Locally</strong> - Verify content loads and displays correctly</li>
+    <li><strong>Review Links</strong> - Check internal links and navigation flow</li>
+    <li><strong>Test Search</strong> - Ensure new content appears in search results</li>
+  </ol>
+
+  <h3 id="content-best-practices">Content Best Practices</h3>
+
+  <p>
+    Follow these practices for maintainable, high-quality documentation:
+  </p>
+
+  <h4 id="html-structure">HTML Structure</h4>
+
+  <ul>
+    <li><strong>Use semantic headings</strong> - Start with h1, then h2, h3, h4 in order</li>
+    <li><strong>Include unique IDs</strong> - Every heading should have a unique ID for deep linking</li>
+    <li><strong>Structure content logically</strong> - Use sections, lists, and callouts appropriately</li>
+    <li><strong>Keep HTML clean</strong> - Avoid inline styles, use CSS classes instead</li>
+  </ul>
+
+  <h4 id="writing-guidelines">Writing Guidelines</h4>
+
+  <ul>
+    <li><strong>Start with overview</strong> - Begin each page with a clear introduction</li>
+    <li><strong>Use active voice</strong> - "Click the button" vs "The button should be clicked"</li>
+    <li><strong>Be concise</strong> - Break up long paragraphs into shorter, scannable sections</li>
+    <li><strong>Include examples</strong> - Show both code examples and expected results</li>
+  </ul>
+
+  <h3 id="version-control">Version Control Integration</h3>
+
+  <p>
+    Set up Git to track your documentation changes:
+  </p>
+
+  <pre><code># Initialize git repository
+git init
+git add .
+git commit -m "Initial DevDocs setup"
+
+# Create .gitignore for common files
+echo "node_modules/
+.DS_Store
+Thumbs.db
+*.log" > .gitignore
+
+# Add remote repository and push
+git remote add origin https://github.com/yourusername/your-docs.git
+git push -u origin main</code></pre>
+
+  <!-- ─── TESTING & VALIDATION ───────────── -->
+  <h2 id="testing-validation">Testing & Validation</h2>
+
+  <p>
+    Thoroughly test your documentation before deployment to ensure everything works correctly.
+  </p>
+
+  <h3 id="functional-testing">Functional Testing</h3>
+
+  <p>
+    Test these core functions across different browsers:
+  </p>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Feature</th>
+        <th>Test Case</th>
+        <th>Expected Result</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Navigation</td>
+        <td>Click each menu item</td>
+        <td>Content loads without errors</td>
+      </tr>
+      <tr>
+        <td>Search</td>
+        <td>Enter various search terms</td>
+        <td>Relevant results appear quickly</td>
+      </tr>
+      <tr>
+        <td>Right Sidebar</td>
+        <td>Navigate to pages with headings</td>
+        <td>Outline generates automatically</td>
+      </tr>
+      <tr>
+        <td>Responsive</td>
+        <td>Resize browser window</td>
+        <td>Layout adapts to screen size</td>
+      </tr>
+      <tr>
+        <td>Keyboard</td>
+        <td>Navigate using Tab key</td>
+        <td>All interactive elements accessible</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3 id="content-validation">Content Validation</h3>
+
+  <p>
+    Validate your content for common issues:
+  </p>
+
+  <ul>
+    <li><strong>HTML Validation</strong> - Use the W3C HTML validator</li>
+    <li><strong>Link Checking</strong> - Verify all internal and external links work</li>
+    <li><strong>Image Optimization</strong> - Ensure images load quickly and display correctly</li>
+    <li><strong>Accessibility</strong> - Test with screen readers and keyboard-only navigation</li>
+  </ul>
+
+  <h3 id="performance-testing">Performance Testing</h3>
+
+  <p>
+    Use browser DevTools to check performance:
+  </p>
+
+  <pre><code>// Check page load times
+// 1. Open DevTools (F12)
+// 2. Go to Network tab  
+// 3. Reload the page
+// 4. Check for files over 100KB or slow requests
+
+// Monitor JavaScript performance
+// 1. Go to Performance tab
+// 2. Start recording
+// 3. Navigate through several pages
+// 4. Stop recording and analyze results</code></pre>
+
+  <!-- ─── PRODUCTION BUILD ───────────────── -->
+  <h2 id="production-build">Preparing for Production</h2>
+
+  <p>
+    Before deploying your documentation, optimize it for production use.
+  </p>
+
+  <h3 id="optimization-checklist">Optimization Checklist</h3>
+
+  <ul>
+    <li><strong>✅ Minify CSS</strong> - Remove comments and whitespace from <code>styles.css</code></li>
+    <li><strong>✅ Optimize Images</strong> - Compress PNGs/JPGs, convert to WebP if supported</li>
+    <li><strong>✅ Enable Compression</strong> - Configure gzip/brotli on your web server</li>
+    <li><strong>✅ Set Cache Headers</strong> - Configure appropriate cache expiration times</li>
+    <li><strong>✅ Test Search Index</strong> - Ensure search works with your full content</li>
+    <li><strong>✅ Validate HTML</strong> - Fix any HTML validation errors</li>
+    <li><strong>✅ Check Links</strong> - Verify all internal and external links work</li>
+  </ul>
+
+  <h3 id="deployment-preparation">Deployment Preparation</h3>
+
+  <p>
+    Prepare your files for deployment:
+  </p>
+
+  <pre><code># Create a production build directory
+mkdir build
+cp -r *.html *.css *.js pages/ images/ build/
+
+# Optional: minify CSS (requires CSS minifier)
+# csso styles.css --output build/styles.css
+
+# Optional: optimize images (requires imagemin or similar)
+# imagemin images/* --out-dir=build/images/</code></pre>
+
+  <h3 id="deployment-options">Deployment Options</h3>
+
+  <p>
+    DevDocs works on any static hosting platform. Popular options include:
+  </p>
+
+  <ul>
+    <li><strong>GitHub Pages</strong> - Free hosting directly from your GitHub repository</li>
+    <li><strong>Netlify</strong> - Drag-and-drop deployment with automatic HTTPS</li>
+    <li><strong>Vercel</strong> - Fast global CDN with branch preview deployments</li>
+    <li><strong>AWS S3 + CloudFront</strong> - Scalable hosting with CDN distribution</li>
+  </ul>
+
+  <div class="callout">
+    <div class="callout-title">🚀 Next Steps</div>
+    <p>
+      Congratulations! You now have a working DevDocs site. Explore the advanced topics
+      in this documentation to learn about themes, plugins, performance optimization,
+      and advanced configuration options.
+    </p>
+  </div>
+
+  <!-- ─── TROUBLESHOOTING ─────────────────── -->
+  <h2 id="quick-troubleshooting">Quick Troubleshooting</h2>
+
+  <h3 id="common-issues">Common Build & Run Issues</h3>
+
+  <p>
+    <strong>Problem:</strong> "Cross-Origin Request Blocked" errors in console.
+    <br><strong>Solution:</strong> Make sure you're using an HTTP server, not opening <code>index.html</code> directly.
+  </p>
+
+  <p>
+    <strong>Problem:</strong> Navigation shows "Loading..." indefinitely.
+    <br><strong>Solution:</strong> Check browser console for JavaScript errors and verify <code>NAV_DATA</code> syntax.
+  </p>
+
+  <p>
+    <strong>Problem:</strong> Search returns no results.
+    <br><strong>Solution:</strong> Wait for search index to build (check console), then try again.
+  </p>
+
+  <p>
+    <strong>Problem:</strong> Pages don't load when clicking navigation.
+    <br><strong>Solution:</strong> Verify page file paths in <code>NAV_DATA</code> match actual file locations.
+  </p>
+
+  <p>
+    <strong>Problem:</strong> Styling looks broken or inconsistent.
+    <br><strong>Solution:</strong> Check that <code>styles.css</code> is loading correctly and clear browser cache.
+  </p>
+
+</div>

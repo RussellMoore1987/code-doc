@@ -1,0 +1,605 @@
+<div class="content-body">
+
+  <h1 id="api-reference">API Reference</h1>
+
+  <p>
+    DevDocs exposes a comprehensive JavaScript API for programmatic interaction, plugin development,
+    and advanced customization. This reference documents all public APIs, event systems, and
+    extension points available to developers.
+  </p>
+
+  <div class="callout">
+    <div class="callout-title">🚀 API Stability</div>
+    <p>
+      APIs marked as <strong>Stable</strong> are guaranteed backward-compatible. <strong>Beta</strong>
+      APIs may change in minor versions. <strong>Experimental</strong> APIs may change or be removed
+      at any time.
+    </p>
+  </div>
+
+  <!-- ─── CORE API ─────────────────────────── -->
+  <h2 id="core-api">Core API</h2>
+
+  <p>
+    The core DevDocs API provides fundamental application control and lifecycle management.
+  </p>
+
+  <h3 id="application-object">Application Object</h3>
+
+  <p>
+    The global <code>DevDocsApp</code> object exposes core functionality:
+  </p>
+
+  <pre><code>// Access the main application instance
+const app = window.DevDocsApp;
+
+// Application properties
+app.version         // string: Current DevDocs version
+app.state          // object: Current application state
+app.config         // object: Configuration settings
+app.plugins        // array: Loaded plugin instances</code></pre>
+
+  <h4 id="app-methods">Application Methods</h4>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Method</th>
+        <th>Parameters</th>
+        <th>Returns</th>
+        <th>Description</th>
+        <th>Status</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><code>navigateTo(pageId)</code></td>
+        <td>string</td>
+        <td>Promise&lt;void&gt;</td>
+        <td>Navigate to a specific page by ID</td>
+        <td><strong>Stable</strong></td>
+      </tr>
+      <tr>
+        <td><code>loadPage(url)</code></td>
+        <td>string</td>
+        <td>Promise&lt;HTMLElement&gt;</td>
+        <td>Load page content from URL</td>
+        <td><strong>Stable</strong></td>
+      </tr>
+      <tr>
+        <td><code>getActivePage()</code></td>
+        <td>none</td>
+        <td>object|null</td>
+        <td>Get current active page info</td>
+        <td><strong>Stable</strong></td>
+      </tr>
+      <tr>
+        <td><code>registerPlugin(plugin)</code></td>
+        <td>Plugin</td>
+        <td>void</td>
+        <td>Register a new plugin instance</td>
+        <td><strong>Stable</strong></td>
+      </tr>
+      <tr>
+        <td><code>search(query, options)</code></td>
+        <td>string, object</td>
+        <td>Promise&lt;Array&gt;</td>
+        <td>Execute search query</td>
+        <td><strong>Beta</strong></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h4 id="app-example">Application Usage Example</h4>
+
+  <pre><code>// Navigate to a specific page programmatically
+await DevDocsApp.navigateTo('installation');
+
+// Get current page information
+const currentPage = DevDocsApp.getActivePage();
+console.log('Current page:', currentPage.id, currentPage.title);
+
+// Perform a search
+const results = await DevDocsApp.search('configuration', {
+  maxResults: 10,
+  includeContent: true
+});
+
+// Register a custom plugin
+DevDocsApp.registerPlugin(new MyCustomPlugin());</code></pre>
+
+  <!-- ─── NAVIGATION API ──────────────────── -->
+  <h2 id="navigation-api">Navigation API</h2>
+
+  <p>
+    The Navigation API controls the left sidebar navigation tree and page routing.
+  </p>
+
+  <h3 id="navigation-methods">Navigation Methods</h3>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Method</th>
+        <th>Parameters</th>
+        <th>Returns</th>
+        <th>Description</th>
+        <th>Status</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><code>NavAPI.expandNode(nodeId)</code></td>
+        <td>string</td>
+        <td>boolean</td>
+        <td>Expand navigation node</td>
+        <td><strong>Stable</strong></td>
+      </tr>
+      <tr>
+        <td><code>NavAPI.collapseNode(nodeId)</code></td>
+        <td>string</td>
+        <td>boolean</td>
+        <td>Collapse navigation node</td>
+        <td><strong>Stable</strong></td>
+      </tr>
+      <tr>
+        <td><code>NavAPI.getNodePath(pageId)</code></td>
+        <td>string</td>
+        <td>Array&lt;string&gt;</td>
+        <td>Get navigation path to page</td>
+        <td><strong>Stable</strong></td>
+      </tr>
+      <tr>
+        <td><code>NavAPI.addNode(parentId, node)</code></td>
+        <td>string, object</td>
+        <td>boolean</td>
+        <td>Add navigation node dynamically</td>
+        <td><strong>Beta</strong></td>
+      </tr>
+      <tr>
+        <td><code>NavAPI.removeNode(nodeId)</code></td>
+        <td>string</td>
+        <td>boolean</td>
+        <td>Remove navigation node</td>
+        <td><strong>Beta</strong></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3 id="navigation-example">Navigation Usage Example</h3>
+
+  <pre><code>// Get the navigation path to current page
+const path = NavAPI.getNodePath('deep-topic');
+console.log('Navigation path:', path); // ['getting-started', 'first-steps-group', 'step1-group']
+
+// Expand a specific navigation section  
+NavAPI.expandNode('advanced');
+
+// Dynamically add a new page to navigation
+NavAPI.addNode('reference', {
+  id: 'changelog',
+  label: 'Changelog', 
+  page: 'pages/changelog.html'
+});</code></pre>
+
+  <!-- ─── SEARCH API ──────────────────────── -->
+  <h2 id="search-api">Search API</h2>
+
+  <p>
+    The Search API provides programmatic access to search functionality and indexing.
+  </p>
+
+  <h3 id="search-methods">Search Methods</h3>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Method</th>
+        <th>Parameters</th>
+        <th>Returns</th>
+        <th>Description</th>
+        <th>Status</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><code>SearchAPI.query(text, options)</code></td>
+        <td>string, object</td>
+        <td>Promise&lt;Array&gt;</td>
+        <td>Execute search query</td>
+        <td><strong>Stable</strong></td>
+      </tr>
+      <tr>
+        <td><code>SearchAPI.rebuildIndex()</code></td>
+        <td>none</td>
+        <td>Promise&lt;void&gt;</td>
+        <td>Rebuild search index</td>
+        <td><strong>Stable</strong></td>
+      </tr>
+      <tr>
+        <td><code>SearchAPI.addToIndex(item)</code></td>
+        <td>object</td>
+        <td>void</td>
+        <td>Add item to search index</td>
+        <td><strong>Beta</strong></td>
+      </tr>
+      <tr>
+        <td><code>SearchAPI.getIndexStatus()</code></td>
+        <td>none</td>
+        <td>object</td>
+        <td>Get indexing status</td>
+        <td><strong>Stable</strong></td>
+      </tr>
+      <tr>
+        <td><code>SearchAPI.clearIndex()</code></td>
+        <td>none</td>
+        <td>void</td>
+        <td>Clear search index</td>
+        <td><strong>Beta</strong></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3 id="search-options">Search Options</h3>
+
+  <pre><code>const searchOptions = {
+  // Result filtering
+  maxResults: 20,              // Maximum number of results
+  fuzzyThreshold: 0.6,         // Fuzzy matching sensitivity (0-1)
+  includeContent: true,        // Include content snippets in results
+  
+  // Query processing
+  stemming: false,             // Enable word stemming
+  stopWords: true,             // Filter common stop words
+  caseSensitive: false,        // Case-sensitive matching
+  
+  // Result ranking
+  titleWeight: 2.0,            // Weight for title matches
+  headingWeight: 1.5,          // Weight for heading matches  
+  contentWeight: 1.0           // Weight for content matches
+};</code></pre>
+
+  <h3 id="search-example">Search Usage Example</h3>
+
+  <pre><code>// Perform advanced search
+const results = await SearchAPI.query('plugin configuration', {
+  maxResults: 5,
+  fuzzyThreshold: 0.8,
+  includeContent: true
+});
+
+// Process search results
+results.forEach(result => {
+  console.log(`${result.title} (score: ${result.score})`);
+  console.log(`Preview: ${result.snippet}`);
+});
+
+// Check search index status
+const status = SearchAPI.getIndexStatus();
+console.log(`Index contains ${status.itemCount} items`);</code></pre>
+
+  <!-- ─── SIDEBAR API ────────────────────── -->
+  <h2 id="sidebar-api">Sidebar API</h2>
+
+  <p>
+    The Sidebar API controls left and right sidebar behavior, resizing, and state management.
+  </p>
+
+  <h3 id="sidebar-methods">Sidebar Methods</h3>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Method</th>
+        <th>Parameters</th>
+        <th>Returns</th>
+        <th>Description</th>
+        <th>Status</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><code>SidebarAPI.collapse(side)</code></td>
+        <td>'left'|'right'</td>
+        <td>void</td>
+        <td>Collapse specified sidebar</td>
+        <td><strong>Stable</strong></td>
+      </tr>
+      <tr>
+        <td><code>SidebarAPI.expand(side)</code></td>
+        <td>'left'|'right'</td>
+        <td>void</td>
+        <td>Expand specified sidebar</td>
+        <td><strong>Stable</strong></td>
+      </tr>
+      <tr>
+        <td><code>SidebarAPI.toggle(side)</code></td>
+        <td>'left'|'right'</td>
+        <td>void</td>
+        <td>Toggle sidebar collapsed state</td>
+        <td><strong>Stable</strong></td>
+      </tr>
+      <tr>
+        <td><code>SidebarAPI.setWidth(side, width)</code></td>
+        <td>string, number</td>
+        <td>void</td>
+        <td>Set sidebar width in pixels</td>
+        <td><strong>Stable</strong></td>
+      </tr>
+      <tr>
+        <td><code>SidebarAPI.getState(side)</code></td>
+        <td>'left'|'right'</td>
+        <td>object</td>
+        <td>Get sidebar state info</td>
+        <td><strong>Stable</strong></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3 id="sidebar-example">Sidebar Usage Example</h3>
+
+  <pre><code>// Collapse the left navigation sidebar
+SidebarAPI.collapse('left');
+
+// Set a specific width for the right sidebar
+SidebarAPI.setWidth('right', 300);
+
+// Get current state of both sidebars
+const leftState = SidebarAPI.getState('left');
+const rightState = SidebarAPI.getState('right');
+
+console.log('Left sidebar:', leftState.collapsed ? 'collapsed' : `${leftState.width}px`);
+console.log('Right sidebar:', rightState.collapsed ? 'collapsed' : `${rightState.width}px`);</code></pre>
+
+  <!-- ─── EVENT SYSTEM ────────────────────── -->
+  <h2 id="event-system">Event System</h2>
+
+  <p>
+    DevDocs uses a custom event system for communication between components and plugins.
+  </p>
+
+  <h3 id="event-methods">Event Methods</h3>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Method</th>
+        <th>Parameters</th>
+        <th>Returns</th>
+        <th>Description</th>
+        <th>Status</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><code>EventAPI.on(event, handler)</code></td>
+        <td>string, function</td>
+        <td>function</td>
+        <td>Register event listener</td>
+        <td><strong>Stable</strong></td>
+      </tr>
+      <tr>
+        <td><code>EventAPI.off(event, handler)</code></td>
+        <td>string, function</td>
+        <td>boolean</td>
+        <td>Remove event listener</td>
+        <td><strong>Stable</strong></td>
+      </tr>
+      <tr>
+        <td><code>EventAPI.emit(event, data)</code></td>
+        <td>string, any</td>
+        <td>void</td>
+        <td>Emit event with data</td>
+        <td><strong>Stable</strong></td>
+      </tr>
+      <tr>
+        <td><code>EventAPI.once(event, handler)</code></td>
+        <td>string, function</td>
+        <td>function</td>
+        <td>Listen for event once only</td>
+        <td><strong>Stable</strong></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3 id="built-in-events">Built-in Events</h3>
+
+  <ul>
+    <li><code>app:init</code> - Application finished initializing</li>
+    <li><code>app:ready</code> - All plugins loaded and ready</li>
+    <li><code>nav:built</code> - Navigation tree rendered</li>
+    <li><code>page:loading</code> - Started loading new page (pageId)</li>
+    <li><code>page:loaded</code> - Finished loading page (pageData)</li>
+    <li><code>page:error</code> - Error loading page (error, pageId)</li>
+    <li><code>search:query</code> - Search query executed (query, results)</li>
+    <li><code>search:indexed</code> - Search index built (indexInfo)</li>
+    <li><code>sidebar:resized</code> - Sidebar width changed (side, width)</li>
+    <li><code>sidebar:collapsed</code> - Sidebar collapsed/expanded (side, collapsed)</li>
+    <li><code>theme:changed</code> - Theme toggled (themeName)</li>
+  </ul>
+
+  <h3 id="event-example">Event Usage Example</h3>
+
+  <pre><code>// Listen for page navigation events
+const unsubscribe = EventAPI.on('page:loaded', (pageData) => {
+  console.log(`Loaded page: ${pageData.title}`);
+  
+  // Custom logic after page loads
+  initializeCustomFeatures();
+});
+
+// Listen for theme changes
+EventAPI.on('theme:changed', (themeName) => {
+  console.log(`Theme changed to: ${themeName}`);
+  updateCustomThemeElements(themeName);
+});
+
+// Emit custom events
+EventAPI.emit('custom:action', { data: 'example' });
+
+// Remove event listener when needed
+unsubscribe();</code></pre>
+
+  <!-- ─── PLUGIN API ──────────────────────── -->
+  <h2 id="plugin-api">Plugin API</h2>
+
+  <p>
+    The Plugin API provides the foundation for creating reusable DevDocs extensions.
+  </p>
+
+  <h3 id="plugin-base-class">Plugin Base Class</h3>
+
+  <pre><code>class DevDocsPlugin {
+  constructor(options = {}) {
+    this.name = 'Plugin Name';
+    this.version = '1.0.0';
+    this.options = { ...this.defaultOptions, ...options };
+  }
+  
+  // Default configuration options
+  get defaultOptions() {
+    return {
+      enabled: true,
+      debug: false
+    };
+  }
+  
+  // Called when plugin is registered
+  init(app) {
+    this.app = app;
+    this.setupEventListeners();
+    this.setupUI();
+  }
+  
+  // Set up event listeners
+  setupEventListeners() {
+    // Override in subclass
+  }
+  
+  // Set up UI elements
+  setupUI() {
+    // Override in subclass  
+  }
+  
+  // Called when plugin is disabled
+  destroy() {
+    this.removeEventListeners();
+    this.cleanupUI();
+  }
+  
+  // Remove event listeners
+  removeEventListeners() {
+    // Override in subclass
+  }
+  
+  // Clean up UI elements
+  cleanupUI() {
+    // Override in subclass
+  }
+}</code></pre>
+
+  <h3 id="plugin-lifecycle">Plugin Lifecycle Hooks</h3>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Hook</th>
+        <th>When Called</th>
+        <th>Purpose</th>
+        <th>Status</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><code>init(app)</code></td>
+        <td>Plugin registration</td>
+        <td>Initialize plugin, set up listeners</td>
+        <td><strong>Stable</strong></td>
+      </tr>
+      <tr>
+        <td><code>onPageLoad(pageData)</code></td>
+        <td>After page loads</td>
+        <td>Process new page content</td>
+        <td><strong>Stable</strong></td>
+      </tr>
+      <tr>
+        <td><code>onSearchIndex(indexData)</code></td>
+        <td>Search index built</td>
+        <td>Extend search functionality</td>
+        <td><strong>Beta</strong></td>
+      </tr>
+      <tr>
+        <td><code>onThemeChange(theme)</code></td>
+        <td>Theme toggled</td>
+        <td>Adapt to theme changes</td>
+        <td><strong>Stable</strong></td>
+      </tr>
+      <tr>
+        <td><code>destroy()</code></td>
+        <td>Plugin disabled</td>
+        <td>Clean up resources</td>
+        <td><strong>Stable</strong></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- ─── UTILITY API ─────────────────────── -->
+  <h2 id="utility-api">Utility API</h2>
+
+  <p>
+    DevDocs provides utility functions for common tasks in plugin and theme development.
+  </p>
+
+  <h3 id="dom-utilities">DOM Utilities</h3>
+
+  <pre><code>// Element selection and manipulation
+UtilAPI.$(selector)              // Enhanced querySelector
+UtilAPI.$$(selector)             // Enhanced querySelectorAll  
+UtilAPI.createElement(tag, attrs, children) // Create element with attributes
+UtilAPI.insertAfter(newEl, target)         // Insert element after target
+
+// CSS class utilities
+UtilAPI.addClass(el, className)     // Add CSS class
+UtilAPI.removeClass(el, className)  // Remove CSS class
+UtilAPI.toggleClass(el, className)  // Toggle CSS class
+UtilAPI.hasClass(el, className)     // Check if class exists</code></pre>
+
+  <h3 id="storage-utilities">Storage Utilities</h3>
+
+  <pre><code>// LocalStorage wrapper with JSON support
+UtilAPI.storage.set(key, value)     // Set value (auto-stringify)
+UtilAPI.storage.get(key, default)   // Get value (auto-parse)
+UtilAPI.storage.remove(key)         // Remove value
+UtilAPI.storage.clear()             // Clear all DevDocs storage
+
+// Session storage
+UtilAPI.session.set(key, value)
+UtilAPI.session.get(key, default)
+UtilAPI.session.remove(key)
+UtilAPI.session.clear()</code></pre>
+
+  <h3 id="performance-utilities">Performance Utilities</h3>
+
+  <pre><code>// Debouncing and throttling
+UtilAPI.debounce(func, delay)       // Debounce function calls
+UtilAPI.throttle(func, limit)       // Throttle function calls
+
+// Animation frame utilities
+UtilAPI.nextFrame(callback)         // Schedule for next animation frame
+UtilAPI.afterPaint(callback)        // Schedule after paint
+
+// Performance measurement
+UtilAPI.measureTime(label, func)    // Measure function execution time
+UtilAPI.profileStart(label)         // Start performance profile
+UtilAPI.profileEnd(label)           // End performance profile</code></pre>
+
+  <div class="callout">
+    <div class="callout-title">📚 API Documentation</div>
+    <p>
+      All APIs include TypeScript definitions for enhanced development experience.
+      Use <code>DevDocsApp.getAPIDocumentation()</code> to access interactive API
+      explorer with live examples and parameter validation.
+    </p>
+  </div>
+
+</div>

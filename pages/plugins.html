@@ -1,0 +1,300 @@
+<div class="content-body">
+
+  <h1 id="plugins">Plugins</h1>
+
+  <p>
+    DevDocs supports extensibility through a flexible plugin system that allows you to add custom
+    functionality without modifying core files. This guide covers creating, installing, and managing
+    plugins to enhance your documentation experience.
+  </p>
+
+  <div class="callout">
+    <div class="callout-title">🔌 Plugin Philosophy</div>
+    <p>
+      Plugins in DevDocs are lightweight JavaScript modules that hook into the application lifecycle.
+      They can extend search capabilities, add content transformations, integrate external services,
+      or customize the UI without breaking core functionality.
+    </p>
+  </div>
+
+  <!-- ─── PLUGIN ARCHITECTURE ────────────── -->
+  <h2 id="plugin-architecture">Plugin Architecture</h2>
+
+  <p>
+    DevDocs plugins follow a simple event-driven architecture. Plugins register themselves with
+    the main application and can listen for specific lifecycle events or extend existing functionality.
+  </p>
+
+  <h3 id="plugin-lifecycle">Plugin Lifecycle Events</h3>
+
+  <p>Plugins can hook into these application events:</p>
+
+  <ul>
+    <li><strong>app:init</strong> - Application initialization complete</li>
+    <li><strong>nav:built</strong> - Navigation tree has been rendered</li>
+    <li><strong>page:loaded</strong> - New page content loaded via Ajax</li>
+    <li><strong>search:indexed</strong> - Search index building complete</li>
+    <li><strong>theme:changed</strong> - User toggled light/dark theme</li>
+    <li><strong>sidebar:resized</strong> - Left or right sidebar width changed</li>
+  </ul>
+
+  <h3 id="core-plugin-interface">Core Plugin Interface</h3>
+
+  <p>All plugins implement a standard interface for consistency:</p>
+
+  <pre><code>class DevDocsPlugin {
+  constructor(options = {}) {
+    this.name = 'My Plugin';
+    this.version = '1.0.0';
+    this.options = options;
+  }
+
+  // Called when plugin is registered
+  init(app) {
+    this.app = app;
+    this.setupEventListeners();
+  }
+
+  // Plugin-specific setup
+  setupEventListeners() {
+    this.app.on('page:loaded', this.onPageLoaded.bind(this));
+  }
+
+  // Handle page load events
+  onPageLoaded(pageData) {
+    // Your custom logic here
+  }
+
+  // Cleanup when plugin is disabled
+  destroy() {
+    // Remove listeners, clean up DOM, etc.
+  }
+}</code></pre>
+
+  <!-- ─── BUILT-IN PLUGINS ────────────────── -->
+  <h2 id="built-in-plugins">Built-in Plugins</h2>
+
+  <p>
+    DevDocs includes several built-in plugins that demonstrate the plugin architecture and
+    provide commonly requested functionality out of the box.
+  </p>
+
+  <h3 id="code-copy-plugin">Code Copy Plugin</h3>
+
+  <p>
+    Automatically adds copy-to-clipboard buttons to all code blocks. Users can click to copy
+    code snippets without manual text selection.
+  </p>
+
+  <pre><code>// Enable in app.js
+plugins: [
+  new CodeCopyPlugin({
+    buttonText: 'Copy',
+    successText: 'Copied!',
+    position: 'top-right'
+  })
+]</code></pre>
+
+  <h3 id="external-links-plugin">External Links Plugin</h3>
+
+  <p>
+    Detects external links in content and adds appropriate security attributes and visual indicators.
+    Helps users understand when they're leaving the documentation site.
+  </p>
+
+  <ul>
+    <li>Adds <code>rel="noopener noreferrer"</code> to external links</li>
+    <li>Opens external links in new tabs</li>
+    <li>Adds visual icon to indicate external destination</li>
+    <li>Excludes localhost and development URLs</li>
+  </ul>
+
+  <h3 id="analytics-plugin">Analytics Plugin</h3>
+
+  <p>
+    Integrates with popular analytics services to track page views, search queries, and user
+    interactions without compromising privacy or performance.
+  </p>
+
+  <pre><code>// Google Analytics integration
+new AnalyticsPlugin({
+  provider: 'ga4',
+  trackingId: 'G-XXXXXXXXXX',
+  trackPageViews: true,
+  trackSearchQueries: false,  // Respect user privacy
+  trackScrollDepth: true
+})</code></pre>
+
+  <!-- ─── CUSTOM PLUGINS ──────────────────── -->
+  <h2 id="creating-custom-plugins">Creating Custom Plugins</h2>
+
+  <p>
+    Building custom plugins lets you tailor DevDocs to your specific documentation needs.
+    Here's a step-by-step guide to creating your first plugin.
+  </p>
+
+  <h3 id="simple-plugin-example">Simple Plugin Example</h3>
+
+  <p>Let's create a plugin that adds reading time estimates to pages:</p>
+
+  <pre><code>class ReadingTimePlugin extends DevDocsPlugin {
+  constructor(options = {}) {
+    super();
+    this.name = 'Reading Time';
+    this.wordsPerMinute = options.wordsPerMinute || 200;
+  }
+
+  init(app) {
+    super.init(app);
+    this.app.on('page:loaded', this.addReadingTime.bind(this));
+  }
+
+  addReadingTime(pageData) {
+    const content = document.querySelector('.content-body');
+    if (!content) return;
+
+    // Count words in visible text
+    const text = content.textContent || content.innerText || '';
+    const wordCount = text.trim().split(/\s+/).length;
+    const readingTime = Math.ceil(wordCount / this.wordsPerMinute);
+
+    // Add reading time indicator
+    const timeIndicator = document.createElement('div');
+    timeIndicator.className = 'reading-time';
+    timeIndicator.innerHTML = `📖 ${readingTime} min read`;
+    
+    const title = content.querySelector('h1');
+    if (title) {
+      title.insertAdjacentElement('afterend', timeIndicator);
+    }
+  }
+}</code></pre>
+
+  <h3 id="advanced-plugin-features">Advanced Plugin Features</h3>
+
+  <p>More sophisticated plugins can integrate deeply with DevDocs functionality:</p>
+
+  <ul>
+    <li><strong>Search Enhancement</strong> - Add custom search filters or result ranking</li>
+    <li><strong>Content Transformation</strong> - Process Markdown, syntax highlighting, diagrams</li>
+    <li><strong>UI Extensions</strong> - Add toolbar buttons, status indicators, floating panels</li>
+    <li><strong>Data Integration</strong> - Pull content from CMSs, APIs, or external documentation</li>
+  </ul>
+
+  <div class="callout">
+    <div class="callout-title">🛠️ Development Tip</div>
+    <p>
+      Use browser DevTools to test plugins during development. The plugin system includes
+      debug logging that shows registration timing, event firing, and performance metrics.
+    </p>
+  </div>
+
+  <!-- ─── PLUGIN MANAGEMENT ──────────────── -->
+  <h2 id="plugin-management">Plugin Management</h2>
+
+  <p>
+    Managing multiple plugins requires careful attention to loading order, dependencies,
+    and potential conflicts between plugins.
+  </p>
+
+  <h3 id="plugin-registration">Plugin Registration</h3>
+
+  <p>Register plugins in <code>app.js</code> after the core application initializes:</p>
+
+  <pre><code>// app.js - Plugin registration
+const plugins = [
+  new CodeCopyPlugin(),
+  new ReadingTimePlugin({ wordsPerMinute: 180 }),
+  new ExternalLinksPlugin({ openInNewTab: true }),
+  new AnalyticsPlugin({ 
+    provider: 'plausible',
+    domain: 'docs.example.com'
+  })
+];
+
+// Initialize plugins after DOM is ready
+document.addEventListener('DOMContentLoaded', () => {
+  initializeApp();
+  
+  plugins.forEach(plugin => {
+    try {
+      plugin.init(app);
+      console.log(`✅ Plugin "${plugin.name}" loaded successfully`);
+    } catch (error) {
+      console.error(`❌ Plugin "${plugin.name}" failed to load:`, error);
+    }
+  });
+});</code></pre>
+
+  <h3 id="plugin-configuration">Plugin Configuration</h3>
+
+  <p>
+    Plugins should accept configuration objects to make them reusable across different
+    documentation sites. Store plugin settings in a separate configuration file:
+  </p>
+
+  <pre><code>// plugins-config.js
+export const pluginConfig = {
+  codeCopy: {
+    buttonText: 'Copy Code',
+    successText: '✅ Copied!',
+    showLanguage: true,
+    timeout: 2000
+  },
+  
+  readingTime: {
+    wordsPerMinute: 200,
+    showIcon: true,
+    position: 'after-title'  
+  },
+  
+  analytics: {
+    provider: 'none',  // Disable by default
+    respectDoNotTrack: true,
+    anonymizeIp: true
+  }
+};</code></pre>
+
+  <!-- ─── PLUGIN ECOSYSTEM ────────────────── -->
+  <h2 id="plugin-ecosystem">Plugin Ecosystem</h2>
+
+  <p>
+    The DevDocs community maintains a growing collection of useful plugins that extend
+    functionality for common documentation needs.
+  </p>
+
+  <h3 id="community-plugins">Popular Community Plugins</h3>
+
+  <ul>
+    <li><strong>Mermaid Diagrams</strong> - Render flowcharts and diagrams from text markup</li>
+    <li><strong>Math Rendering</strong> - Display mathematical equations using KaTeX or MathJax</li>
+    <li><strong>API Explorer</strong> - Interactive API documentation with request/response examples</li>
+    <li><strong>Feedback Widget</strong> - Collect user feedback on documentation pages</li>
+    <li><strong>Version Switcher</strong> - Navigate between different versions of documentation</li>
+    <li><strong>Print Optimization</strong> - Prepare content for printing with custom CSS</li>
+  </ul>
+
+  <h3 id="plugin-development-guidelines">Development Guidelines</h3>
+
+  <p>
+    When creating plugins for the DevDocs ecosystem, follow these best practices:
+  </p>
+
+  <ul>
+    <li>Keep plugins focused on a single responsibility</li>
+    <li>Provide comprehensive configuration options</li>
+    <li>Include error handling and graceful degradation</li>
+    <li>Document plugin APIs and usage examples</li>
+    <li>Test across different browsers and screen sizes</li>
+    <li>Consider accessibility implications of UI changes</li>
+  </ul>
+
+  <div class="callout">
+    <div class="callout-title">🤝 Contributing</div>
+    <p>
+      Share your plugins with the DevDocs community! Submit plugins to the official registry
+      or create GitHub repositories with the <code>devdocs-plugin</code> topic for discoverability.
+    </p>
+  </div>
+
+</div>

@@ -1,0 +1,537 @@
+<div class="content-body">
+
+  <h1 id="cli-reference">CLI Reference</h1>
+
+  <p>
+    DevDocs includes command-line utilities to streamline development, content management, and 
+    deployment workflows. This reference covers all available CLI tools and their usage patterns.
+  </p>
+
+  <div class="callout">
+    <div class="callout-title">🛠️ CLI Tools</div>
+    <p>
+      DevDocs CLI tools are designed to work with any environment that supports Node.js or Python.
+      Most commands can be run directly from your terminal without additional setup beyond the
+      prerequisites listed in each section.
+    </p>
+  </div>
+
+  <!-- ─── DEVDOCS CLI ─────────────────────── -->
+  <h2 id="devdocs-cli">DevDocs CLI</h2>
+
+  <p>
+    The main DevDocs CLI provides commands for project initialization, content management, and
+    build processes.
+  </p>
+
+  <h3 id="installation">Installation</h3>
+
+  <p>Install the DevDocs CLI globally via npm:</p>
+
+  <pre><code># Install globally
+npm install -g @devdocs/cli
+
+# Or use with npx (no global install)
+npx @devdocs/cli --help
+
+# Verify installation
+devdocs --version</code></pre>
+
+  <h3 id="project-commands">Project Commands</h3>
+
+  <h4 id="init-command">init</h4>
+
+  <p>Initialize a new DevDocs project in the current directory:</p>
+
+  <pre><code>devdocs init [project-name] [options]
+
+# Examples
+devdocs init my-docs
+devdocs init --template minimal
+devdocs init --no-git --theme dark</code></pre>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Option</th>
+        <th>Description</th>
+        <th>Default</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><code>--template &lt;name&gt;</code></td>
+        <td>Project template (default, minimal, api)</td>
+        <td>default</td>
+      </tr>
+      <tr>
+        <td><code>--theme &lt;name&gt;</code></td>
+        <td>Initial theme (light, dark, auto)</td>
+        <td>light</td>
+      </tr>
+      <tr>
+        <td><code>--no-git</code></td>
+        <td>Skip git repository initialization</td>
+        <td>false</td>
+      </tr>
+      <tr>
+        <td><code>--force</code></td>
+        <td>Overwrite existing files</td>
+        <td>false</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h4 id="serve-command">serve</h4>
+
+  <p>Start a local development server with live reload:</p>
+
+  <pre><code>devdocs serve [options]
+
+# Examples  
+devdocs serve
+devdocs serve --port 8080 --open
+devdocs serve --host 0.0.0.0 --cors</code></pre>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Option</th>
+        <th>Description</th>
+        <th>Default</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><code>--port &lt;number&gt;</code></td>
+        <td>Server port</td>
+        <td>3000</td>
+      </tr>
+      <tr>
+        <td><code>--host &lt;address&gt;</code></td>
+        <td>Server host address</td>
+        <td>localhost</td>
+      </tr>
+      <tr>
+        <td><code>--open</code></td>
+        <td>Open browser automatically</td>
+        <td>false</td>
+      </tr>
+      <tr>
+        <td><code>--cors</code></td>
+        <td>Enable CORS headers</td>
+        <td>false</td>
+      </tr>
+      <tr>
+        <td><code>--watch</code></td>
+        <td>Enable file watching and live reload</td>
+        <td>true</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h4 id="build-command">build</h4>
+
+  <p>Build the project for production deployment:</p>
+
+  <pre><code>devdocs build [options]
+
+# Examples
+devdocs build
+devdocs build --output dist --minify
+devdocs build --no-search-index</code></pre>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Option</th>
+        <th>Description</th>
+        <th>Default</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><code>--output &lt;dir&gt;</code></td>
+        <td>Build output directory</td>
+        <td>build</td>
+      </tr>
+      <tr>
+        <td><code>--minify</code></td>
+        <td>Minify CSS and JavaScript</td>
+        <td>false</td>
+      </tr>
+      <tr>
+        <td><code>--no-search-index</code></td>
+        <td>Skip search index generation</td>
+        <td>false</td>
+      </tr>
+      <tr>
+        <td><code>--base-url &lt;url&gt;</code></td>
+        <td>Base URL for deployment</td>
+        <td>/</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- ─── CONTENT MANAGEMENT ─────────────── -->
+  <h2 id="content-management">Content Management</h2>
+
+  <p>
+    CLI commands for creating, organizing, and validating documentation content.
+  </p>
+
+  <h3 id="page-commands">Page Commands</h3>
+
+  <h4 id="new-page-command">new-page</h4>
+
+  <p>Create a new documentation page with proper structure:</p>
+
+  <pre><code>devdocs new-page &lt;name&gt; [options]
+
+# Examples
+devdocs new-page "Getting Started" --section intro
+devdocs new-page "API Guide" --template api --section reference</code></pre>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Option</th>
+        <th>Description</th>
+        <th>Default</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><code>--section &lt;name&gt;</code></td>
+        <td>Navigation section to add page to</td>
+        <td>none</td>
+      </tr>
+      <tr>
+        <td><code>--template &lt;name&gt;</code></td>
+        <td>Page template (basic, api, tutorial)</td>
+        <td>basic</td>
+      </tr>
+      <tr>
+        <td><code>--slug &lt;name&gt;</code></td>
+        <td>Custom URL slug</td>
+        <td>auto-generated</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h4 id="validate-command">validate</h4>
+
+  <p>Validate content structure and check for issues:</p>
+
+  <pre><code>devdocs validate [path] [options]
+
+# Examples
+devdocs validate
+devdocs validate pages/ --fix-links
+devdocs validate --strict --report json</code></pre>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Option</th>
+        <th>Description</th>
+        <th>Default</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><code>--fix-links</code></td>
+        <td>Automatically fix broken internal links</td>
+        <td>false</td>
+      </tr>
+      <tr>
+        <td><code>--strict</code></td>
+        <td>Enable strict validation (fail on warnings)</td>
+        <td>false</td>
+      </tr>
+      <tr>
+        <td><code>--report &lt;format&gt;</code></td>
+        <td>Report format (console, json, html)</td>
+        <td>console</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h4 id="generate-nav-command">generate-nav</h4>
+
+  <p>Auto-generate navigation structure from file system:</p>
+
+  <pre><code>devdocs generate-nav [options]
+
+# Examples
+devdocs generate-nav --depth 3
+devdocs generate-nav --exclude "*.draft.html" --sort alpha</code></pre>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Option</th>
+        <th>Description</th>
+        <th>Default</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><code>--depth &lt;number&gt;</code></td>
+        <td>Maximum navigation depth</td>
+        <td>4</td>
+      </tr>
+      <tr>
+        <td><code>--exclude &lt;pattern&gt;</code></td>
+        <td>Glob pattern for files to exclude</td>
+        <td>none</td>
+      </tr>
+      <tr>
+        <td><code>--sort &lt;method&gt;</code></td>
+        <td>Sort method (alpha, date, custom)</td>
+        <td>alpha</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- ─── SEARCH MANAGEMENT ──────────────── -->
+  <h2 id="search-management">Search Management</h2>
+
+  <p>
+    Commands for managing the search index and search functionality.
+  </p>
+
+  <h4 id="index-command">index</h4>
+
+  <p>Build or rebuild the search index:</p>
+
+  <pre><code>devdocs index [options]
+
+# Examples
+devdocs index
+devdocs index --verbose --output search-index.json
+devdocs index --exclude "pages/archive/**"</code></pre>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Option</th>
+        <th>Description</th>
+        <th>Default</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><code>--output &lt;file&gt;</code></td>
+        <td>Index output file (JSON)</td>
+        <td>auto</td>
+      </tr>
+      <tr>
+        <td><code>--exclude &lt;pattern&gt;</code></td>
+        <td>Exclude files matching pattern</td>
+        <td>none</td>
+      </tr>
+      <tr>
+        <td><code>--verbose</code></td>
+        <td>Show detailed indexing progress</td>
+        <td>false</td>
+      </tr>
+      <tr>
+        <td><code>--stemming</code></td>
+        <td>Enable word stemming</td>
+        <td>false</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h4 id="search-test-command">search-test</h4>
+
+  <p>Test search functionality with sample queries:</p>
+
+  <pre><code>devdocs search-test &lt;query&gt; [options]
+
+# Examples
+devdocs search-test "configuration"
+devdocs search-test "api reference" --max-results 5 --debug</code></pre>
+
+  <!-- ─── THEME MANAGEMENT ───────────────── -->
+  <h2 id="theme-management">Theme Management</h2>
+
+  <p>
+    Commands for creating and managing custom themes.
+  </p>
+
+  <h4 id="theme-create-command">theme-create</h4>
+
+  <p>Create a new custom theme:</p>
+
+  <pre><code>devdocs theme-create &lt;name&gt; [options]
+
+# Examples  
+devdocs theme-create corporate --base light
+devdocs theme-create dark-purple --colors purple.json</code></pre>
+
+  <h4 id="theme-build-command">theme-build</h4>
+
+  <p>Build and validate a custom theme:</p>
+
+  <pre><code>devdocs theme-build &lt;theme-dir&gt; [options]
+
+# Examples
+devdocs theme-build themes/corporate --output themes/corporate.css
+devdocs theme-build themes/custom --validate --minify</code></pre>
+
+  <!-- ─── DEPLOYMENT COMMANDS ────────────── -->
+  <h2 id="deployment-commands">Deployment Commands</h2>
+
+  <p>
+    Commands for deploying DevDocs to various hosting platforms.
+  </p>
+
+  <h4 id="deploy-command">deploy</h4>
+
+  <p>Deploy to supported hosting platforms:</p>
+
+  <pre><code>devdocs deploy &lt;platform&gt; [options]
+
+# Examples
+devdocs deploy github-pages --branch gh-pages
+devdocs deploy netlify --site-id abc123
+devdocs deploy s3 --bucket my-docs-bucket</code></pre>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Platform</th>
+        <th>Required Options</th>
+        <th>Description</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><code>github-pages</code></td>
+        <td><code>--branch</code></td>
+        <td>Deploy to GitHub Pages</td>
+      </tr>
+      <tr>
+        <td><code>netlify</code></td>
+        <td><code>--site-id</code></td>
+        <td>Deploy to Netlify</td>
+      </tr>
+      <tr>
+        <td><code>s3</code></td>
+        <td><code>--bucket</code></td>
+        <td>Deploy to AWS S3</td>
+      </tr>
+      <tr>
+        <td><code>ftp</code></td>
+        <td><code>--host, --user</code></td>
+        <td>Deploy via FTP</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- ─── UTILITY COMMANDS ───────────────── -->
+  <h2 id="utility-commands">Utility Commands</h2>
+
+  <p>
+    Miscellaneous utility commands for development and maintenance.
+  </p>
+
+  <h4 id="convert-command">convert</h4>
+
+  <p>Convert content from other documentation formats:</p>
+
+  <pre><code>devdocs convert &lt;format&gt; &lt;input&gt; [options]
+
+# Examples
+devdocs convert markdown docs/ --output pages/
+devdocs convert gitbook book.json --preserve-structure</code></pre>
+
+  <h4 id="analyze-command">analyze</h4>
+
+  <p>Analyze project structure and provide optimization suggestions:</p>
+
+  <pre><code>devdocs analyze [options]
+
+# Examples
+devdocs analyze --performance --accessibility
+devdocs analyze --report html --output analysis.html</code></pre>
+
+  <h4 id="clean-command">clean</h4>
+
+  <p>Clean up generated files and caches:</p>
+
+  <pre><code>devdocs clean [options]
+
+# Examples
+devdocs clean
+devdocs clean --cache-only</code></pre>
+
+  <!-- ─── SCRIPTING & AUTOMATION ─────── -->
+  <h2 id="scripting-automation">Scripting & Automation</h2>
+
+  <p>
+    Examples of using DevDocs CLI in scripts and automated workflows.
+  </p>
+
+  <h3 id="npm-scripts">NPM Scripts Integration</h3>
+
+  <pre><code>// package.json
+{
+  "scripts": {
+    "docs:dev": "devdocs serve --open",
+    "docs:build": "devdocs build --minify",
+    "docs:validate": "devdocs validate --strict",
+    "docs:deploy": "npm run docs:build && devdocs deploy netlify"
+  }
+}</code></pre>
+
+  <h3 id="ci-cd-examples">CI/CD Examples</h3>
+
+  <pre><code># GitHub Actions example (.github/workflows/docs.yml)
+name: Deploy Documentation
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+      - run: npm install -g @devdocs/cli
+      - run: devdocs validate --strict
+      - run: devdocs build --minify
+      - run: devdocs deploy github-pages --branch gh-pages</code></pre>
+
+  <h3 id="batch-operations">Batch Operations</h3>
+
+  <pre><code># Bash script for content migration
+#!/bin/bash
+
+# Convert all markdown files
+for file in old-docs/*.md; do
+  devdocs convert markdown "$file" --output "pages/$(basename "$file" .md).html"
+done
+
+# Rebuild navigation and search
+devdocs generate-nav --sort alpha
+devdocs index --verbose
+
+# Validate everything
+devdocs validate --fix-links</code></pre>
+
+  <div class="callout">
+    <div class="callout-title">🚀 Pro Tips</div>
+    <p>
+      Use <code>devdocs --help</code> or <code>devdocs &lt;command&gt; --help</code> for detailed
+      information about any command. Most commands support <code>--dry-run</code> to preview
+      changes before executing them.
+    </p>
+  </div>
+
+</div>

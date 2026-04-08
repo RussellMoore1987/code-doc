@@ -1,0 +1,206 @@
+<div class="content-body">
+
+  <h1 id="environment-setup">Environment Setup</h1>
+
+  <p>
+    This guide covers how to configure your development environment for optimal DevDocs development.
+    Whether you're customizing the theme, adding new features, or preparing to contribute, these
+    environment configurations will streamline your workflow.
+  </p>
+
+  <!-- ─── DEVELOPMENT TOOLS ────────────────── -->
+  <h2 id="development-tools">Essential Development Tools</h2>
+
+  <p>
+    While DevDocs runs with just a basic HTTP server, having the right development tools makes
+    content creation and customization much more efficient.
+  </p>
+
+  <h3 id="code-editor-setup">Code Editor Configuration</h3>
+
+  <p>We recommend <strong>Visual Studio Code</strong> with these extensions:</p>
+
+  <ul>
+    <li><strong>Live Server</strong> - Instant reload when you save HTML/CSS/JS changes</li>
+    <li><strong>HTML CSS Support</strong> - Better autocomplete for CSS classes</li>
+    <li><strong>Emmet</strong> - Rapid HTML scaffolding (usually built-in)</li>
+    <li><strong>Prettier</strong> - Code formatting for consistent style</li>
+  </ul>
+
+  <div class="callout">
+    <div class="callout-title">💡 Pro Tip</div>
+    <p>
+      Enable <em>Format on Save</em> in VS Code settings to automatically clean up your HTML and CSS
+      as you work. This keeps the codebase consistent across team members.
+    </p>
+  </div>
+
+  <h3 id="browser-devtools">Browser Developer Tools</h3>
+
+  <p>
+    Since DevDocs uses extensive CSS custom properties and JavaScript interactions, having proper
+    browser tools configured is essential:
+  </p>
+
+  <ul>
+    <li><strong>Chrome DevTools</strong> - Best CSS Grid/Flexbox inspection</li>
+    <li><strong>Firefox Developer Edition</strong> - Excellent CSS custom property debugging</li>
+    <li><strong>Accessibility Inspector</strong> - Built into both browsers, crucial for testing navigation</li>
+  </ul>
+
+  <!-- ─── PROJECT STRUCTURE ───────────────── -->
+  <h2 id="project-structure">Understanding Project Structure</h2>
+
+  <p>
+    DevDocs follows a flat file structure that keeps everything organized without complex build systems:
+  </p>
+
+  <pre><code>devdocs/
+├── index.html          # Main application shell
+├── styles.css          # All styling + CSS custom properties
+├── app.js             # Navigation, search, UI interactions
+├── images/            # Logos, icons, diagrams
+│   ├── logo.svg
+│   └── dark_logo.svg
+└── pages/             # Content fragments (loaded via Ajax)
+    ├── intro.html
+    ├── installation.html
+    ├── first-steps.html
+    ├── environment-setup.html
+    └── ...</code></pre>
+
+  <h3 id="content-authoring-workflow">Content Authoring Workflow</h3>
+
+  <p>The typical workflow for adding new content:</p>
+
+  <ol>
+    <li><strong>Create</strong> a new HTML file in the <code>pages/</code> directory</li>
+    <li><strong>Structure</strong> content using proper heading hierarchy (h1 → h2 → h3 → h4)</li>
+    <li><strong>Add</strong> the page reference to <code>NAV_DATA</code> in <code>app.js</code></li>
+    <li><strong>Test</strong> navigation, search, and right-sidebar outline generation</li>
+    <li><strong>Validate</strong> accessibility with screen reader testing</li>
+  </ol>
+
+  <!-- ─── CUSTOMIZATION ENV ──────────────── -->
+  <h2 id="customization-environment">Customization Environment</h2>
+
+  <p>
+    If you plan to customize DevDocs beyond content changes, these environment setups will
+    help you work more effectively with the codebase.
+  </p>
+
+  <h3 id="css-custom-properties">CSS Custom Properties Workflow</h3>
+
+  <p>
+    All theming happens through CSS custom properties. Create a <code>theme-dev.css</code> file
+    during development to test color schemes without modifying the main stylesheet:
+  </p>
+
+  <pre><code>/* theme-dev.css - development overrides */
+:root {
+  --accent: #ff6b35;        /* Test orange theme */
+  --accent-light: #fff4f2;
+  --nav-active-bar: #ff6b35;
+  --bg-header: #1a1a1a;     /* Dark header experiment */
+}
+
+[data-theme="dark"] {
+  --accent: #ff8c69;
+  --bg-header: #0d1117;
+}</code></pre>
+
+  <p>Link this file after <code>styles.css</code> in your local <code>index.html</code> for testing.</p>
+
+  <h3 id="javascript-debugging">JavaScript Debugging Setup</h3>
+
+  <p>
+    Enable JavaScript debugging features in your browser console. DevDocs logs helpful information
+    that aids in navigation and search troubleshooting:
+  </p>
+
+  <ul>
+    <li>Navigation tree build process and timing</li>
+    <li>Ajax content loading success/failure</li>
+    <li>Search index creation and query performance</li>
+    <li>Scroll-spy and outline generation events</li>
+  </ul>
+
+  <div class="callout">
+    <div class="callout-title">🔧 Debug Mode</div>
+    <p>
+      Add <code>?debug=true</code> to your localhost URL to enable verbose console logging.
+      This reveals the internal state changes as you navigate through the documentation.
+    </p>
+  </div>
+
+  <!-- ─── PERFORMANCE SETUP ──────────────── -->
+  <h2 id="performance-monitoring">Performance Monitoring</h2>
+
+  <p>
+    Even though DevDocs is lightweight, monitoring performance during development ensures
+    your content additions don't degrade the user experience.
+  </p>
+
+  <h3 id="lighthouse-integration">Lighthouse Integration</h3>
+
+  <p>Run regular Lighthouse audits to check:</p>
+
+  <ul>
+    <li><strong>Performance</strong> - JavaScript execution time, content loading speed</li>
+    <li><strong>Accessibility</strong> - Keyboard navigation, screen reader compatibility</li>
+    <li><strong>Best Practices</strong> - HTTPS usage, console errors, deprecated APIs</li>
+    <li><strong>SEO</strong> - Meta descriptions, heading hierarchy, link text</li>
+  </ul>
+
+  <h3 id="content-size-monitoring">Content Size Monitoring</h3>
+
+  <p>
+    Keep individual page files under 50KB for optimal loading performance. Use browser DevTools
+    to monitor:
+  </p>
+
+  <ul>
+    <li>Network tab → Ajax requests for page content</li>
+    <li>Performance tab → JavaScript execution during navigation</li>
+    <li>Memory tab → DOM node count as content grows</li>
+  </ul>
+
+  <!-- ─── TESTING SETUP ────────────────────── -->
+  <h2 id="testing-environment">Testing Environment</h2>
+
+  <p>
+    Comprehensive testing ensures DevDocs works reliably across different browsers and devices.
+  </p>
+
+  <h3 id="cross-browser-testing">Cross-Browser Testing</h3>
+
+  <p>Test core functionality across these minimum browser requirements:</p>
+
+  <ul>
+    <li><strong>Chrome 90+</strong> - CSS Grid, custom properties, Fetch API</li>
+    <li><strong>Firefox 85+</strong> - JavaScript modules, CSS :focus-visible</li>
+    <li><strong>Safari 14+</strong> - CSS aspect-ratio, ResizeObserver</li>
+    <li><strong>Edge 90+</strong> - Same as Chrome (Chromium-based)</li>
+  </ul>
+
+  <h3 id="responsive-testing">Responsive Design Testing</h3>
+
+  <p>
+    Test the responsive behavior at these key breakpoints using browser DevTools device emulation:
+  </p>
+
+  <ul>
+    <li><strong>Mobile</strong> - 375px width (sidebar collapses to overlay)</li>
+    <li><strong>Tablet</strong> - 768px width (right sidebar may be hidden)</li>
+    <li><strong>Desktop</strong> - 1200px+ width (full three-column layout)</li>
+  </ul>
+
+  <div class="callout">
+    <div class="callout-title">📱 Mobile Testing</div>
+    <p>
+      Pay special attention to touch interactions on mobile devices. The sidebar resize handles
+      and navigation should work smoothly with touch gestures, not just mouse interactions.
+    </p>
+  </div>
+
+</div>
