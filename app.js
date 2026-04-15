@@ -201,24 +201,24 @@ async function buildSearchIndex() {
         // Extract all headings and sections for indexing
         const headings = Array.from(doc.querySelectorAll('h1, h2, h3, h4, h5, h6'));
         const sections = [];
-        
+
         headings.forEach((heading, index) => {
           const id = heading.id || `section-${index}`;
           const level = parseInt(heading.tagName.charAt(1));
           const text = heading.textContent.trim();
           
-          if (!text) return; // Skip empty headings
+          if (!text) return; // Skip empty headings, ex <h1></h1>
           
           // Get text content of section (until next heading of same or higher level)
           let content = '';
           let nextEl = heading.nextElementSibling;
-          while (nextEl && content.length < 500) {
+          while (nextEl) {
             const tagName = nextEl.tagName.toLowerCase();
             if (tagName.match(/^h[1-6]$/)) {
-              const nextLevel = parseInt(tagName.charAt(1));
-              if (nextLevel <= level) break;
+              break; // Stop at next heading
             }
-            if (nextEl.innerHTML && nextEl.innerHTML.trim()) {
+
+            if (nextEl?.innerHTML?.trim()) {
               // Use innerHTML to capture all content, then strip HTML properly later
               content += nextEl.innerHTML.trim() + ' ';
             }
@@ -228,7 +228,7 @@ async function buildSearchIndex() {
           sections.push({
             id,
             title: text,
-            content: content.trim().substring(0, 500), // Limit content length
+            content: content.trim(), // Limit content length
             level
           });
         });
@@ -318,7 +318,7 @@ function performSearch(query) {
         title: page.title,
         snippet: getSnippet(page.title, query),
         navId: page.navInfo ? page.navInfo.id : null,
-        instanceIndex: pageQueryIndex[page.url]++
+        instanceIndex: ++pageQueryIndex[page.url]
       });
     }
     
@@ -337,21 +337,12 @@ function performSearch(query) {
           snippet: getSnippet(matchText, query),
           navId: page.navInfo ? page.navInfo.id : null,
           sectionId: section.id,
-          instanceIndex: pageQueryIndex[page.url]++
+          instanceIndex: ++pageQueryIndex[page.url]
         });
       }
     }
   }
   
-  // Sort results by relevance (title matches first, then content matches)
-  searchState.results.sort((a, b) => {
-    const aIsTitle = a.type === 'page' || a.title.toLowerCase().includes(query);
-    const bIsTitle = b.type === 'page' || b.title.toLowerCase().includes(query);
-    
-    if (aIsTitle && !bIsTitle) return -1;
-    if (!aIsTitle && bIsTitle) return 1;
-    return 0;
-  });
   
   // Limit results
   searchState.results = searchState.results.slice(0, 10);
