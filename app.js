@@ -132,6 +132,7 @@ const elSearchInputWrapper = document.getElementById('search-input-wrapper');
 const elSearchInput = document.getElementById('search-input');
 const elSearchClose = document.getElementById('search-close');
 const elSearchResults = document.getElementById('search-results');
+const elSearchResultCount = document.getElementById('search-result-count');
 const elSearchErrorMessage = document.getElementById('search-error-message');
 const elSearchNavControls = document.getElementById('search-nav-controls');
 const elSearchMatchInfo = document.getElementById('search-match-info');
@@ -427,12 +428,14 @@ function renderSearchResults() {
   
   if (!searchState.currentQuery.trim()) {
     elSearchResults.classList.remove('visible');
+    hideResultCount();
     return;
   }
   
   // If there's a validation error, don't show results
   if (searchState.hasValidationError) {
     elSearchResults.classList.remove('visible');
+    hideResultCount();
     return;
   }
   
@@ -443,6 +446,7 @@ function renderSearchResults() {
       </div>
     `;
     elSearchResults.classList.add('visible');
+    hideResultCount();
     return;
   }
 
@@ -454,6 +458,7 @@ function renderSearchResults() {
       </div>
     `;
     elSearchResults.classList.add('visible');
+    hideResultCount();
     return
   }
 
@@ -473,6 +478,7 @@ function renderSearchResults() {
   
   elSearchResults.innerHTML = resultsHTML;
   elSearchResults.classList.add('visible');
+  showResultCount(searchState.results.length, searchState.results.length);
 }
 
 function stripHtmlExceptMark(html) {
@@ -504,6 +510,26 @@ function escapeHtml(text) {
   const div = document.createElement('div');
   div.textContent = text;
   return div.innerHTML;
+}
+
+/**
+ * Show result count
+ */
+function showResultCount(showing, total) {
+  if (!elSearchResultCount) return;
+  
+  elSearchResultCount.textContent = `Showing ${showing} of ${total} results`;
+  elSearchResultCount.style.bottom = `-${elSearchResults.offsetHeight + 30}px`; // make it show up in the right place
+  elSearchResultCount.classList.add('visible');
+}
+
+/**
+ * Hide result count
+ */
+function hideResultCount() {
+  if (!elSearchResultCount) return;
+  
+  elSearchResultCount.classList.remove('visible');
 }
 
 /* ═══════════════════════════════════════════════════════════════
@@ -755,6 +781,7 @@ function closeSearch() {
   
   elSearchInputWrapper.classList.remove('expanded', 'focused');
   elSearchResults.classList.remove('visible');
+  hideResultCount(); // Clear result count
   hideSearchError(); // Clear any error messages
   elSearchInput.value = '';
   
@@ -768,7 +795,7 @@ function closeSearch() {
 function initSearch() {
   // Verify all search elements exist
   if (!elSearchToggle || !elSearchInputWrapper || !elSearchInput || 
-      !elSearchClose || !elSearchResults || !elSearchContainer) {
+      !elSearchClose || !elSearchResults || !elSearchResultCount || !elSearchContainer) {
     console.warn('Search elements not found - search functionality disabled');
     return;
   }

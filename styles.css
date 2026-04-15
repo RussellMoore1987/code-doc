@@ -432,7 +432,7 @@ button {
   text-overflow: ellipsis;
 }
 
-/* Nested list — indentation handled entirely by child row padding */
+/* Nested list - indentation handled entirely by child row padding */
 .nav-children {
   display: none;
 }
@@ -440,7 +440,7 @@ button {
   display: block;
 }
 
-/* Section header rows (no page — groups only) */
+/* Section header rows (no page - groups only) */
 .nav-row.is-group {
   font-weight: 600;
   font-size: 13px;
@@ -791,7 +791,7 @@ button {
    RESPONSIVE
    ═══════════════════════════════════════════════════════════════ */
 
-/* Breakpoint: < 1200px — auto collapse right sidebar */
+/* Breakpoint: < 1200px - auto collapse right sidebar */
 @media (max-width: 1200px) {
   .sidebar-right,
   .resize-handle-right,
@@ -804,7 +804,7 @@ button {
   }
 }
 
-/* Breakpoint: < 800px — auto collapse left sidebar */
+/* Breakpoint: < 800px - auto collapse left sidebar */
 @media (max-width: 800px) {
   .content-body {
     padding: 24px 18px 48px;
@@ -882,14 +882,12 @@ body.is-resizing {
 
 .search-results {
   position: absolute;
-  top: 100%;
+  top: calc(100% + 2px);
   right: 0;
   width: 400px;
   max-height: 400px;
   background: var(--bg-content);
   border: 1px solid var(--border);
-  border-top: none;
-  border-radius: 0 0 6px 6px;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
   overflow-y: auto;
   z-index: 99;
@@ -1087,6 +1085,34 @@ body.right-collapsed .search-nav-controls {
 }
 
 .search-error-message.visible {
+  display: block;
+}
+
+.search-result-count {
+  position: absolute;
+  bottom: calc(100% + 400px);
+  right: 0;
+  width: 400px; /* Match search results width */
+  background: var(--bg-content);
+  border: 1px solid var(--border);
+  border-top: none;
+  border-radius: 0 0 6px 6px;
+  padding: 6px 16px;
+  color: var(--text-muted);
+  font-size: 11px;
+  text-align: right;
+  display: none;
+  z-index: 100;
+  font-weight: 500;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+[data-theme="dark"] .search-result-count {
+  border-color: var(--border);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.search-result-count.visible {
   display: block;
 }
 
