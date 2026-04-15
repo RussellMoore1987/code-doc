@@ -286,6 +286,7 @@ function performSearch(query) {
   if (!query.trim()) {
     searchState.results = [];
     searchState.hasValidationError = false;
+    searchState.currentQuery = ''; // Reset current query
     return;
   }
   
@@ -342,10 +343,6 @@ function performSearch(query) {
       }
     }
   }
-  
-  
-  // Limit results
-  searchState.results = searchState.results.slice(0, 10);
 }
 
 /**
@@ -447,6 +444,17 @@ function renderSearchResults() {
     `;
     elSearchResults.classList.add('visible');
     return;
+  }
+
+  // if you would like more results for the user, you can up the number or comment out this if statement
+  if (searchState.results.length > 250) {
+    elSearchResults.innerHTML = `
+      <div class="search-no-results">
+        Too many results (${searchState.results.length}) for "${escapeHtml(searchState.currentQuery)}". Please refine your search.
+      </div>
+    `;
+    elSearchResults.classList.add('visible');
+    return
   }
 
   const resultsHTML = searchState.results.map((result, index) => {
