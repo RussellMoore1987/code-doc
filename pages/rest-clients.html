@@ -1,0 +1,181 @@
+<div class="content-body">
+
+  <h1 id="rest-clients">REST Clients</h1>
+
+  <p>
+    DevDocs can be extended to fetch live data from REST APIs — for dynamic search indexes,
+    user-specific content, analytics dashboards, or CMS-managed pages. This page covers
+    best practices for writing robust REST client code in a static site context.
+  </p>
+
+  <div class="callout">
+    <div class="callout-title">ℹ The Fetch API</div>
+    <p>
+      Modern browsers include the <code>fetch()</code> API natively. DevDocs already uses it
+      for page loading. You can use the same patterns for any REST endpoint, with no additional
+      library required.
+    </p>
+  </div>
+
+  <!-- ─── BASIC FETCH ───────────────────── -->
+  <h2 id="basic-fetch">Basic GET Request</h2>
+
+  <pre><code>async function fetchData(endpoint) {
+  const response = await fetch(`/api/v1/${endpoint}`);
+
+  if (!response.ok) {
+    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+  }
+
+  return response.json();
+}
+
+// Usage
+const data = await fetchData('pages/metadata');</code></pre>
+
+  <!-- ─── HTTP METHODS ──────────────────── -->
+  <h2 id="http-methods">HTTP Methods</h2>
+
+  <h3 id="post-request">POST Request</h3>
+
+  <pre><code>async function createResource(endpoint, body) {
+  const response = await fetch(`/api/v1/${endpoint}`, {
+    method:  'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body:    JSON.stringify(body)
+  });
+
+  if (!response.ok) throw new Error(`POST failed: ${response.status}`);
+  return response.json();
+}</code></pre>
+
+  <h3 id="put-patch">PUT and PATCH</h3>
+
+  <pre><code>// Full replacement
+async function updateResource(endpoint, id, body) {
+  return fetch(`/api/v1/${endpoint}/${id}`, {
+    method:  'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body:    JSON.stringify(body)
+  }).then(r => r.json());
+}
+
+// Partial update
+async function patchResource(endpoint, id, fields) {
+  return fetch(`/api/v1/${endpoint}/${id}`, {
+    method:  'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body:    JSON.stringify(fields)
+  }).then(r => r.json());
+}</code></pre>
+
+  <!-- ─── ERROR HANDLING ─────────────────── -->
+  <h2 id="rest-error-handling">Error Handling</h2>
+
+  <p>
+    A clean error-handling wrapper normalizes HTTP and network errors into a consistent shape:
+  </p>
+
+  <pre><code>class ApiError extends Error {
+  constructor(status, message, body) {
+    super(message);
+    this.status = status;
+    this.body   = body;
+  }
+}
+
+async function apiFetch(url, options = {}) {
+  let response;
+  try {
+    response = await fetch(url, options);
+  } catch (networkError) {
+    throw new ApiError(0, 'Network error', null);
+  }
+
+  if (!response.ok) {
+    const body = await response.json().catch(() => null);
+    throw new ApiError(response.status, response.statusText, body);
+  }
+
+  return response.json();
+}
+
+// Usage
+try {
+  const data = await apiFetch('/api/v1/pages');
+} catch (err) {
+  if (err.status === 404) showNotFound();
+  else if (err.status === 401) redirectToLogin();
+  else showGenericError(err.message);
+}</code></pre>
+
+  <!-- ─── PAGINATION ─────────────────────── -->
+  <h2 id="pagination">Handling Pagination</h2>
+
+  <pre><code>async function fetchAllPages(endpoint) {
+  const results = [];
+  let cursor    = null;
+
+  do {
+    const url  = cursor ? `${endpoint}?cursor=${cursor}` : endpoint;
+    const page = await apiFetch(url);
+
+    results.push(...page.items);
+    cursor = page.nextCursor ?? null;
+  } while (cursor);
+
+  return results;
+}</code></pre>
+
+  <!-- ─── CACHING ────────────────────────── -->
+  <h2 id="rest-caching">Client-Side Caching</h2>
+
+  <pre><code>const cache = new Map();
+const TTL   = 5 * 60 * 1000; // 5 minutes
+
+async function cachedFetch(url) {
+  const cached = cache.get(url);
+
+  if (cached && Date.now() - cached.timestamp < TTL) {
+    return cached.data;
+  }
+
+  const data = await apiFetch(url);
+  cache.set(url, { data, timestamp: Date.now() });
+  return data;
+}</code></pre>
+
+  <!-- ─── ABORT CONTROLLER ──────────────── -->
+  <h2 id="abort-controller">Request Cancellation</h2>
+
+  <p>
+    Cancel in-flight requests when the user navigates away or types a new search query:
+  </p>
+
+  <pre><code>let activeController = null;
+
+async function searchApi(query) {
+  // Cancel any previous request
+  activeController?.abort();
+  activeController = new AbortController();
+
+  try {
+    return await apiFetch(`/api/v1/search?q=${encodeURIComponent(query)}`, {
+      signal: activeController.signal
+    });
+  } catch (err) {
+    if (err.name === 'AbortError') return null; // Silently ignore cancellations
+    throw err;
+  }
+}</code></pre>
+
+  <div class="callout">
+    <div class="callout-title">ℹ Timeout Pattern</div>
+    <p>
+      To add a timeout to any fetch request, create an <code>AbortController</code> and call
+      <code>controller.abort()</code> after a <code>setTimeout()</code>. The DevDocs app already
+      uses this pattern for managed event listener cleanup.
+    </p>
+  </div>
+
+</div>

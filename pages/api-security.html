@@ -1,0 +1,165 @@
+<div class="content-body">
+
+  <h1 id="api-security">API Security</h1>
+
+  <p>
+    When DevDocs integrates with backend APIs — for search indexing, user management, or
+    content updates — those API calls must be secured properly. This page covers the key
+    threats and countermeasures for API communication in a documentation platform context.
+  </p>
+
+  <div class="callout warning">
+    <div class="callout-title">⚠ Never Expose API Keys Client-Side</div>
+    <p>
+      Any secret embedded in JavaScript that runs in the browser is publicly visible to anyone
+      who opens DevTools. Route all privileged API calls through a backend proxy or serverless
+      function.
+    </p>
+  </div>
+
+  <!-- ─── AUTHENTICATION TOKENS ─────────── -->
+  <h2 id="api-auth-tokens">API Authentication Tokens</h2>
+
+  <h3 id="bearer-tokens">Bearer Tokens</h3>
+
+  <p>
+    The most common pattern for API authentication is the Authorization Bearer header:
+  </p>
+
+  <pre><code>async function apiFetch(endpoint, options = {}) {
+  const token = await getAccessToken(); // from secure storage
+
+  const response = await fetch(`/api/v1/${endpoint}`, {
+    ...options,
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type':  'application/json',
+      ...options.headers
+    }
+  });
+
+  if (response.status === 401) {
+    handleUnauthorized();
+    return null;
+  }
+
+  return response.json();
+}</code></pre>
+
+  <h3 id="token-refresh">Token Refresh</h3>
+
+  <p>
+    Automatically refresh expired tokens before they cause request failures:
+  </p>
+
+  <pre><code>async function getAccessToken() {
+  let token = sessionStorage.getItem('access-token');
+  const expiry = parseInt(sessionStorage.getItem('token-expiry') ?? '0', 10);
+
+  if (Date.now() > expiry - 60_000) {
+    // Refresh 60 seconds before expiry
+    const data = await fetch('/auth/refresh', { method: 'POST', credentials: 'include' })
+                        .then(r => r.json());
+    token = data.accessToken;
+    sessionStorage.setItem('access-token', token);
+    sessionStorage.setItem('token-expiry', String(Date.now() + data.expiresIn * 1000));
+  }
+
+  return token;
+}</code></pre>
+
+  <!-- ─── INPUT VALIDATION ──────────────── -->
+  <h2 id="input-validation">Input Validation &amp; Sanitization</h2>
+
+  <p>
+    All data sent to an API must be validated before dispatch. This prevents injection attacks
+    and reduces server-side error rates.
+  </p>
+
+  <pre><code>function validateSearchQuery(query) {
+  if (typeof query !== 'string') throw new TypeError('Query must be a string');
+  if (query.length === 0)        throw new Error('Query cannot be empty');
+  if (query.length > 200)        throw new Error('Query exceeds maximum length');
+
+  // Strip any HTML/script injections
+  const div = document.createElement('div');
+  div.textContent = query;
+  return div.innerHTML.trim();
+}</code></pre>
+
+  <!-- ─── CORS CONFIGURATION ───────────── -->
+  <h2 id="cors">CORS Configuration</h2>
+
+  <p>
+    Cross-Origin Resource Sharing (CORS) headers must be set on the server. On the client side,
+    always include credentials only when explicitly required:
+  </p>
+
+  <pre><code>// Only send cookies/credentials when the API is same-origin or explicitly trusted
+const response = await fetch('/api/v1/data', {
+  credentials: 'same-origin'  // never use 'include' with a wildcard CORS origin
+});</code></pre>
+
+  <h3 id="cors-server-config">Server-Side CORS Headers</h3>
+
+  <pre><code># Nginx — only allow your own domain
+add_header Access-Control-Allow-Origin "https://docs.example.com";
+add_header Access-Control-Allow-Methods "GET, POST, OPTIONS";
+add_header Access-Control-Allow-Headers "Authorization, Content-Type";
+add_header Access-Control-Max-Age 86400;</code></pre>
+
+  <!-- ─── RATE LIMITING ─────────────────── -->
+  <h2 id="rate-limiting">Rate Limiting</h2>
+
+  <p>
+    Protect your APIs from abuse and brute-force attacks with rate limiting. Implement it at the
+    proxy or gateway layer, and handle <code>429 Too Many Requests</code> gracefully in the client:
+  </p>
+
+  <pre><code>async function apiFetchWithRetry(endpoint, options = {}, retries = 3) {
+  const response = await apiFetch(endpoint, options);
+
+  if (response?.status === 429 && retries > 0) {
+    const retryAfter = parseInt(response.headers.get('Retry-After') ?? '2', 10);
+    await new Promise(resolve => setTimeout(resolve, retryAfter * 1000));
+    return apiFetchWithRetry(endpoint, options, retries - 1);
+  }
+
+  return response;
+}</code></pre>
+
+  <!-- ─── SECURITY HEADERS ──────────────── -->
+  <h2 id="security-headers">Security Headers</h2>
+
+  <p>
+    Configure these HTTP response headers on your API server to defend against common attacks:
+  </p>
+
+  <table>
+    <thead>
+      <tr><th>Header</th><th>Recommended Value</th><th>Purpose</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><code>X-Content-Type-Options</code></td><td><code>nosniff</code></td><td>Prevent MIME sniffing</td></tr>
+      <tr><td><code>X-Frame-Options</code></td><td><code>DENY</code></td><td>Prevent clickjacking</td></tr>
+      <tr><td><code>Strict-Transport-Security</code></td><td><code>max-age=31536000; includeSubDomains</code></td><td>Enforce HTTPS</td></tr>
+      <tr><td><code>Cache-Control</code></td><td><code>no-store</code> (for auth endpoints)</td><td>Prevent credential caching</td></tr>
+    </tbody>
+  </table>
+
+  <!-- ─── DEPENDENCY SECURITY ──────────── -->
+  <h2 id="dependency-security">Dependency Security</h2>
+
+  <p>
+    Since DevDocs has zero runtime dependencies, the attack surface is minimal. However, if you
+    add libraries, audit them regularly:
+  </p>
+
+  <pre><code># If using npm for build tools
+npm audit
+npm audit fix
+
+# Check for known CVEs in specific packages
+npx audit-ci --moderate</code></pre>
+
+</div>

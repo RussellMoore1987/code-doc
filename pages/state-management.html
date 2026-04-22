@@ -1,0 +1,154 @@
+<div class="content-body">
+
+  <h1 id="state-management">State Management</h1>
+
+  <p>
+    DevDocs uses a centralized, mutable state object rather than an immutable store. This keeps
+    the implementation simple and avoids framework dependencies, while still providing a single
+    source of truth for all runtime data.
+  </p>
+
+  <div class="callout">
+    <div class="callout-title">ℹ When to Read This</div>
+    <p>
+      This page is most relevant if you are building a plugin, writing integration tests, or
+      trying to understand how the app responds to user interactions under the hood.
+    </p>
+  </div>
+
+  <!-- ─── STATE OBJECT ──────────────────── -->
+  <h2 id="the-state-object">The State Object</h2>
+
+  <p>
+    All mutable runtime data lives in the <code>state</code> singleton declared at the top
+    of <code>app.js</code>:
+  </p>
+
+  <pre><code>const state = {
+  activeNavId:       null,   // Currently displayed nav item id
+  scrollSpyObserver: null,   // Active IntersectionObserver instance
+  leftCollapsed:     false,
+  rightCollapsed:    false,
+  leftWidth:         280,    // px, persisted in localStorage
+  rightWidth:        250,    // px, persisted in localStorage
+  currentRoute:      null,   // { navId, sectionId }
+  isNavigating:      false,  // Guards against re-entrant navigation
+  abortController:   null    // AbortController for event listeners
+};</code></pre>
+
+  <h3 id="persisted-state">Persisted State</h3>
+
+  <p>
+    Several properties are mirrored to <code>localStorage</code> so they survive page reloads:
+  </p>
+
+  <table>
+    <thead>
+      <tr><th>State Property</th><th>Storage Key</th><th>Persisted When</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><code>leftWidth</code></td><td><code>devdocs-left-w</code></td><td>After drag or keyboard resize</td></tr>
+      <tr><td><code>rightWidth</code></td><td><code>devdocs-right-w</code></td><td>After drag or keyboard resize</td></tr>
+      <tr><td><code>leftCollapsed</code></td><td><code>devdocs-left-collapsed</code></td><td>On collapse (removed on expand)</td></tr>
+      <tr><td><code>rightCollapsed</code></td><td><code>devdocs-right-collapsed</code></td><td>On collapse (removed on expand)</td></tr>
+      <tr><td><em>theme</em></td><td><code>devdocs-theme</code></td><td>On every theme toggle</td></tr>
+    </tbody>
+  </table>
+
+  <!-- ─── READING STATE ─────────────────── -->
+  <h2 id="reading-state">Reading State</h2>
+
+  <p>
+    Read directly from the <code>state</code> object. Because <code>state</code> is a module-level
+    variable, any code in the same script context can access it:
+  </p>
+
+  <pre><code>// Is the right sidebar open?
+if (!state.rightCollapsed) {
+  adjustLayout();
+}
+
+// What page are we on?
+const { navId, sectionId } = state.currentRoute ?? {};</code></pre>
+
+  <!-- ─── WRITING STATE ──────────────────── -->
+  <h2 id="writing-state">Writing State</h2>
+
+  <p>
+    Prefer using the provided functions rather than mutating <code>state</code> directly, because
+    the functions also apply DOM changes and persist to localStorage:
+  </p>
+
+  <table>
+    <thead>
+      <tr><th>Desired Change</th><th>Use This Function</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Collapse left sidebar</td><td><code>collapseLeft()</code></td></tr>
+      <tr><td>Expand left sidebar</td><td><code>expandLeft()</code></td></tr>
+      <tr><td>Collapse right sidebar</td><td><code>collapseRight()</code></td></tr>
+      <tr><td>Expand right sidebar</td><td><code>expandRight()</code></td></tr>
+      <tr><td>Navigate to a page</td><td><code>navigateTo(navId, sectionId)</code></td></tr>
+      <tr><td>Switch theme</td><td><code>applyTheme('light' | 'dark')</code></td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout warning">
+    <div class="callout-title">⚠ Direct Mutation Risks</div>
+    <p>
+      Writing to <code>state.leftCollapsed = true</code> without calling <code>collapseLeft()</code>
+      will desync the state object from the DOM. The sidebar will still be visible even though
+      <code>state.leftCollapsed</code> says otherwise. Always use the API functions.
+    </p>
+  </div>
+
+  <!-- ─── RESETTING STATE ───────────────── -->
+  <h2 id="resetting-state">Resetting State</h2>
+
+  <p>
+    To perform a full reset — for example, in integration tests — call <code>cleanup()</code>
+    followed by a fresh <code>init()</code>:
+  </p>
+
+  <pre><code>// Tear down
+cleanup();
+
+// Re-initialise (re-reads localStorage)
+init();</code></pre>
+
+  <p>
+    To clear persisted preferences only (without re-initialising), clear the relevant localStorage
+    keys:
+  </p>
+
+  <pre><code>localStorage.removeItem('devdocs-left-w');
+localStorage.removeItem('devdocs-right-w');
+localStorage.removeItem('devdocs-left-collapsed');
+localStorage.removeItem('devdocs-right-collapsed');
+localStorage.removeItem('devdocs-theme');</code></pre>
+
+  <!-- ─── SEARCH STATE ──────────────────── -->
+  <h2 id="search-state">Search State</h2>
+
+  <p>
+    The search subsystem uses its own <code>searchState</code> object to avoid cluttering
+    the main <code>state</code> singleton:
+  </p>
+
+  <pre><code>const searchState = {
+  isOpen:            false,
+  index:             [],       // Array&lt;SearchIndexEntry&gt;
+  currentQuery:      '',
+  selectedResult:    -1,
+  results:           [],       // Array&lt;SearchResult&gt;
+  hasValidationError: false,
+  currentHighlights: [],       // Array&lt;HTMLElement&gt;
+  currentMatchIndex: -1
+};</code></pre>
+
+  <p>
+    Reset search state programmatically by calling <code>closeSearch()</code>, which zeroes
+    most of these fields, or <code>clearPageHighlights()</code> for highlight-specific state.
+  </p>
+
+</div>

@@ -1,0 +1,167 @@
+<div class="content-body">
+
+  <h1 id="database-connections">Database Connections</h1>
+
+  <p>
+    While DevDocs itself requires no database, real-world deployments often integrate with
+    one — to store user preferences, feedback submissions, search analytics, or CMS-managed
+    content. This page covers patterns for connecting to common databases from the backend
+    services that support DevDocs.
+  </p>
+
+  <div class="callout">
+    <div class="callout-title">ℹ Server-Side Only</div>
+    <p>
+      Database connections are always server-side. Browser JavaScript cannot connect directly
+      to PostgreSQL, MySQL, or MongoDB. Use a backend API layer (Node.js, Python, etc.) that
+      DevDocs calls over HTTP.
+    </p>
+  </div>
+
+  <!-- ─── CONNECTION POOLING ────────────── -->
+  <h2 id="connection-pooling">Connection Pooling</h2>
+
+  <p>
+    Always use a connection pool rather than creating a new connection per request. Pools
+    reuse existing connections, dramatically reducing latency and resource consumption.
+  </p>
+
+  <h3 id="postgresql-pool">PostgreSQL with pg (Node.js)</h3>
+
+  <pre><code>// db.js
+import { Pool } from 'pg';
+
+const pool = new Pool({
+  host:     process.env.DB_HOST,
+  port:     parseInt(process.env.DB_PORT ?? '5432'),
+  database: process.env.DB_NAME,
+  user:     process.env.DB_USER,
+  password: process.env.DB_PASS,
+  max:      10,         // Maximum connections in pool
+  idleTimeoutMillis: 30000,
+  connectionTimeoutMillis: 2000,
+  ssl: process.env.NODE_ENV === 'production'
+    ? { rejectUnauthorized: true }
+    : false
+});
+
+export async function query(sql, params = []) {
+  const client = await pool.connect();
+  try {
+    const result = await client.query(sql, params);
+    return result.rows;
+  } finally {
+    client.release();
+  }
+}</code></pre>
+
+  <!-- ─── MYSQL ─────────────────────────── -->
+  <h2 id="mysql">MySQL / MariaDB</h2>
+
+  <pre><code>import mysql from 'mysql2/promise';
+
+const pool = mysql.createPool({
+  host:            process.env.DB_HOST,
+  user:            process.env.DB_USER,
+  password:        process.env.DB_PASS,
+  database:        process.env.DB_NAME,
+  waitForConnections: true,
+  connectionLimit:    10,
+  queueLimit:         0
+});
+
+export async function query(sql, params = []) {
+  const [rows] = await pool.execute(sql, params);
+  return rows;
+}</code></pre>
+
+  <!-- ─── MONGODB ───────────────────────── -->
+  <h2 id="mongodb">MongoDB</h2>
+
+  <pre><code>import { MongoClient } from 'mongodb';
+
+let client;
+let db;
+
+export async function getDb() {
+  if (!client) {
+    client = new MongoClient(process.env.MONGODB_URI);
+    await client.connect();
+    db = client.db(process.env.DB_NAME);
+  }
+  return db;
+}
+
+// Usage
+const db        = await getDb();
+const pageViews = await db.collection('analytics').find({ page: '/intro' }).toArray();</code></pre>
+
+  <!-- ─── PARAMETERIZED QUERIES ─────────── -->
+  <h2 id="parameterized-queries">Parameterized Queries</h2>
+
+  <p>
+    Always use parameterized queries to prevent SQL injection. Never concatenate user input
+    directly into SQL strings:
+  </p>
+
+  <pre><code>// SAFE — parameterized
+const rows = await query(
+  'SELECT * FROM pages WHERE slug = $1 AND published = true',
+  [userInput]
+);
+
+// DANGEROUS — never do this
+const rows = await query(
+  `SELECT * FROM pages WHERE slug = '${userInput}'`
+);</code></pre>
+
+  <!-- ─── MIGRATIONS ─────────────────────── -->
+  <h2 id="migrations">Schema Migrations</h2>
+
+  <p>
+    Manage schema changes with a migrations tool to keep development, staging, and production
+    in sync:
+  </p>
+
+  <pre><code># Using node-pg-migrate
+npx node-pg-migrate up
+
+# Create a new migration
+npx node-pg-migrate create add-page-views-table</code></pre>
+
+  <pre><code>// migrations/1713000000000_add-page-views-table.js
+export const up = (pgm) => {
+  pgm.createTable('page_views', {
+    id:         { type: 'serial', primaryKey: true },
+    page_id:    { type: 'varchar(100)', notNull: true },
+    viewed_at:  { type: 'timestamptz', default: pgm.func('NOW()') },
+    user_agent: { type: 'text' }
+  });
+
+  pgm.createIndex('page_views', 'page_id');
+};
+
+export const down = (pgm) => {
+  pgm.dropTable('page_views');
+};</code></pre>
+
+  <!-- ─── HEALTH CHECK ──────────────────── -->
+  <h2 id="db-health-check">Database Health Check</h2>
+
+  <pre><code>export async function checkDbHealth() {
+  try {
+    await query('SELECT 1');
+    return { status: 'ok' };
+  } catch (err) {
+    return { status: 'error', message: err.message };
+  }
+}
+
+// Expose in health endpoint
+app.get('/health', async (req, res) => {
+  const db = await checkDbHealth();
+  const status = db.status === 'ok' ? 200 : 503;
+  res.status(status).json({ db });
+});</code></pre>
+
+</div>

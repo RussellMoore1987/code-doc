@@ -1,0 +1,161 @@
+<div class="content-body">
+
+  <h1 id="middleware-pipeline">Middleware Pipeline</h1>
+
+  <p>
+    The middleware pipeline intercepts key operations — page loads, navigation requests, and
+    search queries — allowing plugins and custom code to transform inputs, inject side effects,
+    or abort processing before the core logic executes.
+  </p>
+
+  <div class="callout">
+    <div class="callout-title">⚙️ Inspired by Express.js</div>
+    <p>
+      If you have used Express or Koa middleware, the pattern will feel familiar.
+      Each middleware receives a context object and a <code>next</code> function.
+      Call <code>next()</code> to pass control to the next middleware in the chain.
+    </p>
+  </div>
+
+  <!-- ─── HOW IT WORKS ──────────────────── -->
+  <h2 id="how-middleware-works">How the Pipeline Works</h2>
+
+  <p>
+    Middleware functions are executed in registration order. Each function can mutate the context,
+    perform async work, or halt the chain by not calling <code>next()</code>.
+  </p>
+
+  <pre><code>// Middleware signature
+async function myMiddleware(ctx, next) {
+  // Before — runs before the core handler
+  console.log('Before:', ctx.navId);
+
+  await next(); // Pass control forward
+
+  // After — runs after the core handler returns
+  console.log('After:', ctx.navId);
+}
+
+// Register
+Middleware.use('navigation', myMiddleware);</code></pre>
+
+  <!-- ─── PIPELINE TYPES ─────────────────── -->
+  <h2 id="pipeline-types">Available Pipelines</h2>
+
+  <h3 id="navigation-pipeline">Navigation Pipeline</h3>
+
+  <p>
+    Wraps every call to <code>navigateTo()</code>. The context object contains:
+  </p>
+
+  <pre><code>ctx = {
+  navId:       string | null,
+  sectionId:   string | null,
+  pushHistory: boolean,
+  smooth:      boolean,
+  abort:       () => void   // Call to cancel navigation entirely
+}</code></pre>
+
+  <h3 id="page-load-pipeline">Page Load Pipeline</h3>
+
+  <p>
+    Wraps each <code>fetch()</code> call for page HTML. Useful for caching or request
+    interception:
+  </p>
+
+  <pre><code>ctx = {
+  url:      string,
+  response: Response | null,  // populated after fetch
+  html:     string | null,    // populated after text() parsing
+  abort:    () => void
+}</code></pre>
+
+  <h3 id="search-pipeline">Search Pipeline</h3>
+
+  <p>Wraps <code>performSearch()</code>. Intercept or modify queries before they run:</p>
+
+  <pre><code>ctx = {
+  query:   string,  // mutable — you may rewrite the query
+  results: SearchResult[] | null  // populated after core search
+}</code></pre>
+
+  <!-- ─── EXAMPLES ───────────────────────── -->
+  <h2 id="middleware-examples">Practical Examples</h2>
+
+  <h3 id="auth-guard">Authentication Guard</h3>
+
+  <pre><code>Middleware.use('navigation', async (ctx, next) => {
+  const protectedIds = ['admin-panel', 'billing'];
+
+  if (protectedIds.includes(ctx.navId) && !isAuthenticated()) {
+    ctx.abort();
+    redirectToLogin();
+    return;
+  }
+
+  await next();
+});</code></pre>
+
+  <h3 id="page-cache">Simple Page Cache</h3>
+
+  <pre><code>const cache = new Map();
+
+Middleware.use('page-load', async (ctx, next) => {
+  if (cache.has(ctx.url)) {
+    ctx.html = cache.get(ctx.url);
+    return; // Skip fetch entirely
+  }
+
+  await next();
+
+  if (ctx.html) {
+    cache.set(ctx.url, ctx.html);
+  }
+});</code></pre>
+
+  <h3 id="query-expansion">Search Query Expansion</h3>
+
+  <pre><code>Middleware.use('search', async (ctx, next) => {
+  // Expand abbreviations before searching
+  const expansions = { 'cfg': 'configuration', 'env': 'environment' };
+  ctx.query = expansions[ctx.query] ?? ctx.query;
+  await next();
+});</code></pre>
+
+  <!-- ─── ORDERING ───────────────────────── -->
+  <h2 id="middleware-ordering">Middleware Ordering</h2>
+
+  <p>
+    Middleware executes in the order it is registered. Order matters — an authentication guard
+    must be registered before a logging middleware if you want to avoid logging blocked requests.
+  </p>
+
+  <pre><code>// Auth runs first
+Middleware.use('navigation', authGuard);
+
+// Logger runs second (sees only allowed navigations)
+Middleware.use('navigation', logger);</code></pre>
+
+  <!-- ─── REMOVING MIDDLEWARE ───────────── -->
+  <h2 id="removing-middleware">Removing Middleware</h2>
+
+  <p>
+    <code>Middleware.use()</code> returns a dispose function. Call it to remove the middleware
+    from the pipeline:
+  </p>
+
+  <pre><code>const dispose = Middleware.use('search', myMiddleware);
+
+// Later, remove it:
+dispose();</code></pre>
+
+  <div class="callout warning">
+    <div class="callout-title">⚠ Performance</div>
+    <p>
+      Every async middleware adds latency. Keep middleware fast, especially on the
+      navigation and page-load pipelines where users notice delays.
+      Profile using <code>performance.mark()</code> if you suspect middleware is the bottleneck.
+    </p>
+  </div>
+
+</div>

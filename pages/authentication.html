@@ -1,0 +1,160 @@
+<div class="content-body">
+
+  <h1 id="authentication">Authentication</h1>
+
+  <p>
+    Out of the box, DevDocs is a public documentation site with no authentication layer. This page
+    explains how to add user authentication — restricting access to internal docs, staging
+    environments, or paid content — using common patterns that integrate cleanly with the
+    existing architecture.
+  </p>
+
+  <div class="callout warning">
+    <div class="callout-title">⚠ Security Notice</div>
+    <p>
+      Client-side authentication guards are convenience features, not security boundaries.
+      Sensitive content must be protected at the server or CDN layer. Never rely solely on
+      JavaScript to hide confidential information.
+    </p>
+  </div>
+
+  <!-- ─── AUTHENTICATION PATTERNS ──────── -->
+  <h2 id="authentication-patterns">Authentication Patterns</h2>
+
+  <h3 id="basic-auth-header">HTTP Basic Auth</h3>
+
+  <p>
+    The simplest approach: configure your web server (Nginx, Apache, or a CDN edge function)
+    to require HTTP Basic Auth before serving any files. No code changes to DevDocs are needed.
+  </p>
+
+  <pre><code># Nginx example
+location /docs/ {
+  auth_basic "Documentation";
+  auth_basic_user_file /etc/nginx/.htpasswd;
+}</code></pre>
+
+  <h3 id="jwt-token">JWT Token Validation</h3>
+
+  <p>
+    For single-page app style authentication, intercept navigation in a <code>beforePageLoad</code>
+    hook and validate a JWT stored in <code>sessionStorage</code>:
+  </p>
+
+  <pre><code>Hooks.before('page-load', (url) => {
+  const token = sessionStorage.getItem('auth-token');
+
+  if (!token || isTokenExpired(token)) {
+    // Redirect to login, cancel page load
+    window.location.href = '/login?return=' + encodeURIComponent(url);
+    return false;
+  }
+});
+
+function isTokenExpired(token) {
+  const payload = JSON.parse(atob(token.split('.')[1]));
+  return Date.now() / 1000 > payload.exp;
+}</code></pre>
+
+  <div class="callout warning">
+    <div class="callout-title">⚠ Token Storage</div>
+    <p>
+      Avoid storing JWTs in <code>localStorage</code> — they are accessible to any JavaScript
+      on the page, making them vulnerable to XSS. Prefer <code>sessionStorage</code> or
+      HttpOnly cookies set by your backend.
+    </p>
+  </div>
+
+  <h3 id="oauth-sso">SSO via OAuth 2.0</h3>
+
+  <p>
+    For enterprise environments, integrate with an Identity Provider (IdP) such as Okta,
+    Azure AD, or Auth0. The authentication flow works as follows:
+  </p>
+
+  <ol>
+    <li>User visits the docs URL without a valid session cookie.</li>
+    <li>A server-side edge function redirects to the IdP authorization endpoint.</li>
+    <li>After successful login, the IdP redirects back with an authorization code.</li>
+    <li>The edge function exchanges the code for tokens and sets a secure session cookie.</li>
+    <li>Subsequent requests are validated against the session cookie.</li>
+  </ol>
+
+  <!-- ─── SESSION MANAGEMENT ───────────── -->
+  <h2 id="session-management">Session Management</h2>
+
+  <p>
+    Track session expiry in DevDocs by registering a periodic check:
+  </p>
+
+  <pre><code>const SESSION_CHECK_INTERVAL = 5 * 60 * 1000; // 5 minutes
+
+setInterval(() => {
+  if (!isSessionValid()) {
+    showSessionExpiredBanner();
+  }
+}, SESSION_CHECK_INTERVAL);
+
+function isSessionValid() {
+  return document.cookie.includes('session=');
+}</code></pre>
+
+  <h3 id="session-expired-banner">Session Expired Banner</h3>
+
+  <pre><code>function showSessionExpiredBanner() {
+  const banner = document.createElement('div');
+  banner.className = 'callout warning';
+  banner.innerHTML = `
+    &lt;div class="callout-title"&gt;Session Expired&lt;/div&gt;
+    &lt;p&gt;Your session has expired. &lt;a href="/login"&gt;Log in again&lt;/a&gt; to continue.&lt;/p&gt;
+  `;
+  document.querySelector('#content-body').prepend(banner);
+}</code></pre>
+
+  <!-- ─── USER IDENTITY ─────────────────── -->
+  <h2 id="user-identity">Displaying User Identity</h2>
+
+  <p>
+    Once authenticated, you can display the logged-in user's name in the header. Inject this
+    after <code>init()</code> completes:
+  </p>
+
+  <pre><code>Hooks.after('init', async () => {
+  const user = await fetchCurrentUser();
+  if (user) {
+    const el = document.querySelector('.header-brand');
+    const badge = document.createElement('span');
+    badge.className = 'user-badge';
+    badge.textContent = user.name;
+    el.appendChild(badge);
+  }
+});</code></pre>
+
+  <!-- ─── ROLE-BASED ACCESS ─────────────── -->
+  <h2 id="role-based-access">Role-Based Access Control</h2>
+
+  <p>
+    Restrict specific navigation sections to users with certain roles by filtering
+    <code>NAV_DATA</code> before the nav tree is built:
+  </p>
+
+  <pre><code>Hooks.before('init', async () => {
+  const user = await fetchCurrentUser();
+  const roles = user?.roles ?? [];
+
+  // Remove admin section for non-admins
+  if (!roles.includes('admin')) {
+    const idx = NAV_DATA.findIndex(s => s.id === 'admin');
+    if (idx !== -1) NAV_DATA.splice(idx, 1);
+  }
+});</code></pre>
+
+  <div class="callout">
+    <div class="callout-title">ℹ Defence in Depth</div>
+    <p>
+      Filtering the nav hides links from non-admin users but does not prevent direct URL access.
+      Always enforce role checks on the server side for any restricted content.
+    </p>
+  </div>
+
+</div>

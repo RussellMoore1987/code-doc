@@ -1,0 +1,144 @@
+<div class="content-body">
+
+  <h1 id="debug-mode">Debug Mode</h1>
+
+  <p>
+    Debug mode enables verbose logging, diagnostic overlays, and developer tooling that would
+    be too noisy or risky to expose in production. This page covers how to activate debug mode,
+    what it exposes, and how to use it effectively.
+  </p>
+
+  <div class="callout">
+    <div class="callout-title">ℹ Development Only</div>
+    <p>
+      Debug mode is designed for local development and controlled staging environments.
+      Never enable it in production — it exposes internal state and increases console noise
+      which can mask real errors.
+    </p>
+  </div>
+
+  <!-- ─── ENABLING DEBUG MODE ───────────── -->
+  <h2 id="enabling-debug-mode">Enabling Debug Mode</h2>
+
+  <h3 id="url-param">URL Parameter</h3>
+
+  <p>
+    Append <code>?debug=1</code> to any URL to activate debug mode for that session:
+  </p>
+
+  <pre><code>http://localhost:8080/?debug=1
+http://localhost:8080/#intro?debug=1</code></pre>
+
+  <h3 id="local-storage-debug">localStorage Flag</h3>
+
+  <p>
+    Persist debug mode across page reloads by setting a localStorage flag in the browser console:
+  </p>
+
+  <pre><code>// Enable
+localStorage.setItem('devdocs-debug', '1');
+location.reload();
+
+// Disable
+localStorage.removeItem('devdocs-debug');
+location.reload();</code></pre>
+
+  <h3 id="detecting-debug">Detecting Debug Mode in Code</h3>
+
+  <pre><code>const DEBUG = new URLSearchParams(window.location.search).get('debug') === '1'
+           || localStorage.getItem('devdocs-debug') === '1';
+
+function debugLog(...args) {
+  if (DEBUG) console.debug('[DevDocs]', ...args);
+}</code></pre>
+
+  <!-- ─── DEBUG OUTPUT ──────────────────── -->
+  <h2 id="debug-output">Debug Output</h2>
+
+  <p>When debug mode is active, the following additional information is logged:</p>
+
+  <h3 id="navigation-debug">Navigation</h3>
+
+  <pre><code>// Logs emitted during navigation
+[DevDocs] navigateTo called { navId: 'intro', sectionId: null, pushHistory: true }
+[DevDocs] Loading page: pages/intro.html
+[DevDocs] Page loaded in 45ms
+[DevDocs] Right nav built: 6 headings
+[DevDocs] Scroll spy initialized: 6 observers</code></pre>
+
+  <h3 id="search-debug">Search</h3>
+
+  <pre><code>[DevDocs] Search index built: 12 pages, 87 sections (312ms)
+[DevDocs] Query: "install" → 4 results (2ms)
+[DevDocs] Highlighting: 3 matches on current page</code></pre>
+
+  <!-- ─── DIAGNOSTIC OVERLAY ────────────── -->
+  <h2 id="diagnostic-overlay">Diagnostic Overlay</h2>
+
+  <p>
+    Enable a visual overlay that shows the current route, active nav item, and scroll spy state:
+  </p>
+
+  <pre><code>if (DEBUG) {
+  const overlay = document.createElement('div');
+  overlay.id = 'debug-overlay';
+  overlay.style.cssText = `
+    position: fixed; bottom: 8px; left: 8px; z-index: 9999;
+    background: rgba(0,0,0,0.8); color: #0f0; font: 12px monospace;
+    padding: 8px 12px; border-radius: 4px; max-width: 320px;
+    pointer-events: none;
+  `;
+  document.body.appendChild(overlay);
+
+  // Update on every navigation
+  EventBus.on('nav:after', ({ navId, sectionId }) => {
+    overlay.innerHTML = `
+      navId: ${navId ?? '—'}&lt;br&gt;
+      sectionId: ${sectionId ?? '—'}&lt;br&gt;
+      leftW: ${state.leftWidth}px | rightW: ${state.rightWidth}px
+    `;
+  });
+}</code></pre>
+
+  <!-- ─── NAV_DATA INSPECTOR ────────────── -->
+  <h2 id="nav-inspector">NAV_DATA Inspector</h2>
+
+  <p>
+    In debug mode, the entire <code>NAV_DATA</code> structure and runtime state are attached
+    to the global <code>window</code> object for easy inspection in DevTools:
+  </p>
+
+  <pre><code>if (DEBUG) {
+  window.__devdocs__ = {
+    NAV_DATA,
+    state,
+    searchState,
+    version: '2.4.1'
+  };
+  console.info('[DevDocs] Debug mode active. Inspect window.__devdocs__');
+}</code></pre>
+
+  <!-- ─── PERFORMANCE DEBUG ─────────────── -->
+  <h2 id="performance-debug">Performance Profiling</h2>
+
+  <pre><code>function debugMeasure(label, fn) {
+  if (!DEBUG) return fn();
+
+  performance.mark(`${label}-start`);
+  const result = fn();
+
+  if (result instanceof Promise) {
+    return result.finally(() => {
+      performance.mark(`${label}-end`);
+      performance.measure(label, `${label}-start`, `${label}-end`);
+      const entry = performance.getEntriesByName(label).at(-1);
+      debugLog(`${label}: ${entry.duration.toFixed(2)}ms`);
+    });
+  }
+
+  performance.mark(`${label}-end`);
+  performance.measure(label, `${label}-start`, `${label}-end`);
+  return result;
+}</code></pre>
+
+</div>

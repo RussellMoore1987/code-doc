@@ -1,0 +1,152 @@
+<div class="content-body">
+
+  <h1 id="error-codes">Error Codes Reference</h1>
+
+  <p>
+    This page documents all error codes produced by DevDocs and its associated backend services.
+    Each code includes a description, likely causes, and recommended resolution steps.
+  </p>
+
+  <div class="callout">
+    <div class="callout-title">ℹ Error Format</div>
+    <p>
+      Errors are reported in the format <code>DDXXX</code> where <code>DD</code> is the subsystem
+      prefix and <code>XXX</code> is a three-digit code. HTTP status codes follow standard
+      RFC 9110 conventions.
+    </p>
+  </div>
+
+  <!-- ─── NAVIGATION ERRORS ─────────────── -->
+  <h2 id="navigation-errors">Navigation Errors (DD1xx)</h2>
+
+  <table>
+    <thead>
+      <tr><th>Code</th><th>Message</th><th>Cause</th><th>Resolution</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><code>DD100</code></td>
+        <td>Navigation item not found</td>
+        <td>The <code>navId</code> in the URL hash does not exist in <code>NAV_DATA</code>.</td>
+        <td>Check that the id is spelled correctly and exists in <code>NAV_DATA</code>.</td>
+      </tr>
+      <tr>
+        <td><code>DD101</code></td>
+        <td>Page load failed</td>
+        <td>The HTML fragment could not be fetched (HTTP 4xx/5xx or network error).</td>
+        <td>Verify the file exists in <code>pages/</code> and the server is running.</td>
+      </tr>
+      <tr>
+        <td><code>DD102</code></td>
+        <td>Re-entrant navigation blocked</td>
+        <td><code>navigateTo()</code> was called while a navigation was already in progress.</td>
+        <td>Wait for the current navigation to complete before triggering another.</td>
+      </tr>
+      <tr>
+        <td><code>DD103</code></td>
+        <td>Section not found on page</td>
+        <td>The <code>sectionId</code> does not match any heading id on the loaded page.</td>
+        <td>Ensure the heading has the expected <code>id</code> attribute.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- ─── SEARCH ERRORS ─────────────────── -->
+  <h2 id="search-errors">Search Errors (DD2xx)</h2>
+
+  <table>
+    <thead>
+      <tr><th>Code</th><th>Message</th><th>Cause</th><th>Resolution</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><code>DD200</code></td>
+        <td>Search index empty</td>
+        <td>No pages were indexed — all fetch requests failed.</td>
+        <td>Ensure the server is running and all pages in <code>NAV_DATA</code> are accessible.</td>
+      </tr>
+      <tr>
+        <td><code>DD201</code></td>
+        <td>Query too long</td>
+        <td>The search query exceeds 25 characters.</td>
+        <td>Shorten the query and try again.</td>
+      </tr>
+      <tr>
+        <td><code>DD202</code></td>
+        <td>Too many results</td>
+        <td>The query matches more than 250 sections.</td>
+        <td>Use a more specific search term.</td>
+      </tr>
+      <tr>
+        <td><code>DD203</code></td>
+        <td>Index build failed</td>
+        <td>An uncaught exception occurred during index construction.</td>
+        <td>Check the browser console for the underlying error and fix the offending page.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- ─── CONFIGURATION ERRORS ─────────── -->
+  <h2 id="config-errors">Configuration Errors (DD3xx)</h2>
+
+  <table>
+    <thead>
+      <tr><th>Code</th><th>Message</th><th>Cause</th><th>Resolution</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><code>DD300</code></td>
+        <td>Duplicate nav id</td>
+        <td>Two or more items in <code>NAV_DATA</code> share the same <code>id</code>.</td>
+        <td>Ensure every <code>id</code> is globally unique.</td>
+      </tr>
+      <tr>
+        <td><code>DD301</code></td>
+        <td>Missing DOM element</td>
+        <td>A required element (e.g., <code>#sidebar-left</code>) is absent from <code>index.html</code>.</td>
+        <td>Restore the element or check for typos in the element's <code>id</code>.</td>
+      </tr>
+      <tr>
+        <td><code>DD302</code></td>
+        <td>Invalid theme value</td>
+        <td>An unsupported value was passed to <code>applyTheme()</code>.</td>
+        <td>Use only <code>'light'</code> or <code>'dark'</code>.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- ─── HTTP STATUS CODES ─────────────── -->
+  <h2 id="http-status-codes">HTTP Status Codes</h2>
+
+  <p>
+    When page loading fails, the error message includes the HTTP status from the failed fetch:
+  </p>
+
+  <table>
+    <thead>
+      <tr><th>Status</th><th>Meaning</th><th>Common Cause</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><code>404</code></td><td>Not Found</td><td>The <code>.html</code> file does not exist in the <code>pages/</code> directory.</td></tr>
+      <tr><td><code>403</code></td><td>Forbidden</td><td>File permissions or a web server ACL is blocking access.</td></tr>
+      <tr><td><code>0</code> / network error</td><td>No Response</td><td>The local dev server is not running. Run <code>python -m http.server</code>.</td></tr>
+      <tr><td><code>500</code></td><td>Server Error</td><td>An error in a server-side preprocessor or proxy.</td></tr>
+    </tbody>
+  </table>
+
+  <!-- ─── REPORTING UNKNOWN ERRORS ─────── -->
+  <h2 id="reporting-errors">Reporting Unknown Errors</h2>
+
+  <p>
+    If you encounter an error not listed here, gather the following information before reporting:
+  </p>
+
+  <ol>
+    <li>Full browser console output (copy all errors and warnings).</li>
+    <li>The URL in the address bar at the time of the error.</li>
+    <li>Browser name, version, and operating system.</li>
+    <li>Steps to reproduce the issue reliably.</li>
+    <li>Whether the issue occurs with all browser extensions disabled.</li>
+  </ol>
+
+</div>

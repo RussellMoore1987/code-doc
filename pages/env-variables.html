@@ -1,0 +1,131 @@
+<div class="content-body">
+
+  <h1 id="environment-variables">Environment Variables</h1>
+
+  <p>
+    Environment variables allow you to configure DevDocs deployments without hardcoding values
+    in source files. They are the standard mechanism for separating configuration from code and
+    adapting the same codebase across development, staging, and production environments.
+  </p>
+
+  <div class="callout">
+    <div class="callout-title">ℹ Client vs. Server Context</div>
+    <p>
+      DevDocs is a fully static site — there is no server process running at request time.
+      Environment variables are useful during the <em>build</em> phase (if you add one) or
+      when configuring the web server that serves the files. They cannot be read at runtime
+      by browser JavaScript.
+    </p>
+  </div>
+
+  <!-- ─── COMMON VARIABLES ──────────────── -->
+  <h2 id="common-variables">Common Configuration Variables</h2>
+
+  <table>
+    <thead>
+      <tr><th>Variable</th><th>Default</th><th>Description</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><code>DOCS_BASE_URL</code></td><td><code>/</code></td><td>Base URL path if deployed to a sub-path (e.g., <code>/docs/</code>).</td></tr>
+      <tr><td><code>DOCS_TITLE</code></td><td><code>Documentation</code></td><td>Site title injected into <code>&lt;title&gt;</code> and header branding.</td></tr>
+      <tr><td><code>DOCS_VERSION</code></td><td>—</td><td>Displayed in the footer as the current documentation version.</td></tr>
+      <tr><td><code>DOCS_ANALYTICS_ID</code></td><td>—</td><td>Analytics tracking ID (e.g., GA4 measurement ID).</td></tr>
+      <tr><td><code>DOCS_SEARCH_ENDPOINT</code></td><td>—</td><td>URL of an optional server-side search API.</td></tr>
+      <tr><td><code>NODE_ENV</code></td><td><code>development</code></td><td>Build environment: <code>development</code>, <code>staging</code>, <code>production</code>.</td></tr>
+    </tbody>
+  </table>
+
+  <!-- ─── .ENV FILES ─────────────────────── -->
+  <h2 id="env-files">Using .env Files</h2>
+
+  <p>
+    Manage environment-specific settings with a hierarchy of <code>.env</code> files:
+  </p>
+
+  <pre><code>.env                  # Shared defaults (safe to commit if no secrets)
+.env.local            # Local overrides (never commit)
+.env.development      # Development environment
+.env.staging          # Staging environment
+.env.production       # Production environment</code></pre>
+
+  <h3 id="env-file-syntax">Syntax</h3>
+
+  <pre><code># .env.production
+DOCS_BASE_URL=/
+DOCS_TITLE=MyProject Documentation
+DOCS_VERSION=2.4.1
+DOCS_ANALYTICS_ID=G-XXXXXXXXXX
+NODE_ENV=production</code></pre>
+
+  <h3 id="loading-env">Loading in Build Scripts</h3>
+
+  <pre><code>// build.mjs — example build script
+import { config } from 'dotenv';
+import { readFileSync, writeFileSync } from 'fs';
+
+config({ path: `.env.${process.env.NODE_ENV ?? 'development'}` });
+
+let html = readFileSync('index.html', 'utf8');
+html = html.replace('__DOCS_TITLE__', process.env.DOCS_TITLE ?? 'Documentation');
+html = html.replace('__DOCS_VERSION__', process.env.DOCS_VERSION ?? '');
+
+writeFileSync('dist/index.html', html);</code></pre>
+
+  <!-- ─── DOCKER ENV ─────────────────────── -->
+  <h2 id="docker-env">Passing Variables to Docker</h2>
+
+  <pre><code># Inline
+docker run -e DOCS_TITLE="My Docs" -p 8080:80 devdocs:latest
+
+# From a file
+docker run --env-file .env.production -p 8080:80 devdocs:latest
+
+# In docker-compose.yml
+services:
+  docs:
+    build: .
+    env_file: .env.production
+    ports:
+      - "8080:80"</code></pre>
+
+  <!-- ─── CI/CD ENV ─────────────────────── -->
+  <h2 id="cicd-env">Environment Variables in CI/CD</h2>
+
+  <h3 id="github-actions-env">GitHub Actions</h3>
+
+  <pre><code># .github/workflows/deploy.yml
+env:
+  DOCS_TITLE: "MyProject Documentation"
+  DOCS_VERSION: ${{ github.ref_name }}
+
+jobs:
+  deploy:
+    steps:
+      - run: echo "Deploying version $DOCS_VERSION"</code></pre>
+
+  <h3 id="sensitive-vars">Handling Sensitive Values</h3>
+
+  <pre><code># Store secrets in GitHub Actions secrets, not env vars
+- name: Build
+  env:
+    ANALYTICS_ID: ${{ secrets.DOCS_ANALYTICS_ID }}
+  run: ./build.sh</code></pre>
+
+  <!-- ─── VALIDATION ────────────────────── -->
+  <h2 id="env-validation">Validating Required Variables</h2>
+
+  <p>
+    Fail fast in build scripts when required variables are missing, rather than producing a
+    silently broken deployment:
+  </p>
+
+  <pre><code>const required = ['DOCS_TITLE', 'DOCS_BASE_URL', 'NODE_ENV'];
+
+for (const key of required) {
+  if (!process.env[key]) {
+    console.error(`Missing required environment variable: ${key}`);
+    process.exit(1);
+  }
+}</code></pre>
+
+</div>

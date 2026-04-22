@@ -1,0 +1,161 @@
+<div class="content-body">
+
+  <h1 id="lifecycle-hooks">Lifecycle Hooks</h1>
+
+  <p>
+    Lifecycle hooks give you precise control over the application's initialization and teardown
+    sequence. By hooking into specific phases you can run setup code at the right moment without
+    modifying core files.
+  </p>
+
+  <div class="callout">
+    <div class="callout-title">ℹ Hook vs. Event</div>
+    <p>
+      Hooks fire synchronously during a specific phase and can block it (by throwing). Events
+      fire asynchronously after a phase completes and cannot block it. Use hooks for critical
+      setup; use events for side effects and analytics.
+    </p>
+  </div>
+
+  <!-- ─── INIT PHASES ───────────────────── -->
+  <h2 id="init-phases">Initialization Phases</h2>
+
+  <p>
+    The <code>init()</code> function runs in this order when <code>DOMContentLoaded</code> fires:
+  </p>
+
+  <ol>
+    <li><strong>beforeInit</strong> — runs before any setup.</li>
+    <li>AbortController created.</li>
+    <li>Theme applied.</li>
+    <li>Sidebar widths applied.</li>
+    <li>Nav tree built and appended.</li>
+    <li>Collapse state restored.</li>
+    <li>Resize handles wired.</li>
+    <li>Responsive collapse checked.</li>
+    <li>Routing initialized.</li>
+    <li>Search initialized.</li>
+    <li>Copy buttons set up.</li>
+    <li><strong>afterInit</strong> — runs after all setup.</li>
+  </ol>
+
+  <pre><code>Hooks.before('init', () => {
+  console.log('App is about to initialize');
+});
+
+Hooks.after('init', () => {
+  console.log('App fully initialized');
+  trackPageLoad();
+});</code></pre>
+
+  <!-- ─── PAGE HOOKS ─────────────────────── -->
+  <h2 id="page-lifecycle">Page Lifecycle Hooks</h2>
+
+  <p>
+    Every time a content page is fetched and rendered, the following hooks fire in order:
+  </p>
+
+  <h3 id="before-page-load">beforePageLoad</h3>
+
+  <p>
+    Fires before the fetch request is made. Receives the target URL. Returning
+    <code>false</code> from a synchronous hook will cancel the load.
+  </p>
+
+  <pre><code>Hooks.before('page-load', (url) => {
+  if (url.includes('restricted')) {
+    return false; // Abort
+  }
+});</code></pre>
+
+  <h3 id="after-page-load">afterPageLoad</h3>
+
+  <p>
+    Fires after the fragment has been injected into the DOM but before scroll spy and
+    right-nav are built. Useful for post-processing content.
+  </p>
+
+  <pre><code>Hooks.after('page-load', ({ url, el }) => {
+  // el is the #content-body element
+  el.querySelectorAll('a[href^="http"]').forEach(a => {
+    a.setAttribute('target', '_blank');
+    a.setAttribute('rel', 'noopener noreferrer');
+  });
+});</code></pre>
+
+  <h3 id="after-right-nav">afterRightNavBuild</h3>
+
+  <p>
+    Fires after the right-side outline is generated from page headings. Use this to inject
+    custom entries or badges.
+  </p>
+
+  <pre><code>Hooks.after('right-nav-build', ({ navEl, headings }) => {
+  // Add a "Back to top" entry
+  const li = document.createElement('li');
+  li.innerHTML = '&lt;a href="#" class="right-nav-link"&gt;↑ Back to top&lt;/a&gt;';
+  navEl.appendChild(li);
+});</code></pre>
+
+  <!-- ─── CLEANUP HOOKS ─────────────────── -->
+  <h2 id="cleanup-hooks">Cleanup Hooks</h2>
+
+  <p>
+    <code>beforeCleanup</code> fires before the app tears itself down on
+    <code>beforeunload</code> and <code>pagehide</code>:
+  </p>
+
+  <pre><code>Hooks.before('cleanup', () => {
+  // Flush pending analytics events
+  analytics.flush();
+});</code></pre>
+
+  <!-- ─── REGISTERING & REMOVING ───────── -->
+  <h2 id="registering-hooks">Registering and Removing Hooks</h2>
+
+  <h3 id="hooks-api">Hooks API</h3>
+
+  <pre><code>// Register
+const token = Hooks.before('page-load', myHandler);
+const token2 = Hooks.after('init', myOtherHandler);
+
+// Remove
+Hooks.remove(token);
+Hooks.remove(token2);</code></pre>
+
+  <h3 id="one-time-hooks">One-Time Hooks</h3>
+
+  <pre><code>// Fires exactly once, then auto-removes
+Hooks.once('after', 'init', () => {
+  console.log('First init complete');
+});</code></pre>
+
+  <!-- ─── EXECUTION ORDER ───────────────── -->
+  <h2 id="hook-execution-order">Hook Execution Order</h2>
+
+  <p>
+    Multiple handlers registered for the same hook run in registration order. If any handler
+    throws, the remaining handlers in that slot still run (errors are caught and logged), but a
+    hook that explicitly returns <code>false</code> will halt the chain.
+  </p>
+
+  <div class="callout warning">
+    <div class="callout-title">⚠ Synchronous Requirement</div>
+    <p>
+      <code>before</code> hooks that can return <code>false</code> must be synchronous. Async
+      <code>before</code> hooks are awaited but their return value is ignored for cancellation
+      purposes. Use the middleware pipeline if you need async cancellation.
+    </p>
+  </div>
+
+  <!-- ─── BEST PRACTICES ────────────────── -->
+  <h2 id="lifecycle-best-practices">Best Practices</h2>
+
+  <ul>
+    <li>Use <code>afterInit</code> for plugin bootstrapping, not global side effects.</li>
+    <li>Keep <code>beforePageLoad</code> fast — it blocks navigation.</li>
+    <li>Always store hook tokens and remove them in your cleanup routine.</li>
+    <li>Don't rely on hook ordering across different plugins; use the EventBus for coordination.</li>
+  </ul>
+
+</div>

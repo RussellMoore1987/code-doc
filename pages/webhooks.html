@@ -1,0 +1,157 @@
+<div class="content-body">
+
+  <h1 id="webhooks">Webhooks</h1>
+
+  <p>
+    Webhooks let external services push real-time notifications to your systems when events
+    occur — a document is published, a CI build completes, or a user submits feedback.
+    This page describes how to configure, receive, and secure webhook integrations
+    within the DevDocs ecosystem.
+  </p>
+
+  <div class="callout">
+    <div class="callout-title">ℹ Push vs. Pull</div>
+    <p>
+      Traditional integrations poll an API on a schedule. Webhooks invert this: the sender
+      pushes a payload to your endpoint the moment something happens. This is more efficient
+      and real-time but requires you to expose a public HTTP endpoint.
+    </p>
+  </div>
+
+  <!-- ─── WEBHOOK PAYLOAD FORMAT ─────────── -->
+  <h2 id="webhook-payload-format">Payload Format</h2>
+
+  <p>
+    DevDocs webhook payloads are JSON objects sent via HTTP POST with a
+    <code>Content-Type: application/json</code> header:
+  </p>
+
+  <pre><code>{
+  "event":     "page.published",
+  "timestamp": "2026-04-22T14:30:00Z",
+  "version":   "1",
+  "data": {
+    "pageId":  "installation",
+    "pageUrl": "pages/installation.html",
+    "author":  "alice@example.com",
+    "title":   "Installation Guide"
+  }
+}</code></pre>
+
+  <h3 id="event-types">Event Types</h3>
+
+  <table>
+    <thead>
+      <tr><th>Event</th><th>Trigger</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><code>page.published</code></td><td>A page is published or updated in production</td></tr>
+      <tr><td><code>page.deleted</code></td><td>A page is removed from the navigation</td></tr>
+      <tr><td><code>deploy.success</code></td><td>A deployment completes successfully</td></tr>
+      <tr><td><code>deploy.failure</code></td><td>A deployment fails</td></tr>
+      <tr><td><code>feedback.submitted</code></td><td>A user submits feedback on a page</td></tr>
+    </tbody>
+  </table>
+
+  <!-- ─── RECEIVING WEBHOOKS ────────────── -->
+  <h2 id="receiving-webhooks">Receiving Webhooks</h2>
+
+  <p>Your endpoint must respond with HTTP 200 within 10 seconds to acknowledge receipt:</p>
+
+  <pre><code>// Node.js / Express example
+import express from 'express';
+import crypto  from 'crypto';
+
+const app = express();
+app.use(express.json());
+
+app.post('/webhooks/devdocs', (req, res) => {
+  // Immediately acknowledge
+  res.sendStatus(200);
+
+  // Process asynchronously
+  processWebhookAsync(req.body).catch(console.error);
+});
+
+async function processWebhookAsync(payload) {
+  const { event, data } = payload;
+
+  if (event === 'page.published') {
+    await invalidateCacheForPage(data.pageUrl);
+    await notifySlack(`📄 Page published: ${data.title}`);
+  }
+}</code></pre>
+
+  <!-- ─── WEBHOOK SECURITY ──────────────── -->
+  <h2 id="webhook-security">Securing Webhooks</h2>
+
+  <p>
+    Verify that incoming requests originate from the expected sender by validating an HMAC
+    signature in the request header:
+  </p>
+
+  <pre><code>const WEBHOOK_SECRET = process.env.WEBHOOK_SECRET;
+
+function verifySignature(req) {
+  const signature = req.headers['x-devdocs-signature-256'];
+  if (!signature) return false;
+
+  const expected = 'sha256=' + crypto
+    .createHmac('sha256', WEBHOOK_SECRET)
+    .update(JSON.stringify(req.body))
+    .digest('hex');
+
+  // Use timingSafeEqual to prevent timing attacks
+  return crypto.timingSafeEqual(
+    Buffer.from(signature),
+    Buffer.from(expected)
+  );
+}
+
+app.post('/webhooks/devdocs', (req, res) => {
+  if (!verifySignature(req)) {
+    return res.status(401).send('Invalid signature');
+  }
+  res.sendStatus(200);
+  processWebhookAsync(req.body).catch(console.error);
+});</code></pre>
+
+  <!-- ─── RETRY POLICY ──────────────────── -->
+  <h2 id="webhook-retries">Retry Policy</h2>
+
+  <p>
+    If your endpoint returns a non-2xx status or times out, the sender will retry with
+    exponential backoff:
+  </p>
+
+  <table>
+    <thead>
+      <tr><th>Attempt</th><th>Delay</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>1st retry</td><td>30 seconds</td></tr>
+      <tr><td>2nd retry</td><td>5 minutes</td></tr>
+      <tr><td>3rd retry</td><td>30 minutes</td></tr>
+      <tr><td>4th retry</td><td>2 hours</td></tr>
+    </tbody>
+  </table>
+
+  <p>
+    Make your webhook handler idempotent — processing the same event twice should produce the
+    same result. Use the <code>timestamp</code> + <code>event</code> combination as a
+    deduplication key.
+  </p>
+
+  <!-- ─── TESTING ───────────────────────── -->
+  <h2 id="testing-webhooks">Testing Webhooks Locally</h2>
+
+  <pre><code># Expose local server with ngrok
+ngrok http 3000
+
+# Send a test payload manually
+curl -X POST https://your-ngrok-url.ngrok.io/webhooks/devdocs \
+  -H "Content-Type: application/json" \
+  -H "X-DevDocs-Signature-256: sha256=..." \
+  -d '{"event":"page.published","data":{"title":"Test"}}'</code></pre>
+
+</div>

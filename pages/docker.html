@@ -1,0 +1,161 @@
+<div class="content-body">
+
+  <h1 id="docker">Docker Containerization</h1>
+
+  <p>
+    Packaging DevDocs in a Docker container makes deployments reproducible, eliminates
+    "works on my machine" issues, and integrates cleanly with container orchestration platforms
+    like Kubernetes and AWS ECS.
+  </p>
+
+  <div class="callout">
+    <div class="callout-title">ℹ Static Site Advantage</div>
+    <p>
+      Because DevDocs consists entirely of static files, the Docker image is extremely small —
+      just an Nginx or Caddy base image plus your project files. No runtime, no database,
+      no long-running process other than the web server.
+    </p>
+  </div>
+
+  <!-- ─── DOCKERFILE ────────────────────── -->
+  <h2 id="dockerfile">Writing the Dockerfile</h2>
+
+  <pre><code># Dockerfile
+FROM nginx:1.27-alpine
+
+# Remove default Nginx content
+RUN rm -rf /usr/share/nginx/html/*
+
+# Copy project files
+COPY . /usr/share/nginx/html/
+
+# Copy custom Nginx config (optional but recommended)
+COPY nginx.conf /etc/nginx/conf.d/default.conf
+
+EXPOSE 80
+
+CMD ["nginx", "-g", "daemon off;"]</code></pre>
+
+  <h3 id="nginx-config">Nginx Configuration</h3>
+
+  <pre><code># nginx.conf
+server {
+  listen 80;
+  server_name _;
+  root /usr/share/nginx/html;
+  index index.html;
+
+  # Security headers
+  add_header X-Content-Type-Options nosniff always;
+  add_header X-Frame-Options DENY always;
+  add_header Referrer-Policy strict-origin-when-cross-origin always;
+
+  # Cache static assets
+  location ~* \.(css|js|png|jpg|svg|woff2)$ {
+    expires 1y;
+    add_header Cache-Control "public, immutable";
+  }
+
+  # No cache for HTML
+  location ~* \.html$ {
+    add_header Cache-Control "no-cache";
+  }
+
+  location / {
+    try_files $uri $uri/ /index.html;
+  }
+}</code></pre>
+
+  <!-- ─── BUILD & RUN ───────────────────── -->
+  <h2 id="build-and-run">Building and Running</h2>
+
+  <pre><code># Build the image
+docker build -t devdocs:latest .
+
+# Run locally on port 8080
+docker run -p 8080:80 devdocs:latest
+
+# Open in browser
+open http://localhost:8080</code></pre>
+
+  <h3 id="tagging">Tagging for Production</h3>
+
+  <pre><code># Tag with version
+docker build -t devdocs:1.4.2 -t devdocs:latest .
+
+# Tag for a registry
+docker tag devdocs:latest registry.example.com/devdocs:latest
+
+# Push
+docker push registry.example.com/devdocs:latest</code></pre>
+
+  <!-- ─── DOCKER COMPOSE ─────────────────── -->
+  <h2 id="docker-compose">Docker Compose</h2>
+
+  <p>
+    Use Docker Compose for local development and multi-container setups (e.g., docs + reverse proxy):
+  </p>
+
+  <pre><code># docker-compose.yml
+version: "3.9"
+services:
+  docs:
+    build: .
+    ports:
+      - "8080:80"
+    volumes:
+      # Mount pages/ for hot-reload during development
+      - ./pages:/usr/share/nginx/html/pages:ro
+    restart: unless-stopped</code></pre>
+
+  <pre><code># Start
+docker compose up -d
+
+# Stop
+docker compose down</code></pre>
+
+  <!-- ─── MULTI-STAGE BUILDS ────────────── -->
+  <h2 id="multi-stage">Multi-Stage Builds</h2>
+
+  <p>
+    If you add a build step (e.g., a script that pre-processes pages or generates a search index),
+    use a multi-stage build to keep the final image small:
+  </p>
+
+  <pre><code>FROM node:20-alpine AS builder
+WORKDIR /app
+COPY package*.json ./
+RUN npm ci
+COPY . .
+RUN npm run build   # generates /app/dist
+
+FROM nginx:1.27-alpine
+COPY --from=builder /app/dist /usr/share/nginx/html/
+COPY nginx.conf /etc/nginx/conf.d/default.conf
+EXPOSE 80
+CMD ["nginx", "-g", "daemon off;"]</code></pre>
+
+  <!-- ─── HEALTH CHECK ──────────────────── -->
+  <h2 id="docker-health-check">Container Health Check</h2>
+
+  <pre><code># Add to Dockerfile
+HEALTHCHECK --interval=30s --timeout=5s --start-period=5s --retries=3 \
+  CMD curl -f http://localhost/ || exit 1</code></pre>
+
+  <!-- ─── IMAGE SIZE OPTIMIZATION ──────── -->
+  <h2 id="image-optimization">Minimizing Image Size</h2>
+
+  <ul>
+    <li>Use Alpine-based base images (<code>nginx:alpine</code> is ~7 MB).</li>
+    <li>Add a <code>.dockerignore</code> to exclude development files.</li>
+    <li>Avoid installing unnecessary tools (curl, vim) in the final stage.</li>
+  </ul>
+
+  <pre><code># .dockerignore
+.git
+node_modules
+*.md
+.env*
+.DS_Store</code></pre>
+
+</div>

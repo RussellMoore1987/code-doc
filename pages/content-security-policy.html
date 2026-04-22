@@ -1,0 +1,125 @@
+<div class="content-body">
+
+  <h1 id="content-security-policy">Content Security Policy</h1>
+
+  <p>
+    A Content Security Policy (CSP) is an HTTP response header that instructs browsers which
+    sources of scripts, styles, images, and other resources are permitted to load. A properly
+    configured CSP dramatically reduces the risk of Cross-Site Scripting (XSS) attacks.
+  </p>
+
+  <div class="callout">
+    <div class="callout-title">ℹ Why CSP Matters for DevDocs</div>
+    <p>
+      DevDocs loads HTML fragments from the <code>pages/</code> directory dynamically and
+      injects them into the DOM. Without CSP, a malicious page fragment could inject inline
+      scripts and steal user data. CSP prevents this at the browser level.
+    </p>
+  </div>
+
+  <!-- ─── RECOMMENDED POLICY ───────────── -->
+  <h2 id="recommended-policy">Recommended CSP Policy</h2>
+
+  <p>The following policy is a strong starting point for DevDocs:</p>
+
+  <pre><code>Content-Security-Policy:
+  default-src 'self';
+  script-src  'self';
+  style-src   'self' 'unsafe-inline';
+  img-src     'self' data:;
+  font-src    'self';
+  connect-src 'self';
+  frame-ancestors 'none';
+  base-uri    'self';
+  form-action 'self';</code></pre>
+
+  <h3 id="policy-directives">Directive Explanations</h3>
+
+  <table>
+    <thead>
+      <tr><th>Directive</th><th>Value</th><th>Reason</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><code>default-src</code></td><td><code>'self'</code></td><td>Fallback for all resource types — only same-origin allowed.</td></tr>
+      <tr><td><code>script-src</code></td><td><code>'self'</code></td><td>Only <code>app.js</code> from the same origin; no inline scripts, no CDN.</td></tr>
+      <tr><td><code>style-src</code></td><td><code>'self' 'unsafe-inline'</code></td><td>Inline styles are used by sidebar width calculations; restrict to minimum.</td></tr>
+      <tr><td><code>connect-src</code></td><td><code>'self'</code></td><td>Restricts <code>fetch()</code> calls to same origin only.</td></tr>
+      <tr><td><code>frame-ancestors</code></td><td><code>'none'</code></td><td>Prevents the docs from being embedded in iframes (clickjacking defence).</td></tr>
+    </tbody>
+  </table>
+
+  <!-- ─── APPLYING CSP ─────────────────── -->
+  <h2 id="applying-csp">Applying the Policy</h2>
+
+  <h3 id="nginx-csp">Nginx</h3>
+
+  <pre><code>server {
+  add_header Content-Security-Policy
+    "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self'; frame-ancestors 'none';"
+    always;
+}</code></pre>
+
+  <h3 id="apache-csp">Apache</h3>
+
+  <pre><code>&lt;IfModule mod_headers.c&gt;
+  Header always set Content-Security-Policy \
+    "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; frame-ancestors 'none';"
+&lt;/IfModule&gt;</code></pre>
+
+  <h3 id="meta-tag-csp">Meta Tag (development only)</h3>
+
+  <pre><code>&lt;!-- index.html &lt;head&gt; — use HTTP header in production instead --&gt;
+&lt;meta http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline';"&gt;</code></pre>
+
+  <div class="callout warning">
+    <div class="callout-title">⚠ Meta Tag Limitation</div>
+    <p>
+      The <code>&lt;meta&gt;</code> CSP tag does not support <code>frame-ancestors</code>.
+      Always use the HTTP header in production environments.
+    </p>
+  </div>
+
+  <!-- ─── REPORT-ONLY MODE ──────────────── -->
+  <h2 id="report-only-mode">Report-Only Mode</h2>
+
+  <p>
+    Before enforcing a policy, use <code>Content-Security-Policy-Report-Only</code> to audit
+    violations without breaking anything:
+  </p>
+
+  <pre><code>Content-Security-Policy-Report-Only:
+  default-src 'self';
+  script-src  'self';
+  report-uri  /csp-report-endpoint;</code></pre>
+
+  <p>
+    Violations are sent as JSON POST requests to <code>report-uri</code>. Log them to identify
+    third-party resources or inline scripts that need to be addressed before switching to
+    enforcement mode.
+  </p>
+
+  <!-- ─── ELIMINATING UNSAFE-INLINE ────── -->
+  <h2 id="eliminating-unsafe-inline">Eliminating <code>'unsafe-inline'</code> Styles</h2>
+
+  <p>
+    The inline <code>style</code> attribute used by the resize feature
+    (<code>el.style.width = n + 'px'</code>) prevents dropping <code>'unsafe-inline'</code>
+    from <code>style-src</code>. Two mitigation options:
+  </p>
+
+  <ol>
+    <li>
+      <strong>Nonce approach:</strong> Generate a random nonce per request on the server, inject it
+      into the CSP header and into a <code>&lt;style nonce="..."&gt;</code> block, then move
+      dynamic values to CSS custom properties set via the nonce-protected block.
+    </li>
+    <li>
+      <strong>CSS custom properties:</strong> Replace <code>el.style.width</code> with
+      <code>el.style.setProperty('--sidebar-w', n + 'px')</code> and reference
+      <code>var(--sidebar-w)</code> in CSS. This still requires <code>'unsafe-inline'</code>
+      for inline styles but reduces the scope.
+    </li>
+  </ol>
+
+</div>

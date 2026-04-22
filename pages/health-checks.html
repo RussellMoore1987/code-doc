@@ -1,0 +1,132 @@
+<div class="content-body">
+
+  <h1 id="health-checks">Health Checks &amp; Monitoring</h1>
+
+  <p>
+    Health checks verify that your DevDocs deployment is up and serving content correctly.
+    Combined with monitoring and alerting, they allow you to detect and respond to outages
+    before users report them.
+  </p>
+
+  <div class="callout">
+    <div class="callout-title">ℹ Static Site Characteristics</div>
+    <p>
+      Static sites like DevDocs have a narrow failure surface — there is no application server
+      to crash, no database to become unavailable. The main failure modes are: the CDN/host
+      goes down, a deploy corrupts files, or DNS stops resolving. Design your health checks
+      accordingly.
+    </p>
+  </div>
+
+  <!-- ─── HEALTH CHECK ENDPOINT ─────────── -->
+  <h2 id="health-check-endpoint">Health Check Endpoint</h2>
+
+  <p>
+    Add a dedicated <code>health.json</code> file at the root of your project. This file is
+    lightweight, cacheable, and unambiguous — monitoring tools request it to confirm the site
+    is reachable.
+  </p>
+
+  <pre><code>// health.json
+{
+  "status": "ok",
+  "version": "2.4.1",
+  "timestamp": "2026-04-22T00:00:00Z"
+}</code></pre>
+
+  <p>
+    Update this file as part of your build/deploy pipeline so the version always reflects the
+    live deployment.
+  </p>
+
+  <!-- ─── UPTIME MONITORING ─────────────── -->
+  <h2 id="uptime-monitoring">Uptime Monitoring</h2>
+
+  <h3 id="uptime-robot">UptimeRobot (Free Tier)</h3>
+
+  <ol>
+    <li>Create a new monitor at <em>uptimerobot.com</em>.</li>
+    <li>Choose <em>HTTP(s)</em> monitor type.</li>
+    <li>Set the URL to <code>https://docs.example.com/health.json</code>.</li>
+    <li>Check interval: 5 minutes.</li>
+    <li>Configure email or Slack alerts for downtime events.</li>
+  </ol>
+
+  <h3 id="pingdom">Pingdom / Datadog Synthetics</h3>
+
+  <p>For enterprise monitoring, configure a synthetic transaction test that:</p>
+
+  <ol>
+    <li>Loads the homepage (<code>/</code>).</li>
+    <li>Verifies the <code>&lt;title&gt;</code> tag contains your project name.</li>
+    <li>Checks that <code>app.js</code> returns HTTP 200.</li>
+    <li>Validates a known page fragment (<code>pages/intro.html</code>) is accessible.</li>
+  </ol>
+
+  <!-- ─── CDN HEALTH ────────────────────── -->
+  <h2 id="cdn-health">CDN Health Verification</h2>
+
+  <p>
+    After every deployment, run a smoke test to confirm the CDN is serving the new version:
+  </p>
+
+  <pre><code>#!/bin/bash
+# smoke-test.sh
+
+EXPECTED_VERSION="2.4.1"
+HEALTH_URL="https://docs.example.com/health.json"
+
+ACTUAL_VERSION=$(curl -sf "$HEALTH_URL" | python3 -c "import sys,json; print(json.load(sys.stdin)['version'])")
+
+if [ "$ACTUAL_VERSION" != "$EXPECTED_VERSION" ]; then
+  echo "ERROR: Expected version $EXPECTED_VERSION but got $ACTUAL_VERSION"
+  exit 1
+fi
+
+echo "Health check passed: version $ACTUAL_VERSION"</code></pre>
+
+  <!-- ─── CONTAINER HEALTH CHECKS ──────── -->
+  <h2 id="container-health">Container Health Checks</h2>
+
+  <p>
+    For Docker deployments, declare a <code>HEALTHCHECK</code> instruction in your Dockerfile:
+  </p>
+
+  <pre><code>HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
+  CMD wget -qO- http://localhost/health.json || exit 1</code></pre>
+
+  <p>Kubernetes readiness and liveness probes:</p>
+
+  <pre><code># k8s deployment.yaml
+livenessProbe:
+  httpGet:
+    path: /health.json
+    port: 80
+  initialDelaySeconds: 5
+  periodSeconds: 30
+
+readinessProbe:
+  httpGet:
+    path: /health.json
+    port: 80
+  initialDelaySeconds: 2
+  periodSeconds: 10</code></pre>
+
+  <!-- ─── ALERTING ───────────────────────── -->
+  <h2 id="alerting">Alerting &amp; Escalation</h2>
+
+  <p>Configure alerts with appropriate severity levels and escalation paths:</p>
+
+  <table>
+    <thead>
+      <tr><th>Condition</th><th>Severity</th><th>Response</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>HTTP 5xx from health endpoint</td><td>Critical</td><td>Page on-call immediately</td></tr>
+      <tr><td>Response time &gt; 3s</td><td>Warning</td><td>Notify team channel</td></tr>
+      <tr><td>SSL cert expiry &lt; 14 days</td><td>Warning</td><td>Create renewal ticket</td></tr>
+      <tr><td>HTTP 4xx (not 404) on homepage</td><td>Critical</td><td>Page on-call immediately</td></tr>
+    </tbody>
+  </table>
+
+</div>

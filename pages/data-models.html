@@ -1,0 +1,166 @@
+<div class="content-body">
+
+  <h1 id="data-models">Data Models &amp; Schema</h1>
+
+  <p>
+    Understanding how DevDocs structures its internal data is essential for building integrations,
+    writing custom plugins, and extending the platform's capabilities. This page documents all
+    first-class data models, their fields, types, and validation rules.
+  </p>
+
+  <div class="callout">
+    <div class="callout-title">ℹ Note</div>
+    <p>
+      All models described here are plain JavaScript objects — there is no ORM or database layer.
+      If you are integrating with an external data store, map these structures to your own schema.
+    </p>
+  </div>
+
+  <!-- ─── NAV ITEM MODEL ─────────────────── -->
+  <h2 id="nav-item-model">NavItem Model</h2>
+
+  <p>
+    The <code>NavItem</code> is the fundamental building block of the navigation tree. Every entry
+    in <code>NAV_DATA</code> conforms to this shape.
+  </p>
+
+  <h3 id="nav-item-fields">Fields</h3>
+
+  <table>
+    <thead>
+      <tr><th>Field</th><th>Type</th><th>Required</th><th>Description</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><code>id</code></td><td>string</td><td>Yes</td><td>Unique identifier used in URL routing and DOM queries.</td></tr>
+      <tr><td><code>label</code></td><td>string</td><td>Yes</td><td>Human-readable display text shown in the sidebar.</td></tr>
+      <tr><td><code>page</code></td><td>string</td><td>No</td><td>Relative path to an HTML fragment. Omit for group nodes.</td></tr>
+      <tr><td><code>children</code></td><td>NavItem[]</td><td>No</td><td>Nested items. A node cannot have both <code>page</code> and <code>children</code>.</td></tr>
+    </tbody>
+  </table>
+
+  <h3 id="nav-item-example">Example</h3>
+
+  <pre><code>// Leaf node (has a page)
+{
+  id: 'installation',
+  label: 'Installation',
+  page: 'pages/installation.html'
+}
+
+// Group node (has children, no page)
+{
+  id: 'getting-started',
+  label: 'Getting Started',
+  children: [
+    { id: 'intro', label: 'Introduction', page: 'pages/intro.html' }
+  ]
+}</code></pre>
+
+  <h3 id="nav-item-validation">Validation Rules</h3>
+
+  <ul>
+    <li><code>id</code> values must be globally unique across all items at every depth level.</li>
+    <li><code>id</code> should only contain lowercase letters, numbers, and hyphens (<code>a-z0-9-</code>).</li>
+    <li>A node with <code>children</code> must not also declare a <code>page</code> — the app treats
+        such nodes as non-navigable group headers.</li>
+    <li>Depth is unlimited, but the UI is optimised for up to 4 levels of nesting.</li>
+  </ul>
+
+  <!-- ─── ROUTE STATE MODEL ──────────────── -->
+  <h2 id="route-state">Route State Model</h2>
+
+  <p>
+    The application maintains a <code>currentRoute</code> object inside the <code>state</code> singleton
+    that describes the user's current position in the documentation.
+  </p>
+
+  <pre><code>// state.currentRoute shape
+{
+  navId:     string | null,   // active NavItem id
+  sectionId: string | null    // active heading id on the loaded page
+}</code></pre>
+
+  <p>
+    This object is updated by <code>navigateTo()</code>, scroll spy events, and popstate handlers.
+    Never mutate it directly — always call <code>navigateTo()</code> to trigger side effects
+    (URL update, content load, right-nav highlight).
+  </p>
+
+  <!-- ─── SEARCH INDEX ENTRY ────────────── -->
+  <h2 id="search-index-entry">SearchIndexEntry Model</h2>
+
+  <p>
+    The search subsystem builds an in-memory index at load time. Each entry in
+    <code>searchState.index</code> has the following shape:
+  </p>
+
+  <pre><code>{
+  url:     string,         // relative page path, e.g. "pages/intro.html"
+  title:   string,         // text content of the first &lt;h1&gt; on the page
+  navInfo: NavItem | null, // the matching NavItem from NAV_DATA
+  sections: [
+    {
+      id:      string,  // heading element id (auto-generated if missing)
+      title:   string,  // heading text
+      content: string,  // raw innerHTML of sibling elements until next heading
+      level:   number   // 1–6
+    }
+  ]
+}</code></pre>
+
+  <h3 id="search-result">SearchResult Model</h3>
+
+  <p>Each entry in <code>searchState.results</code> after a query looks like:</p>
+
+  <pre><code>{
+  type:          'section',
+  page:          SearchIndexEntry,
+  section:       SectionEntry,
+  title:         string,   // heading text
+  snippet:       string,   // HTML snippet with &lt;mark&gt; highlights
+  navId:         string | null,
+  sectionId:     string,
+  instanceIndex: number    // 0-based occurrence index within the page
+}</code></pre>
+
+  <!-- ─── APP STATE ──────────────────────── -->
+  <h2 id="app-state">Application State Object</h2>
+
+  <p>
+    The global <code>state</code> object holds all mutable runtime data. Treat it as an internal
+    singleton — plugins should read from it but avoid writing directly unless instructed.
+  </p>
+
+  <pre><code>const state = {
+  activeNavId:       string | null,
+  scrollSpyObserver: IntersectionObserver | null,
+  leftCollapsed:     boolean,
+  rightCollapsed:    boolean,
+  leftWidth:         number,   // pixels
+  rightWidth:        number,   // pixels
+  currentRoute:      RouteState | null,
+  isNavigating:      boolean,
+  abortController:   AbortController | null
+};</code></pre>
+
+  <div class="callout warning">
+    <div class="callout-title">⚠ Mutation Warning</div>
+    <p>
+      Setting <code>state.isNavigating = false</code> manually to unblock a stuck navigation is
+      an escape hatch. Prefer fixing the root cause (e.g., a rejected fetch) rather than forcing
+      the flag.
+    </p>
+  </div>
+
+  <!-- ─── BEST PRACTICES ────────────────── -->
+  <h2 id="best-practices">Schema Best Practices</h2>
+
+  <ul>
+    <li>Keep <code>id</code> values stable — they are embedded in bookmarked URLs.</li>
+    <li>Use kebab-case for ids: <code>api-reference</code>, not <code>apiReference</code>.</li>
+    <li>Avoid id collisions between nav items and heading ids; the routing parser must disambiguate.</li>
+    <li>When adding pages programmatically, call <code>buildNavTree(NAV_DATA)</code> again and
+        replace the contents of <code>#left-nav</code> to re-render the sidebar.</li>
+  </ul>
+
+</div>

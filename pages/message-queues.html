@@ -1,0 +1,156 @@
+<div class="content-body">
+
+  <h1 id="message-queues">Message Queues</h1>
+
+  <p>
+    Message queues decouple the producer of a task from its consumer, enabling asynchronous
+    processing, retry logic, and horizontal scaling. In a DevDocs deployment, queues are useful
+    for sending notifications, rebuilding search indexes, processing feedback submissions,
+    and triggering cache invalidations without blocking the main request.
+  </p>
+
+  <div class="callout">
+    <div class="callout-title">ℹ When to Use a Queue</div>
+    <p>
+      Use a message queue when a task is too slow to complete in an HTTP request-response cycle
+      (&gt; 500ms), could fail and needs retry logic, needs to fan out to multiple consumers,
+      or must survive a server restart.
+    </p>
+  </div>
+
+  <!-- ─── BASIC CONCEPTS ────────────────── -->
+  <h2 id="basic-concepts">Basic Concepts</h2>
+
+  <table>
+    <thead>
+      <tr><th>Term</th><th>Definition</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><strong>Producer</strong></td><td>The service that creates and enqueues messages.</td></tr>
+      <tr><td><strong>Consumer</strong></td><td>The service that reads and processes messages.</td></tr>
+      <tr><td><strong>Queue</strong></td><td>A durable buffer that stores messages until consumed.</td></tr>
+      <tr><td><strong>Dead Letter Queue</strong></td><td>A secondary queue that receives messages which exceed the retry limit.</td></tr>
+      <tr><td><strong>Acknowledgement</strong></td><td>A signal from the consumer that a message was processed successfully.</td></tr>
+    </tbody>
+  </table>
+
+  <!-- ─── REDIS QUEUE ───────────────────── -->
+  <h2 id="redis-queue">BullMQ (Redis-backed Queue)</h2>
+
+  <p>
+    BullMQ is the most popular Node.js queue library, built on Redis:
+  </p>
+
+  <h3 id="producer">Producer</h3>
+
+  <pre><code>import { Queue } from 'bullmq';
+import { Redis } from 'ioredis';
+
+const connection = new Redis(process.env.REDIS_URL);
+const searchIndexQueue = new Queue('search-index', { connection });
+
+// Enqueue a job when a page is published
+export async function scheduleSearchReindex(pageId) {
+  await searchIndexQueue.add('reindex', { pageId }, {
+    attempts:       3,
+    backoff: {
+      type:   'exponential',
+      delay:  2000
+    },
+    removeOnComplete: 100,
+    removeOnFail:     50
+  });
+}</code></pre>
+
+  <h3 id="consumer">Consumer (Worker)</h3>
+
+  <pre><code>import { Worker } from 'bullmq';
+
+const worker = new Worker('search-index', async (job) => {
+  const { pageId } = job.data;
+  console.log(`Reindexing page: ${pageId}`);
+
+  const content = await fetchPageContent(pageId);
+  await updateSearchIndex(pageId, content);
+
+  return { reindexed: true };
+}, { connection });
+
+worker.on('completed', (job) => {
+  console.log(`Job ${job.id} completed`);
+});
+
+worker.on('failed', (job, err) => {
+  console.error(`Job ${job.id} failed: ${err.message}`);
+});</code></pre>
+
+  <!-- ─── SQS ──────────────────────────── -->
+  <h2 id="aws-sqs">AWS SQS</h2>
+
+  <pre><code>import { SQSClient, SendMessageCommand, ReceiveMessageCommand, DeleteMessageCommand } from "@aws-sdk/client-sqs";
+
+const sqs  = new SQSClient({ region: 'us-east-1' });
+const QUEUE_URL = process.env.SQS_QUEUE_URL;
+
+// Produce
+async function enqueue(message) {
+  await sqs.send(new SendMessageCommand({
+    QueueUrl:    QUEUE_URL,
+    MessageBody: JSON.stringify(message),
+    MessageAttributes: {
+      Event: { DataType: 'String', StringValue: message.event }
+    }
+  }));
+}
+
+// Consume (polling loop)
+async function poll() {
+  while (true) {
+    const { Messages } = await sqs.send(new ReceiveMessageCommand({
+      QueueUrl:            QUEUE_URL,
+      MaxNumberOfMessages: 10,
+      WaitTimeSeconds:     20  // Long polling
+    }));
+
+    for (const msg of Messages ?? []) {
+      await processMessage(JSON.parse(msg.Body));
+      await sqs.send(new DeleteMessageCommand({
+        QueueUrl:      QUEUE_URL,
+        ReceiptHandle: msg.ReceiptHandle
+      }));
+    }
+  }
+}</code></pre>
+
+  <!-- ─── IDEMPOTENCY ───────────────────── -->
+  <h2 id="idempotency">Idempotency</h2>
+
+  <p>
+    In at-least-once delivery systems, the same message may be delivered more than once. Design
+    consumers to be idempotent — processing the same message twice should produce the same
+    result:
+  </p>
+
+  <pre><code>const processed = new Set();
+
+async function processMessage(message) {
+  const key = `${message.event}:${message.data.pageId}:${message.timestamp}`;
+
+  if (processed.has(key)) {
+    console.log(`Skipping duplicate message: ${key}`);
+    return;
+  }
+
+  await doWork(message);
+  processed.add(key);
+}</code></pre>
+
+  <div class="callout warning">
+    <div class="callout-title">⚠ In-Memory Deduplication</div>
+    <p>
+      The in-memory <code>Set</code> above is lost on restart. For production, store processed
+      message IDs in Redis or a database with an appropriate TTL.
+    </p>
+  </div>
+
+</div>

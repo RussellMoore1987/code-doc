@@ -1,0 +1,147 @@
+<div class="content-body">
+
+  <h1 id="logging-guide">Logging Guide</h1>
+
+  <p>
+    Good logging is the foundation of observable systems. This guide covers what to log,
+    how to structure log output, and how to ship logs from DevDocs deployments to your
+    preferred observability platform.
+  </p>
+
+  <div class="callout">
+    <div class="callout-title">ℹ Client vs. Server Logging</div>
+    <p>
+      Browser-side JavaScript can only log to the DevTools console. Structured,
+      persistent logs require a backend service. This guide covers both layers.
+    </p>
+  </div>
+
+  <!-- ─── LOG LEVELS ────────────────────── -->
+  <h2 id="log-levels">Log Levels</h2>
+
+  <p>Use consistent log levels to allow filtering in production:</p>
+
+  <table>
+    <thead>
+      <tr><th>Level</th><th>console Method</th><th>When to Use</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><code>DEBUG</code></td><td><code>console.debug()</code></td><td>Verbose diagnostic data — dev only</td></tr>
+      <tr><td><code>INFO</code></td><td><code>console.info()</code></td><td>Normal lifecycle events (page loaded, theme changed)</td></tr>
+      <tr><td><code>WARN</code></td><td><code>console.warn()</code></td><td>Recoverable issues (failed to index one page)</td></tr>
+      <tr><td><code>ERROR</code></td><td><code>console.error()</code></td><td>Unexpected failures that affect functionality</td></tr>
+    </tbody>
+  </table>
+
+  <pre><code>// Structured client-side logger
+const logger = {
+  debug: (...args) => DEBUG && console.debug('[DD]', ...args),
+  info:  (...args) =>           console.info ('[DD]', ...args),
+  warn:  (...args) =>           console.warn ('[DD]', ...args),
+  error: (...args) =>           console.error('[DD]', ...args),
+};</code></pre>
+
+  <!-- ─── WHAT TO LOG ───────────────────── -->
+  <h2 id="what-to-log">What to Log</h2>
+
+  <h3 id="navigation-logs">Navigation Events</h3>
+
+  <pre><code>// Log every page navigation
+EventBus.on('nav:page-loaded', ({ url, navId }) => {
+  logger.info('Page loaded', { url, navId, timestamp: Date.now() });
+});</code></pre>
+
+  <h3 id="error-logs">Errors</h3>
+
+  <pre><code>// Catch unhandled errors
+window.addEventListener('error', (event) => {
+  logger.error('Unhandled error', {
+    message:  event.message,
+    filename: event.filename,
+    line:     event.lineno,
+    column:   event.colno,
+    stack:    event.error?.stack
+  });
+});
+
+// Catch unhandled promise rejections
+window.addEventListener('unhandledrejection', (event) => {
+  logger.error('Unhandled promise rejection', {
+    reason: event.reason?.message ?? String(event.reason)
+  });
+});</code></pre>
+
+  <!-- ─── STRUCTURED LOGGING ────────────── -->
+  <h2 id="structured-logging">Structured Logging (Server-Side)</h2>
+
+  <p>
+    On the server, always log JSON rather than plain strings. Structured logs are indexable,
+    filterable, and machine-readable.
+  </p>
+
+  <pre><code>// Using pino (fast Node.js logger)
+import pino from 'pino';
+
+const log = pino({
+  level: process.env.LOG_LEVEL ?? 'info',
+  formatters: {
+    level: (label) => ({ level: label })
+  }
+});
+
+// Usage
+log.info({ pageId: 'intro', duration: 45 }, 'Page served');
+log.warn({ pageId: 'missing', status: 404 }, 'Page not found');
+log.error({ err }, 'Unhandled error in middleware');</code></pre>
+
+  <!-- ─── LOG SHIPPING ──────────────────── -->
+  <h2 id="log-shipping">Shipping Logs to a Platform</h2>
+
+  <h3 id="datadog">Datadog</h3>
+
+  <pre><code># docker-compose.yml — Datadog log collection
+services:
+  docs:
+    image: devdocs:latest
+    labels:
+      com.datadoghq.ad.logs: '[{"source":"nginx","service":"devdocs"}]'
+    logging:
+      driver: json-file</code></pre>
+
+  <h3 id="cloudwatch">AWS CloudWatch</h3>
+
+  <pre><code># ECS task definition log configuration
+"logConfiguration": {
+  "logDriver": "awslogs",
+  "options": {
+    "awslogs-group":         "/ecs/devdocs",
+    "awslogs-region":        "us-east-1",
+    "awslogs-stream-prefix": "ecs"
+  }
+}</code></pre>
+
+  <!-- ─── LOG RETENTION ─────────────────── -->
+  <h2 id="log-retention">Log Retention Policies</h2>
+
+  <table>
+    <thead>
+      <tr><th>Log Type</th><th>Recommended Retention</th><th>Reason</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Access logs</td><td>90 days</td><td>Traffic analysis, incident forensics</td></tr>
+      <tr><td>Application errors</td><td>30 days</td><td>Bug investigation</td></tr>
+      <tr><td>Security/audit logs</td><td>1 year+</td><td>Compliance requirements</td></tr>
+      <tr><td>Debug logs</td><td>7 days</td><td>High volume, low long-term value</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout warning">
+    <div class="callout-title">⚠ PII in Logs</div>
+    <p>
+      Never log personally identifiable information (email addresses, IP addresses in some
+      jurisdictions, user IDs linked to individuals) unless required and consented to.
+      Use anonymization or pseudonymization techniques where logging user data is necessary.
+    </p>
+  </div>
+
+</div>

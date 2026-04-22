@@ -1,0 +1,181 @@
+<div class="content-body">
+
+  <h1 id="ci-cd">CI/CD Integration</h1>
+
+  <p>
+    Continuous Integration and Continuous Deployment (CI/CD) pipelines automate testing,
+    building, and deploying DevDocs whenever changes are pushed to your repository. This
+    eliminates manual deployment steps and ensures every commit is validated before it
+    reaches production.
+  </p>
+
+  <div class="callout">
+    <div class="callout-title">⚙️ Zero Build Step Advantage</div>
+    <p>
+      DevDocs requires no compilation or bundling. CI pipelines are fast — typically under
+      60 seconds — because the "build" is simply copying files and running validation checks.
+    </p>
+  </div>
+
+  <!-- ─── GITHUB ACTIONS ─────────────────── -->
+  <h2 id="github-actions">GitHub Actions</h2>
+
+  <h3 id="deploy-to-pages">Deploy to GitHub Pages</h3>
+
+  <pre><code># .github/workflows/deploy.yml
+name: Deploy Documentation
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+  pages:    write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Validate HTML
+        run: npx html-validate pages/*.html index.html
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v4
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: '.'
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4</code></pre>
+
+  <h3 id="deploy-to-docker">Build and Push Docker Image</h3>
+
+  <pre><code># .github/workflows/docker.yml
+name: Build and Push Docker Image
+
+on:
+  push:
+    tags: ['v*']
+
+jobs:
+  docker:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Log in to registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push
+        uses: docker/build-push-action@v5
+        with:
+          push: true
+          tags: |
+            ghcr.io/${{ github.repository }}:latest
+            ghcr.io/${{ github.repository }}:${{ github.ref_name }}</code></pre>
+
+  <!-- ─── GITLAB CI ──────────────────────── -->
+  <h2 id="gitlab-ci">GitLab CI/CD</h2>
+
+  <pre><code># .gitlab-ci.yml
+stages:
+  - validate
+  - deploy
+
+validate:html:
+  stage: validate
+  image: node:20-alpine
+  script:
+    - npm install -g html-validate
+    - html-validate pages/*.html index.html
+
+pages:
+  stage: deploy
+  script:
+    - mkdir -p public
+    - cp -r . public/
+  artifacts:
+    paths:
+      - public
+  only:
+    - main</code></pre>
+
+  <!-- ─── LINK CHECKING ─────────────────── -->
+  <h2 id="link-checking">Automated Link Checking</h2>
+
+  <p>
+    Add a broken-link check to catch navigation entries that reference non-existent pages:
+  </p>
+
+  <pre><code># Install lychee (fast link checker)
+cargo install lychee
+
+# Check all links (local + external)
+lychee --offline pages/*.html index.html</code></pre>
+
+  <p>As a CI step:</p>
+
+  <pre><code>- name: Check internal links
+  run: |
+    npx linkinator . --recurse --skip "https://|http://" --verbosity error</code></pre>
+
+  <!-- ─── DEPLOYMENT STRATEGIES ─────────── -->
+  <h2 id="deployment-strategies">Deployment Strategies</h2>
+
+  <h3 id="blue-green">Blue-Green Deployment</h3>
+
+  <p>
+    Maintain two identical production environments (blue and green). Deploy new versions to
+    the idle environment, run smoke tests, then switch traffic instantly.
+  </p>
+
+  <h3 id="rolling">Rolling Deployment</h3>
+
+  <p>
+    Gradually replace old instances with new ones. Works well behind a load balancer with
+    health checks enabled.
+  </p>
+
+  <h3 id="canary">Canary Release</h3>
+
+  <p>
+    Route a small percentage of traffic (e.g., 5%) to the new version, monitor error rates,
+    then gradually increase the traffic split.
+  </p>
+
+  <!-- ─── BRANCH PREVIEW ─────────────────── -->
+  <h2 id="branch-previews">Branch Preview Deployments</h2>
+
+  <p>
+    Automatically deploy a preview of each pull request for stakeholder review:
+  </p>
+
+  <pre><code>- name: Deploy preview
+  uses: cloudflare/pages-action@v1
+  with:
+    apiToken: ${{ secrets.CF_API_TOKEN }}
+    accountId: ${{ secrets.CF_ACCOUNT_ID }}
+    projectName: devdocs
+    directory: .
+    gitHubToken: ${{ secrets.GITHUB_TOKEN }}</code></pre>
+
+</div>

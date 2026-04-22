@@ -75,6 +75,61 @@ const NAV_DATA = [
       { id: 'cli-ref',  label: 'CLI Reference',  page: 'pages/cli-reference.html' },
       { id: 'faq',      label: 'FAQ',            page: 'pages/faq.html'      }
     ]
+  },
+  {
+    id: 'core-concepts',
+    label: 'Core Concepts',
+    children: [
+      { id: 'data-models',      label: 'Data Models & Schema',  page: 'pages/data-models.html'      },
+      { id: 'event-system',     label: 'Event System',          page: 'pages/event-system.html'     },
+      { id: 'middleware',       label: 'Middleware Pipeline',   page: 'pages/middleware.html'       },
+      { id: 'state-management', label: 'State Management',      page: 'pages/state-management.html' },
+      { id: 'lifecycle-hooks',  label: 'Lifecycle Hooks',       page: 'pages/lifecycle-hooks.html'  }
+    ]
+  },
+  {
+    id: 'security',
+    label: 'Security',
+    children: [
+      { id: 'authentication',          label: 'Authentication',          page: 'pages/authentication.html'          },
+      { id: 'authorization',           label: 'Authorization',           page: 'pages/authorization.html'           },
+      { id: 'api-security',            label: 'API Security',            page: 'pages/api-security.html'            },
+      { id: 'content-security-policy', label: 'Content Security Policy', page: 'pages/content-security-policy.html' },
+      { id: 'secrets-management',      label: 'Secrets Management',      page: 'pages/secrets-management.html'      }
+    ]
+  },
+  {
+    id: 'deployment',
+    label: 'Deployment',
+    children: [
+      { id: 'docker',           label: 'Docker Containerization',   page: 'pages/docker.html'           },
+      { id: 'ci-cd',            label: 'CI/CD Integration',         page: 'pages/ci-cd.html'            },
+      { id: 'cloud-deployment', label: 'Cloud Deployment',          page: 'pages/cloud-deployment.html' },
+      { id: 'env-variables',    label: 'Environment Variables',     page: 'pages/env-variables.html'    },
+      { id: 'health-checks',    label: 'Health Checks & Monitoring',page: 'pages/health-checks.html'   }
+    ]
+  },
+  {
+    id: 'integrations',
+    label: 'Integrations',
+    children: [
+      { id: 'webhooks',             label: 'Webhooks',             page: 'pages/webhooks.html'             },
+      { id: 'rest-clients',         label: 'REST Clients',         page: 'pages/rest-clients.html'         },
+      { id: 'oauth2',               label: 'OAuth 2.0',            page: 'pages/oauth2.html'               },
+      { id: 'database-connections', label: 'Database Connections', page: 'pages/database-connections.html' },
+      { id: 'message-queues',       label: 'Message Queues',       page: 'pages/message-queues.html'       }
+    ]
+  },
+  {
+    id: 'troubleshooting',
+    label: 'Troubleshooting',
+    children: [
+      { id: 'debug-mode',    label: 'Debug Mode',            page: 'pages/debug-mode.html'    },
+      { id: 'error-codes',   label: 'Error Codes Reference', page: 'pages/error-codes.html'   },
+      { id: 'common-issues', label: 'Common Issues',         page: 'pages/common-issues.html' },
+      { id: 'logging-guide', label: 'Logging Guide',         page: 'pages/logging-guide.html' },
+      { id: 'support',       label: 'Support & Resources',   page: 'pages/support.html'       }
+    ]
   }
 ];
 

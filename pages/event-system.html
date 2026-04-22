@@ -1,0 +1,181 @@
+<div class="content-body">
+
+  <h1 id="event-system">Event System</h1>
+
+  <p>
+    DevDocs ships with a lightweight publish/subscribe event bus that coordinates communication
+    between decoupled subsystems — navigation, search, scroll spy, and third-party plugins —
+    without creating hard dependencies between them.
+  </p>
+
+  <div class="callout">
+    <div class="callout-title">ℹ Design Philosophy</div>
+    <p>
+      The event system is intentionally minimal. It does not support event cancellation,
+      bubbling, or priority queues. For complex orchestration needs, consider a state machine
+      or a dedicated reactive library.
+    </p>
+  </div>
+
+  <!-- ─── BUILT-IN EVENTS ────────────────── -->
+  <h2 id="built-in-events">Built-in Events</h2>
+
+  <p>
+    The following events are emitted by the core application. Subscribe to them to react to
+    lifecycle changes without patching internal functions.
+  </p>
+
+  <h3 id="navigation-events">Navigation Events</h3>
+
+  <table>
+    <thead>
+      <tr><th>Event Name</th><th>Payload</th><th>Description</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><code>nav:before</code></td>
+        <td><code>{ navId, sectionId }</code></td>
+        <td>Fired immediately before a navigation begins.</td>
+      </tr>
+      <tr>
+        <td><code>nav:after</code></td>
+        <td><code>{ navId, sectionId, success }</code></td>
+        <td>Fired after navigation completes (or fails).</td>
+      </tr>
+      <tr>
+        <td><code>nav:page-loaded</code></td>
+        <td><code>{ url, navId }</code></td>
+        <td>Fired when an HTML fragment is fetched and injected.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3 id="search-events">Search Events</h3>
+
+  <table>
+    <thead>
+      <tr><th>Event Name</th><th>Payload</th><th>Description</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><code>search:open</code></td>
+        <td><em>none</em></td>
+        <td>Fired when the search overlay opens.</td>
+      </tr>
+      <tr>
+        <td><code>search:close</code></td>
+        <td><em>none</em></td>
+        <td>Fired when the search overlay closes.</td>
+      </tr>
+      <tr>
+        <td><code>search:query</code></td>
+        <td><code>{ query, resultCount }</code></td>
+        <td>Fired after results are computed for a query.</td>
+      </tr>
+      <tr>
+        <td><code>search:select</code></td>
+        <td><code>{ navId, sectionId, query }</code></td>
+        <td>Fired when the user selects a search result.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3 id="theme-events">Theme Events</h3>
+
+  <table>
+    <thead>
+      <tr><th>Event Name</th><th>Payload</th><th>Description</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><code>theme:change</code></td>
+        <td><code>{ theme: 'light' | 'dark' }</code></td>
+        <td>Fired whenever the active colour scheme changes.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- ─── SUBSCRIBING ───────────────────── -->
+  <h2 id="subscribing">Subscribing to Events</h2>
+
+  <p>
+    Use <code>EventBus.on(event, handler)</code> to subscribe. The returned token can be
+    passed to <code>EventBus.off()</code> for cleanup.
+  </p>
+
+  <pre><code>// Subscribe
+const token = EventBus.on('nav:page-loaded', ({ url, navId }) => {
+  console.log(`Page loaded: ${url} (navId: ${navId})`);
+});
+
+// Unsubscribe later
+EventBus.off(token);</code></pre>
+
+  <p>For one-time subscriptions, use <code>EventBus.once()</code>:</p>
+
+  <pre><code>EventBus.once('search:open', () => {
+  console.log('Search opened for the first time');
+});</code></pre>
+
+  <!-- ─── PUBLISHING ─────────────────────── -->
+  <h2 id="publishing">Publishing Custom Events</h2>
+
+  <p>
+    Plugins may publish their own namespaced events. Use a prefix to avoid collisions with
+    core events:
+  </p>
+
+  <pre><code>// Good — namespaced
+EventBus.emit('myplugin:data-ready', { recordCount: 42 });
+
+// Bad — could clash with core
+EventBus.emit('ready', {});</code></pre>
+
+  <h3 id="async-handlers">Async Handlers</h3>
+
+  <p>
+    The event bus does not await async handlers. If you need sequential async execution, chain
+    promises yourself:
+  </p>
+
+  <pre><code>EventBus.on('nav:page-loaded', async ({ url }) => {
+  // This runs fire-and-forget
+  const analytics = await fetchAnalytics(url);
+  trackPageView(analytics);
+});</code></pre>
+
+  <!-- ─── ERROR HANDLING ─────────────────── -->
+  <h2 id="event-error-handling">Error Handling</h2>
+
+  <p>
+    If a subscriber throws, the event bus catches the error, logs it to the console, and
+    continues notifying remaining subscribers. One bad handler does not block the pipeline.
+  </p>
+
+  <pre><code>EventBus.on('nav:after', ({ navId }) => {
+  // If this throws, other handlers still run
+  riskyOperation(navId);
+});</code></pre>
+
+  <div class="callout warning">
+    <div class="callout-title">⚠ Handler Cleanup</div>
+    <p>
+      Always unsubscribe handlers that are registered in components or plugins that can be
+      destroyed. Leaked subscriptions cause memory leaks and unexpected behaviour after teardown.
+      Use the <code>AbortController</code> pattern or store tokens and call <code>EventBus.off()</code>
+      in your cleanup routine.
+    </p>
+  </div>
+
+  <!-- ─── BEST PRACTICES ────────────────── -->
+  <h2 id="event-best-practices">Best Practices</h2>
+
+  <ul>
+    <li>Keep handlers small and focused — do one thing per handler.</li>
+    <li>Never mutate the payload object passed to your handler.</li>
+    <li>Use <code>nav:before</code> for analytics or permission checks, not to block navigation.</li>
+    <li>Test your handlers by emitting events in the browser console during development.</li>
+    <li>Document every custom event your plugin emits in its own README.</li>
+  </ul>
+
+</div>

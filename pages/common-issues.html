@@ -1,0 +1,138 @@
+<div class="content-body">
+
+  <h1 id="common-issues">Common Issues</h1>
+
+  <p>
+    This page documents the most frequently encountered problems when setting up and running
+    DevDocs, along with step-by-step solutions. If your issue isn't listed here, check the
+    <strong>Error Codes</strong> reference or the <strong>FAQ</strong>.
+  </p>
+
+  <div class="callout">
+    <div class="callout-title">ℹ Quick Check</div>
+    <p>
+      Most issues have one of three root causes: the site is not being served over HTTP
+      (using <code>file://</code> instead), a file is missing or misnamed, or a JavaScript
+      error is blocking initialization. Always start by checking the browser console.
+    </p>
+  </div>
+
+  <!-- ─── PAGES WON'T LOAD ──────────────── -->
+  <h2 id="pages-wont-load">Pages Won't Load</h2>
+
+  <h3 id="cors-error">CORS / Fetch Error</h3>
+
+  <p><strong>Symptom:</strong> The content area shows "Error loading page" and the console shows a
+  CORS or <code>Failed to fetch</code> error.</p>
+
+  <p><strong>Cause:</strong> The site is opened as a <code>file://</code> URL instead of via a local HTTP server.</p>
+
+  <p><strong>Solution:</strong></p>
+
+  <pre><code># Option A — Python
+cd /path/to/devdocs
+python -m http.server 8080
+# Open http://localhost:8080
+
+# Option B — Node.js
+npx serve .
+# Open http://localhost:3000
+
+# Option C — VS Code Live Server
+# Right-click index.html → Open with Live Server</code></pre>
+
+  <!-- ─── NAV NOT BUILDING ──────────────── -->
+  <h2 id="nav-not-building">Navigation Tree Is Empty</h2>
+
+  <p><strong>Symptom:</strong> The left sidebar is blank or shows no navigation items.</p>
+
+  <p><strong>Possible causes and fixes:</strong></p>
+
+  <ol>
+    <li>
+      <strong><code>NAV_DATA</code> is empty.</strong> Check that your entries are correctly
+      formatted objects with at least <code>id</code> and <code>label</code> fields.
+    </li>
+    <li>
+      <strong>JavaScript error halted execution.</strong> Open the browser console. If
+      <code>init()</code> threw before <code>buildNavTree()</code> was called, the tree will
+      not render. Fix the underlying error first.
+    </li>
+    <li>
+      <strong><code>#left-nav</code> element missing.</strong> Verify that <code>index.html</code>
+      contains <code>&lt;nav id="left-nav"&gt;</code>.
+    </li>
+  </ol>
+
+  <!-- ─── THEME NOT PERSISTING ─────────── -->
+  <h2 id="theme-not-persisting">Theme Resets on Every Reload</h2>
+
+  <p><strong>Symptom:</strong> The theme always defaults to light (or dark) even after toggling.</p>
+
+  <p><strong>Cause:</strong> <code>localStorage</code> is blocked (private browsing mode) or the
+  storage key has been cleared.</p>
+
+  <p><strong>Solution:</strong></p>
+
+  <pre><code>// Check in console:
+console.log(localStorage.getItem('devdocs-theme'));
+
+// If null, manually set it:
+localStorage.setItem('devdocs-theme', 'dark');</code></pre>
+
+  <!-- ─── SEARCH RETURNING NO RESULTS ───── -->
+  <h2 id="search-no-results">Search Returns No Results</h2>
+
+  <p><strong>Symptom:</strong> Every search returns "No results found" even for text that visibly
+  appears on pages.</p>
+
+  <p><strong>Likely causes:</strong></p>
+
+  <ul>
+    <li>The search index has not finished building. Wait a few seconds after the page loads
+        before searching — <code>buildSearchIndex()</code> runs asynchronously.</li>
+    <li>Pages could not be fetched during index construction. Check the console for
+        <code>Failed to fetch</code> warnings per page.</li>
+    <li>The <code>NAV_DATA</code> entry for the page lacks a <code>page</code> field, so the
+        page is never added to the index.</li>
+  </ul>
+
+  <!-- ─── SIDEBAR WON'T RESIZE ─────────── -->
+  <h2 id="sidebar-wont-resize">Sidebar Drag Resize Not Working</h2>
+
+  <p><strong>Symptom:</strong> Dragging the resize handle does not change the sidebar width.</p>
+
+  <p><strong>Fix:</strong> Check that no CSS <code>pointer-events: none</code> rule is applied to
+  the resize handle or its container. The handle must receive <code>mousedown</code> events.</p>
+
+  <pre><code>// Verify in console:
+document.getElementById('resize-left').style.pointerEvents</code></pre>
+
+  <!-- ─── RIGHT NAV EMPTY ───────────────── -->
+  <h2 id="right-nav-empty">Right Nav Shows "No Sections"</h2>
+
+  <p><strong>Symptom:</strong> The right outline panel shows "No sections on this page" even for
+  pages with many headings.</p>
+
+  <p><strong>Cause:</strong> The headings in the page fragment are not wrapped in the expected
+  structure, or they are <code>h5</code>/<code>h6</code> which <code>buildRightNav()</code>
+  does not include.</p>
+
+  <p><strong>Fix:</strong> Use only <code>h1</code>–<code>h4</code> tags for section headings
+  that should appear in the outline.</p>
+
+  <!-- ─── SCROLL SPY WRONG ──────────────── -->
+  <h2 id="scroll-spy-wrong">Scroll Spy Highlights Wrong Section</h2>
+
+  <p>
+    If the right nav highlights the wrong section while scrolling, adjust the
+    <code>rootMargin</code> in <code>setupScrollSpy()</code>:
+  </p>
+
+  <pre><code>const observer = new IntersectionObserver(callback, {
+  root:       elContentScroll,
+  rootMargin: '0px 0px -70% 0px',  // ← Increase -70% to -80% for tighter detection
+  threshold:  0
+});</code></pre>
+
+</div>

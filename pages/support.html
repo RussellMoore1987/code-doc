@@ -1,0 +1,138 @@
+<div class="content-body">
+
+  <h1 id="support">Support &amp; Resources</h1>
+
+  <p>
+    Whether you are stuck on a configuration problem, have found a bug, or want to contribute
+    to DevDocs, this page points you to the right resources and explains how to get help
+    efficiently.
+  </p>
+
+  <div class="callout">
+    <div class="callout-title">ℹ Before You Ask</div>
+    <p>
+      Most questions are answered in the documentation. Use the search function
+      (<strong>Ctrl/Cmd + K</strong>) to search across all pages before opening a support
+      ticket. Also check the <strong>FAQ</strong> and <strong>Common Issues</strong> pages.
+    </p>
+  </div>
+
+  <!-- ─── GETTING HELP ──────────────────── -->
+  <h2 id="getting-help">Getting Help</h2>
+
+  <h3 id="github-discussions">GitHub Discussions</h3>
+
+  <p>
+    For questions, ideas, and general discussions about DevDocs, use GitHub Discussions on the
+    project repository. This is the best place for questions that don't qualify as bug reports.
+  </p>
+
+  <ul>
+    <li>Search existing discussions before opening a new one.</li>
+    <li>Include your DevDocs version, browser, and OS in your post.</li>
+    <li>Share a minimal reproducible example where possible.</li>
+  </ul>
+
+  <h3 id="bug-reports">Bug Reports</h3>
+
+  <p>
+    File bug reports as GitHub Issues. A good bug report includes:
+  </p>
+
+  <ol>
+    <li>A clear, descriptive title.</li>
+    <li>Steps to reproduce the bug (numbered, precise).</li>
+    <li>What you expected to happen.</li>
+    <li>What actually happened (including console errors).</li>
+    <li>Browser DevTools console output (screenshot or text).</li>
+    <li>Your environment: DevDocs version, browser + version, OS.</li>
+  </ol>
+
+  <pre><code>**Environment**
+- DevDocs version: 2.4.1
+- Browser: Chrome 123.0.6312.86
+- OS: macOS 14.4
+
+**Steps to Reproduce**
+1. Open the docs at http://localhost:8080
+2. Click "Installation" in the left nav
+3. Search for "python"
+4. Click the first result
+
+**Expected**: Navigate to the Installation page and highlight "python"
+**Actual**: Page loads but no highlights appear</code></pre>
+
+  <!-- ─── FEATURE REQUESTS ──────────────── -->
+  <h2 id="feature-requests">Feature Requests</h2>
+
+  <p>
+    Feature requests are welcome. Use the GitHub Issues tracker with the
+    <code>enhancement</code> label. Describe:
+  </p>
+
+  <ul>
+    <li>The problem your feature request solves.</li>
+    <li>Your proposed solution (if any).</li>
+    <li>Alternatives you have considered.</li>
+    <li>How important this is to your use case (nice-to-have vs. blocking).</li>
+  </ul>
+
+  <!-- ─── CONTRIBUTING ──────────────────── -->
+  <h2 id="contributing">Contributing</h2>
+
+  <h3 id="code-contributions">Code Contributions</h3>
+
+  <ol>
+    <li>Fork the repository and create a feature branch: <code>git checkout -b feat/my-feature</code></li>
+    <li>Make your changes with clear, focused commits.</li>
+    <li>Test in multiple browsers (Chrome, Firefox, Safari, Edge).</li>
+    <li>Ensure no new console errors are introduced.</li>
+    <li>Open a pull request with a description of the change and why it's needed.</li>
+  </ol>
+
+  <h3 id="documentation-contributions">Documentation Contributions</h3>
+
+  <p>
+    To improve or add documentation pages:
+  </p>
+
+  <ol>
+    <li>Create a new <code>.html</code> fragment in the <code>pages/</code> directory.</li>
+    <li>Follow the existing page structure (see <strong>Architecture Overview</strong>).</li>
+    <li>Add the corresponding entry to <code>NAV_DATA</code> in <code>app.js</code>.</li>
+    <li>Test that the page loads and the right nav generates correctly.</li>
+  </ol>
+
+  <!-- ─── RELEASE NOTES ─────────────────── -->
+  <h2 id="release-notes">Release Notes &amp; Changelog</h2>
+
+  <p>
+    Every release is documented in the repository's <code>CHANGELOG.md</code>. The changelog
+    follows the <a href="https://keepachangelog.com">Keep a Changelog</a> format with sections for
+    Added, Changed, Deprecated, Removed, Fixed, and Security.
+  </p>
+
+  <pre><code>## [2.4.1] - 2026-04-15
+### Fixed
+- Search highlights now clear correctly when navigating to a new page
+- Right-nav outline no longer duplicates entries on fast navigation
+
+## [2.4.0] - 2026-03-30
+### Added
+- Ctrl/Cmd+K keyboard shortcut to open search
+- F3 / Ctrl+G to navigate between search highlights on a page
+
+### Changed
+- Debounce delay reduced from 400ms to 300ms for faster search feedback</code></pre>
+
+  <!-- ─── USEFUL LINKS ───────────────────── -->
+  <h2 id="useful-links">Useful Links</h2>
+
+  <ul>
+    <li><strong>MDN Web Docs</strong> — Reference for all browser APIs used in DevDocs</li>
+    <li><strong>Can I Use</strong> — Browser compatibility data for CSS and JS features</li>
+    <li><strong>Web Accessibility Initiative (WAI-ARIA)</strong> — Accessibility patterns</li>
+    <li><strong>OWASP Top 10</strong> — Security best practices relevant to web apps</li>
+  </ul>
+
+</div>

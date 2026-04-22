@@ -1,0 +1,147 @@
+<div class="content-body">
+
+  <h1 id="cloud-deployment">Cloud Deployment</h1>
+
+  <p>
+    DevDocs can be deployed to any static hosting platform or cloud provider. This page
+    covers deployment configurations for the most popular options, from simple CDN hosting
+    to enterprise cloud environments.
+  </p>
+
+  <div class="callout">
+    <div class="callout-title">ℹ Choosing a Platform</div>
+    <p>
+      For personal and small team projects, GitHub Pages, Netlify, or Cloudflare Pages are
+      the fastest path. For enterprise deployments with compliance requirements, use your
+      organization's preferred cloud provider (AWS S3 + CloudFront, Azure Static Web Apps,
+      or Google Cloud Storage + Cloud CDN).
+    </p>
+  </div>
+
+  <!-- ─── NETLIFY ───────────────────────── -->
+  <h2 id="netlify">Netlify</h2>
+
+  <p>Netlify supports zero-config deployments from a Git repository:</p>
+
+  <ol>
+    <li>Connect your repository at <a href="https://app.netlify.com">app.netlify.com</a>.</li>
+    <li>Set the publish directory to <code>.</code> (the project root).</li>
+    <li>Leave the build command empty (no build step needed).</li>
+    <li>Click <em>Deploy site</em>.</li>
+  </ol>
+
+  <pre><code># netlify.toml — optional configuration
+[build]
+  publish = "."
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "DENY"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+
+[[headers]]
+  for = "/*.html"
+  [headers.values]
+    Cache-Control = "no-cache"
+
+[[headers]]
+  for = "/*.js"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"</code></pre>
+
+  <!-- ─── AWS S3 + CLOUDFRONT ───────────── -->
+  <h2 id="aws-s3">AWS S3 + CloudFront</h2>
+
+  <h3 id="s3-bucket-setup">S3 Bucket Setup</h3>
+
+  <pre><code># Create bucket
+aws s3 mb s3://my-devdocs --region us-east-1
+
+# Enable static website hosting
+aws s3 website s3://my-devdocs \
+  --index-document index.html \
+  --error-document index.html
+
+# Sync files
+aws s3 sync . s3://my-devdocs \
+  --exclude ".git/*" \
+  --exclude "*.md" \
+  --cache-control "no-cache" \
+  --delete</code></pre>
+
+  <h3 id="cloudfront-distribution">CloudFront Distribution</h3>
+
+  <pre><code># Create distribution (simplified)
+aws cloudfront create-distribution \
+  --origin-domain-name my-devdocs.s3-website-us-east-1.amazonaws.com \
+  --default-root-object index.html</code></pre>
+
+  <!-- ─── CLOUDFLARE PAGES ───────────────── -->
+  <h2 id="cloudflare-pages">Cloudflare Pages</h2>
+
+  <pre><code># Using Wrangler CLI
+npm install -g wrangler
+
+wrangler pages project create devdocs
+wrangler pages deploy . --project-name devdocs</code></pre>
+
+  <p>Cloudflare Pages automatically provisions a global CDN, HTTPS, and DDoS protection.</p>
+
+  <!-- ─── AZURE STATIC WEB APPS ─────────── -->
+  <h2 id="azure-static-web-apps">Azure Static Web Apps</h2>
+
+  <pre><code># staticwebapp.config.json
+{
+  "navigationFallback": {
+    "rewrite": "/index.html"
+  },
+  "globalHeaders": {
+    "X-Content-Type-Options": "nosniff",
+    "X-Frame-Options": "DENY"
+  },
+  "mimeTypes": {
+    ".html": "text/html",
+    ".js": "application/javascript",
+    ".css": "text/css"
+  }
+}</code></pre>
+
+  <!-- ─── GOOGLE CLOUD STORAGE ─────────── -->
+  <h2 id="gcs">Google Cloud Storage</h2>
+
+  <pre><code># Create bucket and enable public access
+gsutil mb gs://my-devdocs
+gsutil iam ch allUsers:objectViewer gs://my-devdocs
+gsutil web set -m index.html gs://my-devdocs
+
+# Upload
+gsutil -m rsync -r -d . gs://my-devdocs</code></pre>
+
+  <!-- ─── CUSTOM DOMAIN ─────────────────── -->
+  <h2 id="custom-domain">Custom Domain Configuration</h2>
+
+  <p>
+    Point your domain to the hosting platform and configure HTTPS. Most platforms provision
+    TLS certificates automatically via Let's Encrypt.
+  </p>
+
+  <pre><code># Example DNS records (adjust for your provider)
+# CNAME for subdomain
+docs     CNAME   my-project.netlify.app.
+
+# A records for apex domain
+@        A       76.76.21.21
+@        A       76.76.21.22</code></pre>
+
+  <div class="callout">
+    <div class="callout-title">ℹ HTTPS Required</div>
+    <p>
+      DevDocs loads page fragments via the Fetch API, which requires a secure context
+      (<code>https://</code>) in most browsers. Always enable HTTPS in production,
+      even if the content is public.
+    </p>
+  </div>
+
+</div>

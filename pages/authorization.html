@@ -1,0 +1,162 @@
+<div class="content-body">
+
+  <h1 id="authorization">Authorization</h1>
+
+  <p>
+    Authorization controls what authenticated users are permitted to do and see. Unlike
+    authentication (proving who you are), authorization enforces rules about access rights,
+    content visibility, and allowed operations.
+  </p>
+
+  <div class="callout">
+    <div class="callout-title">ℹ Prerequisites</div>
+    <p>
+      This page assumes users are already authenticated. See the
+      <strong>Authentication</strong> page for details on the login flow.
+    </p>
+  </div>
+
+  <!-- ─── RBAC ──────────────────────────── -->
+  <h2 id="rbac">Role-Based Access Control (RBAC)</h2>
+
+  <p>
+    RBAC assigns permissions to roles, then assigns roles to users. It is the most common
+    authorization model for documentation portals.
+  </p>
+
+  <h3 id="role-hierarchy">Role Hierarchy</h3>
+
+  <table>
+    <thead>
+      <tr><th>Role</th><th>Permissions</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><code>viewer</code></td><td>Read public pages</td></tr>
+      <tr><td><code>member</code></td><td>viewer + read internal pages</td></tr>
+      <tr><td><code>editor</code></td><td>member + edit page content via CMS</td></tr>
+      <tr><td><code>admin</code></td><td>editor + manage users, settings, plugins</td></tr>
+    </tbody>
+  </table>
+
+  <h3 id="checking-roles">Checking Roles in Code</h3>
+
+  <pre><code>function hasRole(user, requiredRole) {
+  const hierarchy = ['viewer', 'member', 'editor', 'admin'];
+  const userLevel  = hierarchy.indexOf(user.role);
+  const requiredLevel = hierarchy.indexOf(requiredRole);
+  return userLevel >= requiredLevel;
+}
+
+// Usage
+if (hasRole(currentUser, 'editor')) {
+  showEditButton();
+}</code></pre>
+
+  <!-- ─── PAGE-LEVEL RESTRICTIONS ──────── -->
+  <h2 id="page-level-restrictions">Page-Level Restrictions</h2>
+
+  <p>
+    Tag NavItems with a minimum required role, then filter them before the nav tree is rendered:
+  </p>
+
+  <pre><code>// In NAV_DATA — add an optional 'requires' field
+{
+  id:       'billing',
+  label:    'Billing Settings',
+  page:     'pages/billing.html',
+  requires: 'admin'   // Custom field
+}
+
+// In init, before buildNavTree():
+function filterNavByRole(items, user) {
+  return items
+    .filter(item => !item.requires || hasRole(user, item.requires))
+    .map(item => ({
+      ...item,
+      children: item.children ? filterNavByRole(item.children, user) : undefined
+    }));
+}
+
+const visibleNav = filterNavByRole(NAV_DATA, currentUser);
+elLeftNav.appendChild(buildNavTree(visibleNav));</code></pre>
+
+  <!-- ─── ATTRIBUTE-BASED ACCESS ───────── -->
+  <h2 id="abac">Attribute-Based Access Control (ABAC)</h2>
+
+  <p>
+    ABAC grants access based on attributes of the user, resource, and environment rather than
+    static roles. It is more expressive but also more complex to implement.
+  </p>
+
+  <pre><code>function canAccess(user, resource, action, environment) {
+  // Example: allow access only during business hours
+  const hour = new Date().getHours();
+  if (environment.requireBusinessHours && (hour &lt; 9 || hour &gt; 17)) {
+    return false;
+  }
+
+  // Example: allow access if user's department matches resource owner
+  if (resource.department && user.department !== resource.department) {
+    return false;
+  }
+
+  return hasRole(user, resource.minimumRole ?? 'viewer');
+}</code></pre>
+
+  <!-- ─── CONTENT-LEVEL GATING ─────────── -->
+  <h2 id="content-gating">Content-Level Gating</h2>
+
+  <p>
+    You can hide specific sections within a page by adding a <code>data-requires</code>
+    attribute to any element and stripping unauthorized content in the
+    <code>afterPageLoad</code> hook:
+  </p>
+
+  <pre><code>&lt;!-- In an HTML page fragment --&gt;
+&lt;section data-requires="admin"&gt;
+  &lt;h2&gt;Admin-Only Configuration&lt;/h2&gt;
+  &lt;p&gt;...&lt;/p&gt;
+&lt;/section&gt;</code></pre>
+
+  <pre><code>// In app.js or a plugin
+Hooks.after('page-load', ({ el }) => {
+  el.querySelectorAll('[data-requires]').forEach(section => {
+    const requiredRole = section.dataset.requires;
+    if (!hasRole(currentUser, requiredRole)) {
+      section.remove();
+    }
+  });
+});</code></pre>
+
+  <!-- ─── AUDIT LOGGING ─────────────────── -->
+  <h2 id="audit-logging">Audit Logging</h2>
+
+  <p>
+    Log authorization decisions for compliance and debugging. Fire an event on every access
+    attempt (allowed or denied):
+  </p>
+
+  <pre><code>Hooks.before('page-load', (url) => {
+  const decision = canUserLoadPage(currentUser, url);
+
+  auditLog({
+    user:      currentUser.id,
+    resource:  url,
+    action:    'read',
+    decision:  decision ? 'allow' : 'deny',
+    timestamp: new Date().toISOString()
+  });
+
+  if (!decision) return false;
+});</code></pre>
+
+  <div class="callout">
+    <div class="callout-title">ℹ Compliance</div>
+    <p>
+      If your documentation contains regulated information (HIPAA, PCI-DSS, SOC 2), audit logs
+      must be tamper-proof and retained for the required period. Store them server-side, not
+      in the browser.
+    </p>
+  </div>
+
+</div>
