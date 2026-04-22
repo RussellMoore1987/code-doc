@@ -62,9 +62,9 @@ const NAV_DATA = [
     id: 'advanced',
     label: 'Advanced Topics',
     children: [
-      { id: 'config',   label: 'Configuration', page: 'pages/configuration.html' },
-      { id: 'plugins',  label: 'Plugins',        page: 'pages/plugins.html'      },
-      { id: 'perf',     label: 'Performance',    page: 'pages/performance.html' }
+      { id: 'config',   label: 'Configuration',   page: 'pages/configuration.html' },
+      { id: 'plugins',  label: 'Plugins',         page: 'pages/plugins.html'      },
+      { id: 'perf',     label: 'Performance',     page: 'pages/performance.html' }
     ]
   },
   {
