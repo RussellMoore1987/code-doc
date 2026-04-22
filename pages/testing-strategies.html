@@ -1,0 +1,800 @@
+<div class="content-body">
+
+  <h1 id="testing-strategies">Testing Strategies</h1>
+
+  <p>
+    Implement comprehensive testing strategies including unit testing, integration 
+    testing, end-to-end testing, and test automation. This guide covers testing 
+    frameworks, best practices, and continuous integration workflows.
+  </p>
+
+  <div class="callout">
+    <div class="callout-title">🧪 Quality Assurance</div>
+    <p>
+      Effective testing strategies ensure code quality, prevent regressions, and
+      build confidence in your applications. A well-designed test suite serves as
+      documentation and enables safe refactoring and feature development.
+    </p>
+  </div>
+
+  <!-- ─── UNIT TESTING ──────────────────── -->
+  <h2 id="unit-testing">Unit Testing</h2>
+
+  <h3 id="jest-setup">Jest Testing Setup</h3>
+
+  <pre><code>// jest.config.js
+module.exports = {
+  testEnvironment: 'node',
+  collectCoverage: true,
+  coverageDirectory: 'coverage',
+  coverageReporters: ['text', 'lcov', 'html'],
+  coverageThreshold: {
+    global: {
+      branches: 80,
+      functions: 80,
+      lines: 80,
+      statements: 80
+    }
+  },
+  testMatch: [
+    '**/__tests__/**/*.js',
+    '**/?(*.)+(spec|test).js'
+  ],
+  setupFilesAfterEnv: ['<rootDir>/tests/setup.js'],
+  testPathIgnorePatterns: ['/node_modules/', '/build/'],
+  transformIgnorePatterns: [
+    '/node_modules/(?!(module-to-transform)/)'
+  ]
+};
+
+// tests/setup.js
+const { MongoMemoryServer } = require('mongodb-memory-server');
+
+let mongoServer;
+
+beforeAll(async () => {
+  mongoServer = await MongoMemoryServer.create();
+  const mongoUri = mongoServer.getUri();
+  process.env.MONGO_URL = mongoUri;
+});
+
+afterAll(async () => {
+  await mongoServer.stop();
+});
+
+// Global test utilities
+global.createMockUser = () => ({
+  id: '123',
+  username: 'testuser',
+  email: 'test@example.com',
+  createdAt: new Date()
+});
+
+global.createMockRequest = (overrides = {}) => ({
+  body: {},
+  params: {},
+  query: {},
+  headers: {},
+  user: null,
+  ...overrides
+});
+
+global.createMockResponse = () => {
+  const res = {
+    status: jest.fn().mockReturnThis(),
+    json: jest.fn().mockReturnThis(),
+    send: jest.fn().mockReturnThis(),
+    cookie: jest.fn().mockReturnThis(),
+    clearCookie: jest.fn().mockReturnThis()
+  };
+  
+  return res;
+};</code></pre>
+
+  <h3 id="unit-test-examples">Unit Test Examples</h3>
+
+  <pre><code>// __tests__/services/UserService.test.js
+const UserService = require('../../src/services/UserService');
+const User = require('../../src/models/User');
+
+// Mock the User model
+jest.mock('../../src/models/User');
+
+describe('UserService', () => {
+  let userService;
+  
+  beforeEach(() => {
+    userService = new UserService();
+    jest.clearAllMocks();
+  });
+
+  describe('createUser', () => {
+    it('should create a new user with valid data', async () => {
+      const userData = {
+        username: 'newuser',
+        email: 'newuser@example.com',
+        password: 'securepassword'
+      };
+
+      const mockUser = {
+        id: '123',
+        ...userData,
+        createdAt: new Date()
+      };
+
+      User.create.mockResolvedValue(mockUser);
+
+      const result = await userService.createUser(userData);
+
+      expect(User.create).toHaveBeenCalledWith({
+        username: userData.username,
+        email: userData.email,
+        password: expect.any(String) // Password should be hashed
+      });
+      
+      expect(result).toEqual(mockUser);
+    });
+
+    it('should throw error for duplicate email', async () => {
+      const userData = {
+        username: 'user',
+        email: 'existing@example.com',
+        password: 'password'
+      };
+
+      const error = new Error('Email already exists');
+      error.code = 'DUPLICATE_EMAIL';
+      User.create.mockRejectedValue(error);
+
+      await expect(userService.createUser(userData)).rejects.toThrow('Email already exists');
+    });
+
+    it('should hash password before saving', async () => {
+      const userData = {
+        username: 'user',
+        email: 'user@example.com',
+        password: 'plainpassword'
+      };
+
+      User.create.mockResolvedValue({ id: '123' });
+
+      await userService.createUser(userData);
+
+      const createCall = User.create.mock.calls[0][0];
+      expect(createCall.password).not.toBe(userData.password);
+      expect(createCall.password).toMatch(/^\$2[aby]\$\d+\$/); // bcrypt hash pattern
+    });
+  });
+
+  describe('getUserById', () => {
+    it('should return user when found', async () => {
+      const userId = '123';
+      const mockUser = createMockUser();
+      
+      User.findById.mockResolvedValue(mockUser);
+
+      const result = await userService.getUserById(userId);
+
+      expect(User.findById).toHaveBeenCalledWith(userId);
+      expect(result).toEqual(mockUser);
+    });
+
+    it('should throw error when user not found', async () => {
+      const userId = 'nonexistent';
+      
+      User.findById.mockResolvedValue(null);
+
+      await expect(userService.getUserById(userId)).rejects.toThrow('User not found');
+    });
+  });
+
+  describe('updateUser', () => {
+    it('should update user with valid data', async () => {
+      const userId = '123';
+      const updateData = { username: 'updateduser' };
+      const mockUser = { ...createMockUser(), ...updateData };
+
+      User.findByIdAndUpdate.mockResolvedValue(mockUser);
+
+      const result = await userService.updateUser(userId, updateData);
+
+      expect(User.findByIdAndUpdate).toHaveBeenCalledWith(
+        userId,
+        updateData,
+        { new: true, runValidators: true }
+      );
+      expect(result).toEqual(mockUser);
+    });
+
+    it('should not allow updating immutable fields', async () => {
+      const userId = '123';
+      const updateData = {
+        id: 'newid',
+        createdAt: new Date(),
+        username: 'newname'
+      };
+
+      await userService.updateUser(userId, updateData);
+
+      const updateCall = User.findByIdAndUpdate.mock.calls[0][1];
+      expect(updateCall).not.toHaveProperty('id');
+      expect(updateCall).not.toHaveProperty('createdAt');
+      expect(updateCall).toHaveProperty('username');
+    });
+  });
+});</code></pre>
+
+  <!-- ─── INTEGRATION TESTING ───────────── -->
+  <h2 id="integration-testing">Integration Testing</h2>
+
+  <h3 id="api-integration-tests">API Integration Tests</h3>
+
+  <pre><code>// __tests__/integration/auth.integration.test.js
+const request = require('supertest');
+const app = require('../../src/app');
+const User = require('../../src/models/User');
+const { connectToDatabase, clearDatabase, closeDatabase } = require('../helpers/database');
+
+describe('Authentication Integration Tests', () => {
+  beforeAll(async () => {
+    await connectToDatabase();
+  });
+
+  beforeEach(async () => {
+    await clearDatabase();
+  });
+
+  afterAll(async () => {
+    await closeDatabase();
+  });
+
+  describe('POST /api/auth/register', () => {
+    it('should register a new user successfully', async () => {
+      const userData = {
+        username: 'testuser',
+        email: 'test@example.com',
+        password: 'SecurePass123!'
+      };
+
+      const response = await request(app)
+        .post('/api/auth/register')
+        .send(userData)
+        .expect(201);
+
+      expect(response.body).toMatchObject({
+        success: true,
+        user: {
+          username: userData.username,
+          email: userData.email
+        }
+      });
+
+      expect(response.body.user).not.toHaveProperty('password');
+      expect(response.body).toHaveProperty('token');
+
+      // Verify user was created in database
+      const user = await User.findOne({ email: userData.email });
+      expect(user).toBeTruthy();
+      expect(user.username).toBe(userData.username);
+    });
+
+    it('should return 400 for invalid email format', async () => {
+      const userData = {
+        username: 'testuser',
+        email: 'invalid-email',
+        password: 'SecurePass123!'
+      };
+
+      const response = await request(app)
+        .post('/api/auth/register')
+        .send(userData)
+        .expect(400);
+
+      expect(response.body).toMatchObject({
+        success: false,
+        error: expect.stringContaining('email')
+      });
+    });
+
+    it('should return 409 for duplicate email', async () => {
+      const userData = {
+        username: 'testuser',
+        email: 'test@example.com',
+        password: 'SecurePass123!'
+      };
+
+      // Create first user
+      await request(app)
+        .post('/api/auth/register')
+        .send(userData)
+        .expect(201);
+
+      // Try to create duplicate
+      const response = await request(app)
+        .post('/api/auth/register')
+        .send({ ...userData, username: 'different' })
+        .expect(409);
+
+      expect(response.body).toMatchObject({
+        success: false,
+        error: expect.stringContaining('already exists')
+      });
+    });
+  });
+
+  describe('POST /api/auth/login', () => {
+    let testUser;
+
+    beforeEach(async () => {
+      // Create test user
+      const response = await request(app)
+        .post('/api/auth/register')
+        .send({
+          username: 'testuser',
+          email: 'test@example.com',
+          password: 'SecurePass123!'
+        });
+      
+      testUser = response.body.user;
+    });
+
+    it('should login with valid credentials', async () => {
+      const response = await request(app)
+        .post('/api/auth/login')
+        .send({
+          email: 'test@example.com',
+          password: 'SecurePass123!'
+        })
+        .expect(200);
+
+      expect(response.body).toMatchObject({
+        success: true,
+        user: {
+          id: testUser.id,
+          username: testUser.username,
+          email: testUser.email
+        }
+      });
+
+      expect(response.body).toHaveProperty('token');
+    });
+
+    it('should return 401 for invalid password', async () => {
+      const response = await request(app)
+        .post('/api/auth/login')
+        .send({
+          email: 'test@example.com',
+          password: 'wrongpassword'
+        })
+        .expect(401);
+
+      expect(response.body).toMatchObject({
+        success: false,
+        error: 'Invalid credentials'
+      });
+    });
+
+    it('should return 404 for non-existent user', async () => {
+      const response = await request(app)
+        .post('/api/auth/login')
+        .send({
+          email: 'nonexistent@example.com',
+          password: 'password'
+        })
+        .expect(404);
+
+      expect(response.body).toMatchObject({
+        success: false,
+        error: 'User not found'
+      });
+    });
+  });
+
+  describe('Protected Routes', () => {
+    let authToken;
+    let testUser;
+
+    beforeEach(async () => {
+      // Register and login to get auth token
+      const registerResponse = await request(app)
+        .post('/api/auth/register')
+        .send({
+          username: 'testuser',
+          email: 'test@example.com',
+          password: 'SecurePass123!'
+        });
+
+      authToken = registerResponse.body.token;
+      testUser = registerResponse.body.user;
+    });
+
+    it('should access protected route with valid token', async () => {
+      const response = await request(app)
+        .get('/api/user/profile')
+        .set('Authorization', `Bearer ${authToken}`)
+        .expect(200);
+
+      expect(response.body).toMatchObject({
+        success: true,
+        user: {
+          id: testUser.id,
+          username: testUser.username,
+          email: testUser.email
+        }
+      });
+    });
+
+    it('should return 401 without token', async () => {
+      const response = await request(app)
+        .get('/api/user/profile')
+        .expect(401);
+
+      expect(response.body).toMatchObject({
+        success: false,
+        error: 'Access token required'
+      });
+    });
+
+    it('should return 401 with invalid token', async () => {
+      const response = await request(app)
+        .get('/api/user/profile')
+        .set('Authorization', 'Bearer invalidtoken')
+        .expect(401);
+
+      expect(response.body).toMatchObject({
+        success: false,
+        error: 'Invalid token'
+      });
+    });
+  });
+});</code></pre>
+
+  <!-- ─── END-TO-END TESTING ────────────── -->
+  <h2 id="end-to-end-testing">End-to-End Testing</h2>
+
+  <h3 id="cypress-e2e-tests">Cypress E2E Tests</h3>
+
+  <pre><code>// cypress/e2e/user-journey.cy.js
+describe('User Authentication Journey', () => {
+  beforeEach(() => {
+    // Clear database and start fresh
+    cy.task('clearDatabase');
+    cy.visit('/');
+  });
+
+  it('should complete full user registration and login flow', () => {
+    // Navigate to registration page
+    cy.get('[data-cy=nav-register]').click();
+    cy.url().should('include', '/register');
+
+    // Fill out registration form
+    cy.get('[data-cy=username-input]').type('testuser');
+    cy.get('[data-cy=email-input]').type('test@example.com');
+    cy.get('[data-cy=password-input]').type('SecurePass123!');
+    cy.get('[data-cy=confirm-password-input]').type('SecurePass123!');
+
+    // Submit form
+    cy.get('[data-cy=register-button]').click();
+
+    // Should redirect to dashboard
+    cy.url().should('include', '/dashboard');
+    cy.get('[data-cy=welcome-message]').should('contain', 'Welcome, testuser');
+
+    // Logout
+    cy.get('[data-cy=user-menu]').click();
+    cy.get('[data-cy=logout-button]').click();
+    cy.url().should('include', '/');
+
+    // Login again
+    cy.get('[data-cy=nav-login]').click();
+    cy.get('[data-cy=email-input]').type('test@example.com');
+    cy.get('[data-cy=password-input]').type('SecurePass123!');
+    cy.get('[data-cy=login-button]').click();
+
+    // Should be back on dashboard
+    cy.url().should('include', '/dashboard');
+    cy.get('[data-cy=welcome-message]').should('be.visible');
+  });
+
+  it('should handle registration validation errors', () => {
+    cy.visit('/register');
+
+    // Try to submit empty form
+    cy.get('[data-cy=register-button]').click();
+
+    // Should show validation errors
+    cy.get('[data-cy=username-error]').should('contain', 'Username is required');
+    cy.get('[data-cy=email-error]').should('contain', 'Email is required');
+    cy.get('[data-cy=password-error]').should('contain', 'Password is required');
+
+    // Fill with invalid data
+    cy.get('[data-cy=username-input]').type('a'); // Too short
+    cy.get('[data-cy=email-input]').type('invalid-email');
+    cy.get('[data-cy=password-input]').type('weak');
+    cy.get('[data-cy=confirm-password-input]').type('different');
+    cy.get('[data-cy=register-button]').click();
+
+    // Should show specific validation errors
+    cy.get('[data-cy=username-error]').should('contain', 'Username must be at least');
+    cy.get('[data-cy=email-error]').should('contain', 'Invalid email format');
+    cy.get('[data-cy=password-error]').should('contain', 'Password must contain');
+    cy.get('[data-cy=confirm-password-error]').should('contain', 'Passwords do not match');
+  });
+});
+
+// cypress/e2e/dashboard.cy.js
+describe('Dashboard Functionality', () => {
+  beforeEach(() => {
+    // Create and login test user
+    cy.task('createTestUser', {
+      username: 'testuser',
+      email: 'test@example.com',
+      password: 'SecurePass123!'
+    }).then((user) => {
+      cy.login(user.email, 'SecurePass123!');
+      cy.visit('/dashboard');
+    });
+  });
+
+  it('should display user profile information', () => {
+    cy.get('[data-cy=user-profile-card]').should('be.visible');
+    cy.get('[data-cy=profile-username]').should('contain', 'testuser');
+    cy.get('[data-cy=profile-email]').should('contain', 'test@example.com');
+  });
+
+  it('should allow updating profile information', () => {
+    cy.get('[data-cy=edit-profile-button]').click();
+    
+    // Update username
+    cy.get('[data-cy=username-input]').clear().type('updateduser');
+    cy.get('[data-cy=save-profile-button]').click();
+
+    // Should show success message
+    cy.get('[data-cy=success-message]').should('contain', 'Profile updated');
+    cy.get('[data-cy=profile-username]').should('contain', 'updateduser');
+  });
+
+  it('should handle profile update errors gracefully', () => {
+    cy.get('[data-cy=edit-profile-button]').click();
+    
+    // Clear required field
+    cy.get('[data-cy=username-input]').clear();
+    cy.get('[data-cy=save-profile-button]').click();
+
+    // Should show error
+    cy.get('[data-cy=error-message]').should('contain', 'Username is required');
+    
+    // Profile should not be updated
+    cy.get('[data-cy=cancel-edit-button]').click();
+    cy.get('[data-cy=profile-username]').should('contain', 'testuser');
+  });
+});
+
+// cypress/support/commands.js
+Cypress.Commands.add('login', (email, password) => {
+  cy.request({
+    method: 'POST',
+    url: '/api/auth/login',
+    body: { email, password }
+  }).then((response) => {
+    window.localStorage.setItem('authToken', response.body.token);
+  });
+});
+
+Cypress.Commands.add('createTestUser', (userData) => {
+  cy.request({
+    method: 'POST',
+    url: '/api/test/create-user',
+    body: userData
+  }).then((response) => response.body.user);
+});</code></pre>
+
+  <!-- ─── TEST AUTOMATION ──────────────── -->
+  <h2 id="test-automation">Test Automation</h2>
+
+  <h3 id="github-actions-workflow">GitHub Actions Workflow</h3>
+
+  <pre><code># .github/workflows/test.yml
+name: Test Suite
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  unit-tests:
+    runs-on: ubuntu-latest
+    
+    services:
+      mongodb:
+        image: mongo:4.4
+        options: >-
+          --health-cmd mongo
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 27017:27017
+      
+      redis:
+        image: redis:6-alpine
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
+
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18'
+        cache: 'npm'
+    
+    - name: Install dependencies
+      run: npm ci
+    
+    - name: Run linting
+      run: npm run lint
+    
+    - name: Run unit tests
+      run: npm run test:unit
+      env:
+        NODE_ENV: test
+        MONGO_URL: mongodb://localhost:27017/test
+        REDIS_URL: redis://localhost:6379
+    
+    - name: Run integration tests
+      run: npm run test:integration
+      env:
+        NODE_ENV: test
+        MONGO_URL: mongodb://localhost:27017/test
+        REDIS_URL: redis://localhost:6379
+    
+    - name: Upload coverage reports
+      uses: codecov/codecov-action@v3
+      with:
+        file: ./coverage/lcov.info
+        flags: unittests
+
+  e2e-tests:
+    runs-on: ubuntu-latest
+    needs: unit-tests
+    
+    services:
+      mongodb:
+        image: mongo:4.4
+        ports:
+          - 27017:27017
+
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18'
+        cache: 'npm'
+    
+    - name: Install dependencies
+      run: npm ci
+    
+    - name: Build application
+      run: npm run build
+      env:
+        NODE_ENV: production
+    
+    - name: Start application
+      run: |
+        npm start &
+        npx wait-on http://localhost:3000
+      env:
+        NODE_ENV: test
+        MONGO_URL: mongodb://localhost:27017/test
+        PORT: 3000
+    
+    - name: Run Cypress tests
+      uses: cypress-io/github-action@v5
+      with:
+        wait-on: 'http://localhost:3000'
+        wait-on-timeout: 120
+        browser: chrome
+        headless: true
+        record: true
+      env:
+        CYPRESS_RECORD_KEY: ${{ secrets.CYPRESS_RECORD_KEY }}
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    
+    - name: Upload test artifacts
+      uses: actions/upload-artifact@v3
+      if: failure()
+      with:
+        name: cypress-screenshots
+        path: cypress/screenshots
+
+  security-tests:
+    runs-on: ubuntu-latest
+    needs: unit-tests
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Run security audit
+      run: npm audit --audit-level high
+    
+    - name: Run OWASP dependency check
+      uses: dependency-check/Dependency-Check_Action@main
+      with:
+        project: 'test-project'
+        path: '.'
+        format: 'HTML'
+    
+    - name: Upload dependency check results
+      uses: actions/upload-artifact@v3
+      with:
+        name: dependency-check-report
+        path: reports/
+
+  performance-tests:
+    runs-on: ubuntu-latest
+    needs: unit-tests
+    if: github.event_name == 'pull_request'
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18'
+        cache: 'npm'
+    
+    - name: Install dependencies
+      run: npm ci
+    
+    - name: Start application
+      run: |
+        npm start &
+        npx wait-on http://localhost:3000
+    
+    - name: Run load tests
+      run: |
+        npm install -g artillery
+        artillery run tests/load/basic-load-test.yml
+    
+    - name: Run Lighthouse CI
+      run: |
+        npm install -g @lhci/cli
+        lhci collect --url http://localhost:3000
+        lhci assert</code></pre>
+
+  <!-- ─── BEST PRACTICES ─────────────────── -->
+  <h2 id="best-practices">Best Practices</h2>
+
+  <ul>
+    <li><strong>Test Pyramid</strong> - More unit tests, fewer integration tests, minimal E2E tests</li>
+    <li><strong>Test Independence</strong> - Each test should be able to run independently</li>
+    <li><strong>Clear Naming</strong> - Test names should describe what they're testing</li>
+    <li><strong>Arrange-Act-Assert</strong> - Structure tests with clear setup, action, and verification</li>
+    <li><strong>Mock Dependencies</strong> - Isolate units under test from external dependencies</li>
+    <li><strong>Continuous Testing</strong> - Run tests on every commit and deployment</li>
+    <li><strong>Coverage Goals</strong> - Aim for high test coverage but focus on critical paths</li>
+  </ul>
+
+  <div class="callout">
+    <div class="callout-title">🔍 Testing Excellence</div>
+    <p>
+      Effective testing strategies combine multiple levels of testing with
+      automation and continuous integration. Focus on testing critical business
+      logic thoroughly while maintaining fast feedback loops and reliable
+      test suites that developers can trust.
+    </p>
+  </div>
+
+</div>

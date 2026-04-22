@@ -1,0 +1,870 @@
+<div class="content-body">
+
+  <h1 id="pdf-generation">PDF Generation</h1>
+
+  <p>
+    Implement robust PDF generation capabilities for reports, invoices, certificates,
+    and documents. This guide covers multiple PDF generation approaches, template
+    systems, styling, and optimization techniques for high-quality document output.
+  </p>
+
+  <div class="callout">
+    <div class="callout-title">📄 Document Excellence</div>
+    <p>
+      PDF generation is essential for business applications, providing professional
+      documents for reports, invoices, contracts, and certificates. Quality PDF
+      output enhances user experience and meets compliance requirements.
+    </p>
+  </div>
+
+  <!-- ─── PDF GENERATION APPROACHES ────── -->
+  <h2 id="pdf-approaches">PDF Generation Approaches</h2>
+
+  <h3 id="puppeteer-html-to-pdf">Puppeteer (HTML to PDF)</h3>
+
+  <pre><code>const puppeteer = require('puppeteer');
+const handlebars = require('handlebars');
+
+class PuppeteerPDFGenerator {
+  constructor(options = {}) {
+    this.options = {
+      headless: true,
+      args: ['--no-sandbox', '--disable-setuid-sandbox'],
+      ...options
+    };
+    this.browser = null;
+  }
+
+  async initialize() {
+    if (!this.browser) {
+      this.browser = await puppeteer.launch(this.options);
+    }
+  }
+
+  async generateFromHTML(html, options = {}) {
+    await this.initialize();
+    
+    const page = await this.browser.newPage();
+    
+    try {
+      // Set viewport for consistent rendering
+      await page.setViewport({
+        width: 1200,
+        height: 800,
+        deviceScaleFactor: 2
+      });
+
+      // Set content
+      await page.setContent(html, {
+        waitUntil: ['networkidle0', 'domcontentloaded']
+      });
+
+      // Wait for any dynamic content
+      if (options.waitForSelector) {
+        await page.waitForSelector(options.waitForSelector);
+      }
+
+      // Generate PDF
+      const pdfBuffer = await page.pdf({
+        format: options.format || 'A4',
+        margin: options.margin || {
+          top: '20mm',
+          right: '20mm',
+          bottom: '20mm',
+          left: '20mm'
+        },
+        printBackground: true,
+        preferCSSPageSize: true,
+        displayHeaderFooter: options.displayHeaderFooter || false,
+        headerTemplate: options.headerTemplate || '',
+        footerTemplate: options.footerTemplate || '',
+        ...options.pdfOptions
+      });
+
+      return pdfBuffer;
+      
+    } finally {
+      await page.close();
+    }
+  }
+
+  async generateFromTemplate(templatePath, data, options = {}) {
+    const templateSource = await fs.readFile(templatePath, 'utf8');
+    const template = handlebars.compile(templateSource);
+    const html = template(data);
+    
+    return this.generateFromHTML(html, options);
+  }
+
+  async generateFromUrl(url, options = {}) {
+    await this.initialize();
+    
+    const page = await this.browser.newPage();
+    
+    try {
+      await page.goto(url, {
+        waitUntil: ['networkidle0', 'domcontentloaded']
+      });
+
+      const pdfBuffer = await page.pdf({
+        format: options.format || 'A4',
+        margin: options.margin || { top: '20mm', bottom: '20mm' },
+        printBackground: true,
+        ...options.pdfOptions
+      });
+
+      return pdfBuffer;
+      
+    } finally {
+      await page.close();
+    }
+  }
+
+  async close() {
+    if (this.browser) {
+      await this.browser.close();
+      this.browser = null;
+    }
+  }
+}</code></pre>
+
+  <h3 id="pdfkit-programmatic">PDFKit (Programmatic)</h3>
+
+  <pre><code>const PDFDocument = require('pdfkit');
+const fs = require('fs');
+
+class PDFKitGenerator {
+  constructor() {
+    this.fonts = new Map();
+    this.registerFonts();
+  }
+
+  registerFonts() {
+    // Register custom fonts
+    this.fonts.set('Helvetica', null); // Built-in
+    this.fonts.set('Times-Roman', null); // Built-in
+    // this.fonts.set('Custom', './fonts/custom-font.ttf');
+  }
+
+  async generateInvoice(invoiceData, outputPath = null) {
+    return new Promise((resolve, reject) => {
+      const doc = new PDFDocument({
+        size: 'A4',
+        margin: 50,
+        info: {
+          Title: `Invoice ${invoiceData.number}`,
+          Author: invoiceData.company.name,
+          Subject: 'Invoice',
+          Creator: 'PDF Generator'
+        }
+      });
+
+      const buffers = [];
+      
+      if (outputPath) {
+        doc.pipe(fs.createWriteStream(outputPath));
+      } else {
+        doc.on('data', buffers.push.bind(buffers));
+      }
+
+      doc.on('end', () => {
+        if (outputPath) {
+          resolve(outputPath);
+        } else {
+          resolve(Buffer.concat(buffers));
+        }
+      });
+
+      doc.on('error', reject);
+
+      try {
+        this.buildInvoiceContent(doc, invoiceData);
+        doc.end();
+      } catch (error) {
+        reject(error);
+      }
+    });
+  }
+
+  buildInvoiceContent(doc, data) {
+    // Header
+    this.addHeader(doc, data);
+    
+    // Company information
+    this.addCompanyInfo(doc, data.company);
+    
+    // Invoice details
+    this.addInvoiceDetails(doc, data);
+    
+    // Items table
+    this.addItemsTable(doc, data.items);
+    
+    // Totals
+    this.addTotals(doc, data);
+    
+    // Footer
+    this.addFooter(doc, data);
+  }
+
+  addHeader(doc, data) {
+    // Logo
+    if (data.company.logo) {
+      doc.image(data.company.logo, 50, 50, { width: 100 });
+    }
+
+    // Title
+    doc.fontSize(24)
+       .font('Helvetica-Bold')
+       .fillColor('#2E3192')
+       .text('INVOICE', 350, 50, { align: 'right' });
+
+    // Invoice number
+    doc.fontSize(12)
+       .font('Helvetica')
+       .fillColor('black')
+       .text(`Invoice #${data.number}`, 350, 80, { align: 'right' });
+
+    doc.moveDown(3);
+  }
+
+  addCompanyInfo(doc, company) {
+    const startY = doc.y;
+
+    // Bill from
+    doc.fontSize(12)
+       .font('Helvetica-Bold')
+       .text('Bill From:', 50, startY);
+    
+    doc.fontSize(10)
+       .font('Helvetica')
+       .text(company.name, 50, startY + 20)
+       .text(company.address, 50, startY + 35)
+       .text(`${company.city}, ${company.state} ${company.zip}`, 50, startY + 50)
+       .text(company.phone, 50, startY + 65);
+
+    // Bill to
+    doc.fontSize(12)
+       .font('Helvetica-Bold')
+       .text('Bill To:', 300, startY);
+    
+    const customer = data.customer;
+    doc.fontSize(10)
+       .font('Helvetica')
+       .text(customer.name, 300, startY + 20)
+       .text(customer.address, 300, startY + 35)
+       .text(`${customer.city}, ${customer.state} ${customer.zip}`, 300, startY + 50);
+
+    doc.moveDown(4);
+  }
+
+  addInvoiceDetails(doc, data) {
+    const startY = doc.y;
+    const dateFormat = { year: 'numeric', month: 'long', day: 'numeric' };
+
+    doc.fontSize(10)
+       .font('Helvetica-Bold')
+       .text('Invoice Date:', 50, startY)
+       .font('Helvetica')
+       .text(new Date(data.date).toLocaleDateString('en-US', dateFormat), 130, startY);
+
+    doc.font('Helvetica-Bold')
+       .text('Due Date:', 50, startY + 15)
+       .font('Helvetica')
+       .text(new Date(data.dueDate).toLocaleDateString('en-US', dateFormat), 130, startY + 15);
+
+    if (data.poNumber) {
+      doc.font('Helvetica-Bold')
+         .text('PO Number:', 50, startY + 30)
+         .font('Helvetica')
+         .text(data.poNumber, 130, startY + 30);
+    }
+
+    doc.moveDown(2);
+  }
+
+  addItemsTable(doc, items) {
+    const tableTop = doc.y;
+    const tableLeft = 50;
+    const tableWidth = 500;
+    const rowHeight = 25;
+
+    // Table headers
+    const headers = ['Description', 'Qty', 'Rate', 'Amount'];
+    const colWidths = [250, 80, 80, 90];
+    let currentX = tableLeft;
+
+    // Header background
+    doc.rect(tableLeft, tableTop, tableWidth, rowHeight)
+       .fillColor('#f0f0f0')
+       .fill();
+
+    // Header text
+    doc.fillColor('black')
+       .fontSize(10)
+       .font('Helvetica-Bold');
+
+    headers.forEach((header, i) => {
+      doc.text(header, currentX + 5, tableTop + 7, {
+        width: colWidths[i] - 10,
+        align: i === 0 ? 'left' : 'center'
+      });
+      currentX += colWidths[i];
+    });
+
+    // Table rows
+    let currentY = tableTop + rowHeight;
+    
+    items.forEach((item, index) => {
+      currentX = tableLeft;
+      
+      // Alternate row background
+      if (index % 2 === 1) {
+        doc.rect(tableLeft, currentY, tableWidth, rowHeight)
+           .fillColor('#f9f9f9')
+           .fill();
+      }
+
+      doc.fillColor('black')
+         .fontSize(9)
+         .font('Helvetica');
+
+      // Description
+      doc.text(item.description, currentX + 5, currentY + 7, {
+        width: colWidths[0] - 10,
+        align: 'left'
+      });
+      currentX += colWidths[0];
+
+      // Quantity
+      doc.text(item.quantity.toString(), currentX + 5, currentY + 7, {
+        width: colWidths[1] - 10,
+        align: 'center'
+      });
+      currentX += colWidths[1];
+
+      // Rate
+      doc.text(`$${item.rate.toFixed(2)}`, currentX + 5, currentY + 7, {
+        width: colWidths[2] - 10,
+        align: 'center'
+      });
+      currentX += colWidths[2];
+
+      // Amount
+      doc.text(`$${(item.quantity * item.rate).toFixed(2)}`, currentX + 5, currentY + 7, {
+        width: colWidths[3] - 10,
+        align: 'center'
+      });
+
+      currentY += rowHeight;
+    });
+
+    // Table border
+    doc.rect(tableLeft, tableTop, tableWidth, currentY - tableTop)
+       .stroke();
+
+    doc.y = currentY + 10;
+  }
+
+  addTotals(doc, data) {
+    const startY = doc.y;
+    const rightAlign = 450;
+
+    doc.fontSize(10)
+       .font('Helvetica');
+
+    let currentY = startY;
+
+    // Subtotal
+    doc.text('Subtotal:', rightAlign - 80, currentY)
+       .text(`$${data.subtotal.toFixed(2)}`, rightAlign, currentY, { width: 90, align: 'right' });
+    currentY += 15;
+
+    // Tax
+    if (data.tax > 0) {
+      doc.text(`Tax (${data.taxRate}%):`, rightAlign - 80, currentY)
+         .text(`$${data.tax.toFixed(2)}`, rightAlign, currentY, { width: 90, align: 'right' });
+      currentY += 15;
+    }
+
+    // Total
+    doc.fontSize(12)
+       .font('Helvetica-Bold')
+       .text('Total:', rightAlign - 80, currentY)
+       .text(`$${data.total.toFixed(2)}`, rightAlign, currentY, { width: 90, align: 'right' });
+
+    // Total line
+    doc.moveTo(rightAlign - 80, currentY + 15)
+       .lineTo(rightAlign + 90, currentY + 15)
+       .stroke();
+  }
+
+  addFooter(doc, data) {
+    const bottomMargin = 50;
+    const pageHeight = doc.page.height;
+    const footerY = pageHeight - bottomMargin - 40;
+
+    doc.fontSize(9)
+       .font('Helvetica')
+       .fillColor('gray')
+       .text(data.terms || 'Payment is due within 30 days of invoice date.', 
+             50, footerY, { width: 500, align: 'center' });
+
+    // Page number
+    const pageNumber = doc.bufferedPageRange().count;
+    doc.text(`Page ${pageNumber}`, 50, footerY + 20, { 
+      width: 500, 
+      align: 'center' 
+    });
+  }
+}</code></pre>
+
+  <!-- ─── TEMPLATE SYSTEM ───────────────── -->
+  <h2 id="template-system">Template System</h2>
+
+  <h3 id="html-templates">HTML Templates</h3>
+
+  <pre><code>class PDFTemplateManager {
+  constructor(templatesDir = './pdf-templates') {
+    this.templatesDir = templatesDir;
+    this.templateCache = new Map();
+    this.cssCache = new Map();
+    this.helpers = new Map();
+    
+    this.registerHelpers();
+  }
+
+  async renderTemplate(templateName, data, options = {}) {
+    const template = await this.loadTemplate(templateName);
+    const css = await this.loadCSS(templateName);
+    
+    // Compile template with data
+    const compiledTemplate = handlebars.compile(template);
+    const html = compiledTemplate({
+      ...data,
+      ...this.helpers,
+      _options: options
+    });
+
+    // Combine with CSS
+    const styledHTML = this.wrapWithCSS(html, css, options);
+    
+    return styledHTML;
+  }
+
+  async loadTemplate(templateName) {
+    if (this.templateCache.has(templateName)) {
+      return this.templateCache.get(templateName);
+    }
+
+    const templatePath = path.join(this.templatesDir, `${templateName}.hbs`);
+    
+    try {
+      const template = await fs.readFile(templatePath, 'utf8');
+      this.templateCache.set(templateName, template);
+      return template;
+    } catch (error) {
+      throw new Error(`Template '${templateName}' not found`);
+    }
+  }
+
+  async loadCSS(templateName) {
+    if (this.cssCache.has(templateName)) {
+      return this.cssCache.get(templateName);
+    }
+
+    const cssPath = path.join(this.templatesDir, `${templateName}.css`);
+    
+    try {
+      const css = await fs.readFile(cssPath, 'utf8');
+      this.cssCache.set(templateName, css);
+      return css;
+    } catch (error) {
+      // No CSS file, return empty string
+      return '';
+    }
+  }
+
+  wrapWithCSS(html, css, options) {
+    const baseCSS = `
+      @page {
+        size: ${options.format || 'A4'};
+        margin: ${options.margin || '20mm'};
+      }
+      
+      body {
+        font-family: 'Helvetica', Arial, sans-serif;
+        font-size: 12px;
+        line-height: 1.4;
+        color: #333;
+        margin: 0;
+        padding: 0;
+      }
+      
+      .page-break {
+        page-break-after: always;
+      }
+      
+      .no-print {
+        display: none !important;
+      }
+      
+      table {
+        width: 100%;
+        border-collapse: collapse;
+      }
+      
+      th, td {
+        padding: 8px;
+        text-align: left;
+        border-bottom: 1px solid #ddd;
+      }
+      
+      th {
+        background-color: #f2f2f2;
+        font-weight: bold;
+      }
+    `;
+
+    return `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <meta charset="UTF-8">
+          <title>${options.title || 'PDF Document'}</title>
+          <style>
+          </style>
+        </head>
+        <body>
+          ${html}
+        </body>
+      </html>
+    `;
+  }
+
+  registerHelpers() {
+    // Date formatting helper
+    this.helpers.set('formatDate', (date, format = 'short') => {
+      return new Intl.DateTimeFormat('en-US', { 
+        dateStyle: format 
+      }).format(new Date(date));
+    });
+
+    // Currency formatting helper
+    this.helpers.set('formatCurrency', (amount, currency = 'USD') => {
+      return new Intl.NumberFormat('en-US', {
+        style: 'currency',
+        currency: currency
+      }).format(amount);
+    });
+
+    // Number formatting helper
+    this.helpers.set('formatNumber', (number, decimals = 2) => {
+      return Number(number).toFixed(decimals);
+    });
+
+    // Conditional helper
+    this.helpers.set('if', (condition, options) => {
+      if (condition) {
+        return options.fn(this);
+      } else {
+        return options.inverse(this);
+      }
+    });
+
+    // Loop helper
+    this.helpers.set('each', (array, options) => {
+      if (!Array.isArray(array)) return '';
+      
+      return array.map((item, index) => {
+        return options.fn({
+          ...item,
+          @index: index,
+          @first: index === 0,
+          @last: index === array.length - 1
+        });
+      }).join('');
+    });
+
+    // Math helpers
+    this.helpers.set('add', (a, b) => Number(a) + Number(b));
+    this.helpers.set('multiply', (a, b) => Number(a) * Number(b));
+    this.helpers.set('subtract', (a, b) => Number(a) - Number(b));
+    this.helpers.set('divide', (a, b) => Number(a) / Number(b));
+  }
+}</code></pre>
+
+  <!-- ─── PDF OPTIMIZATION ──────────────── -->
+  <h2 id="pdf-optimization">PDF Optimization</h2>
+
+  <h3 id="compression-optimization">Compression & Optimization</h3>
+
+  <pre><code>const { PDFDocument, StandardFonts } = require('pdf-lib');
+
+class PDFOptimizer {
+  constructor() {
+    this.compressionLevel = 9;
+    this.imageQuality = 85;
+  }
+
+  async optimizePDF(inputBuffer, options = {}) {
+    const pdfDoc = await PDFDocument.load(inputBuffer);
+    
+    // Optimize images
+    if (options.optimizeImages !== false) {
+      await this.optimizeImages(pdfDoc);
+    }
+
+    // Remove unused resources
+    if (options.removeUnused !== false) {
+      await this.removeUnusedResources(pdfDoc);
+    }
+
+    // Flatten form fields
+    if (options.flattenForms) {
+      pdfDoc.getForm().flatten();
+    }
+
+    // Set compression
+    const optimizedBuffer = await pdfDoc.save({
+      useObjectStreams: true,
+      addDefaultPage: false,
+      objectsPerTick: 50
+    });
+
+    return optimizedBuffer;
+  }
+
+  async optimizeImages(pdfDoc) {
+    const pages = pdfDoc.getPages();
+    
+    for (const page of pages) {
+      const { node } = page;
+      const resources = node.Resources;
+      
+      if (resources && resources.XObject) {
+        const xObjects = resources.XObject.dict;
+        
+        for (const [key, xObject] of Object.entries(xObjects)) {
+          if (xObject.dict.Subtype?.name === 'Image') {
+            // Compress image
+            await this.compressImage(xObject);
+          }
+        }
+      }
+    }
+  }
+
+  async compressImage(imageObject) {
+    // Implementation depends on image format and compression library
+    // This is a simplified example
+    const filter = imageObject.dict.Filter;
+    
+    if (filter && filter.name === 'DCTDecode') {
+      // JPEG image - adjust quality
+      imageObject.dict.set('Quality', this.imageQuality);
+    }
+  }
+
+  async removeUnusedResources(pdfDoc) {
+    // Remove unused fonts, images, and other resources
+    // This requires analyzing the PDF structure
+    const catalog = pdfDoc.context.lookup(pdfDoc.context.trailerInfo.Root);
+    
+    // Implementation would traverse the PDF object tree
+    // and remove unreferenced objects
+  }
+
+  async addWatermark(pdfBuffer, watermarkText, options = {}) {
+    const pdfDoc = await PDFDocument.load(pdfBuffer);
+    const pages = pdfDoc.getPages();
+    
+    const {
+      opacity = 0.3,
+      fontSize = 50,
+      rotation = -45,
+      color = [0.5, 0.5, 0.5]
+    } = options;
+
+    for (const page of pages) {
+      const { width, height } = page.getSize();
+      
+      page.drawText(watermarkText, {
+        x: width / 2,
+        y: height / 2,
+        size: fontSize,
+        opacity: opacity,
+        rotate: degrees(rotation),
+        color: rgb(color[0], color[1], color[2])
+      });
+    }
+
+    return await pdfDoc.save();
+  }
+
+  async mergePDFs(pdfBuffers) {
+    const mergedPdf = await PDFDocument.create();
+
+    for (const pdfBuffer of pdfBuffers) {
+      const pdfDoc = await PDFDocument.load(pdfBuffer);
+      const pages = await mergedPdf.copyPages(pdfDoc, pdfDoc.getPageIndices());
+      
+      pages.forEach(page => mergedPdf.addPage(page));
+    }
+
+    return await mergedPdf.save();
+  }
+
+  async splitPDF(pdfBuffer, pageRanges) {
+    const pdfDoc = await PDFDocument.load(pdfBuffer);
+    const splitPDFs = [];
+
+    for (const range of pageRanges) {
+      const newPdf = await PDFDocument.create();
+      const pages = await newPdf.copyPages(pdfDoc, range);
+      
+      pages.forEach(page => newPdf.addPage(page));
+      
+      const splitBuffer = await newPdf.save();
+      splitPDFs.push(splitBuffer);
+    }
+
+    return splitPDFs;
+  }
+}</code></pre>
+
+  <!-- ─── ADVANCED FEATURES ─────────────── -->
+  <h2 id="advanced-features">Advanced Features</h2>
+
+  <h3 id="digital-signatures">Digital Signatures</h3>
+
+  <pre><code>const forge = require('node-forge');
+
+class PDFSigner {
+  constructor(privateKey, certificate) {
+    this.privateKey = privateKey;
+    this.certificate = certificate;
+  }
+
+  async signPDF(pdfBuffer, options = {}) {
+    const {
+      reason = 'Document signed',
+      location = 'Digital',
+      contactInfo = '',
+      signatureField = null
+    } = options;
+
+    // Load PDF
+    const pdfDoc = await PDFDocument.load(pdfBuffer);
+
+    // Create signature dictionary
+    const signature = this.createSignature({
+      reason,
+      location,
+      contactInfo,
+      date: new Date()
+    });
+
+    // Add signature field if not provided
+    let signField;
+    if (signatureField) {
+      signField = pdfDoc.getForm().getField(signatureField);
+    } else {
+      signField = this.addSignatureField(pdfDoc);
+    }
+
+    // Apply signature
+    await this.applySignature(pdfDoc, signField, signature);
+
+    return await pdfDoc.save();
+  }
+
+  createSignature(info) {
+    const p7 = forge.pkcs7.createSignedData();
+    
+    // Add certificate
+    p7.addCertificate(this.certificate);
+    
+    // Create signature content
+    const content = JSON.stringify(info);
+    p7.content = forge.util.createBuffer(content, 'utf8');
+    
+    // Sign with private key
+    p7.addSigner({
+      key: this.privateKey,
+      certificate: this.certificate,
+      digestAlgorithm: forge.pki.oids.sha256,
+      authenticatedAttributes: [{
+        type: forge.pki.oids.contentTypes,
+        value: forge.pki.oids.data
+      }, {
+        type: forge.pki.oids.messageDigest
+      }, {
+        type: forge.pki.oids.signingTime,
+        value: new Date()
+      }]
+    });
+
+    p7.sign();
+    
+    return forge.asn1.toDer(p7.toAsn1()).getBytes();
+  }
+
+  addSignatureField(pdfDoc) {
+    const form = pdfDoc.getForm();
+    const pages = pdfDoc.getPages();
+    const firstPage = pages[0];
+    
+    const signatureField = form.createSignature('signature');
+    
+    // Add signature appearance
+    signatureField.addToPage(firstPage, {
+      x: 50,
+      y: 50,
+      width: 200,
+      height: 50
+    });
+
+    return signatureField;
+  }
+
+  async verifySignature(signedPdfBuffer) {
+    // Implementation would extract and verify the signature
+    // This is a complex process involving:
+    // 1. Extracting signature dictionary
+    // 2. Verifying certificate chain
+    // 3. Checking signature validity
+    // 4. Verifying document integrity
+    
+    return {
+      valid: true,
+      signer: 'Certificate CN',
+      signDate: new Date(),
+      reason: 'Document signed'
+    };
+  }
+}</code></pre>
+
+  <!-- ─── BEST PRACTICES ─────────────────── -->
+  <h2 id="best-practices">Best Practices</h2>
+
+  <ul>
+    <li><strong>Template Design</strong> - Use CSS for consistent styling and layout</li>
+    <li><strong>Performance</strong> - Reuse browser instances and optimize images</li>
+    <li><strong>Error Handling</strong> - Handle generation failures gracefully</li>
+    <li><strong>Memory Management</strong> - Clean up resources and limit concurrent generations</li>
+    <li><strong>Accessibility</strong> - Include proper structure and metadata</li>
+    <li><strong>Security</strong> - Sanitize input data and validate templates</li>
+    <li><strong>Testing</strong> - Test across different data sets and edge cases</li>
+  </ul>
+
+  <div class="callout">
+    <div class="callout-title">📊 Quality Output</div>
+    <p>
+      High-quality PDF generation requires attention to typography, layout, and
+      optimization. Choose the right approach for your use case: HTML-to-PDF for
+      complex layouts, programmatic generation for precise control, and always
+      optimize for file size and accessibility.
+    </p>
+  </div>
+
+</div>

@@ -1,0 +1,646 @@
+<div class="content-body">
+
+  <h1 id="request-validation">Request Validation</h1>
+
+  <p>
+    Implement comprehensive request validation to ensure data integrity, security,
+    and API reliability. This guide covers validation schemas, sanitization techniques,
+    error handling, and advanced validation patterns.
+  </p>
+
+  <div class="callout">
+    <div class="callout-title">🛡️ Security Layer</div>
+    <p>
+      Request validation is your first line of defense against malicious input,
+      data corruption, and API abuse. Proper validation prevents injection attacks,
+      ensures data consistency, and improves overall application reliability.
+    </p>
+  </div>
+
+  <!-- ─── VALIDATION SCHEMA ─────────────── -->
+  <h2 id="validation-schema">Validation Schema</h2>
+
+  <p>
+    Define structured validation schemas that are maintainable and reusable across endpoints:
+  </p>
+
+  <h3 id="schema-definition">Schema Definition</h3>
+
+  <pre><code>const Joi = require('joi');
+
+// User registration schema
+const userRegistrationSchema = Joi.object({
+  email: Joi.string()
+    .email({ minDomainSegments: 2 })
+    .required()
+    .messages({
+      'string.email': 'Please provide a valid email address',
+      'any.required': 'Email is required'
+    }),
+    
+  password: Joi.string()
+    .min(8)
+    .max(128)
+    .pattern(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])/)
+    .required()
+    .messages({
+      'string.min': 'Password must be at least 8 characters long',
+      'string.pattern.base': 'Password must contain uppercase, lowercase, number, and special character'
+    }),
+    
+  confirmPassword: Joi.string()
+    .valid(Joi.ref('password'))
+    .required()
+    .messages({
+      'any.only': 'Password confirmation does not match'
+    }),
+    
+  firstName: Joi.string()
+    .trim()
+    .min(1)
+    .max(50)
+    .pattern(/^[a-zA-Z\s]+$/)
+    .required(),
+    
+  lastName: Joi.string()
+    .trim()
+    .min(1)
+    .max(50)
+    .pattern(/^[a-zA-Z\s]+$/)
+    .required(),
+    
+  age: Joi.number()
+    .integer()
+    .min(13)
+    .max(120)
+    .optional(),
+    
+  phoneNumber: Joi.string()
+    .pattern(/^\+?[1-9]\d{1,14}$/)
+    .optional()
+    .messages({
+      'string.pattern.base': 'Please provide a valid phone number'
+    }),
+    
+  termsAccepted: Joi.boolean()
+    .valid(true)
+    .required()
+    .messages({
+      'any.only': 'You must accept the terms and conditions'
+    })
+});
+
+// API endpoint schema
+const createPostSchema = Joi.object({
+  title: Joi.string()
+    .trim()
+    .min(5)
+    .max(200)
+    .required(),
+    
+  content: Joi.string()
+    .trim()
+    .min(10)
+    .max(10000)
+    .required(),
+    
+  tags: Joi.array()
+    .items(Joi.string().trim().min(2).max(30))
+    .max(10)
+    .unique()
+    .optional(),
+    
+  category: Joi.string()
+    .valid('tech', 'lifestyle', 'business', 'education')
+    .required(),
+    
+  publishAt: Joi.date()
+    .greater('now')
+    .optional(),
+    
+  featured: Joi.boolean()
+    .default(false),
+    
+  metadata: Joi.object({
+    seoTitle: Joi.string().max(60).optional(),
+    seoDescription: Joi.string().max(160).optional(),
+    canonicalUrl: Joi.string().uri().optional()
+  }).optional()
+});</code></pre>
+
+  <h3 id="custom-validators">Custom Validators</h3>
+
+  <pre><code>// Custom validation rules
+const customValidators = {
+  // Unique email validator
+  uniqueEmail: {
+    name: 'uniqueEmail',
+    validate: async (value, helpers) => {
+      const existingUser = await User.findOne({ email: value });
+      if (existingUser) {
+        return helpers.error('custom.uniqueEmail');
+      }
+      return value;
+    }
+  },
+
+  // Password strength validator
+  strongPassword: {
+    name: 'strongPassword',
+    validate: (value, helpers) => {
+      const score = calculatePasswordStrength(value);
+      if (score < 3) {
+        return helpers.error('custom.weakPassword', { score });
+      }
+      return value;
+    }
+  },
+
+  // File upload validator
+  validFile: {
+    name: 'validFile',
+    validate: (value, helpers) => {
+      const allowedTypes = ['image/jpeg', 'image/png', 'application/pdf'];
+      const maxSize = 5 * 1024 * 1024; // 5MB
+      
+      if (!allowedTypes.includes(value.mimetype)) {
+        return helpers.error('custom.invalidFileType');
+      }
+      
+      if (value.size > maxSize) {
+        return helpers.error('custom.fileTooLarge');
+      }
+      
+      return value;
+    }
+  },
+
+  // Slug validator
+  validSlug: {
+    name: 'validSlug',
+    validate: async (value, helpers) => {
+      // Check format
+      if (!/^[a-z0-9-]+$/.test(value)) {
+        return helpers.error('custom.invalidSlugFormat');
+      }
+      
+      // Check uniqueness
+      const existing = await Post.findOne({ slug: value });
+      if (existing) {
+        return helpers.error('custom.slugTaken');
+      }
+      
+      return value;
+    }
+  }
+};
+
+// Register custom validators
+Object.values(customValidators).forEach(validator => {
+  Joi.extend(validator);
+});</code></pre>
+
+  <!-- ─── VALIDATION MIDDLEWARE ─────────── -->
+  <h2 id="validation-middleware">Validation Middleware</h2>
+
+  <h3 id="express-middleware">Express Middleware</h3>
+
+  <pre><code>// Validation middleware factory
+const validate = (schema, options = {}) => {
+  return async (req, res, next) => {
+    try {
+      const {
+        source = 'body',
+        allowUnknown = false,
+        stripUnknown = true,
+        abortEarly = false
+      } = options;
+
+      const dataToValidate = req[source];
+      
+      const { error, value } = await schema.validateAsync(dataToValidate, {
+        allowUnknown,
+        stripUnknown,
+        abortEarly,
+        context: {
+          req,
+          user: req.user,
+          ip: req.ip
+        }
+      });
+
+      if (error) {
+        return res.status(400).json({
+          error: 'Validation failed',
+          details: formatValidationErrors(error),
+          timestamp: new Date().toISOString()
+        });
+      }
+
+      // Replace the request data with validated/sanitized data
+      req[source] = value;
+      next();
+
+    } catch (err) {
+      console.error('Validation middleware error:', err);
+      res.status(500).json({
+        error: 'Internal validation error'
+      });
+    }
+  };
+};
+
+// Comprehensive validation for multiple sources
+const validateRequest = (schemas) => {
+  return async (req, res, next) => {
+    const errors = {};
+    
+    for (const [source, schema] of Object.entries(schemas)) {
+      if (req[source]) {
+        try {
+          const { error, value } = await schema.validateAsync(req[source], {
+            stripUnknown: true,
+            allowUnknown: false
+          });
+          
+          if (error) {
+            errors[source] = formatValidationErrors(error);
+          } else {
+            req[source] = value;
+          }
+        } catch (err) {
+          errors[source] = [`Invalid ${source} data`];
+        }
+      }
+    }
+    
+    if (Object.keys(errors).length > 0) {
+      return res.status(400).json({
+        error: 'Request validation failed',
+        details: errors
+      });
+    }
+    
+    next();
+  };
+};
+
+// Usage examples
+app.post('/api/users', 
+  validate(userRegistrationSchema),
+  createUser
+);
+
+app.put('/api/posts/:id',
+  validateRequest({
+    params: Joi.object({
+      id: Joi.string().regex(/^[0-9a-fA-F]{24}$/).required()
+    }),
+    body: updatePostSchema,
+    query: Joi.object({
+      draft: Joi.boolean().default(false)
+    })
+  }),
+  updatePost
+);</code></pre>
+
+  <h3 id="error-formatting">Error Formatting</h3>
+
+  <pre><code>function formatValidationErrors(joiError) {
+  return joiError.details.map(detail => ({
+    field: detail.path.join('.'),
+    message: detail.message,
+    value: detail.context?.value,
+    type: detail.type
+  }));
+}
+
+// Advanced error handler with context
+class ValidationErrorHandler {
+  static format(error, req) {
+    const baseError = {
+      error: 'Validation failed',
+      timestamp: new Date().toISOString(),
+      path: req.path,
+      method: req.method
+    };
+
+    if (error.isJoi) {
+      return {
+        ...baseError,
+        type: 'validation',
+        details: error.details.map(detail => ({
+          field: detail.path.join('.'),
+          message: detail.message,
+          rejectedValue: detail.context?.value,
+          constraint: detail.type
+        }))
+      };
+    }
+
+    if (error.code === 'LIMIT_FILE_SIZE') {
+      return {
+        ...baseError,
+        type: 'file_upload',
+        message: 'File too large',
+        limit: error.limit
+      };
+    }
+
+    return {
+      ...baseError,
+      type: 'unknown',
+      message: 'An error occurred during validation'
+    };
+  }
+
+  static getHttpStatus(error) {
+    if (error.isJoi) {
+      return 400; // Bad Request
+    }
+    
+    if (error.code === 'LIMIT_FILE_SIZE') {
+      return 413; // Payload Too Large
+    }
+    
+    return 500; // Internal Server Error
+  }
+}</code></pre>
+
+  <!-- ─── SANITIZATION ──────────────────── -->
+  <h2 id="sanitization">Data Sanitization</h2>
+
+  <h3 id="input-sanitization">Input Sanitization</h3>
+
+  <pre><code>const validator = require('validator');
+const xss = require('xss');
+
+class DataSanitizer {
+  static sanitizeString(input, options = {}) {
+    if (typeof input !== 'string') return input;
+    
+    let sanitized = input;
+    
+    // Trim whitespace
+    if (options.trim !== false) {
+      sanitized = sanitized.trim();
+    }
+    
+    // Remove HTML tags
+    if (options.stripHtml) {
+      sanitized = validator.stripLow(sanitized);
+      sanitized = sanitized.replace(/<[^>]*>/g, '');
+    }
+    
+    // Prevent XSS
+    if (options.preventXss !== false) {
+      sanitized = xss(sanitized, {
+        whiteList: options.allowedHtml || {},
+        stripIgnoreTag: true,
+        stripIgnoreTagBody: ['script']
+      });
+    }
+    
+    // Escape special characters
+    if (options.escape) {
+      sanitized = validator.escape(sanitized);
+    }
+    
+    return sanitized;
+  }
+
+  static sanitizeEmail(email) {
+    if (typeof email !== 'string') return email;
+    
+    let sanitized = email.toLowerCase().trim();
+    
+    if (validator.isEmail(sanitized)) {
+      return validator.normalizeEmail(sanitized, {
+        gmail_remove_dots: false,
+        outlookdotcom_remove_subaddress: false
+      });
+    }
+    
+    return sanitized;
+  }
+
+  static sanitizePhone(phone) {
+    if (typeof phone !== 'string') return phone;
+    
+    // Remove all non-digit characters except +
+    return phone.replace(/[^\d+]/g, '');
+  }
+
+  static sanitizeUrl(url) {
+    if (typeof url !== 'string') return url;
+    
+    try {
+      const parsed = new URL(url);
+      
+      // Only allow http and https protocols
+      if (!['http:', 'https:'].includes(parsed.protocol)) {
+        throw new Error('Invalid protocol');
+      }
+      
+      return parsed.toString();
+    } catch {
+      return null;
+    }
+  }
+
+  static sanitizeObject(obj, rules) {
+    const sanitized = {};
+    
+    for (const [key, value] of Object.entries(obj)) {
+      const rule = rules[key];
+      
+      if (rule) {
+        switch (rule.type) {
+          case 'string':
+            sanitized[key] = this.sanitizeString(value, rule.options);
+            break;
+          case 'email':
+            sanitized[key] = this.sanitizeEmail(value);
+            break;
+          case 'phone':
+            sanitized[key] = this.sanitizePhone(value);
+            break;
+          case 'url':
+            sanitized[key] = this.sanitizeUrl(value);
+            break;
+          default:
+            sanitized[key] = value;
+        }
+      } else if (rule !== false) {
+        // Include field if not explicitly excluded
+        sanitized[key] = value;
+      }
+    }
+    
+    return sanitized;
+  }
+}</code></pre>
+
+  <!-- ─── RATE LIMITING & THROTTLING ────── -->
+  <h2 id="rate-limiting-validation">Rate Limiting & Throttling</h2>
+
+  <h3 id="validation-rate-limiting">Validation Rate Limiting</h3>
+
+  <pre><code>class ValidationRateLimiter {
+  constructor() {
+    this.attempts = new Map();
+    this.blocklist = new Set();
+  }
+
+  isBlocked(identifier) {
+    return this.blocklist.has(identifier);
+  }
+
+  recordAttempt(identifier, success = true) {
+    if (!this.attempts.has(identifier)) {
+      this.attempts.set(identifier, {
+        count: 0,
+        firstAttempt: Date.now(),
+        lastAttempt: Date.now()
+      });
+    }
+
+    const record = this.attempts.get(identifier);
+    record.count++;
+    record.lastAttempt = Date.now();
+
+    if (!success) {
+      record.failures = (record.failures || 0) + 1;
+      
+      // Block after 10 failed validation attempts in 5 minutes
+      if (record.failures >= 10 && 
+          record.lastAttempt - record.firstAttempt < 300000) {
+        this.blocklist.add(identifier);
+        
+        // Unblock after 30 minutes
+        setTimeout(() => {
+          this.blocklist.delete(identifier);
+          this.attempts.delete(identifier);
+        }, 1800000);
+      }
+    }
+  }
+
+  middleware() {
+    return (req, res, next) => {
+      const identifier = req.ip;
+      
+      if (this.isBlocked(identifier)) {
+        return res.status(429).json({
+          error: 'Too many validation failures',
+          message: 'Your IP has been temporarily blocked due to repeated validation errors',
+          retryAfter: 1800 // seconds
+        });
+      }
+      
+      // Store the identifier for later use
+      req.validationIdentifier = identifier;
+      next();
+    };
+  }
+}</code></pre>
+
+  <!-- ─── ASYNC VALIDATION ──────────────── -->
+  <h2 id="async-validation">Async Validation</h2>
+
+  <h3 id="database-validation">Database Validation</h3>
+
+  <pre><code>class AsyncValidator {
+  static async validateUniqueEmail(email) {
+    const existingUser = await User.findOne({ 
+      email: email.toLowerCase() 
+    });
+    
+    if (existingUser) {
+      throw new Error('Email address is already registered');
+    }
+    
+    return true;
+  }
+
+  static async validateUserExists(userId) {
+    const user = await User.findById(userId);
+    
+    if (!user) {
+      throw new Error('User not found');
+    }
+    
+    return user;
+  }
+
+  static async validatePermissions(userId, resource, action) {
+    const user = await User.findById(userId).populate('roles');
+    
+    const hasPermission = user.roles.some(role => 
+      role.permissions.includes(`${resource}:${action}`)
+    );
+    
+    if (!hasPermission) {
+      throw new Error('Insufficient permissions');
+    }
+    
+    return true;
+  }
+
+  static async validateBusinessRules(data) {
+    const validations = [];
+    
+    // Example: Validate account balance for transactions
+    if (data.type === 'withdrawal' && data.amount) {
+      validations.push(
+        this.validateSufficientBalance(data.accountId, data.amount)
+      );
+    }
+    
+    // Example: Validate appointment availability
+    if (data.appointmentTime) {
+      validations.push(
+        this.validateAppointmentSlot(data.providerId, data.appointmentTime)
+      );
+    }
+    
+    const results = await Promise.all(validations);
+    
+    return results.every(result => result === true);
+  }
+
+  static async validateSufficientBalance(accountId, amount) {
+    const account = await Account.findById(accountId);
+    
+    if (!account || account.balance < amount) {
+      throw new Error('Insufficient account balance');
+    }
+    
+    return true;
+  }
+}</code></pre>
+
+  <!-- ─── BEST PRACTICES ─────────────────── -->
+  <h2 id="best-practices">Best Practices</h2>
+
+  <ul>
+    <li><strong>Fail Fast</strong> - Validate input as early as possible in the request lifecycle</li>
+    <li><strong>Consistent Errors</strong> - Use standardized error formats across your API</li>
+    <li><strong>Sanitize Everything</strong> - Never trust user input, always sanitize</li>
+    <li><strong>Rate Limiting</strong> - Protect against validation abuse and brute force attacks</li>
+    <li><strong>Async Validation</strong> - Use async validators for database checks and external services</li>
+    <li><strong>Performance</strong> - Cache validation results where appropriate</li>
+    <li><strong>Documentation</strong> - Clearly document validation rules and error responses</li>
+  </ul>
+
+  <div class="callout">
+    <div class="callout-title">🎯 Validation Strategy</div>
+    <p>
+      Effective request validation combines schema-based validation with custom
+      business rules, proper sanitization, and rate limiting. Always validate
+      on both client and server side, but never rely solely on client-side validation
+      for security.
+    </p>
+  </div>
+
+</div>

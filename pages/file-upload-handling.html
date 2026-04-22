@@ -1,0 +1,515 @@
+<div class="content-body">
+
+  <h1 id="file-upload-handling">File Upload Handling</h1>
+
+  <p>
+    Implement secure, efficient file upload functionality with proper validation,
+    storage management, and user experience optimization. This guide covers 
+    client-side and server-side upload handling, security considerations, and performance optimization.
+  </p>
+
+  <div class="callout">
+    <div class="callout-title">📁 Upload Security</div>
+    <p>
+      File uploads are a common attack vector. Always validate file types, sizes,
+      and content on the server side. Never trust client-side validation alone,
+      and implement proper sanitization and scanning procedures.
+    </p>
+  </div>
+
+  <!-- ─── CLIENT-SIDE UPLOAD ────────────── -->
+  <h2 id="client-side-upload">Client-Side Upload</h2>
+
+  <h3 id="basic-upload-form">Basic Upload Form</h3>
+
+  <p>
+    Create a responsive file upload interface with drag-and-drop support:
+  </p>
+
+  <pre><code>&lt;div class="upload-container"&gt;
+  &lt;form id="upload-form" enctype="multipart/form-data"&gt;
+    &lt;div class="upload-dropzone" id="dropzone"&gt;
+      &lt;div class="upload-content"&gt;
+        &lt;svg class="upload-icon"&gt;...&lt;/svg&gt;
+        &lt;h3&gt;Drag files here or click to browse&lt;/h3&gt;
+        &lt;p&gt;Supports: JPG, PNG, PDF (max 10MB)&lt;/p&gt;
+        &lt;input type="file" id="file-input" multiple accept=".jpg,.jpeg,.png,.pdf"&gt;
+      &lt;/div&gt;
+    &lt;/div&gt;
+    
+    &lt;div id="file-list" class="file-list"&gt;&lt;/div&gt;
+    &lt;button type="submit" id="upload-btn" disabled&gt;Upload Files&lt;/button&gt;
+  &lt;/form&gt;
+&lt;/div&gt;</code></pre>
+
+  <h3 id="drag-drop-implementation">Drag & Drop Implementation</h3>
+
+  <pre><code>class FileUploader {
+  constructor(containerId, options = {}) {
+    this.container = document.getElementById(containerId);
+    this.options = {
+      maxSize: 10 * 1024 * 1024, // 10MB
+      acceptedTypes: ['image/jpeg', 'image/png', 'application/pdf'],
+      maxFiles: 5,
+      ...options
+    };
+    
+    this.files = [];
+    this.init();
+  }
+
+  init() {
+    this.setupEventListeners();
+    this.setupDragAndDrop();
+  }
+
+  setupDragAndDrop() {
+    const dropzone = this.container.querySelector('.upload-dropzone');
+
+    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+      dropzone.addEventListener(eventName, this.preventDefaults);
+    });
+
+    ['dragenter', 'dragover'].forEach(eventName => {
+      dropzone.addEventListener(eventName, () => {
+        dropzone.classList.add('drag-over');
+      });
+    });
+
+    ['dragleave', 'drop'].forEach(eventName => {
+      dropzone.addEventListener(eventName, () => {
+        dropzone.classList.remove('drag-over');
+      });
+    });
+
+    dropzone.addEventListener('drop', (e) => {
+      this.handleFiles(e.dataTransfer.files);
+    });
+  }
+
+  handleFiles(fileList) {
+    const files = Array.from(fileList);
+    
+    files.forEach(file => {
+      if (this.validateFile(file)) {
+        this.addFile(file);
+      }
+    });
+
+    this.updateUI();
+  }
+
+  validateFile(file) {
+    // Size validation
+    if (file.size > this.options.maxSize) {
+      this.showError(`File ${file.name} is too large (max ${this.formatFileSize(this.options.maxSize)})`);
+      return false;
+    }
+
+    // Type validation
+    if (!this.options.acceptedTypes.includes(file.type)) {
+      this.showError(`File type ${file.type} is not supported`);
+      return false;
+    }
+
+    // Count validation
+    if (this.files.length >= this.options.maxFiles) {
+      this.showError(`Maximum ${this.options.maxFiles} files allowed`);
+      return false;
+    }
+
+    return true;
+  }
+
+  addFile(file) {
+    const fileData = {
+      id: this.generateId(),
+      file: file,
+      name: file.name,
+      size: file.size,
+      type: file.type,
+      status: 'pending',
+      progress: 0
+    };
+
+    this.files.push(fileData);
+  }
+}</code></pre>
+
+  <h3 id="upload-progress">Upload Progress</h3>
+
+  <pre><code>async uploadFiles() {
+  const uploadPromises = this.files.map(fileData => {
+    return this.uploadSingleFile(fileData);
+  });
+
+  try {
+    await Promise.all(uploadPromises);
+    this.onUploadComplete();
+  } catch (error) {
+    this.onUploadError(error);
+  }
+}
+
+async uploadSingleFile(fileData) {
+  const formData = new FormData();
+  formData.append('file', fileData.file);
+  formData.append('metadata', JSON.stringify({
+    originalName: fileData.name,
+    size: fileData.size,
+    type: fileData.type
+  }));
+
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+
+    xhr.upload.onprogress = (e) => {
+      if (e.lengthComputable) {
+        fileData.progress = (e.loaded / e.total) * 100;
+        this.updateFileProgress(fileData);
+      }
+    };
+
+    xhr.onload = () => {
+      if (xhr.status === 200) {
+        const response = JSON.parse(xhr.responseText);
+        fileData.status = 'completed';
+        fileData.url = response.url;
+        fileData.id = response.id;
+        resolve(response);
+      } else {
+        fileData.status = 'failed';
+        reject(new Error(`Upload failed: ${xhr.statusText}`));
+      }
+    };
+
+    xhr.onerror = () => {
+      fileData.status = 'failed';
+      reject(new Error('Network error during upload'));
+    };
+
+    xhr.open('POST', '/api/upload');
+    xhr.send(formData);
+  });
+}</code></pre>
+
+  <!-- ─── SERVER-SIDE HANDLING ──────────── -->
+  <h2 id="server-side-handling">Server-Side Handling</h2>
+
+  <h3 id="express-multer">Express with Multer</h3>
+
+  <pre><code>const multer = require('multer');
+const path = require('path');
+const crypto = require('crypto');
+
+// Configure storage
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    const uploadPath = path.join(__dirname, 'uploads', getDateFolder());
+    ensureDirectoryExists(uploadPath);
+    cb(null, uploadPath);
+  },
+  
+  filename: (req, file, cb) => {
+    const uniqueName = crypto.randomUUID();
+    const ext = path.extname(file.originalname);
+    cb(null, `${uniqueName}${ext}`);
+  }
+});
+
+// File filter for validation
+const fileFilter = (req, file, cb) => {
+  const allowedTypes = ['image/jpeg', 'image/png', 'application/pdf'];
+  
+  if (allowedTypes.includes(file.mimetype)) {
+    cb(null, true);
+  } else {
+    cb(new Error(`File type ${file.mimetype} not allowed`), false);
+  }
+};
+
+const upload = multer({
+  storage: storage,
+  fileFilter: fileFilter,
+  limits: {
+    fileSize: 10 * 1024 * 1024, // 10MB
+    files: 5
+  }
+});
+
+// Upload endpoint
+app.post('/api/upload', upload.array('files', 5), async (req, res) => {
+  try {
+    if (!req.files || req.files.length === 0) {
+      return res.status(400).json({ error: 'No files uploaded' });
+    }
+
+    const uploadResults = await Promise.all(
+      req.files.map(file => processUploadedFile(file, req))
+    );
+
+    res.json({
+      message: 'Files uploaded successfully',
+      files: uploadResults
+    });
+  } catch (error) {
+    console.error('Upload error:', error);
+    res.status(500).json({ error: 'Upload failed' });
+  }
+});</code></pre>
+
+  <h3 id="file-validation">Advanced File Validation</h3>
+
+  <pre><code>const FileType = require('file-type');
+const sharp = require('sharp');
+
+async function validateUploadedFile(file) {
+  const validations = [];
+
+  // 1. File type validation using magic numbers
+  const fileType = await FileType.fromFile(file.path);
+  if (!fileType || !['jpg', 'png', 'pdf'].includes(fileType.ext)) {
+    validations.push('Invalid file type detected');
+  }
+
+  // 2. Image-specific validation
+  if (file.mimetype.startsWith('image/')) {
+    try {
+      const metadata = await sharp(file.path).metadata();
+      
+      // Check image dimensions
+      if (metadata.width > 5000 || metadata.height > 5000) {
+        validations.push('Image dimensions too large');
+      }
+
+      // Check for suspicious metadata
+      if (metadata.exif && metadata.exif.includes('&lt;script')) {
+        validations.push('Suspicious metadata detected');
+      }
+    } catch (error) {
+      validations.push('Invalid image file');
+    }
+  }
+
+  // 3. Virus scanning (using ClamAV)
+  const scanResult = await scanForVirus(file.path);
+  if (!scanResult.clean) {
+    validations.push('File failed security scan');
+  }
+
+  return {
+    valid: validations.length === 0,
+    errors: validations
+  };
+}
+
+async function processUploadedFile(file, req) {
+  // Validate the file
+  const validation = await validateUploadedFile(file);
+  if (!validation.valid) {
+    // Remove invalid file
+    await fs.unlink(file.path);
+    throw new Error(`File validation failed: ${validation.errors.join(', ')}`);
+  }
+
+  // Generate thumbnails for images
+  if (file.mimetype.startsWith('image/')) {
+    await generateThumbnails(file);
+  }
+
+  // Save to database
+  const fileRecord = await saveFileRecord({
+    originalName: file.originalname,
+    filename: file.filename,
+    path: file.path,
+    size: file.size,
+    mimetype: file.mimetype,
+    uploadedBy: req.user?.id,
+    uploadDate: new Date()
+  });
+
+  return {
+    id: fileRecord.id,
+    originalName: file.originalname,
+    size: file.size,
+    mimetype: file.mimetype,
+    url: `/api/files/${fileRecord.id}`,
+    thumbnailUrl: file.mimetype.startsWith('image/') 
+      ? `/api/files/${fileRecord.id}/thumbnail` 
+      : null
+  };
+}</code></pre>
+
+  <!-- ─── CLOUD STORAGE INTEGRATION ────── -->
+  <h2 id="cloud-storage">Cloud Storage Integration</h2>
+
+  <h3 id="aws-s3-upload">AWS S3 Upload</h3>
+
+  <pre><code>const AWS = require('aws-sdk');
+
+class S3FileUploader {
+  constructor(config) {
+    this.s3 = new AWS.S3({
+      accessKeyId: config.accessKeyId,
+      secretAccessKey: config.secretAccessKey,
+      region: config.region
+    });
+    this.bucket = config.bucket;
+  }
+
+  async uploadFile(file, options = {}) {
+    const key = options.key || this.generateKey(file);
+    
+    const params = {
+      Bucket: this.bucket,
+      Key: key,
+      Body: file.buffer,
+      ContentType: file.mimetype,
+      ACL: options.public ? 'public-read' : 'private',
+      Metadata: {
+        'original-name': file.originalname,
+        'upload-date': new Date().toISOString(),
+        'file-size': file.size.toString()
+      }
+    };
+
+    if (options.encryption) {
+      params.ServerSideEncryption = 'AES256';
+    }
+
+    const result = await this.s3.upload(params).promise();
+    
+    return {
+      url: result.Location,
+      key: result.Key,
+      etag: result.ETag
+    };
+  }
+
+  async getSignedUrl(key, expiresIn = 3600) {
+    return this.s3.getSignedUrl('getObject', {
+      Bucket: this.bucket,
+      Key: key,
+      Expires: expiresIn
+    });
+  }
+
+  generateKey(file) {
+    const date = new Date().toISOString().split('T')[0];
+    const uuid = crypto.randomUUID();
+    const ext = path.extname(file.originalname);
+    return `uploads/${date}/${uuid}${ext}`;
+  }
+}</code></pre>
+
+  <!-- ─── PERFORMANCE OPTIMIZATION ──────── -->
+  <h2 id="performance-optimization">Performance Optimization</h2>
+
+  <h3 id="chunked-upload">Chunked Upload</h3>
+
+  <pre><code>class ChunkedUploader {
+  constructor(file, options = {}) {
+    this.file = file;
+    this.chunkSize = options.chunkSize || 1024 * 1024; // 1MB
+    this.totalChunks = Math.ceil(file.size / this.chunkSize);
+    this.uploadId = null;
+    this.uploadedChunks = new Set();
+  }
+
+  async startUpload() {
+    // Initialize multipart upload
+    const response = await fetch('/api/upload/init', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        filename: this.file.name,
+        size: this.file.size,
+        type: this.file.type,
+        chunks: this.totalChunks
+      })
+    });
+
+    const data = await response.json();
+    this.uploadId = data.uploadId;
+
+    return this.uploadChunks();
+  }
+
+  async uploadChunks() {
+    const promises = [];
+
+    for (let i = 0; i < this.totalChunks; i++) {
+      promises.push(this.uploadChunk(i));
+    }
+
+    try {
+      await Promise.all(promises);
+      return this.completeUpload();
+    } catch (error) {
+      await this.abortUpload();
+      throw error;
+    }
+  }
+
+  async uploadChunk(chunkIndex) {
+    const start = chunkIndex * this.chunkSize;
+    const end = Math.min(start + this.chunkSize, this.file.size);
+    const chunk = this.file.slice(start, end);
+
+    const formData = new FormData();
+    formData.append('chunk', chunk);
+    formData.append('uploadId', this.uploadId);
+    formData.append('chunkIndex', chunkIndex);
+
+    const response = await fetch('/api/upload/chunk', {
+      method: 'POST',
+      body: formData
+    });
+
+    if (response.ok) {
+      this.uploadedChunks.add(chunkIndex);
+      this.updateProgress();
+    } else {
+      throw new Error(`Chunk ${chunkIndex} upload failed`);
+    }
+  }
+
+  async completeUpload() {
+    const response = await fetch('/api/upload/complete', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ uploadId: this.uploadId })
+    });
+
+    return response.json();
+  }
+
+  updateProgress() {
+    const progress = (this.uploadedChunks.size / this.totalChunks) * 100;
+    this.onProgress?.(progress);
+  }
+}</code></pre>
+
+  <!-- ─── SECURITY BEST PRACTICES ──────── -->
+  <h2 id="security-best-practices">Security Best Practices</h2>
+
+  <ul>
+    <li><strong>File Type Validation</strong> - Validate using magic numbers, not just extensions</li>
+    <li><strong>Size Limits</strong> - Enforce both per-file and total upload size limits</li>
+    <li><strong>Virus Scanning</strong> - Scan all uploads with antivirus software</li>
+    <li><strong>Content Sanitization</strong> - Strip metadata and potentially harmful content</li>
+    <li><strong>Access Controls</strong> - Implement proper authentication and authorization</li>
+    <li><strong>Storage Isolation</strong> - Store uploads outside the web root directory</li>
+    <li><strong>Rate Limiting</strong> - Prevent abuse through upload rate limiting</li>
+  </ul>
+
+  <div class="callout">
+    <div class="callout-title">🔒 Security First</div>
+    <p>
+      Never trust client-side validation alone. Always implement comprehensive
+      server-side validation, including file type detection using magic numbers,
+      virus scanning, and content sanitization to prevent security vulnerabilities.
+    </p>
+  </div>
+
+</div>

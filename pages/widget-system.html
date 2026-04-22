@@ -1,0 +1,245 @@
+<div class="content-body">
+
+  <h1 id="widget-system">Widget System</h1>
+
+  <p>
+    The DevDocs widget system provides a flexible framework for creating reusable,
+    interactive components that can be embedded throughout your documentation.
+    Widgets enhance user experience with dynamic content and interactive elements.
+  </p>
+
+  <div class="callout">
+    <div class="callout-title">🧩 Widget Philosophy</div>
+    <p>
+      Widgets are self-contained components that encapsulate functionality, styling,
+      and behavior. They can be easily embedded in any page and configured through
+      data attributes or JavaScript APIs.
+    </p>
+  </div>
+
+  <!-- ─── BUILT-IN WIDGETS ───────────────── -->
+  <h2 id="built-in-widgets">Built-in Widgets</h2>
+
+  <p>
+    DevDocs includes several built-in widgets that cover common documentation needs:
+  </p>
+
+  <h3 id="code-snippet-widget">Code Snippet Widget</h3>
+
+  <p>
+    Interactive code blocks with syntax highlighting, copy functionality, and language selection:
+  </p>
+
+  <pre><code>&lt;div class="widget-code-snippet" 
+     data-language="javascript" 
+     data-title="API Example"
+     data-show-line-numbers="true"&gt;
+  &lt;pre&gt;&lt;code&gt;
+const api = new DevDocsAPI({
+  baseUrl: 'https://api.example.com',
+  apiKey: process.env.API_KEY
+});
+
+const response = await api.get('/users');
+console.log(response.data);
+  &lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;</code></pre>
+
+  <h3 id="tabbed-content-widget">Tabbed Content Widget</h3>
+
+  <p>
+    Organize related content into tabbed interfaces for better space utilization:
+  </p>
+
+  <pre><code>&lt;div class="widget-tabs" data-default-tab="javascript"&gt;
+  &lt;div class="tab-headers"&gt;
+    &lt;button data-tab="javascript"&gt;JavaScript&lt;/button&gt;
+    &lt;button data-tab="python"&gt;Python&lt;/button&gt;
+    &lt;button data-tab="curl"&gt;cURL&lt;/button&gt;
+  &lt;/div&gt;
+  &lt;div class="tab-content" data-tab="javascript"&gt;
+    &lt;pre&gt;&lt;code&gt;fetch('/api/data')&lt;/code&gt;&lt;/pre&gt;
+  &lt;/div&gt;
+  &lt;div class="tab-content" data-tab="python"&gt;
+    &lt;pre&gt;&lt;code&gt;requests.get('/api/data')&lt;/code&gt;&lt;/pre&gt;
+  &lt;/div&gt;
+&lt;/div&gt;</code></pre>
+
+  <h3 id="interactive-demo-widget">Interactive Demo Widget</h3>
+
+  <p>
+    Embed live demonstrations and sandboxes directly in documentation:
+  </p>
+
+  <pre><code>&lt;div class="widget-demo" 
+     data-demo-url="https://codepen.io/example"
+     data-height="400"
+     data-theme="dark"&gt;
+  &lt;iframe src="demo-fallback.html"&gt;&lt;/iframe&gt;
+&lt;/div&gt;</code></pre>
+
+  <!-- ─── CUSTOM WIDGET DEVELOPMENT ─────── -->
+  <h2 id="custom-widget-development">Custom Widget Development</h2>
+
+  <p>
+    Create custom widgets by extending the base Widget class and implementing
+    the required lifecycle methods:
+  </p>
+
+  <pre><code>class CustomWidget extends DevDocsWidget {
+  constructor(element, options = {}) {
+    super(element, options);
+    this.name = 'custom-widget';
+    this.version = '1.0.0';
+  }
+
+  init() {
+    // Widget initialization logic
+    this.setupEventListeners();
+    this.loadData();
+    this.render();
+  }
+
+  render() {
+    // Render widget content
+    this.element.innerHTML = this.template();
+    this.bindEvents();
+  }
+
+  template() {
+    return `
+      &lt;div class="custom-widget-content"&gt;
+        &lt;h3&gt;${this.options.title}&lt;/h3&gt;
+        &lt;div class="widget-body"&gt;
+          ${this.renderContent()}
+        &lt;/div&gt;
+      &lt;/div&gt;
+    `;
+  }
+
+  destroy() {
+    // Cleanup logic
+    this.removeEventListeners();
+    this.element.innerHTML = '';
+  }
+}</code></pre>
+
+  <h3 id="widget-registration">Widget Registration</h3>
+
+  <p>
+    Register custom widgets with the widget system for automatic initialization:
+  </p>
+
+  <pre><code>// Register the widget
+DevDocs.widgets.register('custom-widget', CustomWidget);
+
+// Auto-initialize widgets on page load
+document.addEventListener('DOMContentLoaded', () => {
+  DevDocs.widgets.initializeAll();
+});
+
+// Initialize specific widgets
+const widgets = document.querySelectorAll('[data-widget="custom-widget"]');
+widgets.forEach(el => new CustomWidget(el));</code></pre>
+
+  <!-- ─── WIDGET CONFIGURATION ──────────── -->
+  <h2 id="widget-configuration">Widget Configuration</h2>
+
+  <p>
+    Configure widgets through data attributes, JavaScript options, or external configuration files:
+  </p>
+
+  <h3 id="data-attribute-configuration">Data Attribute Configuration</h3>
+
+  <pre><code>&lt;div class="widget-chart" 
+     data-widget="line-chart"
+     data-api-endpoint="/api/metrics"
+     data-refresh-interval="30000"
+     data-chart-type="line"
+     data-show-legend="true"&gt;
+&lt;/div&gt;</code></pre>
+
+  <h3 id="javascript-configuration">JavaScript Configuration</h3>
+
+  <pre><code>const chartWidget = new ChartWidget(element, {
+  apiEndpoint: '/api/metrics',
+  refreshInterval: 30000,
+  chartOptions: {
+    type: 'line',
+    responsive: true,
+    scales: {
+      y: { beginAtZero: true }
+    }
+  },
+  onDataUpdate: (data) => {
+    console.log('Chart data updated:', data);
+  }
+});</code></pre>
+
+  <!-- ─── WIDGET LIFECYCLE ───────────────── -->
+  <h2 id="widget-lifecycle">Widget Lifecycle</h2>
+
+  <p>
+    Understanding the widget lifecycle helps in creating robust, performant widgets:
+  </p>
+
+  <ol>
+    <li><strong>Discovery</strong> - Widget elements are found via selectors</li>
+    <li><strong>Instantiation</strong> - Widget class is instantiated with configuration</li>
+    <li><strong>Initialization</strong> - Widget sets up initial state and DOM</li>
+    <li><strong>Rendering</strong> - Widget renders content and becomes interactive</li>
+    <li><strong>Updates</strong> - Widget responds to data changes and user interactions</li>
+    <li><strong>Cleanup</strong> - Widget removes event listeners and cleans up resources</li>
+  </ol>
+
+  <h3 id="lifecycle-hooks">Lifecycle Hooks</h3>
+
+  <pre><code>class SmartWidget extends DevDocsWidget {
+  beforeInit() {
+    // Called before initialization
+    this.validateConfig();
+  }
+
+  afterInit() {
+    // Called after initialization
+    this.trackInitialization();
+  }
+
+  beforeRender() {
+    // Called before each render
+    this.prepareRenderData();
+  }
+
+  afterRender() {
+    // Called after each render
+    this.announceAccessibility();
+  }
+
+  beforeDestroy() {
+    // Called before cleanup
+    this.saveState();
+  }
+}</code></pre>
+
+  <!-- ─── WIDGET BEST PRACTICES ─────────── -->
+  <h2 id="widget-best-practices">Widget Best Practices</h2>
+
+  <ul>
+    <li><strong>Accessibility First</strong> - Ensure widgets work with screen readers and keyboards</li>
+    <li><strong>Performance Conscious</strong> - Lazy load heavy widgets and optimize rendering</li>
+    <li><strong>Responsive Design</strong> - Widgets should adapt to different screen sizes</li>
+    <li><strong>Error Handling</strong> - Gracefully handle API failures and invalid data</li>
+    <li><strong>State Management</strong> - Maintain consistent state across widget interactions</li>
+    <li><strong>Event Cleanup</strong> - Properly remove event listeners to prevent memory leaks</li>
+  </ul>
+
+  <div class="callout">
+    <div class="callout-title">⚡ Performance Tip</div>
+    <p>
+      Use intersection observers to lazy-load widgets that aren't immediately visible,
+      and implement debouncing for widgets that respond to scroll or resize events
+      to maintain smooth performance.
+    </p>
+  </div>
+
+</div>

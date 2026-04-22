@@ -1,0 +1,483 @@
+<div class="content-body">
+
+  <h1 id="internationalization">Internationalization (i18n)</h1>
+
+  <p>
+    Implement comprehensive internationalization support to make your application
+    accessible to users worldwide. This guide covers locale management, text
+    translation, formatting, and cultural adaptation strategies.
+  </p>
+
+  <div class="callout">
+    <div class="callout-title">🌐 Global Reach</div>
+    <p>
+      Internationalization enables your application to support multiple languages,
+      regions, and cultural conventions without code changes. Proper i18n
+      implementation can significantly expand your user base and market reach.
+    </p>
+  </div>
+
+  <!-- ─── I18N SETUP ─────────────────────── -->
+  <h2 id="i18n-setup">I18n Setup</h2>
+
+  <p>
+    Set up a robust internationalization framework that supports dynamic language
+    switching and fallback mechanisms:
+  </p>
+
+  <h3 id="basic-configuration">Basic Configuration</h3>
+
+  <pre><code>// i18n.js - Configuration
+const i18next = require('i18next');
+const Backend = require('i18next-fs-backend');
+const middleware = require('i18next-http-middleware');
+
+i18next
+  .use(Backend)
+  .use(middleware.LanguageDetector)
+  .init({
+    fallbackLng: 'en',
+    preload: ['en', 'es', 'fr', 'de', 'ja', 'zh'],
+    
+    backend: {
+      loadPath: './locales/{{lng}}/{{ns}}.json',
+      addPath: './locales/{{lng}}/{{ns}}.missing.json'
+    },
+    
+    detection: {
+      order: ['querystring', 'cookie', 'header'],
+      caches: ['cookie'],
+      lookupQuerystring: 'lang',
+      lookupCookie: 'i18next',
+      cookieMinutes: 10080, // 7 days
+    },
+    
+    interpolation: {
+      escapeValue: false // React already escapes
+    },
+    
+    saveMissing: true,
+    saveMissingTo: 'fallback'
+  });
+
+module.exports = i18next;</code></pre>
+
+  <h3 id="resource-structure">Resource Structure</h3>
+
+  <pre><code>// locales/en/common.json
+{
+  "navigation": {
+    "home": "Home",
+    "about": "About",
+    "contact": "Contact",
+    "login": "Log In",
+    "logout": "Log Out"
+  },
+  "buttons": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "confirm": "Confirm"
+  },
+  "messages": {
+    "loading": "Loading...",
+    "success": "Operation completed successfully",
+    "error": "An error occurred",
+    "welcome": "Welcome, {{name}}!"
+  }
+}
+
+// locales/es/common.json
+{
+  "navigation": {
+    "home": "Inicio",
+    "about": "Acerca de",
+    "contact": "Contacto",
+    "login": "Iniciar Sesión",
+    "logout": "Cerrar Sesión"
+  },
+  "buttons": {
+    "save": "Guardar",
+    "cancel": "Cancelar",
+    "delete": "Eliminar",
+    "confirm": "Confirmar"
+  },
+  "messages": {
+    "loading": "Cargando...",
+    "success": "Operación completada exitosamente",
+    "error": "Ocurrió un error",
+    "welcome": "¡Bienvenido, {{name}}!"
+  }
+}</code></pre>
+
+  <!-- ─── CLIENT-SIDE IMPLEMENTATION ────── -->
+  <h2 id="client-side-implementation">Client-Side Implementation</h2>
+
+  <h3 id="react-integration">React Integration</h3>
+
+  <pre><code>// React i18n setup
+import { useTranslation } from 'react-i18next';
+import { useState, useEffect } from 'react';
+
+function LanguageSelector() {
+  const { i18n } = useTranslation();
+  const [currentLang, setCurrentLang] = useState(i18n.language);
+
+  const languages = [
+    { code: 'en', name: 'English' },
+    { code: 'es', name: 'Español' },
+    { code: 'fr', name: 'Français' },
+    { code: 'de', name: 'Deutsch' },
+    { code: 'ja', name: '日本語' },
+    { code: 'zh', name: '中文' }
+  ];
+
+  const changeLanguage = (langCode) => {
+    i18n.changeLanguage(langCode);
+    setCurrentLang(langCode);
+    
+    // Update HTML lang attribute
+    document.documentElement.lang = langCode;
+    
+    // Update text direction for RTL languages
+    document.documentElement.dir = 
+      ['ar', 'he', 'fa'].includes(langCode) ? 'rtl' : 'ltr';
+  };
+
+  return (
+    <select 
+      value={currentLang} 
+      onChange={(e) => changeLanguage(e.target.value)}
+      className="language-selector"
+    >
+      {languages.map(lang => (
+        <option key={lang.code} value={lang.code}>
+          {lang.name}
+        </option>
+      ))}
+    </select>
+  );
+}
+
+// Component using translations
+function UserProfile({ user }) {
+  const { t } = useTranslation();
+
+  return (
+    <div className="user-profile">
+      <h1>{t('messages.welcome', { name: user.name })}</h1>
+      <button onClick={handleSave}>
+        {t('buttons.save')}
+      </button>
+      <button onClick={handleCancel}>
+        {t('buttons.cancel')}
+      </button>
+    </div>
+  );
+}</code></pre>
+
+  <h3 id="vanilla-js-implementation">Vanilla JavaScript Implementation</h3>
+
+  <pre><code>class I18nManager {
+  constructor() {
+    this.currentLocale = 'en';
+    this.translations = {};
+    this.fallbackLocale = 'en';
+  }
+
+  async loadTranslations(locale) {
+    if (this.translations[locale]) {
+      return this.translations[locale];
+    }
+
+    try {
+      const response = await fetch(`/api/translations/${locale}`);
+      const data = await response.json();
+      this.translations[locale] = data;
+      return data;
+    } catch (error) {
+      console.error(`Failed to load translations for ${locale}:`, error);
+      return this.translations[this.fallbackLocale] || {};
+    }
+  }
+
+  async setLocale(locale) {
+    await this.loadTranslations(locale);
+    this.currentLocale = locale;
+    this.updateDOM();
+    this.savePreference(locale);
+  }
+
+  t(key, params = {}) {
+    const translation = this.getTranslation(key, this.currentLocale) ||
+                       this.getTranslation(key, this.fallbackLocale) ||
+                       key;
+
+    return this.interpolate(translation, params);
+  }
+
+  getTranslation(key, locale) {
+    const keys = key.split('.');
+    let value = this.translations[locale];
+
+    for (const k of keys) {
+      if (value && typeof value === 'object') {
+        value = value[k];
+      } else {
+        return null;
+      }
+    }
+
+    return value;
+  }
+
+  interpolate(template, params) {
+    return template.replace(/\{\{(\w+)\}\}/g, (match, key) => {
+      return params[key] || match;
+    });
+  }
+
+  updateDOM() {
+    document.querySelectorAll('[data-i18n]').forEach(element => {
+      const key = element.getAttribute('data-i18n');
+      element.textContent = this.t(key);
+    });
+
+    document.querySelectorAll('[data-i18n-placeholder]').forEach(element => {
+      const key = element.getAttribute('data-i18n-placeholder');
+      element.placeholder = this.t(key);
+    });
+  }
+
+  savePreference(locale) {
+    localStorage.setItem('preferred-language', locale);
+    document.cookie = `lang=${locale}; path=/; max-age=604800`; // 7 days
+  }
+}</code></pre>
+
+  <!-- ─── NUMBER & DATE FORMATTING ─────── -->
+  <h2 id="formatting">Number & Date Formatting</h2>
+
+  <h3 id="number-formatting">Number Formatting</h3>
+
+  <pre><code>class NumberFormatter {
+  constructor(locale = 'en') {
+    this.locale = locale;
+  }
+
+  formatCurrency(amount, currency = 'USD') {
+    return new Intl.NumberFormat(this.locale, {
+      style: 'currency',
+      currency: currency,
+      minimumFractionDigits: 2
+    }).format(amount);
+  }
+
+  formatPercent(value) {
+    return new Intl.NumberFormat(this.locale, {
+      style: 'percent',
+      minimumFractionDigits: 1,
+      maximumFractionDigits: 2
+    }).format(value);
+  }
+
+  formatNumber(number, options = {}) {
+    return new Intl.NumberFormat(this.locale, {
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 2,
+      ...options
+    }).format(number);
+  }
+
+  formatFileSize(bytes) {
+    const sizes = ['bytes', 'KB', 'MB', 'GB', 'TB'];
+    if (bytes === 0) return '0 bytes';
+    
+    const i = Math.floor(Math.log(bytes) / Math.log(1024));
+    const size = bytes / Math.pow(1024, i);
+    
+    return `${this.formatNumber(size, { maximumFractionDigits: 1 })} ${sizes[i]}`;
+  }
+}</code></pre>
+
+  <h3 id="date-time-formatting">Date & Time Formatting</h3>
+
+  <pre><code>class DateTimeFormatter {
+  constructor(locale = 'en', timeZone = 'UTC') {
+    this.locale = locale;
+    this.timeZone = timeZone;
+  }
+
+  formatDate(date, style = 'medium') {
+    const options = {
+      timeZone: this.timeZone,
+      dateStyle: style
+    };
+    
+    return new Intl.DateTimeFormat(this.locale, options).format(date);
+  }
+
+  formatTime(date, style = 'short') {
+    const options = {
+      timeZone: this.timeZone,
+      timeStyle: style
+    };
+    
+    return new Intl.DateTimeFormat(this.locale, options).format(date);
+  }
+
+  formatDateTime(date, options = {}) {
+    const defaultOptions = {
+      timeZone: this.timeZone,
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      ...options
+    };
+    
+    return new Intl.DateTimeFormat(this.locale, defaultOptions).format(date);
+  }
+
+  formatRelativeTime(date) {
+    const rtf = new Intl.RelativeTimeFormat(this.locale, { numeric: 'auto' });
+    const diff = date.getTime() - Date.now();
+    const absDiff = Math.abs(diff);
+
+    if (absDiff < 1000 * 60) {
+      return rtf.format(Math.round(diff / 1000), 'second');
+    } else if (absDiff < 1000 * 60 * 60) {
+      return rtf.format(Math.round(diff / (1000 * 60)), 'minute');
+    } else if (absDiff < 1000 * 60 * 60 * 24) {
+      return rtf.format(Math.round(diff / (1000 * 60 * 60)), 'hour');
+    } else if (absDiff < 1000 * 60 * 60 * 24 * 30) {
+      return rtf.format(Math.round(diff / (1000 * 60 * 60 * 24)), 'day');
+    } else {
+      return this.formatDate(date);
+    }
+  }
+}</code></pre>
+
+  <!-- ─── PLURALIZATION ──────────────────── -->
+  <h2 id="pluralization">Pluralization</h2>
+
+  <p>
+    Handle complex pluralization rules for different languages:
+  </p>
+
+  <pre><code>// Pluralization rules
+const pluralizationRules = {
+  en: {
+    cardinal: ['one', 'other'],
+    ordinal: ['one', 'two', 'few', 'other']
+  },
+  ru: {
+    cardinal: ['one', 'few', 'many', 'other'],
+    ordinal: ['other']
+  },
+  ar: {
+    cardinal: ['zero', 'one', 'two', 'few', 'many', 'other'],
+    ordinal: ['other']
+  }
+};
+
+class PluralFormatter {
+  constructor(locale) {
+    this.locale = locale;
+    this.pr = new Intl.PluralRules(locale, { type: 'cardinal' });
+    this.prOrdinal = new Intl.PluralRules(locale, { type: 'ordinal' });
+  }
+
+  formatPlural(count, translations) {
+    const rule = this.pr.select(count);
+    return translations[rule] || translations.other || '';
+  }
+
+  formatOrdinal(number) {
+    const rule = this.prOrdinal.select(number);
+    const suffixes = {
+      one: 'st',
+      two: 'nd',
+      few: 'rd',
+      other: 'th'
+    };
+    return `${number}${suffixes[rule] || suffixes.other}`;
+  }
+}
+
+// Usage example
+const plural = new PluralFormatter('en');
+const messageTranslations = {
+  zero: 'No messages',
+  one: '{{count}} message',
+  other: '{{count}} messages'
+};
+
+console.log(plural.formatPlural(0, messageTranslations)); // "No messages"
+console.log(plural.formatPlural(1, messageTranslations)); // "1 message"
+console.log(plural.formatPlural(5, messageTranslations)); // "5 messages"</code></pre>
+
+  <!-- ─── RTL SUPPORT ────────────────────── -->
+  <h2 id="rtl-support">RTL Support</h2>
+
+  <p>
+    Implement proper right-to-left language support:
+  </p>
+
+  <pre><code>// RTL detection and styling
+const RTL_LANGUAGES = ['ar', 'he', 'fa', 'ur'];
+
+class RTLManager {
+  constructor() {
+    this.isRTL = false;
+  }
+
+  setDirection(locale) {
+    this.isRTL = RTL_LANGUAGES.includes(locale);
+    document.documentElement.dir = this.isRTL ? 'rtl' : 'ltr';
+    document.documentElement.classList.toggle('rtl', this.isRTL);
+    
+    // Update CSS custom properties
+    document.documentElement.style.setProperty(
+      '--text-align-start', 
+      this.isRTL ? 'right' : 'left'
+    );
+    document.documentElement.style.setProperty(
+      '--text-align-end', 
+      this.isRTL ? 'left' : 'right'
+    );
+  }
+
+  adjustFlexDirection(element) {
+    if (this.isRTL) {
+      const currentDirection = getComputedStyle(element).flexDirection;
+      if (currentDirection === 'row') {
+        element.style.flexDirection = 'row-reverse';
+      }
+    }
+  }
+}</code></pre>
+
+  <!-- ─── BEST PRACTICES ─────────────────── -->
+  <h2 id="best-practices">Best Practices</h2>
+
+  <ul>
+    <li><strong>Key Organization</strong> - Use nested keys for logical grouping and context</li>
+    <li><strong>Fallback Strategy</strong> - Always provide fallback translations</li>
+    <li><strong>Context Awareness</strong> - Include context in translation keys when needed</li>
+    <li><strong>Performance</strong> - Lazy load translations for large applications</li>
+    <li><strong>Cultural Adaptation</strong> - Consider cultural differences beyond language</li>
+    <li><strong>Testing</strong> - Test with pseudo-locales during development</li>
+  </ul>
+
+  <div class="callout">
+    <div class="callout-title">🎯 Localization Strategy</div>
+    <p>
+      Successful internationalization requires planning from the start. Design your
+      application architecture to support multiple languages, implement proper
+      text extraction workflows, and consider cultural differences in design and functionality.
+    </p>
+  </div>
+
+</div>

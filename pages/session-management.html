@@ -1,0 +1,369 @@
+<div class="content-body">
+
+  <h1 id="session-management">Session Management</h1>
+
+  <p>
+    Implement secure, scalable session management to maintain user state across
+    requests. This guide covers session storage options, security considerations,
+    and performance optimization techniques.
+  </p>
+
+  <div class="callout">
+    <div class="callout-title">🔐 Security Focus</div>
+    <p>
+      Sessions contain sensitive user data and authentication state. Proper session
+      management is critical for application security, preventing session hijacking,
+      fixation attacks, and unauthorized access.
+    </p>
+  </div>
+
+  <!-- ─── SESSION BASICS ─────────────────── -->
+  <h2 id="session-basics">Session Basics</h2>
+
+  <p>
+    Sessions allow servers to maintain user state across multiple HTTP requests.
+    They work by storing a session identifier on the client and session data on the server.
+  </p>
+
+  <h3 id="session-lifecycle">Session Lifecycle</h3>
+
+  <pre><code>// Session creation
+app.post('/api/login', async (req, res) => {
+  const { username, password } = req.body;
+  
+  const user = await authenticateUser(username, password);
+  if (!user) {
+    return res.status(401).json({ error: 'Invalid credentials' });
+  }
+
+  // Create session
+  const session = {
+    id: generateSecureId(),
+    userId: user.id,
+    createdAt: new Date(),
+    lastActivity: new Date(),
+    ipAddress: req.ip,
+    userAgent: req.get('User-Agent')
+  };
+
+  await sessionStore.create(session.id, session);
+  
+  // Set secure cookie
+  res.cookie('sessionId', session.id, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'strict',
+    maxAge: 24 * 60 * 60 * 1000 // 24 hours
+  });
+
+  res.json({ message: 'Login successful' });
+});</code></pre>
+
+  <h3 id="session-middleware">Session Middleware</h3>
+
+  <pre><code>const sessionMiddleware = async (req, res, next) => {
+  const sessionId = req.cookies.sessionId;
+  
+  if (!sessionId) {
+    req.session = null;
+    return next();
+  }
+
+  try {
+    const session = await sessionStore.get(sessionId);
+    
+    if (!session) {
+      res.clearCookie('sessionId');
+      req.session = null;
+      return next();
+    }
+
+    // Check session expiry
+    if (session.expiresAt && session.expiresAt < new Date()) {
+      await sessionStore.destroy(sessionId);
+      res.clearCookie('sessionId');
+      req.session = null;
+      return next();
+    }
+
+    // Update last activity
+    session.lastActivity = new Date();
+    await sessionStore.update(sessionId, session);
+    
+    req.session = session;
+    req.sessionId = sessionId;
+    
+  } catch (error) {
+    console.error('Session middleware error:', error);
+    req.session = null;
+  }
+  
+  next();
+};</code></pre>
+
+  <!-- ─── STORAGE OPTIONS ────────────────── -->
+  <h2 id="storage-options">Storage Options</h2>
+
+  <h3 id="memory-store">Memory Store</h3>
+
+  <pre><code>class MemorySessionStore {
+  constructor() {
+    this.sessions = new Map();
+    this.startCleanupInterval();
+  }
+
+  async create(sessionId, data) {
+    this.sessions.set(sessionId, {
+      ...data,
+      createdAt: new Date(),
+      expiresAt: new Date(Date.now() + (24 * 60 * 60 * 1000))
+    });
+  }
+
+  async get(sessionId) {
+    return this.sessions.get(sessionId) || null;
+  }
+
+  async update(sessionId, data) {
+    if (this.sessions.has(sessionId)) {
+      this.sessions.set(sessionId, data);
+    }
+  }
+
+  async destroy(sessionId) {
+    this.sessions.delete(sessionId);
+  }
+
+  startCleanupInterval() {
+    setInterval(() => {
+      const now = new Date();
+      for (const [sessionId, session] of this.sessions) {
+        if (session.expiresAt && session.expiresAt < now) {
+          this.sessions.delete(sessionId);
+        }
+      }
+    }, 15 * 60 * 1000); // Every 15 minutes
+  }
+}</code></pre>
+
+  <h3 id="redis-store">Redis Store</h3>
+
+  <pre><code>const Redis = require('redis');
+
+class RedisSessionStore {
+  constructor(redisConfig) {
+    this.client = Redis.createClient(redisConfig);
+    this.prefix = 'session:';
+    this.defaultTTL = 24 * 60 * 60; // 24 hours
+  }
+
+  async create(sessionId, data) {
+    const key = this.prefix + sessionId;
+    const serialized = JSON.stringify(data);
+    await this.client.setex(key, this.defaultTTL, serialized);
+  }
+
+  async get(sessionId) {
+    const key = this.prefix + sessionId;
+    const data = await this.client.get(key);
+    return data ? JSON.parse(data) : null;
+  }
+
+  async update(sessionId, data) {
+    const key = this.prefix + sessionId;
+    const ttl = await this.client.ttl(key);
+    const serialized = JSON.stringify(data);
+    
+    if (ttl > 0) {
+      await this.client.setex(key, ttl, serialized);
+    } else {
+      await this.client.setex(key, this.defaultTTL, serialized);
+    }
+  }
+
+  async destroy(sessionId) {
+    const key = this.prefix + sessionId;
+    await this.client.del(key);
+  }
+
+  async extend(sessionId, additionalTime = this.defaultTTL) {
+    const key = this.prefix + sessionId;
+    await this.client.expire(key, additionalTime);
+  }
+}</code></pre>
+
+  <!-- ─── SECURITY FEATURES ──────────────── -->
+  <h2 id="security-features">Security Features</h2>
+
+  <h3 id="session-regeneration">Session Regeneration</h3>
+
+  <pre><code>async function regenerateSession(req, res) {
+  const oldSessionId = req.sessionId;
+  const oldSession = req.session;
+  
+  // Generate new session ID
+  const newSessionId = generateSecureId();
+  
+  // Copy session data to new session
+  const newSession = {
+    ...oldSession,
+    id: newSessionId,
+    regeneratedAt: new Date()
+  };
+  
+  // Create new session
+  await sessionStore.create(newSessionId, newSession);
+  
+  // Remove old session
+  if (oldSessionId) {
+    await sessionStore.destroy(oldSessionId);
+  }
+  
+  // Update cookie
+  res.cookie('sessionId', newSessionId, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'strict',
+    maxAge: 24 * 60 * 60 * 1000
+  });
+  
+  req.sessionId = newSessionId;
+  req.session = newSession;
+}</code></pre>
+
+  <h3 id="concurrent-session-control">Concurrent Session Control</h3>
+
+  <pre><code>class ConcurrentSessionManager {
+  constructor(sessionStore, maxSessions = 3) {
+    this.sessionStore = sessionStore;
+    this.maxSessions = maxSessions;
+    this.userSessions = new Map();
+  }
+
+  async createSession(userId, sessionData) {
+    const sessionId = generateSecureId();
+    
+    // Track user sessions
+    if (!this.userSessions.has(userId)) {
+      this.userSessions.set(userId, new Set());
+    }
+    
+    const sessions = this.userSessions.get(userId);
+    
+    // Enforce session limit
+    if (sessions.size >= this.maxSessions) {
+      const oldestSession = sessions.values().next().value;
+      await this.destroySession(oldestSession);
+      sessions.delete(oldestSession);
+    }
+    
+    sessions.add(sessionId);
+    
+    await this.sessionStore.create(sessionId, {
+      ...sessionData,
+      userId,
+      sessionId
+    });
+    
+    return sessionId;
+  }
+
+  async destroySession(sessionId) {
+    const session = await this.sessionStore.get(sessionId);
+    if (session) {
+      const sessions = this.userSessions.get(session.userId);
+      if (sessions) {
+        sessions.delete(sessionId);
+        if (sessions.size === 0) {
+          this.userSessions.delete(session.userId);
+        }
+      }
+    }
+    
+    await this.sessionStore.destroy(sessionId);
+  }
+
+  async getUserSessions(userId) {
+    const sessionIds = this.userSessions.get(userId) || new Set();
+    const sessions = [];
+    
+    for (const sessionId of sessionIds) {
+      const session = await this.sessionStore.get(sessionId);
+      if (session) {
+        sessions.push(session);
+      } else {
+        // Clean up stale session ID
+        sessionIds.delete(sessionId);
+      }
+    }
+    
+    return sessions;
+  }
+}</code></pre>
+
+  <!-- ─── PERFORMANCE OPTIMIZATION ──────── -->
+  <h2 id="performance-optimization">Performance Optimization</h2>
+
+  <h3 id="session-clustering">Session Clustering</h3>
+
+  <pre><code>// Consistent hashing for session distribution
+class SessionCluster {
+  constructor(servers) {
+    this.servers = servers;
+    this.ring = new Map();
+    this.buildHashRing();
+  }
+
+  buildHashRing() {
+    this.servers.forEach(server => {
+      for (let i = 0; i < 160; i++) {
+        const hash = this.hash(`${server.host}:${server.port}:${i}`);
+        this.ring.set(hash, server);
+      }
+    });
+  }
+
+  getServerForSession(sessionId) {
+    const hash = this.hash(sessionId);
+    const keys = Array.from(this.ring.keys()).sort((a, b) => a - b);
+    
+    for (const key of keys) {
+      if (key >= hash) {
+        return this.ring.get(key);
+      }
+    }
+    
+    return this.ring.get(keys[0]);
+  }
+
+  hash(str) {
+    let hash = 0;
+    for (let i = 0; i < str.length; i++) {
+      hash = ((hash << 5) - hash + str.charCodeAt(i)) & 0xffffffff;
+    }
+    return Math.abs(hash);
+  }
+}</code></pre>
+
+  <!-- ─── BEST PRACTICES ─────────────────── -->
+  <h2 id="best-practices">Best Practices</h2>
+
+  <ul>
+    <li><strong>Secure Cookies</strong> - Always use httpOnly, secure, and sameSite flags</li>
+    <li><strong>Session Expiration</strong> - Implement both idle timeout and absolute timeout</li>
+    <li><strong>Regenerate on Privilege Change</strong> - Generate new session ID after authentication</li>
+    <li><strong>IP and User-Agent Validation</strong> - Detect suspicious session usage</li>
+    <li><strong>Proper Cleanup</strong> - Implement automated session garbage collection</li>
+    <li><strong>Audit Logging</strong> - Log session creation, destruction, and suspicious activity</li>
+  </ul>
+
+  <div class="callout">
+    <div class="callout-title">🔄 Session Lifecycle</div>
+    <p>
+      Proper session lifecycle management is crucial for both security and performance.
+      Always implement session expiration, cleanup mechanisms, and regeneration on
+      sensitive operations to maintain a secure application state.
+    </p>
+  </div>
+
+</div>

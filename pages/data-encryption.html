@@ -1,0 +1,1020 @@
+<div class="content-body">
+
+  <h1 id="data-encryption">Data Encryption</h1>
+
+  <p>
+    Implement comprehensive data encryption strategies for data at rest, in transit,
+    and in use. This guide covers encryption algorithms, key management, secure
+    protocols, and compliance requirements for protecting sensitive information.
+  </p>
+
+  <div class="callout">
+    <div class="callout-title">🔐 Security Excellence</div>
+    <p>
+      Data encryption is fundamental to protecting sensitive information from
+      unauthorized access. Proper encryption implementation requires understanding
+      of cryptographic principles, secure key management, and compliance with
+      industry standards and regulations.
+    </p>
+  </div>
+
+  <!-- ─── ENCRYPTION FUNDAMENTALS ──────── -->
+  <h2 id="encryption-fundamentals">Encryption Fundamentals</h2>
+
+  <h3 id="encryption-library-setup">Encryption Library Setup</h3>
+
+  <pre><code>const crypto = require('crypto');
+const bcrypt = require('bcrypt');
+const jwt = require('jsonwebtoken');
+const forge = require('node-forge');
+
+class EncryptionManager {
+  constructor(options = {}) {
+    this.algorithm = options.algorithm || 'aes-256-gcm';
+    this.keySize = options.keySize || 32; // 256 bits
+    this.ivSize = options.ivSize || 16; // 128 bits
+    this.saltRounds = options.saltRounds || 12;
+    this.tagSize = options.tagSize || 16; // 128 bits for GCM
+    
+    // Master encryption key (should be stored securely)
+    this.masterKey = options.masterKey || this.generateKey();
+    
+    // Key derivation settings
+    this.kdfIterations = options.kdfIterations || 100000;
+    this.kdfKeySize = options.kdfKeySize || 32;
+    this.kdfHashAlgorithm = options.kdfHashAlgorithm || 'sha256';
+  }
+
+  // Generate cryptographically secure random key
+  generateKey(size = this.keySize) {
+    return crypto.randomBytes(size);
+  }
+
+  // Generate random initialization vector
+  generateIV(size = this.ivSize) {
+    return crypto.randomBytes(size);
+  }
+
+  // Generate random salt
+  generateSalt(size = 16) {
+    return crypto.randomBytes(size);
+  }
+
+  // Key derivation using PBKDF2
+  deriveKey(password, salt, iterations = this.kdfIterations) {
+    return crypto.pbkdf2Sync(
+      password,
+      salt,
+      iterations,
+      this.kdfKeySize,
+      this.kdfHashAlgorithm
+    );
+  }
+
+  // Symmetric encryption using AES-GCM
+  encrypt(plaintext, key = null) {
+    try {
+      const encryptionKey = key || this.masterKey;
+      const iv = this.generateIV();
+      
+      const cipher = crypto.createCipher(this.algorithm, encryptionKey, { iv });
+      
+      let encrypted = cipher.update(plaintext, 'utf8', 'hex');
+      encrypted += cipher.final('hex');
+      
+      const tag = cipher.getAuthTag();
+      
+      // Return encrypted data with metadata
+      return {
+        encrypted,
+        iv: iv.toString('hex'),
+        tag: tag.toString('hex'),
+        algorithm: this.algorithm
+      };
+    } catch (error) {
+      throw new Error(`Encryption failed: ${error.message}`);
+    }
+  }
+
+  // Symmetric decryption using AES-GCM
+  decrypt(encryptedData, key = null) {
+    try {
+      const decryptionKey = key || this.masterKey;
+      const { encrypted, iv, tag, algorithm } = encryptedData;
+      
+      const decipher = crypto.createDecipherGCM(
+        algorithm,
+        decryptionKey,
+        Buffer.from(iv, 'hex')
+      );
+      
+      decipher.setAuthTag(Buffer.from(tag, 'hex'));
+      
+      let decrypted = decipher.update(encrypted, 'hex', 'utf8');
+      decrypted += decipher.final('utf8');
+      
+      return decrypted;
+    } catch (error) {
+      throw new Error(`Decryption failed: ${error.message}`);
+    }
+  }
+
+  // Password-based encryption
+  encryptWithPassword(plaintext, password) {
+    const salt = this.generateSalt();
+    const key = this.deriveKey(password, salt);
+    const encryptedData = this.encrypt(plaintext, key);
+    
+    return {
+      ...encryptedData,
+      salt: salt.toString('hex'),
+      iterations: this.kdfIterations
+    };
+  }
+
+  // Password-based decryption
+  decryptWithPassword(encryptedData, password) {
+    const { salt, iterations } = encryptedData;
+    const key = this.deriveKey(password, Buffer.from(salt, 'hex'), iterations);
+    
+    return this.decrypt(encryptedData, key);
+  }
+
+  // Hash passwords using bcrypt
+  async hashPassword(password) {
+    return bcrypt.hash(password, this.saltRounds);
+  }
+
+  // Verify password against hash
+  async verifyPassword(password, hash) {
+    return bcrypt.compare(password, hash);
+  }
+
+  // Generate HMAC for data integrity
+  generateHMAC(data, key = null) {
+    const hmacKey = key || this.masterKey;
+    const hmac = crypto.createHmac('sha256', hmacKey);
+    hmac.update(data);
+    return hmac.digest('hex');
+  }
+
+  // Verify HMAC
+  verifyHMAC(data, providedHMAC, key = null) {
+    const calculatedHMAC = this.generateHMAC(data, key);
+    return crypto.timingSafeEqual(
+      Buffer.from(calculatedHMAC, 'hex'),
+      Buffer.from(providedHMAC, 'hex')
+    );
+  }
+}</code></pre>
+
+  <!-- ─── DATABASE ENCRYPTION ───────────── -->
+  <h2 id="database-encryption">Database Encryption</h2>
+
+  <h3 id="field-level-encryption">Field-Level Encryption</h3>
+
+  <pre><code>class DatabaseEncryption {
+  constructor(encryptionManager) {
+    this.encryption = encryptionManager;
+    this.encryptedFields = new Set();
+    this.fieldEncryptionKeys = new Map();
+  }
+
+  // Register fields for encryption
+  registerEncryptedField(fieldName, options = {}) {
+    this.encryptedFields.add(fieldName);
+    
+    if (options.dedicatedKey) {
+      this.fieldEncryptionKeys.set(fieldName, this.encryption.generateKey());
+    }
+  }
+
+  // Encrypt object before saving to database
+  encryptObject(obj) {
+    const encrypted = { ...obj };
+    
+    for (const field of this.encryptedFields) {
+      if (encrypted[field]) {
+        const key = this.fieldEncryptionKeys.get(field);
+        encrypted[field] = this.encryption.encrypt(
+          JSON.stringify(encrypted[field]),
+          key
+        );
+        // Mark field as encrypted
+        encrypted[`${field}_encrypted`] = true;
+      }
+    }
+    
+    return encrypted;
+  }
+
+  // Decrypt object after retrieving from database
+  decryptObject(obj) {
+    const decrypted = { ...obj };
+    
+    for (const field of this.encryptedFields) {
+      if (decrypted[`${field}_encrypted`]) {
+        const key = this.fieldEncryptionKeys.get(field);
+        const decryptedValue = this.encryption.decrypt(decrypted[field], key);
+        decrypted[field] = JSON.parse(decryptedValue);
+        delete decrypted[`${field}_encrypted`];
+      }
+    }
+    
+    return decrypted;
+  }
+
+  // Mongoose plugin for automatic encryption
+  createMongoosePlugin() {
+    return function(schema, options) {
+      const dbEncryption = options.dbEncryption;
+      
+      // Pre-save hook to encrypt
+      schema.pre('save', function(next) {
+        if (this.isNew || this.isModified()) {
+          const encrypted = dbEncryption.encryptObject(this.toObject());
+          Object.assign(this, encrypted);
+        }
+        next();
+      });
+      
+      // Post-find hooks to decrypt
+      schema.post('find', function(docs) {
+        if (Array.isArray(docs)) {
+          docs.forEach(doc => {
+            if (doc.toObject) {
+              Object.assign(doc, dbEncryption.decryptObject(doc.toObject()));
+            }
+          });
+        }
+      });
+      
+      schema.post('findOne', function(doc) {
+        if (doc && doc.toObject) {
+          Object.assign(doc, dbEncryption.decryptObject(doc.toObject()));
+        }
+      });
+    };
+  }
+
+  // Searchable encryption for specific fields
+  createSearchableHash(value, salt = null) {
+    const searchSalt = salt || this.encryption.generateSalt();
+    const hash = crypto.scryptSync(value.toLowerCase(), searchSalt, 32);
+    
+    return {
+      hash: hash.toString('hex'),
+      salt: searchSalt.toString('hex')
+    };
+  }
+
+  // Add searchable encryption field
+  addSearchableEncryption(obj, field) {
+    if (obj[field]) {
+      const searchable = this.createSearchableHash(obj[field]);
+      obj[`${field}_search`] = searchable.hash;
+      obj[`${field}_search_salt`] = searchable.salt;
+    }
+    return obj;
+  }
+
+  // Search by encrypted field
+  createSearchQuery(field, value) {
+    // This requires the salt to be stored or deterministic
+    // For better security, consider using order-preserving encryption
+    // or secure multi-party computation for range queries
+    const searchHash = crypto.scryptSync(value.toLowerCase(), 'fixed-salt', 32);
+    return { [`${field}_search`]: searchHash.toString('hex') };
+  }
+}</code></pre>
+
+  <!-- ─── TRANSPORT ENCRYPTION ──────────── -->
+  <h2 id="transport-encryption">Transport Encryption</h2>
+
+  <h3 id="tls-configuration">TLS Configuration</h3>
+
+  <pre><code>const https = require('https');
+const tls = require('tls');
+const fs = require('fs');
+
+class TLSManager {
+  constructor() {
+    this.sslOptions = this.getSSLOptions();
+    this.securityHeaders = this.getSecurityHeaders();
+  }
+
+  getSSLOptions() {
+    return {
+      // Certificate and key files
+      cert: fs.readFileSync(process.env.SSL_CERT_PATH || './certs/cert.pem'),
+      key: fs.readFileSync(process.env.SSL_KEY_PATH || './certs/key.pem'),
+      ca: process.env.SSL_CA_PATH ? 
+          fs.readFileSync(process.env.SSL_CA_PATH) : undefined,
+      
+      // TLS version constraints
+      minVersion: 'TLSv1.2',
+      maxVersion: 'TLSv1.3',
+      
+      // Cipher suites (secure configurations)
+      ciphers: [
+        'ECDHE-RSA-AES128-GCM-SHA256',
+        'ECDHE-RSA-AES256-GCM-SHA384',
+        'ECDHE-RSA-AES128-SHA256',
+        'ECDHE-RSA-AES256-SHA384',
+        'ECDHE-RSA-AES256-SHA256',
+        'DHE-RSA-AES128-GCM-SHA256',
+        'DHE-RSA-AES256-GCM-SHA384',
+        'DHE-RSA-AES128-SHA256',
+        'DHE-RSA-AES256-SHA256',
+        '!aNULL',
+        '!eNULL',
+        '!EXPORT',
+        '!DES',
+        '!RC4',
+        '!MD5',
+        '!PSK',
+        '!SRP',
+        '!CAMELLIA'
+      ].join(':'),
+      
+      // Prefer server cipher suite ordering
+      honorCipherOrder: true,
+      
+      // Secure renegotiation
+      secureProtocol: 'TLSv1_2_method',
+      
+      // Session management
+      sessionTimeout: 300, // 5 minutes
+      
+      // OCSP stapling
+      requestOCSP: true
+    };
+  }
+
+  getSecurityHeaders() {
+    return {
+      // HTTP Strict Transport Security
+      'Strict-Transport-Security': 'max-age=31536000; includeSubDomains; preload',
+      
+      // Content Security Policy
+      'Content-Security-Policy': [
+        "default-src 'self'",
+        "script-src 'self' 'unsafe-inline'",
+        "style-src 'self' 'unsafe-inline'",
+        "img-src 'self' data: https:",
+        "connect-src 'self'",
+        "font-src 'self'",
+        "object-src 'none'",
+        "media-src 'self'",
+        "frame-src 'none'"
+      ].join('; '),
+      
+      // X-Frame-Options
+      'X-Frame-Options': 'DENY',
+      
+      // X-Content-Type-Options
+      'X-Content-Type-Options': 'nosniff',
+      
+      // X-XSS-Protection
+      'X-XSS-Protection': '1; mode=block',
+      
+      // Referrer Policy
+      'Referrer-Policy': 'strict-origin-when-cross-origin',
+      
+      // Permissions Policy
+      'Permissions-Policy': 'geolocation=(), microphone=(), camera=()'
+    };
+  }
+
+  // Express middleware for security headers
+  securityHeadersMiddleware() {
+    return (req, res, next) => {
+      // Apply security headers
+      Object.entries(this.securityHeaders).forEach(([header, value]) => {
+        res.setHeader(header, value);
+      });
+      
+      // Force HTTPS redirect
+      if (!req.secure && req.get('X-Forwarded-Proto') !== 'https') {
+        return res.redirect(`https://${req.get('host')}${req.url}`);
+      }
+      
+      next();
+    };
+  }
+
+  // Create HTTPS server
+  createServer(app, options = {}) {
+    const serverOptions = { ...this.sslOptions, ...options };
+    
+    const server = https.createServer(serverOptions, app);
+    
+    // Security event handlers
+    server.on('secureConnection', (tlsSocket) => {
+      console.log('Secure connection established:', {
+        protocol: tlsSocket.getProtocol(),
+        cipher: tlsSocket.getCipher(),
+        authorized: tlsSocket.authorized
+      });
+    });
+    
+    server.on('tlsClientError', (err, tlsSocket) => {
+      console.error('TLS client error:', err.message);
+    });
+    
+    return server;
+  }
+
+  // Certificate validation
+  validateCertificate(cert) {
+    try {
+      const certificate = new crypto.X509Certificate(cert);
+      
+      const now = new Date();
+      const notBefore = new Date(certificate.validFrom);
+      const notAfter = new Date(certificate.validTo);
+      
+      return {
+        valid: now >= notBefore && now <= notAfter,
+        subject: certificate.subject,
+        issuer: certificate.issuer,
+        validFrom: certificate.validFrom,
+        validTo: certificate.validTo,
+        daysUntilExpiry: Math.floor((notAfter - now) / (1000 * 60 * 60 * 24))
+      };
+    } catch (error) {
+      return {
+        valid: false,
+        error: error.message
+      };
+    }
+  }
+
+  // Certificate monitoring
+  monitorCertificates() {
+    const checkInterval = 24 * 60 * 60 * 1000; // 24 hours
+    
+    setInterval(() => {
+      try {
+        const certPath = process.env.SSL_CERT_PATH || './certs/cert.pem';
+        const cert = fs.readFileSync(certPath);
+        const validation = this.validateCertificate(cert);
+        
+        if (!validation.valid) {
+          console.error('Certificate validation failed:', validation.error);
+          this.alertCertificateIssue('invalid', validation);
+        } else if (validation.daysUntilExpiry <= 30) {
+          console.warn(`Certificate expires in ${validation.daysUntilExpiry} days`);
+          this.alertCertificateIssue('expiring', validation);
+        }
+      } catch (error) {
+        console.error('Certificate monitoring error:', error);
+      }
+    }, checkInterval);
+  }
+
+  alertCertificateIssue(type, details) {
+    // Implement alerting logic (email, Slack, etc.)
+    console.log(`Certificate ${type}:`, details);
+  }
+}
+
+// Client-side TLS configuration
+class TLSClient {
+  constructor(options = {}) {
+    this.clientOptions = {
+      // Certificate verification
+      rejectUnauthorized: true,
+      checkServerIdentity: tls.checkServerIdentity,
+      
+      // Client certificates (mutual TLS)
+      cert: options.clientCert,
+      key: options.clientKey,
+      ca: options.ca,
+      
+      // Protocol constraints
+      minVersion: 'TLSv1.2',
+      maxVersion: 'TLSv1.3',
+      
+      // Cipher preferences
+      ciphers: 'ECDHE+AESGCM:ECDHE+CHACHA20:DHE+AESGCM:DHE+CHACHA20:!aNULL:!MD5:!DSS',
+      
+      // Session reuse
+      session: options.session
+    };
+  }
+
+  // Make secure HTTP request
+  async makeSecureRequest(url, options = {}) {
+    const requestOptions = {
+      ...this.clientOptions,
+      ...options,
+      timeout: options.timeout || 30000
+    };
+    
+    return new Promise((resolve, reject) => {
+      const req = https.request(url, requestOptions, (res) => {
+        let data = '';
+        
+        res.on('data', (chunk) => {
+          data += chunk;
+        });
+        
+        res.on('end', () => {
+          resolve({
+            statusCode: res.statusCode,
+            headers: res.headers,
+            body: data,
+            tlsSocket: res.socket
+          });
+        });
+      });
+      
+      req.on('error', reject);
+      req.on('timeout', () => reject(new Error('Request timeout')));
+      
+      if (options.body) {
+        req.write(options.body);
+      }
+      
+      req.end();
+    });
+  }
+
+  // Validate server certificate
+  validateServerCertificate(hostname, port = 443) {
+    return new Promise((resolve, reject) => {
+      const socket = tls.connect(port, hostname, this.clientOptions, () => {
+        const cert = socket.getPeerCertificate(true);
+        const authorized = socket.authorized;
+        
+        socket.end();
+        
+        resolve({
+          authorized,
+          certificate: cert,
+          protocol: socket.getProtocol(),
+          cipher: socket.getCipher()
+        });
+      });
+      
+      socket.on('error', reject);
+    });
+  }
+}</code></pre>
+
+  <!-- ─── KEY MANAGEMENT ─────────────────── -->
+  <h2 id="key-management">Key Management</h2>
+
+  <h3 id="key-management-system">Key Management System</h3>
+
+  <pre><code>class KeyManagementSystem {
+  constructor(options = {}) {
+    this.keyStore = new Map();
+    this.keyRotationInterval = options.rotationInterval || (24 * 60 * 60 * 1000); // 24 hours
+    this.keyVersions = new Map();
+    this.encryptionManager = new EncryptionManager();
+    
+    // Initialize key rotation
+    if (options.autoRotate !== false) {
+      this.startKeyRotation();
+    }
+  }
+
+  // Generate and store a new encryption key
+  generateKey(keyId, options = {}) {
+    const key = {
+      id: keyId,
+      key: this.encryptionManager.generateKey(),
+      created: new Date(),
+      version: 1,
+      active: true,
+      purpose: options.purpose || 'encryption',
+      algorithm: options.algorithm || 'aes-256-gcm',
+      rotationPolicy: options.rotationPolicy || 'time-based'
+    };
+    
+    this.keyStore.set(keyId, key);
+    this.keyVersions.set(keyId, [key]);
+    
+    console.log(`Generated new key: ${keyId} (version ${key.version})`);
+    return key;
+  }
+
+  // Get active key by ID
+  getKey(keyId, version = null) {
+    if (version) {
+      const versions = this.keyVersions.get(keyId) || [];
+      return versions.find(k => k.version === version);
+    }
+    
+    return this.keyStore.get(keyId);
+  }
+
+  // Rotate a key (create new version)
+  rotateKey(keyId) {
+    const currentKey = this.keyStore.get(keyId);
+    if (!currentKey) {
+      throw new Error(`Key ${keyId} not found`);
+    }
+    
+    // Create new version
+    const newKey = {
+      ...currentKey,
+      key: this.encryptionManager.generateKey(),
+      version: currentKey.version + 1,
+      created: new Date()
+    };
+    
+    // Mark old key as inactive
+    currentKey.active = false;
+    
+    // Update stores
+    this.keyStore.set(keyId, newKey);
+    const versions = this.keyVersions.get(keyId) || [];
+    versions.push(newKey);
+    this.keyVersions.set(keyId, versions);
+    
+    console.log(`Rotated key: ${keyId} (version ${newKey.version})`);
+    return newKey;
+  }
+
+  // Start automatic key rotation
+  startKeyRotation() {
+    this.rotationTimer = setInterval(() => {
+      this.rotateExpiredKeys();
+    }, this.keyRotationInterval);
+  }
+
+  // Rotate keys based on policy
+  rotateExpiredKeys() {
+    for (const [keyId, key] of this.keyStore) {
+      if (this.shouldRotateKey(key)) {
+        try {
+          this.rotateKey(keyId);
+        } catch (error) {
+          console.error(`Failed to rotate key ${keyId}:`, error);
+        }
+      }
+    }
+  }
+
+  // Check if key should be rotated
+  shouldRotateKey(key) {
+    const age = Date.now() - key.created.getTime();
+    
+    switch (key.rotationPolicy) {
+      case 'time-based':
+        return age > this.keyRotationInterval;
+      case 'usage-based':
+        return key.usageCount > 1000000; // 1M operations
+      case 'manual':
+        return false;
+      default:
+        return age > this.keyRotationInterval;
+    }
+  }
+
+  // Derive key from master key
+  deriveKey(masterKeyId, context, keyId = null) {
+    const masterKey = this.getKey(masterKeyId);
+    if (!masterKey) {
+      throw new Error(`Master key ${masterKeyId} not found`);
+    }
+    
+    // Use HKDF for key derivation
+    const salt = crypto.randomBytes(32);
+    const info = Buffer.from(context, 'utf8');
+    
+    const derivedKey = crypto.hkdfSync(
+      'sha256',
+      masterKey.key,
+      salt,
+      info,
+      32 // 256 bits
+    );
+    
+    if (keyId) {
+      const key = {
+        id: keyId,
+        key: derivedKey,
+        created: new Date(),
+        version: 1,
+        active: true,
+        purpose: 'derived',
+        derivedFrom: masterKeyId,
+        context,
+        salt: salt.toString('hex')
+      };
+      
+      this.keyStore.set(keyId, key);
+      return key;
+    }
+    
+    return derivedKey;
+  }
+
+  // Export key (encrypted)
+  exportKey(keyId, exportKey) {
+    const key = this.getKey(keyId);
+    if (!key) {
+      throw new Error(`Key ${keyId} not found`);
+    }
+    
+    const exportData = {
+      id: key.id,
+      version: key.version,
+      created: key.created,
+      purpose: key.purpose,
+      algorithm: key.algorithm
+    };
+    
+    // Encrypt the actual key
+    const encryptedKey = this.encryptionManager.encrypt(
+      key.key.toString('hex'),
+      exportKey
+    );
+    
+    return {
+      ...exportData,
+      encryptedKey
+    };
+  }
+
+  // Import key (decrypt and store)
+  importKey(exportedKey, importKey) {
+    const keyHex = this.encryptionManager.decrypt(
+      exportedKey.encryptedKey,
+      importKey
+    );
+    
+    const key = {
+      id: exportedKey.id,
+      key: Buffer.from(keyHex, 'hex'),
+      created: new Date(exportedKey.created),
+      version: exportedKey.version,
+      active: true,
+      purpose: exportedKey.purpose,
+      algorithm: exportedKey.algorithm,
+      imported: true
+    };
+    
+    this.keyStore.set(key.id, key);
+    return key;
+  }
+
+  // Secure key deletion
+  deleteKey(keyId) {
+    const key = this.keyStore.get(keyId);
+    if (key) {
+      // Overwrite key data
+      crypto.randomFillSync(key.key);
+      
+      // Remove from stores
+      this.keyStore.delete(keyId);
+      this.keyVersions.delete(keyId);
+      
+      console.log(`Deleted key: ${keyId}`);
+    }
+  }
+
+  // Key audit and compliance
+  auditKeys() {
+    const audit = {
+      timestamp: new Date(),
+      totalKeys: this.keyStore.size,
+      keys: []
+    };
+    
+    for (const [keyId, key] of this.keyStore) {
+      const versions = this.keyVersions.get(keyId) || [];
+      
+      audit.keys.push({
+        id: keyId,
+        active: key.active,
+        created: key.created,
+        version: key.version,
+        totalVersions: versions.length,
+        purpose: key.purpose,
+        algorithm: key.algorithm,
+        age: Date.now() - key.created.getTime(),
+        needsRotation: this.shouldRotateKey(key)
+      });
+    }
+    
+    return audit;
+  }
+
+  // Cleanup old key versions
+  cleanupOldVersions(retentionPeriod = 30 * 24 * 60 * 60 * 1000) {
+    const cutoffDate = new Date(Date.now() - retentionPeriod);
+    
+    for (const [keyId, versions] of this.keyVersions) {
+      const activeVersions = versions.filter(key => 
+        key.active || key.created > cutoffDate
+      );
+      
+      if (activeVersions.length < versions.length) {
+        // Securely delete old versions
+        versions.forEach(key => {
+          if (!activeVersions.includes(key)) {
+            crypto.randomFillSync(key.key);
+          }
+        });
+        
+        this.keyVersions.set(keyId, activeVersions);
+        console.log(`Cleaned up old versions for key: ${keyId}`);
+      }
+    }
+  }
+
+  // Stop key rotation
+  stopKeyRotation() {
+    if (this.rotationTimer) {
+      clearInterval(this.rotationTimer);
+      this.rotationTimer = null;
+    }
+  }
+}</code></pre>
+
+  <!-- ─── COMPLIANCE IMPLEMENTATION ─────── -->
+  <h2 id="compliance-implementation">Compliance Implementation</h2>
+
+  <h3 id="gdpr-encryption">GDPR Compliance</h3>
+
+  <pre><code>class GDPREncryption {
+  constructor(kms) {
+    this.kms = kms;
+    this.personalDataFields = new Set(['email', 'name', 'phone', 'address']);
+    this.auditLog = [];
+  }
+
+  // Encrypt personal data with user-specific key
+  encryptPersonalData(userId, data) {
+    const userKeyId = `user_${userId}_personal_data`;
+    
+    // Generate user-specific key if not exists
+    if (!this.kms.getKey(userKeyId)) {
+      this.kms.generateKey(userKeyId, {
+        purpose: 'personal_data_encryption',
+        rotationPolicy: 'manual' // GDPR requires controlled deletion
+      });
+    }
+    
+    const encrypted = {};
+    const userKey = this.kms.getKey(userKeyId).key;
+    
+    for (const [field, value] of Object.entries(data)) {
+      if (this.personalDataFields.has(field) && value) {
+        encrypted[field] = this.kms.encryptionManager.encrypt(
+          JSON.stringify(value),
+          userKey
+        );
+        encrypted[`${field}_encrypted`] = true;
+      } else {
+        encrypted[field] = value;
+      }
+    }
+    
+    // Audit log
+    this.auditLog.push({
+      action: 'encrypt_personal_data',
+      userId,
+      timestamp: new Date(),
+      fields: Object.keys(data).filter(f => this.personalDataFields.has(f))
+    });
+    
+    return encrypted;
+  }
+
+  // Decrypt personal data
+  decryptPersonalData(userId, encryptedData) {
+    const userKeyId = `user_${userId}_personal_data`;
+    const userKey = this.kms.getKey(userKeyId);
+    
+    if (!userKey) {
+      throw new Error('User encryption key not found');
+    }
+    
+    const decrypted = { ...encryptedData };
+    
+    for (const field of this.personalDataFields) {
+      if (decrypted[`${field}_encrypted`]) {
+        const decryptedValue = this.kms.encryptionManager.decrypt(
+          decrypted[field],
+          userKey.key
+        );
+        decrypted[field] = JSON.parse(decryptedValue);
+        delete decrypted[`${field}_encrypted`];
+      }
+    }
+    
+    // Audit log
+    this.auditLog.push({
+      action: 'decrypt_personal_data',
+      userId,
+      timestamp: new Date(),
+      fields: Object.keys(encryptedData).filter(f => 
+        this.personalDataFields.has(f) && encryptedData[`${f}_encrypted`]
+      )
+    });
+    
+    return decrypted;
+  }
+
+  // Right to erasure (Article 17)
+  erasePersonalData(userId) {
+    const userKeyId = `user_${userId}_personal_data`;
+    
+    // Delete the encryption key (makes data unrecoverable)
+    this.kms.deleteKey(userKeyId);
+    
+    // Audit log
+    this.auditLog.push({
+      action: 'erase_personal_data',
+      userId,
+      timestamp: new Date(),
+      method: 'key_deletion'
+    });
+    
+    console.log(`Personal data erased for user: ${userId}`);
+    return true;
+  }
+
+  // Data portability (Article 20)
+  exportPersonalData(userId, exportFormat = 'json') {
+    const userKeyId = `user_${userId}_personal_data`;
+    const userKey = this.kms.getKey(userKeyId);
+    
+    if (!userKey) {
+      throw new Error('User encryption key not found');
+    }
+    
+    // This would typically fetch from database
+    const userData = this.getUserData(userId);
+    const decryptedData = this.decryptPersonalData(userId, userData);
+    
+    // Audit log
+    this.auditLog.push({
+      action: 'export_personal_data',
+      userId,
+      timestamp: new Date(),
+      format: exportFormat
+    });
+    
+    switch (exportFormat) {
+      case 'json':
+        return JSON.stringify(decryptedData, null, 2);
+      case 'csv':
+        return this.convertToCSV(decryptedData);
+      default:
+        return decryptedData;
+    }
+  }
+
+  // Get audit trail
+  getAuditTrail(userId = null) {
+    if (userId) {
+      return this.auditLog.filter(entry => entry.userId === userId);
+    }
+    return this.auditLog;
+  }
+
+  getUserData(userId) {
+    // Mock implementation - replace with actual database query
+    return {};
+  }
+
+  convertToCSV(data) {
+    // Mock CSV conversion
+    return 'field,value\n' + 
+           Object.entries(data)
+             .map(([k, v]) => `${k},${v}`)
+             .join('\n');
+  }
+}</code></pre>
+
+  <!-- ─── BEST PRACTICES ─────────────────── -->
+  <h2 id="best-practices">Best Practices</h2>
+
+  <ul>
+    <li><strong>Algorithm Selection</strong> - Use industry-standard, well-vetted algorithms</li>
+    <li><strong>Key Management</strong> - Implement proper key generation, rotation, and storage</li>
+    <li><strong>Defense in Depth</strong> - Layer multiple encryption mechanisms</li>
+    <li><strong>Regular Updates</strong> - Keep cryptographic libraries up to date</li>
+    <li><strong>Compliance</strong> - Meet regulatory requirements (GDPR, HIPAA, PCI-DSS)</li>
+    <li><strong>Performance</strong> - Balance security with application performance</li>
+    <li><strong>Audit Trails</strong> - Maintain comprehensive encryption activity logs</li>
+  </ul>
+
+  <div class="callout">
+    <div class="callout-title">🔒 Encryption Excellence</div>
+    <p>
+      Effective encryption requires more than just algorithm implementation.
+      Focus on secure key management, proper random number generation, and
+      comprehensive security policies. Regular security audits and compliance
+      reviews ensure ongoing protection effectiveness.
+    </p>
+  </div>
+
+</div>

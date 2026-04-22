@@ -1,0 +1,862 @@
+<div class="content-body">
+
+  <h1 id="websocket-communication">WebSocket Communication</h1>
+
+  <p>
+    Implement real-time bidirectional communication using WebSockets for live chat,
+    notifications, collaborative editing, gaming, and live data streaming. This
+    guide covers WebSocket server setup, client implementation, and advanced patterns.
+  </p>
+
+  <div class="callout">
+    <div class="callout-title">🔄 Real-Time Excellence</div>
+    <p>
+      WebSockets enable true real-time communication between clients and servers,
+      providing low-latency data exchange essential for modern interactive
+      applications requiring instant updates and live collaboration features.
+    </p>
+  </div>
+
+  <!-- ─── WEBSOCKET SERVER SETUP ──────── -->
+  <h2 id="websocket-server-setup">WebSocket Server Setup</h2>
+
+  <h3 id="ws-server-implementation">WebSocket Server Implementation</h3>
+
+  <pre><code>const WebSocket = require('ws');
+const http = require('http');
+const express = require('express');
+const jwt = require('jsonwebtoken');
+
+class WebSocketServer {
+  constructor(options = {}) {
+    this.app = express();
+    this.server = http.createServer(this.app);
+    
+    this.wss = new WebSocket.Server({
+      server: this.server,
+      path: options.path || '/ws',
+      clientTracking: true
+    });
+    
+    this.clients = new Map();
+    this.rooms = new Map();
+    this.messageHandlers = new Map();
+    
+    this.setupMiddleware();
+    this.setupWebSocketHandlers();
+    this.setupHeartbeat();
+  }
+
+  setupMiddleware() {
+    // Authentication middleware
+    this.wss.on('connection', async (ws, request) => {
+      try {
+        const token = this.extractTokenFromRequest(request);
+        const user = await this.authenticateToken(token);
+        
+        ws.user = user;
+        ws.isAlive = true;
+        ws.joinedRooms = new Set();
+        
+        this.clients.set(ws.user.id, ws);
+        
+        console.log(`User ${user.username} connected`);
+        this.handleConnection(ws);
+        
+      } catch (error) {
+        console.error('Authentication failed:', error);
+        ws.close(1008, 'Authentication failed');
+      }
+    });
+  }
+
+  extractTokenFromRequest(request) {
+    const url = new URL(request.url, 'http://localhost');
+    const token = url.searchParams.get('token');
+    
+    if (!token) {
+      throw new Error('No token provided');
+    }
+    
+    return token;
+  }
+
+  async authenticateToken(token) {
+    try {
+      const decoded = jwt.verify(token, process.env.JWT_SECRET);
+      return decoded; // Contains user info
+    } catch (error) {
+      throw new Error('Invalid token');
+    }
+  }
+
+  handleConnection(ws) {
+    ws.on('message', async (data) => {
+      try {
+        const message = JSON.parse(data.toString());
+        await this.handleMessage(ws, message);
+      } catch (error) {
+        console.error('Message parsing error:', error);
+        this.sendError(ws, 'Invalid message format');
+      }
+    });
+
+    ws.on('close', () => {
+      this.handleDisconnection(ws);
+    });
+
+    ws.on('error', (error) => {
+      console.error('WebSocket error:', error);
+    });
+
+    ws.on('pong', () => {
+      ws.isAlive = true;
+    });
+
+    // Send welcome message
+    this.send(ws, {
+      type: 'welcome',
+      data: {
+        message: 'Connected successfully',
+        userId: ws.user.id,
+        timestamp: Date.now()
+      }
+    });
+  }
+
+  async handleMessage(ws, message) {
+    const { type, data } = message;
+    
+    if (this.messageHandlers.has(type)) {
+      const handler = this.messageHandlers.get(type);
+      await handler(ws, data);
+    } else {
+      console.warn(`Unknown message type: ${type}`);
+      this.sendError(ws, `Unknown message type: ${type}`);
+    }
+  }
+
+  registerMessageHandler(type, handler) {
+    this.messageHandlers.set(type, handler);
+  }
+
+  handleDisconnection(ws) {
+    // Remove from all rooms
+    ws.joinedRooms.forEach(roomId => {
+      this.leaveRoom(ws, roomId);
+    });
+    
+    // Remove from clients map
+    if (ws.user) {
+      this.clients.delete(ws.user.id);
+      console.log(`User ${ws.user.username} disconnected`);
+    }
+  }
+
+  setupHeartbeat() {
+    const interval = setInterval(() => {
+      this.wss.clients.forEach((ws) => {
+        if (ws.isAlive === false) {
+          return ws.terminate();
+        }
+        
+        ws.isAlive = false;
+        ws.ping();
+      });
+    }, 30000); // 30 seconds
+
+    this.wss.on('close', () => {
+      clearInterval(interval);
+    });
+  }
+
+  // Room management
+  joinRoom(ws, roomId) {
+    if (!this.rooms.has(roomId)) {
+      this.rooms.set(roomId, new Set());
+    }
+    
+    this.rooms.get(roomId).add(ws);
+    ws.joinedRooms.add(roomId);
+    
+    // Notify room members
+    this.broadcastToRoom(roomId, {
+      type: 'user-joined',
+      data: {
+        userId: ws.user.id,
+        username: ws.user.username,
+        roomId,
+        timestamp: Date.now()
+      }
+    }, ws);
+  }
+
+  leaveRoom(ws, roomId) {
+    if (this.rooms.has(roomId)) {
+      this.rooms.get(roomId).delete(ws);
+      ws.joinedRooms.delete(roomId);
+      
+      // Clean up empty rooms
+      if (this.rooms.get(roomId).size === 0) {
+        this.rooms.delete(roomId);
+      } else {
+        // Notify remaining room members
+        this.broadcastToRoom(roomId, {
+          type: 'user-left',
+          data: {
+            userId: ws.user.id,
+            username: ws.user.username,
+            roomId,
+            timestamp: Date.now()
+          }
+        });
+      }
+    }
+  }
+
+  // Messaging methods
+  send(ws, message) {
+    if (ws.readyState === WebSocket.OPEN) {
+      ws.send(JSON.stringify(message));
+    }
+  }
+
+  sendError(ws, error) {
+    this.send(ws, {
+      type: 'error',
+      data: { error, timestamp: Date.now() }
+    });
+  }
+
+  sendToUser(userId, message) {
+    const ws = this.clients.get(userId);
+    if (ws) {
+      this.send(ws, message);
+      return true;
+    }
+    return false;
+  }
+
+  broadcastToRoom(roomId, message, excludeWs = null) {
+    if (this.rooms.has(roomId)) {
+      this.rooms.get(roomId).forEach(ws => {
+        if (ws !== excludeWs) {
+          this.send(ws, message);
+        }
+      });
+    }
+  }
+
+  broadcast(message, excludeWs = null) {
+    this.wss.clients.forEach(ws => {
+      if (ws !== excludeWs && ws.readyState === WebSocket.OPEN) {
+        this.send(ws, message);
+      }
+    });
+  }
+
+  // Statistics
+  getStats() {
+    return {
+      totalConnections: this.wss.clients.size,
+      activeRooms: this.rooms.size,
+      roomDetails: Array.from(this.rooms.entries()).map(([roomId, clients]) => ({
+        roomId,
+        memberCount: clients.size
+      }))
+    };
+  }
+
+  start(port = 3000) {
+    this.server.listen(port, () => {
+      console.log(`WebSocket server running on port ${port}`);
+    });
+  }
+}</code></pre>
+
+  <!-- ─── MESSAGE HANDLERS ──────────────── -->
+  <h2 id="message-handlers">Message Handlers</h2>
+
+  <h3 id="chat-system-handlers">Chat System Handlers</h3>
+
+  <pre><code>class ChatHandlers {
+  constructor(wsServer) {
+    this.wsServer = wsServer;
+    this.setupHandlers();
+  }
+
+  setupHandlers() {
+    // Join room handler
+    this.wsServer.registerMessageHandler('join-room', async (ws, data) => {
+      const { roomId } = data;
+      
+      if (!roomId) {
+        return this.wsServer.sendError(ws, 'Room ID is required');
+      }
+      
+      this.wsServer.joinRoom(ws, roomId);
+      
+      // Send room info
+      this.wsServer.send(ws, {
+        type: 'room-joined',
+        data: {
+          roomId,
+          memberCount: this.wsServer.rooms.get(roomId)?.size || 0,
+          timestamp: Date.now()
+        }
+      });
+    });
+
+    // Leave room handler
+    this.wsServer.registerMessageHandler('leave-room', async (ws, data) => {
+      const { roomId } = data;
+      
+      if (ws.joinedRooms.has(roomId)) {
+        this.wsServer.leaveRoom(ws, roomId);
+        
+        this.wsServer.send(ws, {
+          type: 'room-left',
+          data: { roomId, timestamp: Date.now() }
+        });
+      }
+    });
+
+    // Chat message handler
+    this.wsServer.registerMessageHandler('chat-message', async (ws, data) => {
+      const { roomId, message, replyTo } = data;
+      
+      if (!roomId || !message) {
+        return this.wsServer.sendError(ws, 'Room ID and message are required');
+      }
+      
+      if (!ws.joinedRooms.has(roomId)) {
+        return this.wsServer.sendError(ws, 'You are not a member of this room');
+      }
+      
+      const chatMessage = {
+        id: this.generateMessageId(),
+        type: 'chat-message',
+        data: {
+          messageId: this.generateMessageId(),
+          roomId,
+          userId: ws.user.id,
+          username: ws.user.username,
+          message: this.sanitizeMessage(message),
+          replyTo: replyTo || null,
+          timestamp: Date.now()
+        }
+      };
+      
+      // Store message (implement your storage logic)
+      await this.storeMessage(chatMessage.data);
+      
+      // Broadcast to room
+      this.wsServer.broadcastToRoom(roomId, chatMessage);
+    });
+
+    // Typing indicator handler
+    this.wsServer.registerMessageHandler('typing', async (ws, data) => {
+      const { roomId, isTyping } = data;
+      
+      if (!roomId) {
+        return this.wsServer.sendError(ws, 'Room ID is required');
+      }
+      
+      if (!ws.joinedRooms.has(roomId)) {
+        return;
+      }
+      
+      this.wsServer.broadcastToRoom(roomId, {
+        type: 'typing-indicator',
+        data: {
+          userId: ws.user.id,
+          username: ws.user.username,
+          roomId,
+          isTyping,
+          timestamp: Date.now()
+        }
+      }, ws);
+    });
+
+    // Private message handler
+    this.wsServer.registerMessageHandler('private-message', async (ws, data) => {
+      const { recipientId, message } = data;
+      
+      if (!recipientId || !message) {
+        return this.wsServer.sendError(ws, 'Recipient ID and message are required');
+      }
+      
+      const privateMessage = {
+        type: 'private-message',
+        data: {
+          messageId: this.generateMessageId(),
+          senderId: ws.user.id,
+          senderUsername: ws.user.username,
+          recipientId,
+          message: this.sanitizeMessage(message),
+          timestamp: Date.now()
+        }
+      };
+      
+      // Store message
+      await this.storePrivateMessage(privateMessage.data);
+      
+      // Send to recipient
+      const sent = this.wsServer.sendToUser(recipientId, privateMessage);
+      
+      // Send confirmation to sender
+      this.wsServer.send(ws, {
+        type: 'message-status',
+        data: {
+          messageId: privateMessage.data.messageId,
+          status: sent ? 'delivered' : 'failed',
+          timestamp: Date.now()
+        }
+      });
+    });
+
+    // Get room history handler
+    this.wsServer.registerMessageHandler('get-history', async (ws, data) => {
+      const { roomId, limit = 50, before } = data;
+      
+      if (!roomId) {
+        return this.wsServer.sendError(ws, 'Room ID is required');
+      }
+      
+      if (!ws.joinedRooms.has(roomId)) {
+        return this.wsServer.sendError(ws, 'You are not a member of this room');
+      }
+      
+      try {
+        const history = await this.getMessageHistory(roomId, limit, before);
+        
+        this.wsServer.send(ws, {
+          type: 'message-history',
+          data: {
+            roomId,
+            messages: history,
+            timestamp: Date.now()
+          }
+        });
+      } catch (error) {
+        this.wsServer.sendError(ws, 'Failed to retrieve message history');
+      }
+    });
+  }
+
+  generateMessageId() {
+    return Date.now().toString(36) + Math.random().toString(36).substr(2);
+  }
+
+  sanitizeMessage(message) {
+    // Basic HTML sanitization
+    return message
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#x27;')
+      .trim()
+      .substring(0, 1000); // Limit message length
+  }
+
+  async storeMessage(messageData) {
+    // Implement your message storage logic here
+    // This could use a database, Redis, or other storage solution
+    console.log('Storing message:', messageData);
+  }
+
+  async storePrivateMessage(messageData) {
+    // Implement private message storage
+    console.log('Storing private message:', messageData);
+  }
+
+  async getMessageHistory(roomId, limit, before) {
+    // Implement message history retrieval
+    // Return array of messages ordered by timestamp
+    return [];
+  }
+}</code></pre>
+
+  <!-- ─── CLIENT-SIDE IMPLEMENTATION ────── -->
+  <h2 id="client-side-implementation">Client-Side Implementation</h2>
+
+  <h3 id="websocket-client">WebSocket Client</h3>
+
+  <pre><code>class WebSocketClient {
+  constructor(options = {}) {
+    this.url = options.url || 'ws://localhost:3000/ws';
+    this.token = options.token;
+    this.reconnectInterval = options.reconnectInterval || 5000;
+    this.maxReconnectAttempts = options.maxReconnectAttempts || 10;
+    
+    this.ws = null;
+    this.reconnectAttempts = 0;
+    this.reconnectTimer = null;
+    this.messageHandlers = new Map();
+    this.isConnected = false;
+    this.messageQueue = [];
+    
+    this.setupEventHandlers();
+  }
+
+  setupEventHandlers() {
+    this.on('welcome', (data) => {
+      console.log('Connected successfully:', data);
+      this.isConnected = true;
+      this.reconnectAttempts = 0;
+      
+      // Send queued messages
+      this.flushMessageQueue();
+    });
+
+    this.on('error', (data) => {
+      console.error('Server error:', data.error);
+    });
+  }
+
+  connect() {
+    if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+      return Promise.resolve();
+    }
+
+    return new Promise((resolve, reject) => {
+      try {
+        const wsUrl = new URL(this.url);
+        if (this.token) {
+          wsUrl.searchParams.set('token', this.token);
+        }
+        
+        this.ws = new WebSocket(wsUrl.toString());
+        
+        this.ws.onopen = () => {
+          console.log('WebSocket connected');
+          resolve();
+        };
+        
+        this.ws.onmessage = (event) => {
+          this.handleMessage(event.data);
+        };
+        
+        this.ws.onclose = (event) => {
+          console.log('WebSocket disconnected:', event.code, event.reason);
+          this.isConnected = false;
+          this.attemptReconnect();
+        };
+        
+        this.ws.onerror = (error) => {
+          console.error('WebSocket error:', error);
+          reject(error);
+        };
+        
+      } catch (error) {
+        reject(error);
+      }
+    });
+  }
+
+  handleMessage(data) {
+    try {
+      const message = JSON.parse(data);
+      const { type, data: messageData } = message;
+      
+      if (this.messageHandlers.has(type)) {
+        this.messageHandlers.get(type)(messageData);
+      } else {
+        console.warn('Unhandled message type:', type);
+      }
+    } catch (error) {
+      console.error('Message parsing error:', error);
+    }
+  }
+
+  send(type, data) {
+    const message = { type, data };
+    
+    if (this.isConnected && this.ws.readyState === WebSocket.OPEN) {
+      this.ws.send(JSON.stringify(message));
+    } else {
+      // Queue message for later sending
+      this.messageQueue.push(message);
+    }
+  }
+
+  flushMessageQueue() {
+    while (this.messageQueue.length > 0) {
+      const message = this.messageQueue.shift();
+      this.ws.send(JSON.stringify(message));
+    }
+  }
+
+  on(type, handler) {
+    this.messageHandlers.set(type, handler);
+  }
+
+  off(type) {
+    this.messageHandlers.delete(type);
+  }
+
+  attemptReconnect() {
+    if (this.reconnectAttempts >= this.maxReconnectAttempts) {
+      console.error('Max reconnection attempts reached');
+      return;
+    }
+    
+    this.reconnectAttempts++;
+    console.log(`Attempting to reconnect... (${this.reconnectAttempts}/${this.maxReconnectAttempts})`);
+    
+    this.reconnectTimer = setTimeout(() => {
+      this.connect().catch(() => {
+        // Reconnection failed, will try again
+      });
+    }, this.reconnectInterval * this.reconnectAttempts);
+  }
+
+  disconnect() {
+    if (this.reconnectTimer) {
+      clearTimeout(this.reconnectTimer);
+      this.reconnectTimer = null;
+    }
+    
+    if (this.ws) {
+      this.ws.close(1000, 'Client disconnect');
+      this.ws = null;
+    }
+    
+    this.isConnected = false;
+    this.reconnectAttempts = 0;
+  }
+
+  // Chat-specific methods
+  joinRoom(roomId) {
+    this.send('join-room', { roomId });
+  }
+
+  leaveRoom(roomId) {
+    this.send('leave-room', { roomId });
+  }
+
+  sendMessage(roomId, message, replyTo = null) {
+    this.send('chat-message', { roomId, message, replyTo });
+  }
+
+  sendPrivateMessage(recipientId, message) {
+    this.send('private-message', { recipientId, message });
+  }
+
+  setTyping(roomId, isTyping) {
+    this.send('typing', { roomId, isTyping });
+  }
+
+  getHistory(roomId, limit = 50, before = null) {
+    this.send('get-history', { roomId, limit, before });
+  }
+}</code></pre>
+
+  <!-- ─── ADVANCED PATTERNS ─────────────── -->
+  <h2 id="advanced-patterns">Advanced Patterns</h2>
+
+  <h3 id="pub-sub-pattern">Publish-Subscribe Pattern</h3>
+
+  <pre><code>class PubSubWebSocketServer extends WebSocketServer {
+  constructor(options = {}) {
+    super(options);
+    
+    this.channels = new Map(); // channel -> Set of subscribers
+    this.subscriptions = new Map(); // client -> Set of channels
+    
+    this.setupPubSubHandlers();
+  }
+
+  setupPubSubHandlers() {
+    this.registerMessageHandler('subscribe', async (ws, data) => {
+      const { channel, filters = {} } = data;
+      
+      if (!channel) {
+        return this.sendError(ws, 'Channel is required');
+      }
+      
+      this.subscribe(ws, channel, filters);
+    });
+
+    this.registerMessageHandler('unsubscribe', async (ws, data) => {
+      const { channel } = data;
+      
+      if (channel) {
+        this.unsubscribe(ws, channel);
+      } else {
+        // Unsubscribe from all channels
+        this.unsubscribeAll(ws);
+      }
+    });
+
+    this.registerMessageHandler('publish', async (ws, data) => {
+      const { channel, message, filters = {} } = data;
+      
+      if (!channel || !message) {
+        return this.sendError(ws, 'Channel and message are required');
+      }
+      
+      await this.publish(channel, message, ws.user, filters);
+    });
+  }
+
+  subscribe(ws, channel, filters = {}) {
+    // Add to channel subscribers
+    if (!this.channels.has(channel)) {
+      this.channels.set(channel, new Map());
+    }
+    
+    this.channels.get(channel).set(ws, { filters, subscribedAt: Date.now() });
+    
+    // Add to client subscriptions
+    if (!this.subscriptions.has(ws)) {
+      this.subscriptions.set(ws, new Set());
+    }
+    
+    this.subscriptions.get(ws).add(channel);
+    
+    // Confirm subscription
+    this.send(ws, {
+      type: 'subscribed',
+      data: {
+        channel,
+        filters,
+        timestamp: Date.now()
+      }
+    });
+    
+    console.log(`User ${ws.user.username} subscribed to ${channel}`);
+  }
+
+  unsubscribe(ws, channel) {
+    // Remove from channel
+    if (this.channels.has(channel)) {
+      this.channels.get(channel).delete(ws);
+      
+      if (this.channels.get(channel).size === 0) {
+        this.channels.delete(channel);
+      }
+    }
+    
+    // Remove from client subscriptions
+    if (this.subscriptions.has(ws)) {
+      this.subscriptions.get(ws).delete(channel);
+    }
+    
+    this.send(ws, {
+      type: 'unsubscribed',
+      data: { channel, timestamp: Date.now() }
+    });
+  }
+
+  unsubscribeAll(ws) {
+    if (this.subscriptions.has(ws)) {
+      const channels = Array.from(this.subscriptions.get(ws));
+      channels.forEach(channel => this.unsubscribe(ws, channel));
+    }
+  }
+
+  async publish(channel, message, publisher, filters = {}) {
+    if (!this.channels.has(channel)) {
+      return; // No subscribers
+    }
+    
+    const subscribers = this.channels.get(channel);
+    const publishMessage = {
+      type: 'message',
+      data: {
+        channel,
+        message,
+        publisher: {
+          id: publisher.id,
+          username: publisher.username
+        },
+        filters,
+        timestamp: Date.now()
+      }
+    };
+    
+    // Send to matching subscribers
+    for (const [ws, subscription] of subscribers) {
+      if (this.matchesFilters(message, subscription.filters)) {
+        this.send(ws, publishMessage);
+      }
+    }
+    
+    // Store message for replay (optional)
+    await this.storeChannelMessage(channel, publishMessage.data);
+  }
+
+  matchesFilters(message, filters) {
+    if (Object.keys(filters).length === 0) {
+      return true; // No filters, match all
+    }
+    
+    // Implement your filtering logic here
+    // Example: filter by message type, user, etc.
+    for (const [key, value] of Object.entries(filters)) {
+      if (message[key] !== value) {
+        return false;
+      }
+    }
+    
+    return true;
+  }
+
+  handleDisconnection(ws) {
+    // Unsubscribe from all channels
+    this.unsubscribeAll(ws);
+    
+    // Call parent handler
+    super.handleDisconnection(ws);
+  }
+
+  async storeChannelMessage(channel, messageData) {
+    // Implement channel message storage for replay
+    console.log(`Storing message for channel ${channel}:`, messageData);
+  }
+
+  // Get channel statistics
+  getChannelStats() {
+    const stats = {};
+    
+    for (const [channel, subscribers] of this.channels) {
+      stats[channel] = {
+        subscriberCount: subscribers.size,
+        subscribers: Array.from(subscribers.keys()).map(ws => ({
+          userId: ws.user.id,
+          username: ws.user.username,
+          subscribedAt: subscribers.get(ws).subscribedAt
+        }))
+      };
+    }
+    
+    return stats;
+  }
+}</code></pre>
+
+  <!-- ─── SECURITY CONSIDERATIONS ──────── -->
+  <h2 id="security-considerations">Security Considerations</h2>
+
+  <ul>
+    <li><strong>Authentication</strong> - Verify user identity on connection</li>
+    <li><strong>Authorization</strong> - Control access to rooms and channels</li>
+    <li><strong>Rate Limiting</strong> - Prevent message spam and abuse</li>
+    <li><strong>Input Validation</strong> - Sanitize all incoming data</li>
+    <li><strong>Origin Checking</strong> - Validate WebSocket origin</li>
+    <li><strong>SSL/TLS</strong> - Use secure WebSocket connections (WSS)</li>
+    <li><strong>Message Size Limits</strong> - Prevent large message attacks</li>
+  </ul>
+
+  <div class="callout">
+    <div class="callout-title">⚡ Real-Time Performance</div>
+    <p>
+      WebSocket applications require careful consideration of connection
+      management, message routing, and scaling strategies. Implement proper
+      error handling, reconnection logic, and monitoring to ensure reliable
+      real-time communication.
+    </p>
+  </div>
+
+</div>

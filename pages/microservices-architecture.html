@@ -1,0 +1,1108 @@
+<div class="content-body">
+
+  <h1 id="microservices-architecture">Microservices Architecture</h1>
+
+  <p>
+    Design and implement scalable microservices architectures with service
+    discovery, inter-service communication, distributed tracing, and fault
+    tolerance. This guide covers modern microservices patterns and best practices.
+  </p>
+
+  <div class="callout">
+    <div class="callout-title">🏗️ Distributed Excellence</div>
+    <p>
+      Microservices architecture enables scalable, maintainable systems by
+      decomposing applications into loosely coupled services. Success requires
+      careful attention to service boundaries, communication patterns, and
+      operational complexity management.
+    </p>
+  </div>
+
+  <!-- ─── SERVICE ARCHITECTURE ──────────── -->
+  <h2 id="service-architecture">Service Architecture</h2>
+
+  <h3 id="service-foundation">Service Foundation</h3>
+
+  <pre><code>const express = require('express');
+const { v4: uuidv4 } = require('uuid');
+const consul = require('consul');
+
+class MicroserviceBase {
+  constructor(config) {
+    this.config = {
+      name: config.name,
+      version: config.version || '1.0.0',
+      port: config.port || 3000,
+      host: config.host || 'localhost',
+      consul: config.consul || { host: 'localhost', port: 8500 },
+      healthCheckInterval: config.healthCheckInterval || 30000,
+      ...config
+    };
+    
+    this.serviceId = `${this.config.name}-${uuidv4()}`;
+    this.app = express();
+    this.consul = consul(this.config.consul);
+    this.dependencies = new Map();
+    this.circuitBreakers = new Map();
+    
+    this.setupMiddleware();
+    this.setupHealthChecks();
+    this.setupGracefulShutdown();
+  }
+
+  setupMiddleware() {
+    // Request tracking
+    this.app.use((req, res, next) => {
+      req.correlationId = req.get('X-Correlation-ID') || uuidv4();
+      req.requestStart = Date.now();
+      
+      res.set('X-Correlation-ID', req.correlationId);
+      res.set('X-Service-Name', this.config.name);
+      res.set('X-Service-Version', this.config.version);
+      
+      console.log(`[${req.correlationId}] ${req.method} ${req.path}`);
+      next();
+    });
+
+    // JSON parsing
+    this.app.use(express.json({ limit: '10mb' }));
+    
+    // Error handling
+    this.app.use(this.errorHandler.bind(this));
+  }
+
+  setupHealthChecks() {
+    // Liveness probe
+    this.app.get('/health/live', (req, res) => {
+      res.json({
+        status: 'alive',
+        service: this.config.name,
+        version: this.config.version,
+        timestamp: new Date().toISOString()
+      });
+    });
+
+    // Readiness probe
+    this.app.get('/health/ready', async (req, res) => {
+      try {
+        const dependencyChecks = await this.checkDependencies();
+        const allReady = dependencyChecks.every(check => check.status === 'healthy');
+        
+        res.status(allReady ? 200 : 503).json({
+          status: allReady ? 'ready' : 'not ready',
+          service: this.config.name,
+          dependencies: dependencyChecks,
+          timestamp: new Date().toISOString()
+        });
+      } catch (error) {
+        res.status(503).json({
+          status: 'not ready',
+          error: error.message,
+          timestamp: new Date().toISOString()
+        });
+      }
+    });
+
+    // Detailed health check
+    this.app.get('/health', async (req, res) => {
+      const health = await this.getHealthStatus();
+      const statusCode = health.status === 'healthy' ? 200 : 503;
+      res.status(statusCode).json(health);
+    });
+  }
+
+  async checkDependencies() {
+    const checks = [];
+    
+    for (const [name, dependency] of this.dependencies) {
+      try {
+        const start = Date.now();
+        const response = await this.makeRequest(dependency.url + '/health/live', {
+          timeout: 5000
+        });
+        
+        checks.push({
+          name,
+          status: response.status === 200 ? 'healthy' : 'unhealthy',
+          responseTime: Date.now() - start,
+          url: dependency.url
+        });
+      } catch (error) {
+        checks.push({
+          name,
+          status: 'unhealthy',
+          error: error.message,
+          url: dependency.url
+        });
+      }
+    }
+    
+    return checks;
+  }
+
+  async getHealthStatus() {
+    const dependencyChecks = await this.checkDependencies();
+    const unhealthyDeps = dependencyChecks.filter(d => d.status !== 'healthy');
+    
+    return {
+      status: unhealthyDeps.length === 0 ? 'healthy' : 'degraded',
+      service: this.config.name,
+      version: this.config.version,
+      uptime: process.uptime(),
+      memory: process.memoryUsage(),
+      dependencies: dependencyChecks,
+      timestamp: new Date().toISOString()
+    };
+  }
+
+  // Service registration with Consul
+  async registerService() {
+    const registration = {
+      id: this.serviceId,
+      name: this.config.name,
+      tags: [
+        `version-${this.config.version}`,
+        'microservice',
+        process.env.NODE_ENV || 'development'
+      ],
+      address: this.config.host,
+      port: this.config.port,
+      check: {
+        http: `http://${this.config.host}:${this.config.port}/health/ready`,
+        interval: '10s',
+        timeout: '5s',
+        deregisterCriticalServiceAfter: '1m'
+      },
+      meta: {
+        version: this.config.version,
+        startTime: new Date().toISOString()
+      }
+    };
+
+    try {
+      await this.consul.agent.service.register(registration);
+      console.log(`Service ${this.config.name} registered with Consul`);
+    } catch (error) {
+      console.error('Failed to register service:', error);
+    }
+  }
+
+  // Service discovery
+  async discoverService(serviceName) {
+    try {
+      const services = await this.consul.health.service({
+        service: serviceName,
+        passing: true
+      });
+
+      if (services.length === 0) {
+        throw new Error(`No healthy instances of ${serviceName} found`);
+      }
+
+      // Simple round-robin selection
+      const service = services[Math.floor(Math.random() * services.length)];
+      const { Address, Port } = service.Service;
+      
+      return {
+        url: `http://${Address}:${Port}`,
+        id: service.Service.ID,
+        meta: service.Service.Meta
+      };
+    } catch (error) {
+      console.error(`Service discovery failed for ${serviceName}:`, error);
+      throw error;
+    }
+  }
+
+  // Register dependency
+  addDependency(name, serviceName) {
+    this.dependencies.set(name, { serviceName });
+  }
+
+  // Circuit breaker for external calls
+  async callWithCircuitBreaker(serviceName, operation) {
+    if (!this.circuitBreakers.has(serviceName)) {
+      this.circuitBreakers.set(serviceName, new CircuitBreaker({
+        failureThreshold: 5,
+        resetTimeout: 30000
+      }));
+    }
+
+    const breaker = this.circuitBreakers.get(serviceName);
+    return breaker.execute(operation);
+  }
+
+  // Make HTTP request to another service
+  async makeRequest(url, options = {}) {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), options.timeout || 10000);
+
+    try {
+      const response = await fetch(url, {
+        ...options,
+        signal: controller.signal,
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Correlation-ID': options.correlationId || uuidv4(),
+          'X-Service-Name': this.config.name,
+          ...options.headers
+        }
+      });
+
+      clearTimeout(timeout);
+      return response;
+    } catch (error) {
+      clearTimeout(timeout);
+      throw error;
+    }
+  }
+
+  // Error handler
+  errorHandler(error, req, res, next) {
+    console.error(`[${req.correlationId}] Error:`, error);
+
+    const statusCode = error.statusCode || 500;
+    const response = {
+      error: error.message || 'Internal Server Error',
+      correlationId: req.correlationId,
+      service: this.config.name,
+      timestamp: new Date().toISOString()
+    };
+
+    if (process.env.NODE_ENV !== 'production') {
+      response.stack = error.stack;
+    }
+
+    res.status(statusCode).json(response);
+  }
+
+  setupGracefulShutdown() {
+    const shutdown = async (signal) => {
+      console.log(`Received ${signal}, shutting down gracefully`);
+      
+      // Deregister from Consul
+      try {
+        await this.consul.agent.service.deregister(this.serviceId);
+        console.log('Service deregistered from Consul');
+      } catch (error) {
+        console.error('Failed to deregister service:', error);
+      }
+
+      // Close server
+      if (this.server) {
+        this.server.close(() => {
+          console.log('HTTP server closed');
+          process.exit(0);
+        });
+      }
+    };
+
+    process.on('SIGTERM', () => shutdown('SIGTERM'));
+    process.on('SIGINT', () => shutdown('SIGINT'));
+  }
+
+  async start() {
+    this.server = this.app.listen(this.config.port, this.config.host, async () => {
+      console.log(`${this.config.name} listening on ${this.config.host}:${this.config.port}`);
+      
+      // Register with service discovery
+      await this.registerService();
+    });
+  }
+}
+
+// Circuit breaker implementation
+class CircuitBreaker {
+  constructor(options = {}) {
+    this.failureThreshold = options.failureThreshold || 5;
+    this.resetTimeout = options.resetTimeout || 60000;
+    this.state = 'CLOSED'; // CLOSED, OPEN, HALF_OPEN
+    this.failureCount = 0;
+    this.nextAttempt = Date.now();
+  }
+
+  async execute(operation) {
+    if (this.state === 'OPEN') {
+      if (Date.now() < this.nextAttempt) {
+        throw new Error('Circuit breaker is OPEN');
+      } else {
+        this.state = 'HALF_OPEN';
+      }
+    }
+
+    try {
+      const result = await operation();
+      this.onSuccess();
+      return result;
+    } catch (error) {
+      this.onFailure();
+      throw error;
+    }
+  }
+
+  onSuccess() {
+    this.failureCount = 0;
+    if (this.state === 'HALF_OPEN') {
+      this.state = 'CLOSED';
+    }
+  }
+
+  onFailure() {
+    this.failureCount++;
+    if (this.failureCount >= this.failureThreshold) {
+      this.state = 'OPEN';
+      this.nextAttempt = Date.now() + this.resetTimeout;
+    }
+  }
+}</code></pre>
+
+  <!-- ─── INTER-SERVICE COMMUNICATION ───── -->
+  <h2 id="inter-service-communication">Inter-Service Communication</h2>
+
+  <h3 id="service-communication">Service Communication Patterns</h3>
+
+  <pre><code>class ServiceCommunicationManager {
+  constructor(baseService) {
+    this.baseService = baseService;
+    this.eventBus = new EventEmitter();
+    this.messageQueue = new Map(); // In-memory queue for demo
+    this.sagaOrchestrator = new SagaOrchestrator();
+  }
+
+  // Synchronous request-response pattern
+  async callService(serviceName, endpoint, data = null, options = {}) {
+    try {
+      const service = await this.baseService.discoverService(serviceName);
+      const url = `${service.url}${endpoint}`;
+      
+      return await this.baseService.callWithCircuitBreaker(serviceName, async () => {
+        const response = await this.baseService.makeRequest(url, {
+          method: options.method || (data ? 'POST' : 'GET'),
+          body: data ? JSON.stringify(data) : undefined,
+          correlationId: options.correlationId,
+          timeout: options.timeout || 10000
+        });
+
+        if (!response.ok) {
+          throw new Error(`Service call failed: ${response.status}`);
+        }
+
+        return await response.json();
+      });
+    } catch (error) {
+      console.error(`Failed to call ${serviceName}${endpoint}:`, error);
+      throw error;
+    }
+  }
+
+  // Asynchronous event-driven pattern
+  async publishEvent(eventType, data, options = {}) {
+    const event = {
+      id: uuidv4(),
+      type: eventType,
+      data,
+      source: this.baseService.config.name,
+      timestamp: new Date().toISOString(),
+      version: '1.0',
+      correlationId: options.correlationId || uuidv4()
+    };
+
+    try {
+      // Publish to message queue/event bus
+      await this.publishToQueue(event, options.topic || eventType);
+      
+      // Emit locally for immediate handlers
+      this.eventBus.emit(eventType, event);
+      
+      console.log(`Published event: ${eventType}`);
+      return event;
+    } catch (error) {
+      console.error(`Failed to publish event ${eventType}:`, error);
+      throw error;
+    }
+  }
+
+  // Subscribe to events
+  subscribeToEvent(eventType, handler) {
+    this.eventBus.on(eventType, handler);
+  }
+
+  // Message queue operations
+  async publishToQueue(message, topic) {
+    // In production, this would use Redis, RabbitMQ, Kafka, etc.
+    if (!this.messageQueue.has(topic)) {
+      this.messageQueue.set(topic, []);
+    }
+    
+    this.messageQueue.get(topic).push(message);
+    
+    // Simulate async processing
+    setTimeout(() => this.processQueueMessage(topic), 100);
+  }
+
+  async processQueueMessage(topic) {
+    const queue = this.messageQueue.get(topic);
+    if (!queue || queue.length === 0) return;
+
+    const message = queue.shift();
+    
+    try {
+      // Process the message
+      this.eventBus.emit(message.type, message);
+    } catch (error) {
+      console.error(`Failed to process queue message:`, error);
+      // Add to dead letter queue in production
+    }
+  }
+
+  // Saga pattern for distributed transactions
+  async startSaga(sagaType, data, options = {}) {
+    return this.sagaOrchestrator.start(sagaType, data, options);
+  }
+}
+
+// Saga orchestrator for distributed transactions
+class SagaOrchestrator {
+  constructor() {
+    this.sagas = new Map();
+    this.sagaDefinitions = new Map();
+  }
+
+  // Define a saga workflow
+  defineSaga(type, steps) {
+    this.sagaDefinitions.set(type, steps);
+  }
+
+  // Start saga execution
+  async start(type, data, options = {}) {
+    const sagaId = uuidv4();
+    const steps = this.sagaDefinitions.get(type);
+    
+    if (!steps) {
+      throw new Error(`Saga type ${type} not defined`);
+    }
+
+    const saga = {
+      id: sagaId,
+      type,
+      data,
+      steps: [...steps],
+      currentStep: 0,
+      executedSteps: [],
+      status: 'running',
+      startTime: new Date(),
+      correlationId: options.correlationId || uuidv4()
+    };
+
+    this.sagas.set(sagaId, saga);
+    
+    try {
+      await this.executeNextStep(saga);
+      return saga;
+    } catch (error) {
+      await this.rollbackSaga(saga, error);
+      throw error;
+    }
+  }
+
+  async executeNextStep(saga) {
+    if (saga.currentStep >= saga.steps.length) {
+      saga.status = 'completed';
+      saga.endTime = new Date();
+      return;
+    }
+
+    const step = saga.steps[saga.currentStep];
+    
+    try {
+      const result = await step.execute(saga.data, saga);
+      
+      saga.executedSteps.push({
+        step: saga.currentStep,
+        result,
+        timestamp: new Date()
+      });
+      
+      saga.currentStep++;
+      
+      // Continue to next step
+      await this.executeNextStep(saga);
+    } catch (error) {
+      saga.status = 'failed';
+      saga.error = error.message;
+      throw error;
+    }
+  }
+
+  async rollbackSaga(saga, error) {
+    console.log(`Rolling back saga ${saga.id} due to error:`, error.message);
+    
+    // Execute compensation steps in reverse order
+    for (let i = saga.executedSteps.length - 1; i >= 0; i--) {
+      const executedStep = saga.executedSteps[i];
+      const step = saga.steps[executedStep.step];
+      
+      if (step.compensate) {
+        try {
+          await step.compensate(executedStep.result, saga);
+        } catch (compensationError) {
+          console.error(`Compensation failed for step ${executedStep.step}:`, compensationError);
+        }
+      }
+    }
+    
+    saga.status = 'rolled_back';
+    saga.rollbackTime = new Date();
+  }
+}
+
+// Example service implementation
+class UserService extends MicroserviceBase {
+  constructor() {
+    super({
+      name: 'user-service',
+      version: '1.0.0',
+      port: 3001
+    });
+
+    this.communication = new ServiceCommunicationManager(this);
+    this.setupRoutes();
+    this.setupEventHandlers();
+    this.setupSagas();
+    
+    // Register dependencies
+    this.addDependency('email', 'email-service');
+    this.addDependency('payment', 'payment-service');
+  }
+
+  setupRoutes() {
+    this.app.post('/users', async (req, res) => {
+      try {
+        const user = await this.createUser(req.body);
+        res.status(201).json(user);
+      } catch (error) {
+        res.status(400).json({ error: error.message });
+      }
+    });
+
+    this.app.get('/users/:id', async (req, res) => {
+      try {
+        const user = await this.getUser(req.params.id);
+        res.json(user);
+      } catch (error) {
+        res.status(404).json({ error: error.message });
+      }
+    });
+  }
+
+  setupEventHandlers() {
+    // Handle user creation events
+    this.communication.subscribeToEvent('user.created', async (event) => {
+      console.log('User created event received:', event.data);
+      
+      // Send welcome email
+      await this.communication.publishEvent('email.send', {
+        to: event.data.email,
+        template: 'welcome',
+        data: event.data
+      }, { correlationId: event.correlationId });
+    });
+
+    // Handle payment events
+    this.communication.subscribeToEvent('payment.completed', async (event) => {
+      console.log('Payment completed:', event.data);
+      await this.upgradeUserSubscription(event.data.userId, event.data.plan);
+    });
+  }
+
+  setupSagas() {
+    // Define user registration saga
+    this.communication.sagaOrchestrator.defineSaga('user-registration', [
+      {
+        name: 'create-user',
+        execute: async (data, saga) => {
+          const user = await this.createUserInDB(data);
+          return { userId: user.id };
+        },
+        compensate: async (result, saga) => {
+          await this.deleteUserFromDB(result.userId);
+        }
+      },
+      {
+        name: 'create-payment-profile',
+        execute: async (data, saga) => {
+          const result = await this.communication.callService(
+            'payment-service',
+            '/profiles',
+            { userId: saga.data.userId },
+            { correlationId: saga.correlationId }
+          );
+          return result;
+        },
+        compensate: async (result, saga) => {
+          await this.communication.callService(
+            'payment-service',
+            `/profiles/${result.profileId}`,
+            null,
+            { method: 'DELETE', correlationId: saga.correlationId }
+          );
+        }
+      },
+      {
+        name: 'send-welcome-email',
+        execute: async (data, saga) => {
+          return await this.communication.callService(
+            'email-service',
+            '/send',
+            {
+              to: saga.data.email,
+              template: 'welcome',
+              data: saga.data
+            },
+            { correlationId: saga.correlationId }
+          );
+        },
+        compensate: async (result, saga) => {
+          // No compensation needed for email
+        }
+      }
+    ]);
+  }
+
+  async createUser(userData) {
+    // Start distributed transaction
+    const saga = await this.communication.startSaga('user-registration', userData);
+    
+    // Publish event
+    await this.communication.publishEvent('user.created', {
+      id: saga.data.userId,
+      ...userData
+    });
+
+    return { id: saga.data.userId, ...userData };
+  }
+
+  async createUserInDB(userData) {
+    // Mock user creation
+    const user = {
+      id: uuidv4(),
+      ...userData,
+      createdAt: new Date().toISOString()
+    };
+    
+    console.log('User created in database:', user);
+    return user;
+  }
+
+  async deleteUserFromDB(userId) {
+    console.log('User deleted from database:', userId);
+  }
+
+  async getUser(userId) {
+    // Mock user retrieval
+    return {
+      id: userId,
+      name: 'John Doe',
+      email: 'john@example.com'
+    };
+  }
+
+  async upgradeUserSubscription(userId, plan) {
+    console.log(`Upgrading user ${userId} to ${plan} plan`);
+  }
+}</code></pre>
+
+  <!-- ─── SERVICE MESH ──────────────────── -->
+  <h2 id="service-mesh">Service Mesh Integration</h2>
+
+  <h3 id="istio-integration">Istio Service Mesh</h3>
+
+  <pre><code># Istio configuration for microservices
+
+# Virtual Service for traffic management
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: user-service
+  namespace: microservices
+spec:
+  hosts:
+  - user-service
+  http:
+  - match:
+    - headers:
+        version:
+          exact: v2
+    route:
+    - destination:
+        host: user-service
+        subset: v2
+  - route:
+    - destination:
+        host: user-service
+        subset: v1
+      weight: 90
+    - destination:
+        host: user-service
+        subset: v2
+      weight: 10
+
+---
+# Destination Rule for load balancing
+apiVersion: networking.istio.io/v1beta1
+kind: DestinationRule
+metadata:
+  name: user-service
+  namespace: microservices
+spec:
+  host: user-service
+  trafficPolicy:
+    loadBalancer:
+      simple: LEAST_CONN
+    connectionPool:
+      tcp:
+        maxConnections: 10
+      http:
+        http1MaxPendingRequests: 10
+        maxRequestsPerConnection: 2
+    circuitBreaker:
+      consecutiveErrors: 3
+      interval: 30s
+      baseEjectionTime: 30s
+  subsets:
+  - name: v1
+    labels:
+      version: v1
+  - name: v2
+    labels:
+      version: v2
+
+---
+# Service Entry for external dependencies
+apiVersion: networking.istio.io/v1beta1
+kind: ServiceEntry
+metadata:
+  name: external-payment-api
+  namespace: microservices
+spec:
+  hosts:
+  - payment-api.external.com
+  ports:
+  - number: 443
+    name: https
+    protocol: HTTPS
+  location: MESH_EXTERNAL
+  resolution: DNS
+
+---
+# Authorization Policy
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: user-service-policy
+  namespace: microservices
+spec:
+  selector:
+    matchLabels:
+      app: user-service
+  rules:
+  - from:
+    - source:
+        principals: ["cluster.local/ns/microservices/sa/api-gateway"]
+  - to:
+    - operation:
+        methods: ["GET"]
+  - when:
+    - key: source.ip
+      notValues: ["192.168.1.100"]</code></pre>
+
+  <!-- ─── MONITORING AND OBSERVABILITY ───── -->
+  <h2 id="monitoring-observability">Monitoring & Observability</h2>
+
+  <h3 id="distributed-tracing">Distributed Tracing</h3>
+
+  <pre><code>const opentracing = require('opentracing');
+const jaeger = require('jaeger-client');
+
+class MicroserviceTracing {
+  constructor(serviceName) {
+    this.serviceName = serviceName;
+    this.tracer = this.initializeTracer();
+    opentracing.initGlobalTracer(this.tracer);
+  }
+
+  initializeTracer() {
+    const config = {
+      serviceName: this.serviceName,
+      sampler: {
+        type: 'const',
+        param: 1
+      },
+      reporter: {
+        logSpans: true,
+        agentHost: process.env.JAEGER_AGENT_HOST || 'localhost',
+        agentPort: parseInt(process.env.JAEGER_AGENT_PORT) || 6832
+      }
+    };
+
+    return jaeger.initTracer(config);
+  }
+
+  // Create span for operation
+  createSpan(operationName, parentSpan = null) {
+    const spanOptions = {
+      tags: {
+        [opentracing.Tags.COMPONENT]: this.serviceName,
+        [opentracing.Tags.SPAN_KIND]: opentracing.Tags.SPAN_KIND_RPC_SERVER
+      }
+    };
+
+    if (parentSpan) {
+      spanOptions.childOf = parentSpan;
+    }
+
+    return this.tracer.startSpan(operationName, spanOptions);
+  }
+
+  // Trace HTTP requests
+  traceRequest() {
+    return (req, res, next) => {
+      const span = this.createSpan(`${req.method} ${req.path}`);
+      
+      span.setTag(opentracing.Tags.HTTP_METHOD, req.method);
+      span.setTag(opentracing.Tags.HTTP_URL, req.url);
+      span.setTag('correlation.id', req.correlationId);
+
+      req.span = span;
+
+      res.on('finish', () => {
+        span.setTag(opentracing.Tags.HTTP_STATUS_CODE, res.statusCode);
+        
+        if (res.statusCode >= 400) {
+          span.setTag(opentracing.Tags.ERROR, true);
+          span.setTag('error.message', `HTTP ${res.statusCode}`);
+        }
+        
+        span.finish();
+      });
+
+      next();
+    };
+  }
+
+  // Trace service calls
+  traceServiceCall(serviceName, operation, callFunction) {
+    return async (...args) => {
+      const span = this.createSpan(`${serviceName}.${operation}`);
+      
+      span.setTag(opentracing.Tags.SPAN_KIND, opentracing.Tags.SPAN_KIND_RPC_CLIENT);
+      span.setTag('service.name', serviceName);
+      span.setTag('operation.name', operation);
+
+      try {
+        const result = await callFunction(...args);
+        span.setTag('success', true);
+        return result;
+      } catch (error) {
+        span.setTag(opentracing.Tags.ERROR, true);
+        span.setTag('error.message', error.message);
+        throw error;
+      } finally {
+        span.finish();
+      }
+    };
+  }
+
+  // Add trace context to outgoing requests
+  injectTraceContext(span, headers = {}) {
+    const traceHeaders = {};
+    this.tracer.inject(span, opentracing.FORMAT_HTTP_HEADERS, traceHeaders);
+    
+    return {
+      ...headers,
+      ...traceHeaders
+    };
+  }
+
+  // Extract trace context from incoming requests
+  extractTraceContext(headers) {
+    return this.tracer.extract(opentracing.FORMAT_HTTP_HEADERS, headers);
+  }
+}
+
+// Enhanced service base with tracing
+class TracedMicroservice extends MicroserviceBase {
+  constructor(config) {
+    super(config);
+    this.tracing = new MicroserviceTracing(config.name);
+    
+    // Add tracing middleware
+    this.app.use(this.tracing.traceRequest());
+  }
+
+  // Override makeRequest to include tracing
+  async makeRequest(url, options = {}) {
+    const span = this.tracing.createSpan('http.request');
+    
+    try {
+      const enhancedOptions = {
+        ...options,
+        headers: this.tracing.injectTraceContext(span, options.headers)
+      };
+      
+      span.setTag('http.url', url);
+      span.setTag('http.method', enhancedOptions.method || 'GET');
+      
+      const response = await super.makeRequest(url, enhancedOptions);
+      
+      span.setTag('http.status_code', response.status);
+      
+      return response;
+    } catch (error) {
+      span.setTag('error', true);
+      span.setTag('error.message', error.message);
+      throw error;
+    } finally {
+      span.finish();
+    }
+  }
+}</code></pre>
+
+  <!-- ─── DEPLOYMENT PATTERNS ──────────── -->
+  <h2 id="deployment-patterns">Deployment Patterns</h2>
+
+  <h3 id="kubernetes-deployment">Kubernetes Deployment</h3>
+
+  <pre><code># Microservice Kubernetes deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: user-service
+  namespace: microservices
+  labels:
+    app: user-service
+    version: v1
+spec:
+  replicas: 3
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 1
+  selector:
+    matchLabels:
+      app: user-service
+      version: v1
+  template:
+    metadata:
+      labels:
+        app: user-service
+        version: v1
+      annotations:
+        sidecar.istio.io/inject: "true"
+    spec:
+      containers:
+      - name: user-service
+        image: myregistry/user-service:v1.0.0
+        ports:
+        - containerPort: 3001
+          name: http
+        env:
+        - name: NODE_ENV
+          value: "production"
+        - name: CONSUL_HOST
+          value: "consul.service-discovery"
+        - name: JAEGER_AGENT_HOST
+          value: "jaeger-agent.monitoring"
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "100m"
+          limits:
+            memory: "256Mi"
+            cpu: "500m"
+        livenessProbe:
+          httpGet:
+            path: /health/live
+            port: 3001
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /health/ready
+            port: 3001
+          initialDelaySeconds: 5
+          periodSeconds: 5
+        securityContext:
+          runAsNonRoot: true
+          runAsUser: 1001
+          allowPrivilegeEscalation: false
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: user-service
+  namespace: microservices
+  labels:
+    app: user-service
+spec:
+  selector:
+    app: user-service
+  ports:
+  - name: http
+    port: 80
+    targetPort: 3001
+  type: ClusterIP
+
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: user-service-hpa
+  namespace: microservices
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: user-service
+  minReplicas: 3
+  maxReplicas: 10
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 70
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization
+        averageUtilization: 80</code></pre>
+
+  <!-- ─── BEST PRACTICES ─────────────────── -->
+  <h2 id="best-practices">Best Practices</h2>
+
+  <ul>
+    <li><strong>Domain-Driven Design</strong> - Align services with business domains</li>
+    <li><strong>API Contracts</strong> - Define clear, versioned service interfaces</li>
+    <li><strong>Fault Tolerance</strong> - Implement circuit breakers and retries</li>
+    <li><strong>Data Consistency</strong> - Use saga patterns for distributed transactions</li>
+    <li><strong>Observability</strong> - Implement comprehensive monitoring and tracing</li>
+    <li><strong>Security</strong> - Secure inter-service communication with mTLS</li>
+    <li><strong>Testing</strong> - Use contract testing and service virtualization</li>
+  </ul>
+
+  <div class="callout">
+    <div class="callout-title">🎯 Microservices Excellence</div>
+    <p>
+      Successful microservices architecture requires careful service design,
+      robust communication patterns, and comprehensive operational practices.
+      Focus on service autonomy, fault tolerance, and observability to build
+      resilient distributed systems.
+    </p>
+  </div>
+
+</div>

@@ -1,0 +1,1196 @@
+<div class="content-body">
+
+  <h1 id="real-time-analytics">Real-Time Analytics</h1>
+
+  <p>
+    Build sophisticated real-time analytics systems for streaming data processing,
+    real-time dashboards, and instant insights. This guide covers stream processing,
+    event analytics, and real-time visualization patterns.
+  </p>
+
+  <div class="callout">
+    <div class="callout-title">📊 Real-Time Insights</div>
+    <p>
+      Real-time analytics enables immediate decision-making by processing and
+      analyzing data as it arrives. This requires efficient stream processing,
+      fast aggregation techniques, and responsive visualization systems.
+    </p>
+  </div>
+
+  <!-- ─── STREAM PROCESSING ─────────────── -->
+  <h2 id="stream-processing">Stream Processing Engine</h2>
+
+  <h3 id="analytics-engine">Analytics Engine Foundation</h3>
+
+  <pre><code>const EventEmitter = require('events');
+const { v4: uuidv4 } = require('uuid');
+
+class RealTimeAnalytics extends EventEmitter {
+  constructor(config = {}) {
+    super();
+    
+    this.config = {
+      windowSize: config.windowSize || 60000, // 1 minute
+      batchSize: config.batchSize || 1000,
+      flushInterval: config.flushInterval || 5000,
+      retentionPeriod: config.retentionPeriod || 3600000, // 1 hour
+      ...config
+    };
+    
+    this.streams = new Map();
+    this.windows = new Map();
+    this.aggregators = new Map();
+    this.filters = new Map();
+    this.outputs = new Map();
+    this.metrics = new Map();
+    
+    this.setupCleanupInterval();
+  }
+
+  // Create a new data stream
+  createStream(streamName, schema = {}) {
+    if (this.streams.has(streamName)) {
+      throw new Error(`Stream ${streamName} already exists`);
+    }
+
+    const stream = {
+      name: streamName,
+      schema,
+      buffer: [],
+      totalEvents: 0,
+      lastEvent: null,
+      created: new Date(),
+      processors: new Set()
+    };
+
+    this.streams.set(streamName, stream);
+    this.metrics.set(streamName, {
+      eventsPerSecond: 0,
+      avgLatency: 0,
+      errorRate: 0,
+      lastUpdate: Date.now()
+    });
+
+    console.log(`Created stream: ${streamName}`);
+    return stream;
+  }
+
+  // Ingest event into stream
+  async ingestEvent(streamName, eventData, metadata = {}) {
+    const stream = this.streams.get(streamName);
+    if (!stream) {
+      throw new Error(`Stream ${streamName} not found`);
+    }
+
+    const event = {
+      id: uuidv4(),
+      stream: streamName,
+      timestamp: metadata.timestamp || Date.now(),
+      data: eventData,
+      metadata: {
+        source: metadata.source || 'unknown',
+        correlationId: metadata.correlationId,
+        ...metadata
+      }
+    };
+
+    // Validate against schema
+    if (stream.schema && !this.validateEvent(event.data, stream.schema)) {
+      throw new Error(`Event validation failed for stream ${streamName}`);
+    }
+
+    // Add to stream buffer
+    stream.buffer.push(event);
+    stream.totalEvents++;
+    stream.lastEvent = event;
+
+    // Update metrics
+    this.updateStreamMetrics(streamName);
+
+    // Process event through pipelines
+    await this.processEvent(event);
+
+    // Emit event for real-time subscribers
+    this.emit('event', event);
+    this.emit(`stream:${streamName}`, event);
+
+    return event;
+  }
+
+  // Process event through registered processors
+  async processEvent(event) {
+    const stream = this.streams.get(event.stream);
+    
+    for (const processorName of stream.processors) {
+      try {
+        const processor = this.getProcessor(processorName);
+        if (processor) {
+          await processor.process(event);
+        }
+      } catch (error) {
+        console.error(`Processor ${processorName} failed:`, error);
+        this.emit('processingError', { processorName, event, error });
+      }
+    }
+  }
+
+  // Create windowed aggregations
+  createWindow(windowName, streamName, config = {}) {
+    const windowConfig = {
+      size: config.size || this.config.windowSize,
+      type: config.type || 'tumbling', // tumbling, sliding, session
+      aggregate: config.aggregate || 'count',
+      groupBy: config.groupBy,
+      ...config
+    };
+
+    const window = {
+      name: windowName,
+      stream: streamName,
+      config: windowConfig,
+      current: new Map(),
+      results: [],
+      lastFlush: Date.now()
+    };
+
+    this.windows.set(windowName, window);
+
+    // Add processor to stream
+    const stream = this.streams.get(streamName);
+    if (stream) {
+      stream.processors.add(windowName);
+    }
+
+    console.log(`Created window: ${windowName} for stream ${streamName}`);
+    return window;
+  }
+
+  // Process window aggregations
+  async processWindow(windowName, event) {
+    const window = this.windows.get(windowName);
+    if (!window) return;
+
+    const now = Date.now();
+    const windowKey = this.getWindowKey(event, window);
+    
+    // Initialize window data if needed
+    if (!window.current.has(windowKey)) {
+      window.current.set(windowKey, {
+        key: windowKey,
+        count: 0,
+        sum: 0,
+        min: Infinity,
+        max: -Infinity,
+        values: [],
+        firstEvent: now,
+        lastEvent: now
+      });
+    }
+
+    const windowData = window.current.get(windowKey);
+    
+    // Update aggregations
+    windowData.count++;
+    windowData.lastEvent = now;
+    
+    if (typeof event.data === 'number') {
+      windowData.sum += event.data;
+      windowData.min = Math.min(windowData.min, event.data);
+      windowData.max = Math.max(windowData.max, event.data);
+    }
+    
+    if (window.config.keepValues) {
+      windowData.values.push(event.data);
+    }
+
+    // Check if window should be flushed
+    if (this.shouldFlushWindow(window, windowData, now)) {
+      await this.flushWindow(window, windowKey);
+    }
+  }
+
+  getWindowKey(event, window) {
+    if (window.config.groupBy) {
+      const groupValue = this.getNestedValue(event.data, window.config.groupBy);
+      return `${Math.floor(event.timestamp / window.config.size)}-${groupValue}`;
+    }
+    
+    return Math.floor(event.timestamp / window.config.size);
+  }
+
+  shouldFlushWindow(window, windowData, now) {
+    const windowAge = now - windowData.firstEvent;
+    return windowAge >= window.config.size;
+  }
+
+  async flushWindow(window, windowKey) {
+    const windowData = window.current.get(windowKey);
+    if (!windowData) return;
+
+    const result = {
+      window: window.name,
+      stream: window.stream,
+      key: windowKey,
+      startTime: windowData.firstEvent,
+      endTime: windowData.lastEvent,
+      duration: windowData.lastEvent - windowData.firstEvent,
+      count: windowData.count,
+      timestamp: Date.now()
+    };
+
+    // Add aggregation results based on type
+    switch (window.config.aggregate) {
+      case 'sum':
+        result.sum = windowData.sum;
+        break;
+      case 'avg':
+        result.avg = windowData.sum / windowData.count;
+        break;
+      case 'min':
+        result.min = windowData.min;
+        break;
+      case 'max':
+        result.max = windowData.max;
+        break;
+      case 'count':
+      default:
+        // Count is already included
+        break;
+    }
+
+    // Store result
+    window.results.push(result);
+    window.current.delete(windowKey);
+    window.lastFlush = Date.now();
+
+    // Emit result
+    this.emit('windowResult', result);
+    this.emit(`window:${window.name}`, result);
+
+    console.log(`Window flushed: ${window.name}, count: ${result.count}`);
+    return result;
+  }
+
+  // Create real-time filter
+  createFilter(filterName, streamName, predicate) {
+    const filter = {
+      name: filterName,
+      stream: streamName,
+      predicate,
+      matchCount: 0,
+      totalProcessed: 0
+    };
+
+    this.filters.set(filterName, filter);
+
+    // Add processor to stream
+    const stream = this.streams.get(streamName);
+    if (stream) {
+      stream.processors.add(filterName);
+    }
+
+    return filter;
+  }
+
+  // Process filter
+  async processFilter(filterName, event) {
+    const filter = this.filters.get(filterName);
+    if (!filter) return false;
+
+    filter.totalProcessed++;
+
+    try {
+      const matches = await filter.predicate(event);
+      
+      if (matches) {
+        filter.matchCount++;
+        this.emit('filterMatch', { filter: filterName, event });
+        return true;
+      }
+    } catch (error) {
+      console.error(`Filter ${filterName} error:`, error);
+    }
+
+    return false;
+  }
+
+  // Get processor (window, filter, etc.)
+  getProcessor(processorName) {
+    if (this.windows.has(processorName)) {
+      return {
+        process: (event) => this.processWindow(processorName, event)
+      };
+    }
+
+    if (this.filters.has(processorName)) {
+      return {
+        process: (event) => this.processFilter(processorName, event)
+      };
+    }
+
+    return null;
+  }
+
+  // Query real-time data
+  async query(params = {}) {
+    const {
+      stream,
+      window,
+      timeRange,
+      groupBy,
+      aggregate = 'count',
+      limit = 100
+    } = params;
+
+    let results = [];
+
+    if (window && this.windows.has(window)) {
+      const windowObj = this.windows.get(window);
+      results = [...windowObj.results];
+      
+      // Apply time range filter
+      if (timeRange) {
+        const { start, end } = timeRange;
+        results = results.filter(r => 
+          r.timestamp >= start && r.timestamp <= end
+        );
+      }
+    } else if (stream && this.streams.has(stream)) {
+      const streamObj = this.streams.get(stream);
+      let events = [...streamObj.buffer];
+      
+      // Apply time range filter
+      if (timeRange) {
+        const { start, end } = timeRange;
+        events = events.filter(e => 
+          e.timestamp >= start && e.timestamp <= end
+        );
+      }
+      
+      // Perform real-time aggregation
+      results = this.aggregateEvents(events, { groupBy, aggregate });
+    }
+
+    // Apply limit
+    return results.slice(0, limit);
+  }
+
+  aggregateEvents(events, options = {}) {
+    const { groupBy, aggregate } = options;
+    
+    if (!groupBy) {
+      // Simple aggregation
+      return [{
+        count: events.length,
+        timestamp: Date.now()
+      }];
+    }
+
+    // Group by field
+    const groups = new Map();
+    
+    events.forEach(event => {
+      const groupValue = this.getNestedValue(event.data, groupBy);
+      const key = String(groupValue);
+      
+      if (!groups.has(key)) {
+        groups.set(key, []);
+      }
+      groups.get(key).push(event);
+    });
+
+    // Apply aggregation to each group
+    return Array.from(groups.entries()).map(([key, groupEvents]) => ({
+      group: key,
+      count: groupEvents.length,
+      timestamp: Date.now()
+    }));
+  }
+
+  // Update stream metrics
+  updateStreamMetrics(streamName) {
+    const metrics = this.metrics.get(streamName);
+    const stream = this.streams.get(streamName);
+    
+    if (!metrics || !stream) return;
+
+    const now = Date.now();
+    const timeDiff = (now - metrics.lastUpdate) / 1000; // seconds
+    
+    if (timeDiff > 0) {
+      const eventsInPeriod = stream.buffer.length;
+      metrics.eventsPerSecond = eventsInPeriod / timeDiff;
+      metrics.lastUpdate = now;
+    }
+
+    // Calculate average latency
+    if (stream.lastEvent) {
+      const processingLatency = Date.now() - stream.lastEvent.timestamp;
+      metrics.avgLatency = (metrics.avgLatency + processingLatency) / 2;
+    }
+  }
+
+  // Cleanup old data
+  setupCleanupInterval() {
+    setInterval(() => {
+      this.cleanupOldData();
+    }, 60000); // Cleanup every minute
+  }
+
+  cleanupOldData() {
+    const now = Date.now();
+    const retentionTime = now - this.config.retentionPeriod;
+
+    // Cleanup stream buffers
+    for (const [streamName, stream] of this.streams) {
+      const beforeCount = stream.buffer.length;
+      stream.buffer = stream.buffer.filter(event => 
+        event.timestamp > retentionTime
+      );
+      
+      const cleanedCount = beforeCount - stream.buffer.length;
+      if (cleanedCount > 0) {
+        console.log(`Cleaned ${cleanedCount} old events from ${streamName}`);
+      }
+    }
+
+    // Cleanup window results
+    for (const [windowName, window] of this.windows) {
+      const beforeCount = window.results.length;
+      window.results = window.results.filter(result => 
+        result.timestamp > retentionTime
+      );
+      
+      const cleanedCount = beforeCount - window.results.length;
+      if (cleanedCount > 0) {
+        console.log(`Cleaned ${cleanedCount} old window results from ${windowName}`);
+      }
+    }
+  }
+
+  // Validate event against schema
+  validateEvent(data, schema) {
+    // Simple schema validation
+    for (const [field, type] of Object.entries(schema)) {
+      if (!(field in data)) {
+        return false;
+      }
+      
+      if (typeof data[field] !== type) {
+        return false;
+      }
+    }
+    
+    return true;
+  }
+
+  // Get nested object value
+  getNestedValue(obj, path) {
+    return path.split('.').reduce((current, key) => 
+      current && current[key] !== undefined ? current[key] : undefined, obj
+    );
+  }
+
+  // Get analytics summary
+  getSummary() {
+    const summary = {
+      streams: this.streams.size,
+      windows: this.windows.size,
+      filters: this.filters.size,
+      totalEvents: 0,
+      metrics: {}
+    };
+
+    // Aggregate stream metrics
+    for (const [streamName, stream] of this.streams) {
+      summary.totalEvents += stream.totalEvents;
+      summary.metrics[streamName] = {
+        ...this.metrics.get(streamName),
+        bufferSize: stream.buffer.length,
+        totalEvents: stream.totalEvents
+      };
+    }
+
+    return summary;
+  }
+}</code></pre>
+
+  <!-- ─── REAL-TIME DASHBOARD ──────────── -->
+  <h2 id="real-time-dashboard">Real-Time Dashboard</h2>
+
+  <h3 id="dashboard-server">Dashboard WebSocket Server</h3>
+
+  <pre><code>const WebSocket = require('ws');
+const http = require('http');
+const express = require('express');
+
+class RealTimeDashboard {
+  constructor(analytics, port = 3000) {
+    this.analytics = analytics;
+    this.port = port;
+    this.app = express();
+    this.server = http.createServer(this.app);
+    this.wss = new WebSocket.Server({ server: this.server });
+    
+    this.clients = new Map();
+    this.subscriptions = new Map();
+    this.dashboards = new Map();
+    
+    this.setupRoutes();
+    this.setupWebSocket();
+    this.setupAnalyticsListeners();
+  }
+
+  setupRoutes() {
+    this.app.use(express.json());
+    this.app.use(express.static('public'));
+
+    // Dashboard configuration
+    this.app.get('/api/dashboards', (req, res) => {
+      const dashboards = Array.from(this.dashboards.values());
+      res.json(dashboards);
+    });
+
+    this.app.post('/api/dashboards', (req, res) => {
+      const dashboard = this.createDashboard(req.body);
+      res.json(dashboard);
+    });
+
+    this.app.get('/api/dashboards/:id', (req, res) => {
+      const dashboard = this.dashboards.get(req.params.id);
+      if (!dashboard) {
+        return res.status(404).json({ error: 'Dashboard not found' });
+      }
+      res.json(dashboard);
+    });
+
+    // Real-time data queries
+    this.app.get('/api/data/:stream', async (req, res) => {
+      try {
+        const data = await this.analytics.query({
+          stream: req.params.stream,
+          timeRange: {
+            start: parseInt(req.query.start) || Date.now() - 300000,
+            end: parseInt(req.query.end) || Date.now()
+          },
+          limit: parseInt(req.query.limit) || 100
+        });
+        
+        res.json(data);
+      } catch (error) {
+        res.status(500).json({ error: error.message });
+      }
+    });
+
+    // Metrics endpoint
+    this.app.get('/api/metrics', (req, res) => {
+      res.json(this.analytics.getSummary());
+    });
+  }
+
+  setupWebSocket() {
+    this.wss.on('connection', (ws, req) => {
+      const clientId = this.generateClientId();
+      
+      const client = {
+        id: clientId,
+        ws,
+        subscriptions: new Set(),
+        lastPing: Date.now(),
+        userAgent: req.headers['user-agent']
+      };
+      
+      this.clients.set(clientId, client);
+      
+      console.log(`Client ${clientId} connected`);
+      
+      // Send welcome message
+      this.sendToClient(clientId, {
+        type: 'connected',
+        clientId,
+        timestamp: Date.now()
+      });
+
+      // Handle messages
+      ws.on('message', (message) => {
+        this.handleClientMessage(clientId, message);
+      });
+
+      // Handle disconnect
+      ws.on('close', () => {
+        this.handleClientDisconnect(clientId);
+      });
+
+      // Ping/Pong for connection health
+      ws.on('pong', () => {
+        client.lastPing = Date.now();
+      });
+    });
+
+    // Ping clients periodically
+    setInterval(() => {
+      this.pingClients();
+    }, 30000);
+  }
+
+  handleClientMessage(clientId, message) {
+    try {
+      const data = JSON.parse(message);
+      
+      switch (data.type) {
+        case 'subscribe':
+          this.subscribeClient(clientId, data.topic, data.filters);
+          break;
+        case 'unsubscribe':
+          this.unsubscribeClient(clientId, data.topic);
+          break;
+        case 'query':
+          this.handleQuery(clientId, data);
+          break;
+        case 'ping':
+          this.sendToClient(clientId, { type: 'pong' });
+          break;
+        default:
+          console.log(`Unknown message type: ${data.type}`);
+      }
+    } catch (error) {
+      console.error(`Error handling client message:`, error);
+    }
+  }
+
+  subscribeClient(clientId, topic, filters = {}) {
+    const client = this.clients.get(clientId);
+    if (!client) return;
+
+    client.subscriptions.add(topic);
+    
+    if (!this.subscriptions.has(topic)) {
+      this.subscriptions.set(topic, new Set());
+    }
+    
+    this.subscriptions.get(topic).add(clientId);
+    
+    console.log(`Client ${clientId} subscribed to ${topic}`);
+    
+    // Send confirmation
+    this.sendToClient(clientId, {
+      type: 'subscribed',
+      topic,
+      timestamp: Date.now()
+    });
+  }
+
+  unsubscribeClient(clientId, topic) {
+    const client = this.clients.get(clientId);
+    if (!client) return;
+
+    client.subscriptions.delete(topic);
+    
+    if (this.subscriptions.has(topic)) {
+      this.subscriptions.get(topic).delete(clientId);
+    }
+    
+    console.log(`Client ${clientId} unsubscribed from ${topic}`);
+  }
+
+  async handleQuery(clientId, queryData) {
+    try {
+      const results = await this.analytics.query(queryData.params);
+      
+      this.sendToClient(clientId, {
+        type: 'queryResult',
+        queryId: queryData.queryId,
+        results,
+        timestamp: Date.now()
+      });
+    } catch (error) {
+      this.sendToClient(clientId, {
+        type: 'queryError',
+        queryId: queryData.queryId,
+        error: error.message,
+        timestamp: Date.now()
+      });
+    }
+  }
+
+  handleClientDisconnect(clientId) {
+    const client = this.clients.get(clientId);
+    if (!client) return;
+
+    // Remove from all subscriptions
+    for (const topic of client.subscriptions) {
+      if (this.subscriptions.has(topic)) {
+        this.subscriptions.get(topic).delete(clientId);
+      }
+    }
+
+    this.clients.delete(clientId);
+    console.log(`Client ${clientId} disconnected`);
+  }
+
+  setupAnalyticsListeners() {
+    // Forward analytics events to subscribed clients
+    this.analytics.on('event', (event) => {
+      this.broadcastToTopic('events', {
+        type: 'event',
+        data: event,
+        timestamp: Date.now()
+      });
+    });
+
+    this.analytics.on('windowResult', (result) => {
+      this.broadcastToTopic('windows', {
+        type: 'windowResult',
+        data: result,
+        timestamp: Date.now()
+      });
+      
+      this.broadcastToTopic(`window:${result.window}`, {
+        type: 'windowUpdate',
+        data: result,
+        timestamp: Date.now()
+      });
+    });
+
+    this.analytics.on('filterMatch', (match) => {
+      this.broadcastToTopic('filters', {
+        type: 'filterMatch',
+        data: match,
+        timestamp: Date.now()
+      });
+    });
+  }
+
+  broadcastToTopic(topic, message) {
+    const subscribers = this.subscriptions.get(topic);
+    if (!subscribers) return;
+
+    subscribers.forEach(clientId => {
+      this.sendToClient(clientId, message);
+    });
+  }
+
+  sendToClient(clientId, message) {
+    const client = this.clients.get(clientId);
+    if (!client || client.ws.readyState !== WebSocket.OPEN) {
+      return;
+    }
+
+    try {
+      client.ws.send(JSON.stringify(message));
+    } catch (error) {
+      console.error(`Failed to send message to client ${clientId}:`, error);
+    }
+  }
+
+  pingClients() {
+    const now = Date.now();
+    
+    for (const [clientId, client] of this.clients) {
+      if (client.ws.readyState === WebSocket.OPEN) {
+        // Remove clients that haven't ponged in 60 seconds
+        if (now - client.lastPing > 60000) {
+          console.log(`Client ${clientId} timeout, disconnecting`);
+          client.ws.terminate();
+          continue;
+        }
+        
+        client.ws.ping();
+      }
+    }
+  }
+
+  createDashboard(config) {
+    const dashboard = {
+      id: this.generateClientId(),
+      name: config.name || 'New Dashboard',
+      description: config.description || '',
+      widgets: config.widgets || [],
+      layout: config.layout || 'grid',
+      autoRefresh: config.autoRefresh || 5000,
+      created: new Date().toISOString(),
+      updated: new Date().toISOString()
+    };
+
+    this.dashboards.set(dashboard.id, dashboard);
+    return dashboard;
+  }
+
+  generateClientId() {
+    return Math.random().toString(36).substr(2, 9);
+  }
+
+  start() {
+    this.server.listen(this.port, () => {
+      console.log(`Real-time dashboard server listening on port ${this.port}`);
+    });
+  }
+}</code></pre>
+
+  <!-- ─── CLIENT-SIDE DASHBOARD ──────────── -->
+  <h2 id="client-dashboard">Client-Side Dashboard</h2>
+
+  <h3 id="dashboard-client">Dashboard Client Implementation</h3>
+
+  <pre><code>// Dashboard client-side implementation
+class DashboardClient {
+  constructor(wsUrl) {
+    this.wsUrl = wsUrl;
+    this.ws = null;
+    this.connected = false;
+    this.subscriptions = new Map();
+    this.queryCallbacks = new Map();
+    this.reconnectAttempts = 0;
+    this.maxReconnectAttempts = 10;
+    this.reconnectDelay = 1000;
+    
+    this.eventHandlers = new Map();
+    
+    this.connect();
+  }
+
+  connect() {
+    try {
+      this.ws = new WebSocket(this.wsUrl);
+      
+      this.ws.onopen = () => {
+        console.log('Connected to dashboard server');
+        this.connected = true;
+        this.reconnectAttempts = 0;
+        this.emit('connected');
+      };
+
+      this.ws.onmessage = (event) => {
+        this.handleMessage(JSON.parse(event.data));
+      };
+
+      this.ws.onclose = () => {
+        console.log('Disconnected from dashboard server');
+        this.connected = false;
+        this.emit('disconnected');
+        this.attemptReconnect();
+      };
+
+      this.ws.onerror = (error) => {
+        console.error('WebSocket error:', error);
+        this.emit('error', error);
+      };
+    } catch (error) {
+      console.error('Failed to connect:', error);
+      this.attemptReconnect();
+    }
+  }
+
+  handleMessage(message) {
+    switch (message.type) {
+      case 'connected':
+        console.log(`Client ID: ${message.clientId}`);
+        break;
+      case 'event':
+        this.emit('event', message.data);
+        break;
+      case 'windowResult':
+        this.emit('windowResult', message.data);
+        break;
+      case 'windowUpdate':
+        this.emit('windowUpdate', message.data);
+        break;
+      case 'filterMatch':
+        this.emit('filterMatch', message.data);
+        break;
+      case 'queryResult':
+        this.handleQueryResult(message);
+        break;
+      case 'queryError':
+        this.handleQueryError(message);
+        break;
+      case 'subscribed':
+        console.log(`Subscribed to ${message.topic}`);
+        break;
+      case 'pong':
+        // Handle pong
+        break;
+      default:
+        console.log('Unknown message type:', message.type);
+    }
+  }
+
+  subscribe(topic, callback) {
+    if (!this.connected) {
+      console.warn('Not connected, subscription will be queued');
+    }
+
+    this.subscriptions.set(topic, callback);
+    this.on(topic, callback);
+
+    if (this.connected) {
+      this.send({
+        type: 'subscribe',
+        topic
+      });
+    }
+  }
+
+  unsubscribe(topic) {
+    this.subscriptions.delete(topic);
+    this.off(topic);
+
+    if (this.connected) {
+      this.send({
+        type: 'unsubscribe',
+        topic
+      });
+    }
+  }
+
+  query(params) {
+    return new Promise((resolve, reject) => {
+      const queryId = Math.random().toString(36).substr(2, 9);
+      
+      this.queryCallbacks.set(queryId, { resolve, reject });
+      
+      this.send({
+        type: 'query',
+        queryId,
+        params
+      });
+    });
+  }
+
+  handleQueryResult(message) {
+    const callback = this.queryCallbacks.get(message.queryId);
+    if (callback) {
+      callback.resolve(message.results);
+      this.queryCallbacks.delete(message.queryId);
+    }
+  }
+
+  handleQueryError(message) {
+    const callback = this.queryCallbacks.get(message.queryId);
+    if (callback) {
+      callback.reject(new Error(message.error));
+      this.queryCallbacks.delete(message.queryId);
+    }
+  }
+
+  send(message) {
+    if (this.connected && this.ws.readyState === WebSocket.OPEN) {
+      this.ws.send(JSON.stringify(message));
+    } else {
+      console.warn('Cannot send message, not connected');
+    }
+  }
+
+  attemptReconnect() {
+    if (this.reconnectAttempts >= this.maxReconnectAttempts) {
+      console.error('Max reconnection attempts reached');
+      return;
+    }
+
+    this.reconnectAttempts++;
+    const delay = this.reconnectDelay * Math.pow(2, this.reconnectAttempts - 1);
+    
+    console.log(`Attempting to reconnect in ${delay}ms (attempt ${this.reconnectAttempts})`);
+    
+    setTimeout(() => {
+      this.connect();
+    }, delay);
+  }
+
+  on(event, callback) {
+    if (!this.eventHandlers.has(event)) {
+      this.eventHandlers.set(event, []);
+    }
+    this.eventHandlers.get(event).push(callback);
+  }
+
+  off(event, callback = null) {
+    if (!this.eventHandlers.has(event)) return;
+
+    if (callback) {
+      const handlers = this.eventHandlers.get(event);
+      const index = handlers.indexOf(callback);
+      if (index > -1) {
+        handlers.splice(index, 1);
+      }
+    } else {
+      this.eventHandlers.delete(event);
+    }
+  }
+
+  emit(event, data = null) {
+    if (!this.eventHandlers.has(event)) return;
+
+    this.eventHandlers.get(event).forEach(callback => {
+      try {
+        callback(data);
+      } catch (error) {
+        console.error(`Error in event handler for ${event}:`, error);
+      }
+    });
+  }
+
+  disconnect() {
+    if (this.ws) {
+      this.ws.close();
+    }
+  }
+}
+
+// Dashboard widget system
+class DashboardWidget {
+  constructor(container, config) {
+    this.container = container;
+    this.config = {
+      type: 'chart',
+      title: 'Widget',
+      refreshInterval: 5000,
+      ...config
+    };
+    
+    this.data = [];
+    this.chart = null;
+    
+    this.createElement();
+    this.setupRefresh();
+  }
+
+  createElement() {
+    this.element = document.createElement('div');
+    this.element.className = 'dashboard-widget';
+    this.element.innerHTML = `
+      <div class="widget-header">
+        <h3>${this.config.title}</h3>
+        <button class="widget-refresh">↻</button>
+      </div>
+      <div class="widget-content">
+        <canvas class="widget-chart"></canvas>
+      </div>
+    `;
+    
+    this.container.appendChild(this.element);
+    this.canvas = this.element.querySelector('.widget-chart');
+    
+    // Setup refresh button
+    this.element.querySelector('.widget-refresh').addEventListener('click', () => {
+      this.refresh();
+    });
+  }
+
+  setupRefresh() {
+    if (this.config.refreshInterval > 0) {
+      setInterval(() => {
+        this.refresh();
+      }, this.config.refreshInterval);
+    }
+  }
+
+  async refresh() {
+    try {
+      const data = await this.fetchData();
+      this.updateData(data);
+      this.render();
+    } catch (error) {
+      console.error(`Widget refresh failed:`, error);
+    }
+  }
+
+  async fetchData() {
+    // Override in subclasses
+    return [];
+  }
+
+  updateData(newData) {
+    this.data = newData;
+  }
+
+  render() {
+    // Override in subclasses
+    console.log('Rendering widget with data:', this.data);
+  }
+}
+
+// Example: Real-time line chart widget
+class LineChartWidget extends DashboardWidget {
+  constructor(container, config) {
+    super(container, config);
+    this.initChart();
+  }
+
+  initChart() {
+    const ctx = this.canvas.getContext('2d');
+    
+    this.chart = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: [],
+        datasets: [{
+          label: this.config.metric || 'Value',
+          data: [],
+          borderColor: 'rgb(75, 192, 192)',
+          backgroundColor: 'rgba(75, 192, 192, 0.2)',
+          tension: 0.4
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+          y: {
+            beginAtZero: true
+          }
+        },
+        plugins: {
+          legend: {
+            display: false
+          }
+        }
+      }
+    });
+  }
+
+  updateData(newData) {
+    super.updateData(newData);
+    
+    // Update chart data
+    const labels = newData.map(item => 
+      new Date(item.timestamp).toLocaleTimeString()
+    );
+    const values = newData.map(item => item.count || item.value || 0);
+    
+    this.chart.data.labels = labels;
+    this.chart.data.datasets[0].data = values;
+    this.chart.update('none'); // No animation for real-time updates
+  }
+
+  async fetchData() {
+    // Implement data fetching logic
+    const response = await fetch(`/api/data/${this.config.stream}?limit=20`);
+    return await response.json();
+  }
+}</code></pre>
+
+  <!-- ─── BEST PRACTICES ─────────────────── -->
+  <h2 id="best-practices">Best Practices</h2>
+
+  <ul>
+    <li><strong>Stream Processing</strong> - Use efficient windowing and aggregation strategies</li>
+    <li><strong>Data Retention</strong> - Implement appropriate data cleanup policies</li>
+    <li><strong>Scalability</strong> - Design for horizontal scaling with partitioning</li>
+    <li><strong>Latency Optimization</strong> - Minimize processing delays for real-time insights</li>
+    <li><strong>Fault Tolerance</strong> - Handle failures gracefully with retry mechanisms</li>
+    <li><strong>Resource Management</strong> - Monitor memory usage and optimize data structures</li>
+    <li><strong>Dashboard Performance</strong> - Use efficient visualization techniques</li>
+  </ul>
+
+  <div class="callout">
+    <div class="callout-title">⚡ Real-Time Performance</div>
+    <p>
+      Effective real-time analytics requires balancing speed, accuracy, and
+      resource efficiency. Focus on stream processing optimization, efficient
+      data structures, and responsive visualization to deliver actionable
+      insights in real-time.
+    </p>
+  </div>
+
+</div>

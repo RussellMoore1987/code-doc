@@ -1,0 +1,588 @@
+<div class="content-body">
+
+  <h1 id="response-formatting">Response Formatting</h1>
+
+  <p>
+    Implement consistent, well-structured API response formatting to improve client
+    integration, debugging, and overall API usability. This guide covers response
+    standards, error handling, pagination, and content negotiation.
+  </p>
+
+  <div class="callout">
+    <div class="callout-title">📊 Consistency Matters</div>
+    <p>
+      Consistent response formatting reduces integration complexity for API consumers,
+      improves debugging efficiency, and creates a professional developer experience
+      that encourages API adoption and reduces support overhead.
+    </p>
+  </div>
+
+  <!-- ─── RESPONSE STANDARDS ────────────── -->
+  <h2 id="response-standards">Response Standards</h2>
+
+  <h3 id="success-responses">Success Responses</h3>
+
+  <pre><code>// Standard success response format
+{
+  "success": true,
+  "data": {
+    // Actual response data
+  },
+  "meta": {
+    "timestamp": "2026-04-22T10:30:00Z",
+    "requestId": "req_abc123",
+    "version": "1.0",
+    "processingTime": 45
+  }
+}
+
+// Collection response with pagination
+{
+  "success": true,
+  "data": [
+    {
+      "id": 1,
+      "name": "Item 1"
+    },
+    {
+      "id": 2,
+      "name": "Item 2"
+    }
+  ],
+  "meta": {
+    "pagination": {
+      "page": 1,
+      "limit": 20,
+      "total": 150,
+      "totalPages": 8,
+      "hasNext": true,
+      "hasPrev": false
+    },
+    "timestamp": "2026-04-22T10:30:00Z",
+    "requestId": "req_def456"
+  },
+  "links": {
+    "self": "/api/items?page=1&limit=20",
+    "next": "/api/items?page=2&limit=20",
+    "last": "/api/items?page=8&limit=20"
+  }
+}</code></pre>
+
+  <h3 id="error-responses">Error Responses</h3>
+
+  <pre><code>// Standard error response format
+{
+  "success": false,
+  "error": {
+    "code": "VALIDATION_ERROR",
+    "message": "The request contains invalid data",
+    "details": [
+      {
+        "field": "email",
+        "message": "Email is required",
+        "code": "REQUIRED_FIELD"
+      },
+      {
+        "field": "age",
+        "message": "Age must be a positive number",
+        "code": "INVALID_TYPE"
+      }
+    ]
+  },
+  "meta": {
+    "timestamp": "2026-04-22T10:30:00Z",
+    "requestId": "req_error123",
+    "documentation": "https://api.example.com/docs/errors#validation"
+  }
+}
+
+// HTTP error response
+{
+  "success": false,
+  "error": {
+    "code": "RESOURCE_NOT_FOUND",
+    "message": "The requested user was not found",
+    "details": {
+      "resource": "user",
+      "identifier": "user123"
+    }
+  },
+  "meta": {
+    "timestamp": "2026-04-22T10:30:00Z",
+    "requestId": "req_404abc"
+  }
+}</code></pre>
+
+  <!-- ─── RESPONSE FORMATTER CLASS ─────── -->
+  <h2 id="response-formatter">Response Formatter</h2>
+
+  <h3 id="formatter-implementation">Formatter Implementation</h3>
+
+  <pre><code>class ResponseFormatter {
+  constructor(options = {}) {
+    this.options = {
+      includeTimestamp: true,
+      includeRequestId: true,
+      includeProcessingTime: true,
+      includeVersion: true,
+      version: '1.0',
+      ...options
+    };
+  }
+
+  success(data, meta = {}, links = {}) {
+    const response = {
+      success: true,
+      data,
+      meta: this.buildMeta(meta),
+    };
+
+    if (Object.keys(links).length > 0) {
+      response.links = links;
+    }
+
+    return response;
+  }
+
+  error(error, statusCode = 500, meta = {}) {
+    const response = {
+      success: false,
+      error: this.formatError(error, statusCode),
+      meta: this.buildMeta(meta)
+    };
+
+    return response;
+  }
+
+  paginated(data, pagination, links = {}, meta = {}) {
+    return this.success(data, {
+      ...meta,
+      pagination: this.formatPagination(pagination)
+    }, links);
+  }
+
+  buildMeta(customMeta = {}) {
+    const meta = { ...customMeta };
+
+    if (this.options.includeTimestamp) {
+      meta.timestamp = new Date().toISOString();
+    }
+
+    if (this.options.includeRequestId && this.requestId) {
+      meta.requestId = this.requestId;
+    }
+
+    if (this.options.includeProcessingTime && this.startTime) {
+      meta.processingTime = Date.now() - this.startTime;
+    }
+
+    if (this.options.includeVersion) {
+      meta.version = this.options.version;
+    }
+
+    return meta;
+  }
+
+  formatError(error, statusCode) {
+    if (typeof error === 'string') {
+      return {
+        code: this.getErrorCode(statusCode),
+        message: error
+      };
+    }
+
+    if (error instanceof Error) {
+      return {
+        code: error.code || this.getErrorCode(statusCode),
+        message: error.message,
+        details: error.details || undefined
+      };
+    }
+
+    return {
+      code: error.code || this.getErrorCode(statusCode),
+      message: error.message || 'An error occurred',
+      details: error.details
+    };
+  }
+
+  formatPagination(pagination) {
+    return {
+      page: pagination.page,
+      limit: pagination.limit,
+      total: pagination.total,
+      totalPages: Math.ceil(pagination.total / pagination.limit),
+      hasNext: pagination.page * pagination.limit < pagination.total,
+      hasPrev: pagination.page > 1
+    };
+  }
+
+  getErrorCode(statusCode) {
+    const codes = {
+      400: 'BAD_REQUEST',
+      401: 'UNAUTHORIZED',
+      403: 'FORBIDDEN',
+      404: 'NOT_FOUND',
+      409: 'CONFLICT',
+      422: 'VALIDATION_ERROR',
+      429: 'RATE_LIMIT_EXCEEDED',
+      500: 'INTERNAL_ERROR'
+    };
+
+    return codes[statusCode] || 'UNKNOWN_ERROR';
+  }
+
+  setRequestContext(req) {
+    this.requestId = req.id || req.headers['x-request-id'];
+    this.startTime = req.startTime || Date.now();
+    return this;
+  }
+}</code></pre>
+
+  <h3 id="express-middleware">Express Middleware</h3>
+
+  <pre><code>// Response formatting middleware
+const responseFormatter = (req, res, next) => {
+  const formatter = new ResponseFormatter();
+  formatter.setRequestContext(req);
+
+  // Add helper methods to response object
+  res.success = (data, meta, links) => {
+    const response = formatter.success(data, meta, links);
+    return res.json(response);
+  };
+
+  res.error = (error, statusCode = 500, meta) => {
+    const response = formatter.error(error, statusCode, meta);
+    return res.status(statusCode).json(response);
+  };
+
+  res.paginated = (data, pagination, links, meta) => {
+    const response = formatter.paginated(data, pagination, links, meta);
+    return res.json(response);
+  };
+
+  res.created = (data, meta) => {
+    const response = formatter.success(data, meta);
+    return res.status(201).json(response);
+  };
+
+  res.noContent = () => {
+    return res.status(204).send();
+  };
+
+  next();
+};
+
+// Usage in routes
+app.get('/api/users', async (req, res) => {
+  try {
+    const { page = 1, limit = 20 } = req.query;
+    const users = await getUsersPaginated(page, limit);
+    
+    const links = {
+      self: `/api/users?page=${page}&limit=${limit}`,
+      next: users.hasNext ? `/api/users?page=${page + 1}&limit=${limit}` : null,
+      prev: users.hasPrev ? `/api/users?page=${page - 1}&limit=${limit}` : null
+    };
+
+    return res.paginated(users.data, users.pagination, links);
+  } catch (error) {
+    return res.error(error, 500);
+  }
+});
+
+app.post('/api/users', async (req, res) => {
+  try {
+    const user = await createUser(req.body);
+    return res.created(user, { location: `/api/users/${user.id}` });
+  } catch (error) {
+    if (error.name === 'ValidationError') {
+      return res.error(error, 422);
+    }
+    return res.error(error, 500);
+  }
+});</code></pre>
+
+  <!-- ─── CONTENT NEGOTIATION ───────────── -->
+  <h2 id="content-negotiation">Content Negotiation</h2>
+
+  <h3 id="format-negotiation">Format Negotiation</h3>
+
+  <pre><code>class ContentNegotiator {
+  constructor() {
+    this.formatters = new Map([
+      ['application/json', this.formatJSON],
+      ['application/xml', this.formatXML],
+      ['text/csv', this.formatCSV],
+      ['text/plain', this.formatText]
+    ]);
+  }
+
+  negotiate(req, data) {
+    const acceptHeader = req.get('Accept') || 'application/json';
+    const preferredType = this.parseAcceptHeader(acceptHeader);
+    
+    const formatter = this.formatters.get(preferredType) || 
+                     this.formatters.get('application/json');
+    
+    return {
+      contentType: preferredType,
+      data: formatter(data)
+    };
+  }
+
+  parseAcceptHeader(acceptHeader) {
+    const types = acceptHeader.split(',').map(type => {
+      const [mediaType, ...params] = type.trim().split(';');
+      const quality = params.find(p => p.trim().startsWith('q='));
+      const q = quality ? parseFloat(quality.split('=')[1]) : 1.0;
+      
+      return { mediaType: mediaType.trim(), quality: q };
+    });
+
+    // Sort by quality score
+    types.sort((a, b) => b.quality - a.quality);
+    
+    // Return the first supported type
+    for (const type of types) {
+      if (this.formatters.has(type.mediaType)) {
+        return type.mediaType;
+      }
+    }
+    
+    return 'application/json';
+  }
+
+  formatJSON(data) {
+    return JSON.stringify(data, null, 2);
+  }
+
+  formatXML(data) {
+    const toXML = (obj, rootName = 'response') => {
+      let xml = `<${rootName}>`;
+      
+      for (const [key, value] of Object.entries(obj)) {
+        if (Array.isArray(value)) {
+          xml += `<${key}>`;
+          value.forEach(item => {
+            xml += toXML(item, 'item');
+          });
+          xml += `</${key}>`;
+        } else if (typeof value === 'object' && value !== null) {
+          xml += toXML(value, key);
+        } else {
+          xml += `<${key}>${this.escapeXML(value)}</${key}>`;
+        }
+      }
+      
+      xml += `</${rootName}>`;
+      return xml;
+    };
+    
+    return '<?xml version="1.0" encoding="UTF-8"?>\n' + toXML(data);
+  }
+
+  formatCSV(data) {
+    if (!Array.isArray(data.data)) {
+      throw new Error('CSV format requires array data');
+    }
+
+    const items = data.data;
+    if (items.length === 0) return '';
+
+    const headers = Object.keys(items[0]);
+    const csvRows = [headers.join(',')];
+
+    items.forEach(item => {
+      const values = headers.map(header => {
+        const value = item[header];
+        return typeof value === 'string' && value.includes(',') 
+          ? `"${value}"` 
+          : value;
+      });
+      csvRows.push(values.join(','));
+    });
+
+    return csvRows.join('\n');
+  }
+
+  formatText(data) {
+    return JSON.stringify(data, null, 2);
+  }
+
+  escapeXML(value) {
+    if (typeof value !== 'string') return value;
+    
+    return value
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
+}</code></pre>
+
+  <!-- ─── RESPONSE COMPRESSION ──────────── -->
+  <h2 id="response-compression">Response Compression</h2>
+
+  <h3 id="compression-middleware">Compression Middleware</h3>
+
+  <pre><code>const compression = require('compression');
+const zlib = require('zlib');
+
+// Smart compression based on content type and size
+const smartCompression = compression({
+  // Only compress responses larger than 1KB
+  threshold: 1024,
+  
+  // Compression level (1-9, higher = better compression but slower)
+  level: 6,
+  
+  // Compress these MIME types
+  filter: (req, res) => {
+    if (req.headers['x-no-compression']) {
+      return false;
+    }
+    
+    const contentType = res.get('Content-Type');
+    const compressibleTypes = [
+      'application/json',
+      'application/xml',
+      'text/plain',
+      'text/html',
+      'text/css',
+      'application/javascript'
+    ];
+    
+    return compressibleTypes.some(type => 
+      contentType && contentType.includes(type)
+    );
+  },
+
+  // Use gzip for most clients, brotli for modern browsers
+  strategy: (req, res) => {
+    const acceptEncoding = req.get('Accept-Encoding') || '';
+    
+    if (acceptEncoding.includes('br')) {
+      return zlib.constants.BROTLI_ENCODE;
+    } else if (acceptEncoding.includes('gzip')) {
+      return zlib.constants.GZIP;
+    }
+    
+    return null; // No compression
+  }
+});
+
+// Response size monitoring
+const responseSizeMonitor = (req, res, next) => {
+  const originalSend = res.send;
+  const originalJson = res.json;
+  
+  res.send = function(body) {
+    if (body) {
+      res.set('X-Response-Size', Buffer.byteLength(body));
+    }
+    return originalSend.call(this, body);
+  };
+  
+  res.json = function(obj) {
+    const jsonString = JSON.stringify(obj);
+    res.set('X-Response-Size', Buffer.byteLength(jsonString));
+    return originalJson.call(this, obj);
+  };
+  
+  next();
+};</code></pre>
+
+  <!-- ─── CACHING HEADERS ───────────────── -->
+  <h2 id="caching-headers">Caching Headers</h2>
+
+  <h3 id="cache-control">Cache Control</h3>
+
+  <pre><code>class CacheHeaderManager {
+  static setCacheHeaders(res, options = {}) {
+    const {
+      maxAge = 0,
+      private = false,
+      noCache = false,
+      noStore = false,
+      mustRevalidate = false,
+      staleWhileRevalidate = 0,
+      etag = null
+    } = options;
+
+    let cacheControl = [];
+
+    if (noStore) {
+      cacheControl.push('no-store');
+    } else if (noCache) {
+      cacheControl.push('no-cache');
+    } else {
+      cacheControl.push(private ? 'private' : 'public');
+      cacheControl.push(`max-age=${maxAge}`);
+      
+      if (staleWhileRevalidate > 0) {
+        cacheControl.push(`stale-while-revalidate=${staleWhileRevalidate}`);
+      }
+    }
+
+    if (mustRevalidate) {
+      cacheControl.push('must-revalidate');
+    }
+
+    res.set('Cache-Control', cacheControl.join(', '));
+
+    if (etag) {
+      res.set('ETag', `"${etag}"`);
+    }
+
+    // Set Vary header for content negotiation
+    res.set('Vary', 'Accept, Accept-Encoding');
+  }
+
+  static cacheMiddleware(options) {
+    return (req, res, next) => {
+      // Set cache headers based on route or resource type
+      const cacheConfig = this.getCacheConfig(req.path, options);
+      this.setCacheHeaders(res, cacheConfig);
+      
+      next();
+    };
+  }
+
+  static getCacheConfig(path, options) {
+    const configs = {
+      '/api/users': { maxAge: 300, private: true }, // 5 minutes
+      '/api/posts': { maxAge: 600 }, // 10 minutes
+      '/api/config': { maxAge: 3600 }, // 1 hour
+      '/api/auth': { noCache: true }
+    };
+
+    return configs[path] || options.default || { maxAge: 0 };
+  }
+}</code></pre>
+
+  <!-- ─── BEST PRACTICES ─────────────────── -->
+  <h2 id="best-practices">Best Practices</h2>
+
+  <ul>
+    <li><strong>Consistency</strong> - Use the same response format across all endpoints</li>
+    <li><strong>Meaningful Errors</strong> - Provide clear, actionable error messages</li>
+    <li><strong>Proper Status Codes</strong> - Use appropriate HTTP status codes</li>
+    <li><strong>Pagination</strong> - Always paginate large result sets</li>
+    <li><strong>Metadata</strong> - Include relevant metadata like timestamps and request IDs</li>
+    <li><strong>Compression</strong> - Compress responses to reduce bandwidth usage</li>
+    <li><strong>Caching</strong> - Set appropriate cache headers for performance</li>
+  </ul>
+
+  <div class="callout">
+    <div class="callout-title">🔄 Response Evolution</div>
+    <p>
+      Design your response format to be extensible. Use versioning strategies
+      that allow you to evolve your API without breaking existing clients.
+      Consider backwards compatibility and provide migration paths for major changes.
+    </p>
+  </div>
+
+</div>

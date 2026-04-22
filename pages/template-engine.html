@@ -1,0 +1,644 @@
+<div class="content-body">
+
+  <h1 id="template-engine">Template Engine</h1>
+
+  <p>
+    Build and integrate a powerful template engine for dynamic content generation.
+    This guide covers template syntax, rendering optimization, security considerations,
+    and advanced templating features like inheritance and partial includes.
+  </p>
+
+  <div class="callout">
+    <div class="callout-title">📝 Template Power</div>
+    <p>
+      A well-designed template engine separates presentation logic from business logic,
+      enabling designers and developers to work independently while maintaining
+      consistency and reusability across your application.
+    </p>
+  </div>
+
+  <!-- ─── TEMPLATE SYNTAX ────────────────── -->
+  <h2 id="template-syntax">Template Syntax</h2>
+
+  <p>
+    Define a clean, intuitive syntax for template expressions and control structures:
+  </p>
+
+  <h3 id="basic-expressions">Basic Expressions</h3>
+
+  <pre><code>&lt;!-- Variable interpolation --&gt;
+&lt;h1&gt;{{ title }}&lt;/h1&gt;
+&lt;p&gt;Welcome, {{ user.name }}!&lt;/p&gt;
+
+&lt;!-- Filters --&gt;
+&lt;p&gt;{{ price | currency }}&lt;/p&gt;
+&lt;p&gt;{{ content | truncate(100) | markdown }}&lt;/p&gt;
+
+&lt;!-- Safe HTML output --&gt;
+&lt;div&gt;{{{ htmlContent }}}&lt;/div&gt;
+
+&lt;!-- Conditional expressions --&gt;
+&lt;span class=\"{{ isActive ? 'active' : 'inactive' }}\"&gt;Status&lt;/span&gt;</code></pre>
+
+  <h3 id="control-structures">Control Structures</h3>
+
+  <pre><code>&lt;!-- Conditionals --&gt;
+{% if user.isAuthenticated %}
+  &lt;p&gt;Welcome back, {{ user.name }}!&lt;/p&gt;
+{% elif user.isGuest %}
+  &lt;p&gt;Hello, guest!&lt;/p&gt;
+{% else %}
+  &lt;p&gt;Please log in.&lt;/p&gt;
+{% endif %}
+
+&lt;!-- Loops --&gt;
+{% for item in items %}
+  &lt;div class=\"item\"&gt;
+    &lt;h3&gt;{{ item.title }}&lt;/h3&gt;
+    &lt;p&gt;{{ item.description }}&lt;/p&gt;
+    
+    {% if loop.first %}
+      &lt;span class=\"badge\"&gt;First&lt;/span&gt;
+    {% endif %}
+    
+    {% if loop.last %}
+      &lt;span class=\"badge\"&gt;Last&lt;/span&gt;
+    {% endif %}
+  &lt;/div&gt;
+{% empty %}
+  &lt;p&gt;No items found.&lt;/p&gt;
+{% endfor %}
+
+&lt;!-- Switch statements --&gt;
+{% switch user.role %}
+  {% case 'admin' %}
+    &lt;div class=\"admin-panel\"&gt;...&lt;/div&gt;
+  {% case 'moderator' %}
+    &lt;div class=\"mod-panel\"&gt;...&lt;/div&gt;
+  {% default %}
+    &lt;div class=\"user-panel\"&gt;...&lt;/div&gt;
+{% endswitch %}</code></pre>
+
+  <!-- ─── TEMPLATE ENGINE CORE ──────────── -->
+  <h2 id="template-engine-core">Template Engine Core</h2>
+
+  <h3 id="lexer-parser">Lexer & Parser</h3>
+
+  <pre><code>class TemplateEngine {
+  constructor(options = {}) {
+    this.options = {
+      delimiters: {
+        variable: ['{{', '}}'],
+        block: ['{%', '%}'],
+        comment: ['{#', '#}']
+      },
+      autoescape: true,
+      cache: true,
+      ...options
+    };
+    
+    this.templates = new Map();
+    this.filters = new Map();
+    this.globals = new Map();
+    this.partials = new Map();
+  }
+
+  tokenize(template) {
+    const tokens = [];
+    let position = 0;
+    
+    const patterns = [
+      { type: 'VARIABLE', regex: /\{\{\s*(.*?)\s*\}\}/ },
+      { type: 'BLOCK_START', regex: /\{\%\s*(.*?)\s*\%\}/ },
+      { type: 'COMMENT', regex: /\{\#(.*?)\#\}/ },
+      { type: 'TEXT', regex: /([^{]+)/ }
+    ];
+
+    while (position < template.length) {
+      let matched = false;
+      
+      for (const pattern of patterns) {
+        const regex = new RegExp(pattern.regex.source, 'y');
+        regex.lastIndex = position;
+        const match = regex.exec(template);
+        
+        if (match) {
+          if (pattern.type === 'TEXT' || match[0].trim()) {
+            tokens.push({
+              type: pattern.type,
+              value: match[1] || match[0],
+              position
+            });
+          }
+          position = regex.lastIndex;
+          matched = true;
+          break;
+        }
+      }
+      
+      if (!matched) {
+        position++;
+      }
+    }
+    
+    return tokens;
+  }
+
+  parse(tokens) {
+    const ast = { type: 'TEMPLATE', children: [] };
+    const stack = [ast];
+    
+    for (const token of tokens) {
+      const current = stack[stack.length - 1];
+      
+      switch (token.type) {
+        case 'TEXT':
+          current.children.push({
+            type: 'TEXT',
+            value: token.value
+          });
+          break;
+          
+        case 'VARIABLE':
+          current.children.push({
+            type: 'VARIABLE',
+            expression: this.parseExpression(token.value)
+          });
+          break;
+          
+        case 'BLOCK_START':
+          const blockNode = this.parseBlock(token.value);
+          if (blockNode.needsClosing) {
+            stack.push(blockNode);
+          }
+          current.children.push(blockNode);
+          break;
+      }
+    }
+    
+    return ast;
+  }
+
+  parseExpression(expr) {
+    // Handle filters: value | filter1 | filter2(arg)
+    const parts = expr.split('|').map(p => p.trim());
+    const variable = parts[0];
+    const filters = parts.slice(1).map(filterExpr => {
+      const match = filterExpr.match(/^(\w+)(?:\((.*)\))?$/);
+      return {
+        name: match[1],
+        args: match[2] ? match[2].split(',').map(s => s.trim()) : []
+      };
+    });
+    
+    return { variable, filters };
+  }
+
+  parseBlock(blockContent) {
+    const parts = blockContent.trim().split(/\s+/);
+    const blockType = parts[0];
+    
+    const blockParsers = {
+      'if': () => ({
+        type: 'IF',
+        condition: parts.slice(1).join(' '),
+        children: [],
+        needsClosing: true
+      }),
+      'for': () => ({
+        type: 'FOR',
+        variable: parts[1],
+        iterable: parts[3],
+        children: [],
+        needsClosing: true
+      }),
+      'include': () => ({
+        type: 'INCLUDE',
+        template: parts[1].replace(/['"]/g, ''),
+        needsClosing: false
+      })
+    };
+    
+    return blockParsers[blockType]?.() || { type: 'UNKNOWN' };
+  }
+}</code></pre>
+
+  <h3 id="template-compiler">Template Compiler</h3>
+
+  <pre><code>class TemplateCompiler {
+  compile(ast) {
+    return this.generateFunction(ast);
+  }
+
+  generateFunction(ast) {
+    let code = 'let output = "";\n';
+    
+    const generateNode = (node) => {
+      switch (node.type) {
+        case 'TEXT':
+          return `output += ${JSON.stringify(node.value)};\n`;
+          
+        case 'VARIABLE':
+          const expr = this.generateExpression(node.expression);
+          return `output += this.escape(${expr}) || '';\n`;
+          
+        case 'IF':
+          let ifCode = `if (${this.generateCondition(node.condition)}) {\n`;
+          node.children.forEach(child => {
+            ifCode += generateNode(child);
+          });
+          ifCode += '}\n';
+          return ifCode;
+          
+        case 'FOR':
+          let forCode = `
+            const iterable = ${node.iterable} || [];
+            const isArray = Array.isArray(iterable);
+            const items = isArray ? iterable : Object.entries(iterable);
+            
+            for (let i = 0; i < items.length; i++) {
+              const ${node.variable} = isArray ? items[i] : items[i][1];
+              const loop = {
+                index: i,
+                index0: i,
+                first: i === 0,
+                last: i === items.length - 1,
+                length: items.length
+              };
+          `;
+          
+          node.children.forEach(child => {
+            forCode += generateNode(child);
+          });
+          forCode += '}\n';
+          return forCode;
+          
+        case 'INCLUDE':
+          return `output += this.renderPartial('${node.template}', context);\n`;
+          
+        default:
+          return '';
+      }
+    };
+
+    ast.children.forEach(child => {
+      code += generateNode(child);
+    });
+
+    code += 'return output;';
+    
+    return new Function('context', code);
+  }
+
+  generateExpression(expr) {
+    let code = `context.${expr.variable}`;
+    
+    expr.filters.forEach(filter => {
+      const args = filter.args.map(arg => {
+        // Simple argument parsing - could be more sophisticated
+        return isNaN(arg) ? `'${arg}'` : arg;
+      }).join(', ');
+      
+      code = `this.applyFilter('${filter.name}', ${code}${args ? ', ' + args : ''})`;
+    });
+    
+    return code;
+  }
+
+  generateCondition(condition) {
+    // Basic condition parsing - handle variables and operators
+    return condition
+      .replace(/\b(\w+)\b/g, 'context.$1')
+      .replace(/context\.(true|false|null|undefined)/g, '$1');
+  }
+}</code></pre>
+
+  <!-- ─── TEMPLATE INHERITANCE ──────────── -->
+  <h2 id="template-inheritance">Template Inheritance</h2>
+
+  <p>
+    Implement template inheritance for layout reuse and content organization:
+  </p>
+
+  <h3 id="base-templates">Base Templates</h3>
+
+  <pre><code>&lt;!-- layouts/base.html --&gt;
+&lt;!DOCTYPE html&gt;
+&lt;html lang=\"{{ language || 'en' }}\"&gt;
+&lt;head&gt;
+  &lt;meta charset=\"UTF-8\"&gt;
+  &lt;meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\"&gt;
+  &lt;title&gt;{% block title %}{{ siteTitle }}{% endblock %}&lt;/title&gt;
+  
+  {% block head %}
+    &lt;link rel=\"stylesheet\" href=\"/css/main.css\"&gt;
+  {% endblock %}
+&lt;/head&gt;
+&lt;body&gt;
+  &lt;header&gt;
+    {% block header %}
+      {% include 'partials/navigation.html' %}
+    {% endblock %}
+  &lt;/header&gt;
+  
+  &lt;main&gt;
+    {% block content %}
+      &lt;p&gt;Default content&lt;/p&gt;
+    {% endblock %}
+  &lt;/main&gt;
+  
+  &lt;footer&gt;
+    {% block footer %}
+      {% include 'partials/footer.html' %}
+    {% endblock %}
+  &lt;/footer&gt;
+  
+  {% block scripts %}
+    &lt;script src=\"/js/main.js\"&gt;&lt;/script&gt;
+  {% endblock %}
+&lt;/body&gt;
+&lt;/html&gt;</code></pre>
+
+  <h3 id="child-templates">Child Templates</h3>
+
+  <pre><code>&lt;!-- pages/article.html --&gt;
+{% extends 'layouts/base.html' %}
+
+{% block title %}{{ article.title }} - {{ super() }}{% endblock %}
+
+{% block head %}
+  {{ super() }}
+  &lt;meta name=\"description\" content=\"{{ article.excerpt }}\"&gt;
+  &lt;meta property=\"og:title\" content=\"{{ article.title }}\"&gt;
+  &lt;meta property=\"og:description\" content=\"{{ article.excerpt }}\"&gt;
+{% endblock %}
+
+{% block content %}
+  &lt;article class=\"article\"&gt;
+    &lt;header class=\"article-header\"&gt;
+      &lt;h1&gt;{{ article.title }}&lt;/h1&gt;
+      &lt;div class=\"article-meta\"&gt;
+        &lt;time datetime=\"{{ article.publishedAt | date('Y-m-d') }}\"&gt;
+          {{ article.publishedAt | date('F j, Y') }}
+        &lt;/time&gt;
+        &lt;span class=\"author\"&gt;by {{ article.author.name }}&lt;/span&gt;
+      &lt;/div&gt;
+    &lt;/header&gt;
+    
+    &lt;div class=\"article-content\"&gt;
+      {{{ article.content | markdown }}}
+    &lt;/div&gt;
+    
+    {% if article.tags.length %}
+      &lt;footer class=\"article-footer\"&gt;
+        &lt;div class=\"tags\"&gt;
+          {% for tag in article.tags %}
+            &lt;a href=\"/tags/{{ tag.slug }}\" class=\"tag\"&gt;{{ tag.name }}&lt;/a&gt;
+          {% endfor %}
+        &lt;/div&gt;
+      &lt;/footer&gt;
+    {% endif %}
+  &lt;/article&gt;
+{% endblock %}</code></pre>
+
+  <!-- ─── FILTERS & HELPERS ──────────────── -->
+  <h2 id="filters-helpers">Filters & Helpers</h2>
+
+  <h3 id="built-in-filters">Built-in Filters</h3>
+
+  <pre><code>class TemplateFilters {
+  constructor() {
+    this.filters = new Map([
+      ['date', this.dateFilter],
+      ['currency', this.currencyFilter],
+      ['truncate', this.truncateFilter],
+      ['markdown', this.markdownFilter],
+      ['url', this.urlFilter],
+      ['json', this.jsonFilter],
+      ['default', this.defaultFilter],
+      ['length', this.lengthFilter],
+      ['upper', this.upperFilter],
+      ['lower', this.lowerFilter],
+      ['capitalize', this.capitalizeFilter]
+    ]);
+  }
+
+  dateFilter(date, format = 'Y-m-d') {
+    if (!date) return '';
+    const d = new Date(date);
+    
+    const formatMap = {
+      'Y': d.getFullYear(),
+      'm': String(d.getMonth() + 1).padStart(2, '0'),
+      'd': String(d.getDate()).padStart(2, '0'),
+      'H': String(d.getHours()).padStart(2, '0'),
+      'i': String(d.getMinutes()).padStart(2, '0'),
+      's': String(d.getSeconds()).padStart(2, '0'),
+      'F': d.toLocaleDateString('en', { month: 'long' }),
+      'j': d.getDate()
+    };
+    
+    return format.replace(/[YmdhisFj]/g, match => formatMap[match] || match);
+  }
+
+  currencyFilter(amount, currency = 'USD') {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: currency
+    }).format(amount);
+  }
+
+  truncateFilter(str, length = 100, suffix = '...') {
+    if (!str || str.length <= length) return str;
+    return str.substring(0, length).trim() + suffix;
+  }
+
+  markdownFilter(text) {
+    // Basic markdown processing
+    return text
+      .replace(/\*\*(.*?)\*\*/g, '&lt;strong&gt;$1&lt;/strong&gt;')
+      .replace(/\*(.*?)\*/g, '&lt;em&gt;$1&lt;/em&gt;')
+      .replace(/`(.*?)`/g, '&lt;code&gt;$1&lt;/code&gt;')
+      .replace(/\n\n/g, '&lt;/p&gt;&lt;p&gt;')
+      .replace(/\n/g, '&lt;br&gt;');
+  }
+
+  urlFilter(path, params = {}) {
+    const url = new URL(path, 'http://localhost');
+    Object.entries(params).forEach(([key, value]) => {
+      url.searchParams.set(key, value);
+    });
+    return url.pathname + url.search;
+  }
+
+  defaultFilter(value, defaultValue) {
+    return value || defaultValue;
+  }
+}</code></pre>
+
+  <!-- ─── PERFORMANCE OPTIMIZATION ──────── -->
+  <h2 id="performance-optimization">Performance Optimization</h2>
+
+  <h3 id="template-caching">Template Caching</h3>
+
+  <pre><code>class TemplateCache {
+  constructor(options = {}) {
+    this.cache = new Map();
+    this.maxSize = options.maxSize || 100;
+    this.ttl = options.ttl || 3600000; // 1 hour
+    this.stats = {
+      hits: 0,
+      misses: 0
+    };
+  }
+
+  get(key) {
+    const cached = this.cache.get(key);
+    
+    if (!cached) {
+      this.stats.misses++;
+      return null;
+    }
+    
+    if (Date.now() > cached.expires) {
+      this.cache.delete(key);
+      this.stats.misses++;
+      return null;
+    }
+    
+    this.stats.hits++;
+    cached.lastAccessed = Date.now();
+    return cached.template;
+  }
+
+  set(key, template) {
+    if (this.cache.size >= this.maxSize) {
+      this.evictLRU();
+    }
+    
+    this.cache.set(key, {
+      template,
+      expires: Date.now() + this.ttl,
+      lastAccessed: Date.now()
+    });
+  }
+
+  evictLRU() {
+    let oldestKey = null;
+    let oldestTime = Date.now();
+    
+    for (const [key, cached] of this.cache) {
+      if (cached.lastAccessed < oldestTime) {
+        oldestTime = cached.lastAccessed;
+        oldestKey = key;
+      }
+    }
+    
+    if (oldestKey) {
+      this.cache.delete(oldestKey);
+    }
+  }
+
+  getStats() {
+    const total = this.stats.hits + this.stats.misses;
+    return {
+      ...this.stats,
+      hitRate: total > 0 ? this.stats.hits / total : 0,
+      size: this.cache.size
+    };
+  }
+}</code></pre>
+
+  <h3 id="precompilation">Template Precompilation</h3>
+
+  <pre><code>// Build-time template compilation
+const fs = require('fs');
+const path = require('path');
+
+class TemplatePrecompiler {
+  constructor(inputDir, outputDir) {
+    this.inputDir = inputDir;
+    this.outputDir = outputDir;
+    this.compiler = new TemplateCompiler();
+  }
+
+  async compileAll() {
+    const templates = await this.findTemplates(this.inputDir);
+    const compiled = new Map();
+    
+    for (const templatePath of templates) {
+      const relativePath = path.relative(this.inputDir, templatePath);
+      const source = await fs.promises.readFile(templatePath, 'utf8');
+      
+      try {
+        const tokens = this.tokenize(source);
+        const ast = this.parse(tokens);
+        const compiled = this.compiler.compile(ast);
+        
+        const outputPath = path.join(
+          this.outputDir,
+          relativePath.replace('.html', '.js')
+        );
+        
+        await this.writeCompiledTemplate(outputPath, compiled);
+        
+      } catch (error) {
+        console.error(`Failed to compile ${relativePath}:`, error);
+      }
+    }
+  }
+
+  async writeCompiledTemplate(outputPath, compiledFunction) {
+    const dir = path.dirname(outputPath);
+    await fs.promises.mkdir(dir, { recursive: true });
+    
+    const code = `
+      module.exports = function(context) {
+        const template = ${compiledFunction.toString()};
+        return template.call(this, context);
+      };
+    `;
+    
+    await fs.promises.writeFile(outputPath, code);
+  }
+
+  async findTemplates(dir) {
+    const templates = [];
+    const entries = await fs.promises.readdir(dir, { withFileTypes: true });
+    
+    for (const entry of entries) {
+      const fullPath = path.join(dir, entry.name);
+      
+      if (entry.isDirectory()) {
+        templates.push(...await this.findTemplates(fullPath));
+      } else if (entry.name.endsWith('.html')) {
+        templates.push(fullPath);
+      }
+    }
+    
+    return templates;
+  }
+}</code></pre>
+
+  <!-- ─── BEST PRACTICES ─────────────────── -->
+  <h2 id=\"best-practices\">Best Practices</h2>
+
+  <ul>
+    <li><strong>Security First</strong> - Always escape output unless explicitly marked safe</li>
+    <li><strong>Performance Conscious</strong> - Use template caching and precompilation</li>
+    <li><strong>Separation of Concerns</strong> - Keep logic in controllers, not templates</li>
+    <li><strong>Reusability</strong> - Leverage inheritance, partials, and components</li>
+    <li><strong>Error Handling</strong> - Provide helpful error messages with line numbers</li>
+    <li><strong>Documentation</strong> - Document custom filters and template conventions</li>
+  </ul>
+
+  <div class="callout">
+    <div class="callout-title">🎨 Template Design</div>
+    <p>
+      A good template engine balances power with simplicity. Provide enough features
+      for complex layouts while keeping the syntax clean and intuitive for designers.
+      Always prioritize security and performance in your implementation.
+    </p>
+  </div>
+
+</div>

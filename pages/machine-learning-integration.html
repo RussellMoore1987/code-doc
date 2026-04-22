@@ -1,0 +1,1333 @@
+<div class="content-body">
+
+  <h1 id="machine-learning-integration">Machine Learning Integration</h1>
+
+  <p>
+    Integrate machine learning capabilities into web applications with model
+    serving, real-time predictions, training pipelines, and ML workflow
+    orchestration. This guide covers practical ML implementation patterns.
+  </p>
+
+  <div class="callout">
+    <div class="callout-title">🤖 Intelligent Applications</div>
+    <p>
+      Machine learning integration enables applications to make intelligent
+      decisions, provide personalized experiences, and automate complex tasks.
+      Success requires proper model management, efficient serving, and
+      continuous learning capabilities.
+    </p>
+  </div>
+
+  <!-- ─── MODEL SERVING ─────────────────── -->
+  <h2 id="model-serving">Model Serving Infrastructure</h2>
+
+  <h3 id="model-server">ML Model Server</h3>
+
+  <pre><code>const tf = require('@tensorflow/tfjs-node');
+const express = require('express');
+const multer = require('multer');
+const sharp = require('sharp');
+const { v4: uuidv4 } = require('uuid');
+
+class MLModelServer {
+  constructor(config = {}) {
+    this.config = {
+      modelsPath: config.modelsPath || './models',
+      cacheSize: config.cacheSize || 10,
+      batchSize: config.batchSize || 32,
+      timeout: config.timeout || 30000,
+      ...config
+    };
+    
+    this.models = new Map();
+    this.modelCache = new Map();
+    this.predictionQueue = new Map();
+    this.metrics = new Map();
+    
+    this.app = express();
+    this.setupMiddleware();
+    this.setupRoutes();
+    this.startBatchProcessor();
+  }
+
+  setupMiddleware() {
+    this.app.use(express.json({ limit: '50mb' }));
+    this.app.use(express.urlencoded({ extended: true, limit: '50mb' }));
+    
+    // Request logging
+    this.app.use((req, res, next) => {
+      req.requestId = uuidv4();
+      console.log(`[${req.requestId}] ${req.method} ${req.path}`);
+      next();
+    });
+    
+    // CORS
+    this.app.use((req, res, next) => {
+      res.header('Access-Control-Allow-Origin', '*');
+      res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+      res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+      next();
+    });
+  }
+
+  setupRoutes() {
+    // Model management
+    this.app.get('/models', (req, res) => {
+      const models = Array.from(this.models.values()).map(model => ({
+        id: model.id,
+        name: model.name,
+        version: model.version,
+        type: model.type,
+        status: model.status,
+        loaded: model.loaded,
+        inputShape: model.inputShape,
+        outputShape: model.outputShape,
+        metrics: this.metrics.get(model.id)
+      }));
+      
+      res.json({ models });
+    });
+
+    this.app.post('/models/load', async (req, res) => {
+      try {
+        const { modelPath, name, version, type } = req.body;
+        const model = await this.loadModel(modelPath, { name, version, type });
+        res.json({ success: true, model: model.id });
+      } catch (error) {
+        res.status(500).json({ error: error.message });
+      }
+    });
+
+    this.app.delete('/models/:modelId', async (req, res) => {
+      try {
+        await this.unloadModel(req.params.modelId);
+        res.json({ success: true });
+      } catch (error) {
+        res.status(500).json({ error: error.message });
+      }
+    });
+
+    // Prediction endpoints
+    this.app.post('/predict/:modelId', async (req, res) => {
+      try {
+        const prediction = await this.predict(req.params.modelId, req.body.input, {
+          requestId: req.requestId
+        });
+        
+        res.json({
+          prediction,
+          modelId: req.params.modelId,
+          requestId: req.requestId,
+          timestamp: new Date().toISOString()
+        });
+      } catch (error) {
+        res.status(500).json({
+          error: error.message,
+          requestId: req.requestId
+        });
+      }
+    });
+
+    this.app.post('/predict/batch/:modelId', async (req, res) => {
+      try {
+        const predictions = await this.predictBatch(req.params.modelId, req.body.inputs, {
+          requestId: req.requestId
+        });
+        
+        res.json({
+          predictions,
+          modelId: req.params.modelId,
+          requestId: req.requestId,
+          batchSize: req.body.inputs.length,
+          timestamp: new Date().toISOString()
+        });
+      } catch (error) {
+        res.status(500).json({
+          error: error.message,
+          requestId: req.requestId
+        });
+      }
+    });
+
+    // Image classification endpoint
+    const upload = multer({ memory: true });
+    this.app.post('/classify/:modelId', upload.single('image'), async (req, res) => {
+      try {
+        if (!req.file) {
+          return res.status(400).json({ error: 'No image provided' });
+        }
+
+        const processedImage = await this.preprocessImage(req.file.buffer);
+        const prediction = await this.predict(req.params.modelId, processedImage, {
+          requestId: req.requestId
+        });
+        
+        res.json({
+          prediction,
+          modelId: req.params.modelId,
+          requestId: req.requestId,
+          timestamp: new Date().toISOString()
+        });
+      } catch (error) {
+        res.status(500).json({
+          error: error.message,
+          requestId: req.requestId
+        });
+      }
+    });
+
+    // Health check
+    this.app.get('/health', (req, res) => {
+      const health = {
+        status: 'healthy',
+        modelsLoaded: this.models.size,
+        totalPredictions: this.getTotalPredictions(),
+        uptime: process.uptime(),
+        memory: process.memoryUsage()
+      };
+      
+      res.json(health);
+    });
+
+    // Metrics
+    this.app.get('/metrics', (req, res) => {
+      const metrics = {};
+      
+      for (const [modelId, modelMetrics] of this.metrics) {
+        const model = this.models.get(modelId);
+        metrics[modelId] = {
+          name: model?.name,
+          ...modelMetrics
+        };
+      }
+      
+      res.json(metrics);
+    });
+  }
+
+  async loadModel(modelPath, options = {}) {
+    const modelId = uuidv4();
+    const model = {
+      id: modelId,
+      name: options.name || `model-${modelId}`,
+      version: options.version || '1.0.0',
+      type: options.type || 'tensorflow',
+      path: modelPath,
+      status: 'loading',
+      loaded: false,
+      inputShape: null,
+      outputShape: null,
+      tfModel: null
+    };
+
+    this.models.set(modelId, model);
+    this.initializeMetrics(modelId);
+
+    try {
+      console.log(`Loading model from ${modelPath}`);
+      model.tfModel = await tf.loadLayersModel(`file://${modelPath}`);
+      
+      // Get model shapes
+      if (model.tfModel.inputs && model.tfModel.inputs.length > 0) {
+        model.inputShape = model.tfModel.inputs[0].shape;
+      }
+      
+      if (model.tfModel.outputs && model.tfModel.outputs.length > 0) {
+        model.outputShape = model.tfModel.outputs[0].shape;
+      }
+      
+      model.status = 'ready';
+      model.loaded = true;
+      
+      console.log(`Model ${model.name} loaded successfully`);
+      return model;
+    } catch (error) {
+      model.status = 'error';
+      model.error = error.message;
+      console.error(`Failed to load model ${model.name}:`, error);
+      throw error;
+    }
+  }
+
+  async unloadModel(modelId) {
+    const model = this.models.get(modelId);
+    if (!model) {
+      throw new Error('Model not found');
+    }
+
+    if (model.tfModel) {
+      model.tfModel.dispose();
+    }
+
+    this.models.delete(modelId);
+    this.metrics.delete(modelId);
+    this.modelCache.delete(modelId);
+    
+    console.log(`Model ${model.name} unloaded`);
+  }
+
+  async predict(modelId, input, options = {}) {
+    const start = Date.now();
+    const model = this.models.get(modelId);
+    
+    if (!model || !model.loaded) {
+      throw new Error('Model not found or not loaded');
+    }
+
+    try {
+      // Convert input to tensor
+      const inputTensor = this.preprocessInput(input, model);
+      
+      // Make prediction
+      const prediction = model.tfModel.predict(inputTensor);
+      
+      // Convert output to JavaScript
+      const output = await this.postprocessOutput(prediction, model);
+      
+      // Clean up tensors
+      inputTensor.dispose();
+      if (Array.isArray(prediction)) {
+        prediction.forEach(p => p.dispose());
+      } else {
+        prediction.dispose();
+      }
+
+      // Update metrics
+      const latency = Date.now() - start;
+      this.updateMetrics(modelId, { latency, success: true });
+
+      return output;
+    } catch (error) {
+      const latency = Date.now() - start;
+      this.updateMetrics(modelId, { latency, success: false, error: error.message });
+      throw error;
+    }
+  }
+
+  async predictBatch(modelId, inputs, options = {}) {
+    const model = this.models.get(modelId);
+    
+    if (!model || !model.loaded) {
+      throw new Error('Model not found or not loaded');
+    }
+
+    const batchSize = Math.min(inputs.length, this.config.batchSize);
+    const batches = [];
+    
+    // Split into batches
+    for (let i = 0; i < inputs.length; i += batchSize) {
+      batches.push(inputs.slice(i, i + batchSize));
+    }
+
+    const allPredictions = [];
+    
+    for (const batch of batches) {
+      const batchPredictions = await Promise.all(
+        batch.map(input => this.predict(modelId, input, options))
+      );
+      
+      allPredictions.push(...batchPredictions);
+    }
+
+    return allPredictions;
+  }
+
+  preprocessInput(input, model) {
+    // Handle different input types
+    if (Array.isArray(input)) {
+      // Numerical array input
+      if (model.inputShape) {
+        return tf.tensor(input, model.inputShape.slice(1)); // Remove batch dimension
+      } else {
+        return tf.tensor(input);
+      }
+    } else if (input instanceof tf.Tensor) {
+      return input;
+    } else if (typeof input === 'object' && input.data) {
+      // Image data
+      return tf.tensor3d(input.data, input.shape);
+    } else {
+      throw new Error('Unsupported input format');
+    }
+  }
+
+  async postprocessOutput(prediction, model) {
+    if (Array.isArray(prediction)) {
+      // Multiple outputs
+      const outputs = await Promise.all(
+        prediction.map(async (pred) => await pred.data())
+      );
+      return outputs;
+    } else {
+      // Single output
+      const output = await prediction.data();
+      
+      // Convert to regular array for JSON serialization
+      return Array.from(output);
+    }
+  }
+
+  async preprocessImage(buffer, targetSize = [224, 224]) {
+    try {
+      // Resize and normalize image
+      const processedBuffer = await sharp(buffer)
+        .resize(targetSize[0], targetSize[1])
+        .removeAlpha()
+        .raw()
+        .toBuffer();
+
+      // Convert to float32 and normalize to [0, 1]
+      const float32Array = new Float32Array(processedBuffer.length);
+      for (let i = 0; i < processedBuffer.length; i++) {
+        float32Array[i] = processedBuffer[i] / 255.0;
+      }
+
+      // Create tensor with shape [height, width, channels]
+      return tf.tensor3d(float32Array, [targetSize[0], targetSize[1], 3]);
+    } catch (error) {
+      throw new Error(`Image preprocessing failed: ${error.message}`);
+    }
+  }
+
+  initializeMetrics(modelId) {
+    this.metrics.set(modelId, {
+      totalPredictions: 0,
+      successfulPredictions: 0,
+      failedPredictions: 0,
+      averageLatency: 0,
+      minLatency: Infinity,
+      maxLatency: 0,
+      lastPrediction: null,
+      errors: []
+    });
+  }
+
+  updateMetrics(modelId, result) {
+    const metrics = this.metrics.get(modelId);
+    if (!metrics) return;
+
+    metrics.totalPredictions++;
+    metrics.lastPrediction = new Date().toISOString();
+
+    if (result.success) {
+      metrics.successfulPredictions++;
+    } else {
+      metrics.failedPredictions++;
+      metrics.errors.push({
+        timestamp: new Date().toISOString(),
+        error: result.error
+      });
+      
+      // Keep only last 10 errors
+      if (metrics.errors.length > 10) {
+        metrics.errors = metrics.errors.slice(-10);
+      }
+    }
+
+    // Update latency metrics
+    metrics.averageLatency = (metrics.averageLatency + result.latency) / 2;
+    metrics.minLatency = Math.min(metrics.minLatency, result.latency);
+    metrics.maxLatency = Math.max(metrics.maxLatency, result.latency);
+  }
+
+  getTotalPredictions() {
+    let total = 0;
+    for (const metrics of this.metrics.values()) {
+      total += metrics.totalPredictions;
+    }
+    return total;
+  }
+
+  startBatchProcessor() {
+    // Process queued predictions in batches
+    setInterval(() => {
+      this.processBatchQueue();
+    }, 100);
+  }
+
+  async processBatchQueue() {
+    for (const [modelId, queue] of this.predictionQueue) {
+      if (queue.length === 0) continue;
+
+      const batchSize = Math.min(queue.length, this.config.batchSize);
+      const batch = queue.splice(0, batchSize);
+
+      try {
+        const inputs = batch.map(item => item.input);
+        const predictions = await this.predictBatch(modelId, inputs);
+        
+        // Resolve promises
+        batch.forEach((item, index) => {
+          item.resolve(predictions[index]);
+        });
+      } catch (error) {
+        // Reject all promises in batch
+        batch.forEach(item => {
+          item.reject(error);
+        });
+      }
+    }
+  }
+
+  start(port = 3000) {
+    this.app.listen(port, () => {
+      console.log(`ML Model Server listening on port ${port}`);
+      console.log(`Health check: http://localhost:${port}/health`);
+      console.log(`Models endpoint: http://localhost:${port}/models`);
+    });
+  }
+}</code></pre>
+
+  <!-- ─── TRAINING PIPELINE ─────────────── -->
+  <h2 id="training-pipeline">Training Pipeline</h2>
+
+  <h3 id="ml-training">ML Training Orchestrator</h3>
+
+  <pre><code>const fs = require('fs').promises;
+const path = require('path');
+const { spawn } = require('child_process');
+
+class MLTrainingPipeline {
+  constructor(config = {}) {
+    this.config = {
+      dataPath: config.dataPath || './data',
+      modelsPath: config.modelsPath || './models',
+      experimentsPath: config.experimentsPath || './experiments',
+      checkpointInterval: config.checkpointInterval || 1000,
+      maxConcurrentJobs: config.maxConcurrentJobs || 2,
+      ...config
+    };
+    
+    this.experiments = new Map();
+    this.jobs = new Map();
+    this.runningJobs = new Set();
+    
+    this.setupDirectories();
+  }
+
+  async setupDirectories() {
+    const dirs = [
+      this.config.dataPath,
+      this.config.modelsPath,
+      this.config.experimentsPath
+    ];
+
+    for (const dir of dirs) {
+      try {
+        await fs.mkdir(dir, { recursive: true });
+      } catch (error) {
+        console.error(`Failed to create directory ${dir}:`, error);
+      }
+    }
+  }
+
+  // Create new training experiment
+  async createExperiment(config) {
+    const experimentId = this.generateId();
+    const experiment = {
+      id: experimentId,
+      name: config.name || `experiment-${experimentId}`,
+      description: config.description || '',
+      status: 'created',
+      config: {
+        modelType: config.modelType || 'neural_network',
+        datasetPath: config.datasetPath,
+        validationSplit: config.validationSplit || 0.2,
+        epochs: config.epochs || 100,
+        batchSize: config.batchSize || 32,
+        learningRate: config.learningRate || 0.001,
+        optimizer: config.optimizer || 'adam',
+        lossFunction: config.lossFunction || 'categoricalCrossentropy',
+        metrics: config.metrics || ['accuracy'],
+        earlyStoppingPatience: config.earlyStoppingPatience || 10,
+        ...config
+      },
+      created: new Date().toISOString(),
+      started: null,
+      completed: null,
+      metrics: {
+        loss: [],
+        accuracy: [],
+        valLoss: [],
+        valAccuracy: []
+      },
+      bestModel: null,
+      finalModel: null
+    };
+
+    this.experiments.set(experimentId, experiment);
+    
+    // Create experiment directory
+    const expDir = path.join(this.config.experimentsPath, experimentId);
+    await fs.mkdir(expDir, { recursive: true });
+    
+    // Save experiment config
+    await fs.writeFile(
+      path.join(expDir, 'config.json'),
+      JSON.stringify(experiment.config, null, 2)
+    );
+
+    console.log(`Created experiment: ${experiment.name} (${experimentId})`);
+    return experiment;
+  }
+
+  // Start training job
+  async startTraining(experimentId, options = {}) {
+    const experiment = this.experiments.get(experimentId);
+    if (!experiment) {
+      throw new Error('Experiment not found');
+    }
+
+    if (experiment.status !== 'created' && experiment.status !== 'failed') {
+      throw new Error(`Cannot start training, experiment status: ${experiment.status}`);
+    }
+
+    if (this.runningJobs.size >= this.config.maxConcurrentJobs) {
+      throw new Error('Maximum concurrent jobs reached');
+    }
+
+    const jobId = this.generateId();
+    const job = {
+      id: jobId,
+      experimentId,
+      status: 'starting',
+      process: null,
+      logs: [],
+      progress: 0,
+      currentEpoch: 0,
+      started: new Date().toISOString()
+    };
+
+    this.jobs.set(jobId, job);
+    this.runningJobs.add(jobId);
+    
+    experiment.status = 'training';
+    experiment.started = new Date().toISOString();
+    experiment.jobId = jobId;
+
+    try {
+      await this.executeTraining(job, experiment);
+      return job;
+    } catch (error) {
+      experiment.status = 'failed';
+      experiment.error = error.message;
+      this.runningJobs.delete(jobId);
+      throw error;
+    }
+  }
+
+  async executeTraining(job, experiment) {
+    const expDir = path.join(this.config.experimentsPath, experiment.id);
+    
+    // Generate training script
+    const scriptPath = await this.generateTrainingScript(experiment, expDir);
+    
+    // Start training process
+    const pythonProcess = spawn('python', [scriptPath], {
+      cwd: expDir,
+      env: { ...process.env, PYTHONPATH: process.cwd() }
+    });
+
+    job.process = pythonProcess;
+    job.status = 'running';
+
+    // Handle process output
+    pythonProcess.stdout.on('data', (data) => {
+      this.handleTrainingOutput(job, experiment, data.toString());
+    });
+
+    pythonProcess.stderr.on('data', (data) => {
+      const message = data.toString();
+      console.error(`Training error (${job.id}):`, message);
+      job.logs.push({ type: 'error', message, timestamp: new Date().toISOString() });
+    });
+
+    pythonProcess.on('close', (code) => {
+      this.handleTrainingComplete(job, experiment, code);
+    });
+  }
+
+  handleTrainingOutput(job, experiment, output) {
+    const lines = output.trim().split('\n');
+    
+    for (const line of lines) {
+      job.logs.push({ type: 'info', message: line, timestamp: new Date().toISOString() });
+      
+      // Parse training metrics
+      const epochMatch = line.match(/Epoch (\d+)\/(\d+)/);
+      if (epochMatch) {
+        job.currentEpoch = parseInt(epochMatch[1]);
+        job.progress = (job.currentEpoch / parseInt(epochMatch[2])) * 100;
+      }
+
+      // Parse metrics
+      const metricsMatch = line.match(/loss: ([\d.]+).*accuracy: ([\d.]+).*val_loss: ([\d.]+).*val_accuracy: ([\d.]+)/);
+      if (metricsMatch) {
+        experiment.metrics.loss.push(parseFloat(metricsMatch[1]));
+        experiment.metrics.accuracy.push(parseFloat(metricsMatch[2]));
+        experiment.metrics.valLoss.push(parseFloat(metricsMatch[3]));
+        experiment.metrics.valAccuracy.push(parseFloat(metricsMatch[4]));
+      }
+    }
+  }
+
+  handleTrainingComplete(job, experiment, exitCode) {
+    job.status = exitCode === 0 ? 'completed' : 'failed';
+    job.completed = new Date().toISOString();
+    
+    experiment.status = job.status;
+    experiment.completed = new Date().toISOString();
+    
+    this.runningJobs.delete(job.id);
+
+    if (exitCode === 0) {
+      console.log(`Training completed successfully: ${experiment.name}`);
+      this.handleSuccessfulTraining(experiment);
+    } else {
+      console.error(`Training failed: ${experiment.name}, exit code: ${exitCode}`);
+      experiment.error = `Training process exited with code ${exitCode}`;
+    }
+  }
+
+  async handleSuccessfulTraining(experiment) {
+    const expDir = path.join(this.config.experimentsPath, experiment.id);
+    const modelPath = path.join(expDir, 'model');
+    
+    try {
+      // Check if model was saved
+      const modelExists = await fs.access(modelPath).then(() => true).catch(() => false);
+      
+      if (modelExists) {
+        experiment.finalModel = modelPath;
+        
+        // Find best model if available
+        const bestModelPath = path.join(expDir, 'best_model');
+        const bestExists = await fs.access(bestModelPath).then(() => true).catch(() => false);
+        
+        if (bestExists) {
+          experiment.bestModel = bestModelPath;
+        }
+
+        console.log(`Model saved: ${modelPath}`);
+      }
+      
+      // Save experiment results
+      await this.saveExperimentResults(experiment);
+    } catch (error) {
+      console.error(`Error handling successful training:`, error);
+    }
+  }
+
+  async generateTrainingScript(experiment, outputDir) {
+    const config = experiment.config;
+    
+    const script = `
+import tensorflow as tf
+import numpy as np
+import pandas as pd
+import os
+import json
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import LabelEncoder
+
+# Set up GPU if available
+physical_devices = tf.config.experimental.list_physical_devices('GPU')
+if len(physical_devices) > 0:
+    tf.config.experimental.set_memory_growth(physical_devices[0], True)
+
+def load_data():
+    """Load and preprocess data"""
+    # Load dataset
+    if '${config.datasetPath}'.endswith('.csv'):
+        data = pd.read_csv('${config.datasetPath}')
+    elif '${config.datasetPath}'.endswith('.json'):
+        data = pd.read_json('${config.datasetPath}')
+    else:
+        raise ValueError("Unsupported data format")
+    
+    # Assuming last column is target
+    X = data.iloc[:, :-1].values
+    y = data.iloc[:, -1].values
+    
+    # Encode labels if categorical
+    if y.dtype == 'object':
+        le = LabelEncoder()
+        y = le.fit_transform(y)
+        num_classes = len(le.classes_)
+        y = tf.keras.utils.to_categorical(y, num_classes)
+    
+    return X, y
+
+def create_model(input_shape, num_classes):
+    """Create neural network model"""
+    model = tf.keras.Sequential([
+        tf.keras.layers.Input(shape=input_shape),
+        tf.keras.layers.Dense(128, activation='relu'),
+        tf.keras.layers.Dropout(0.3),
+        tf.keras.layers.Dense(64, activation='relu'),
+        tf.keras.layers.Dropout(0.3),
+        tf.keras.layers.Dense(num_classes, activation='softmax')
+    ])
+    
+    model.compile(
+        optimizer='${config.optimizer}',
+        loss='${config.lossFunction}',
+        metrics=${JSON.stringify(config.metrics)}
+    )
+    
+    return model
+
+# Load and split data
+X, y = load_data()
+X_train, X_val, y_train, y_val = train_test_split(
+    X, y, test_size=${config.validationSplit}, random_state=42
+)
+
+# Create model
+input_shape = (X_train.shape[1],)
+num_classes = y_train.shape[1] if len(y_train.shape) > 1 else 1
+model = create_model(input_shape, num_classes)
+
+print(f"Model created with input shape: {input_shape}")
+print(f"Number of classes: {num_classes}")
+
+# Callbacks
+callbacks = [
+    tf.keras.callbacks.ModelCheckpoint(
+        'best_model',
+        save_best_only=True,
+        monitor='val_loss',
+        verbose=1
+    ),
+    tf.keras.callbacks.EarlyStopping(
+        patience=${config.earlyStoppingPatience},
+        monitor='val_loss',
+        restore_best_weights=True
+    ),
+    tf.keras.callbacks.ReduceLROnPlateau(
+        factor=0.5,
+        patience=5,
+        min_lr=0.0001
+    )
+]
+
+# Train model
+history = model.fit(
+    X_train, y_train,
+    epochs=${config.epochs},
+    batch_size=${config.batchSize},
+    validation_data=(X_val, y_val),
+    callbacks=callbacks,
+    verbose=1
+)
+
+# Save final model
+model.save('model')
+
+# Save training history
+with open('history.json', 'w') as f:
+    json.dump(history.history, f, default=str)
+
+print("Training completed successfully")
+`;
+
+    const scriptPath = path.join(outputDir, 'train.py');
+    await fs.writeFile(scriptPath, script);
+    
+    return scriptPath;
+  }
+
+  async saveExperimentResults(experiment) {
+    const expDir = path.join(this.config.experimentsPath, experiment.id);
+    
+    // Save experiment metadata
+    await fs.writeFile(
+      path.join(expDir, 'experiment.json'),
+      JSON.stringify(experiment, null, 2)
+    );
+
+    // Generate summary report
+    const summary = this.generateExperimentSummary(experiment);
+    await fs.writeFile(
+      path.join(expDir, 'summary.md'),
+      summary
+    );
+  }
+
+  generateExperimentSummary(experiment) {
+    const metrics = experiment.metrics;
+    const bestAccuracy = Math.max(...metrics.accuracy);
+    const bestValAccuracy = Math.max(...metrics.valAccuracy);
+    
+    return `
+# Experiment Summary: ${experiment.name}
+
+## Configuration
+- Model Type: ${experiment.config.modelType}
+- Epochs: ${experiment.config.epochs}
+- Batch Size: ${experiment.config.batchSize}
+- Learning Rate: ${experiment.config.learningRate}
+- Optimizer: ${experiment.config.optimizer}
+
+## Results
+- Status: ${experiment.status}
+- Duration: ${experiment.started} to ${experiment.completed}
+- Best Training Accuracy: ${bestAccuracy.toFixed(4)}
+- Best Validation Accuracy: ${bestValAccuracy.toFixed(4)}
+
+## Model Paths
+- Final Model: ${experiment.finalModel || 'N/A'}
+- Best Model: ${experiment.bestModel || 'N/A'}
+
+Generated on: ${new Date().toISOString()}
+`;
+  }
+
+  // Get experiment status
+  getExperiment(experimentId) {
+    return this.experiments.get(experimentId);
+  }
+
+  // List all experiments
+  listExperiments() {
+    return Array.from(this.experiments.values())
+      .sort((a, b) => new Date(b.created) - new Date(a.created));
+  }
+
+  // Stop training job
+  async stopTraining(jobId) {
+    const job = this.jobs.get(jobId);
+    if (!job || !job.process) {
+      throw new Error('Job not found or not running');
+    }
+
+    job.process.kill('SIGTERM');
+    job.status = 'cancelled';
+    job.completed = new Date().toISOString();
+    
+    this.runningJobs.delete(jobId);
+    
+    const experiment = this.experiments.get(job.experimentId);
+    if (experiment) {
+      experiment.status = 'cancelled';
+    }
+  }
+
+  generateId() {
+    return Math.random().toString(36).substr(2, 9);
+  }
+}</code></pre>
+
+  <!-- ─── FEATURE ENGINEERING ──────────── -->
+  <h2 id="feature-engineering">Feature Engineering Pipeline</h2>
+
+  <h3 id="feature-processor">Feature Processing System</h3>
+
+  <pre><code>class FeatureEngineeringPipeline {
+  constructor() {
+    this.processors = new Map();
+    this.transformers = new Map();
+    this.encoders = new Map();
+    this.scalers = new Map();
+    this.pipelines = new Map();
+  }
+
+  // Register feature processor
+  registerProcessor(name, processor) {
+    this.processors.set(name, processor);
+  }
+
+  // Create feature engineering pipeline
+  createPipeline(name, config) {
+    const pipeline = {
+      name,
+      steps: config.steps || [],
+      config: config,
+      fitted: false,
+      metadata: {}
+    };
+
+    this.pipelines.set(name, pipeline);
+    return pipeline;
+  }
+
+  // Text feature processing
+  registerTextProcessors() {
+    this.registerProcessor('tokenize', {
+      transform: (text, options = {}) => {
+        const tokens = text.toLowerCase()
+          .replace(/[^\w\s]/g, '')
+          .split(/\s+/)
+          .filter(token => token.length > 0);
+        
+        if (options.removeStopWords) {
+          const stopWords = new Set(['the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for', 'of', 'with', 'by']);
+          return tokens.filter(token => !stopWords.has(token));
+        }
+        
+        return tokens;
+      }
+    });
+
+    this.registerProcessor('tfidf', {
+      fit: (documents, options = {}) => {
+        const vocabulary = new Set();
+        const docCount = documents.length;
+        const termDocCount = new Map();
+
+        // Build vocabulary and document frequency
+        documents.forEach(doc => {
+          const tokens = new Set(doc.split(/\s+/));
+          tokens.forEach(token => {
+            vocabulary.add(token);
+            termDocCount.set(token, (termDocCount.get(token) || 0) + 1);
+          });
+        });
+
+        const vocabArray = Array.from(vocabulary);
+        const idf = new Map();
+        
+        vocabArray.forEach(term => {
+          const df = termDocCount.get(term) || 1;
+          idf.set(term, Math.log(docCount / df));
+        });
+
+        return {
+          vocabulary: vocabArray,
+          idf,
+          docCount
+        };
+      },
+
+      transform: (documents, model) => {
+        return documents.map(doc => {
+          const tokens = doc.split(/\s+/);
+          const termCount = new Map();
+          
+          // Count terms
+          tokens.forEach(token => {
+            termCount.set(token, (termCount.get(token) || 0) + 1);
+          });
+
+          // Calculate TF-IDF vector
+          const vector = model.vocabulary.map(term => {
+            const tf = termCount.get(term) || 0;
+            const idf = model.idf.get(term) || 0;
+            return tf * idf;
+          });
+
+          return vector;
+        });
+      }
+    });
+  }
+
+  // Numerical feature processing
+  registerNumericalProcessors() {
+    this.registerProcessor('standardScaler', {
+      fit: (data, options = {}) => {
+        const features = data[0].length;
+        const means = new Array(features).fill(0);
+        const stds = new Array(features).fill(0);
+
+        // Calculate means
+        data.forEach(row => {
+          row.forEach((value, index) => {
+            means[index] += value;
+          });
+        });
+        
+        means.forEach((sum, index) => {
+          means[index] = sum / data.length;
+        });
+
+        // Calculate standard deviations
+        data.forEach(row => {
+          row.forEach((value, index) => {
+            stds[index] += Math.pow(value - means[index], 2);
+          });
+        });
+        
+        stds.forEach((sum, index) => {
+          stds[index] = Math.sqrt(sum / data.length);
+        });
+
+        return { means, stds };
+      },
+
+      transform: (data, model) => {
+        return data.map(row => 
+          row.map((value, index) => 
+            model.stds[index] !== 0 ? (value - model.means[index]) / model.stds[index] : 0
+          )
+        );
+      }
+    });
+
+    this.registerProcessor('minMaxScaler', {
+      fit: (data, options = {}) => {
+        const features = data[0].length;
+        const mins = new Array(features).fill(Infinity);
+        const maxs = new Array(features).fill(-Infinity);
+
+        data.forEach(row => {
+          row.forEach((value, index) => {
+            mins[index] = Math.min(mins[index], value);
+            maxs[index] = Math.max(maxs[index], value);
+          });
+        });
+
+        return { mins, maxs };
+      },
+
+      transform: (data, model) => {
+        return data.map(row => 
+          row.map((value, index) => {
+            const range = model.maxs[index] - model.mins[index];
+            return range !== 0 ? (value - model.mins[index]) / range : 0;
+          })
+        );
+      }
+    });
+
+    this.registerProcessor('polynomialFeatures', {
+      fit: (data, options = {}) => {
+        return {
+          degree: options.degree || 2,
+          includeInteraction: options.includeInteraction !== false
+        };
+      },
+
+      transform: (data, model) => {
+        return data.map(row => {
+          const features = [...row]; // Original features
+          
+          // Add polynomial features
+          for (let degree = 2; degree <= model.degree; degree++) {
+            for (let i = 0; i < row.length; i++) {
+              features.push(Math.pow(row[i], degree));
+            }
+          }
+
+          // Add interaction features
+          if (model.includeInteraction) {
+            for (let i = 0; i < row.length; i++) {
+              for (let j = i + 1; j < row.length; j++) {
+                features.push(row[i] * row[j]);
+              }
+            }
+          }
+
+          return features;
+        });
+      }
+    });
+  }
+
+  // Categorical feature processing
+  registerCategoricalProcessors() {
+    this.registerProcessor('oneHotEncoder', {
+      fit: (data, options = {}) => {
+        const columnIndex = options.columnIndex || 0;
+        const categories = new Set();
+        
+        data.forEach(row => {
+          categories.add(row[columnIndex]);
+        });
+
+        return {
+          categories: Array.from(categories),
+          columnIndex
+        };
+      },
+
+      transform: (data, model) => {
+        return data.map(row => {
+          const encoded = model.categories.map(category => 
+            row[model.columnIndex] === category ? 1 : 0
+          );
+          
+          // Replace original column with encoded values
+          const result = [...row];
+          result.splice(model.columnIndex, 1, ...encoded);
+          
+          return result;
+        });
+      }
+    });
+
+    this.registerProcessor('labelEncoder', {
+      fit: (data, options = {}) => {
+        const columnIndex = options.columnIndex || 0;
+        const categories = [...new Set(data.map(row => row[columnIndex]))];
+        const mapping = new Map();
+        
+        categories.forEach((category, index) => {
+          mapping.set(category, index);
+        });
+
+        return { mapping, columnIndex };
+      },
+
+      transform: (data, model) => {
+        return data.map(row => {
+          const result = [...row];
+          result[model.columnIndex] = model.mapping.get(row[model.columnIndex]) || 0;
+          return result;
+        });
+      }
+    });
+  }
+
+  // Time series feature processing
+  registerTimeSeriesProcessors() {
+    this.registerProcessor('lagFeatures', {
+      fit: (data, options = {}) => {
+        return {
+          lags: options.lags || [1, 2, 3],
+          columnIndex: options.columnIndex || 0
+        };
+      },
+
+      transform: (data, model) => {
+        const result = [];
+        
+        data.forEach((row, index) => {
+          const newRow = [...row];
+          
+          model.lags.forEach(lag => {
+            if (index >= lag) {
+              newRow.push(data[index - lag][model.columnIndex]);
+            } else {
+              newRow.push(0); // Fill with zero for missing lags
+            }
+          });
+          
+          result.push(newRow);
+        });
+
+        return result;
+      }
+    });
+
+    this.registerProcessor('rollingStats', {
+      fit: (data, options = {}) => {
+        return {
+          window: options.window || 5,
+          stats: options.stats || ['mean', 'std'],
+          columnIndex: options.columnIndex || 0
+        };
+      },
+
+      transform: (data, model) => {
+        const result = [];
+        
+        data.forEach((row, index) => {
+          const newRow = [...row];
+          
+          // Calculate rolling statistics
+          const windowStart = Math.max(0, index - model.window + 1);
+          const windowData = data.slice(windowStart, index + 1)
+            .map(r => r[model.columnIndex]);
+          
+          if (model.stats.includes('mean')) {
+            const mean = windowData.reduce((sum, val) => sum + val, 0) / windowData.length;
+            newRow.push(mean);
+          }
+          
+          if (model.stats.includes('std')) {
+            const mean = windowData.reduce((sum, val) => sum + val, 0) / windowData.length;
+            const variance = windowData.reduce((sum, val) => sum + Math.pow(val - mean, 2), 0) / windowData.length;
+            newRow.push(Math.sqrt(variance));
+          }
+          
+          if (model.stats.includes('min')) {
+            newRow.push(Math.min(...windowData));
+          }
+          
+          if (model.stats.includes('max')) {
+            newRow.push(Math.max(...windowData));
+          }
+          
+          result.push(newRow);
+        });
+
+        return result;
+      }
+    });
+  }
+
+  // Execute feature engineering pipeline
+  async executePipeline(pipelineName, data, options = {}) {
+    const pipeline = this.pipelines.get(pipelineName);
+    if (!pipeline) {
+      throw new Error(`Pipeline ${pipelineName} not found`);
+    }
+
+    let processedData = data;
+    const models = {};
+
+    for (const step of pipeline.steps) {
+      const processor = this.processors.get(step.name);
+      if (!processor) {
+        throw new Error(`Processor ${step.name} not found`);
+      }
+
+      // Fit if needed and not already fitted
+      if (processor.fit && (!pipeline.fitted || options.refit)) {
+        console.log(`Fitting ${step.name}...`);
+        models[step.name] = processor.fit(processedData, step.options || {});
+      }
+
+      // Transform
+      if (processor.transform) {
+        console.log(`Transforming with ${step.name}...`);
+        const model = models[step.name] || pipeline.metadata[step.name];
+        processedData = processor.transform(processedData, model);
+      }
+    }
+
+    // Save models if fitting
+    if (!pipeline.fitted || options.refit) {
+      pipeline.metadata = { ...pipeline.metadata, ...models };
+      pipeline.fitted = true;
+    }
+
+    return processedData;
+  }
+
+  // Initialize all processors
+  init() {
+    this.registerTextProcessors();
+    this.registerNumericalProcessors();
+    this.registerCategoricalProcessors();
+    this.registerTimeSeriesProcessors();
+    
+    console.log('Feature engineering pipeline initialized');
+  }
+}</code></pre>
+
+  <!-- ─── BEST PRACTICES ─────────────────── -->
+  <h2 id="best-practices">Best Practices</h2>
+
+  <ul>
+    <li><strong>Model Versioning</strong> - Track model versions and lineage</li>
+    <li><strong>A/B Testing</strong> - Test model performance with controlled experiments</li>
+    <li><strong>Monitoring</strong> - Monitor model performance and data drift</li>
+    <li><strong>Scaling</strong> - Design for horizontal scaling and load balancing</li>
+    <li><strong>Security</strong> - Secure model endpoints and validate inputs</li>
+    <li><strong>Feature Stores</strong> - Centralize feature management and reuse</li>
+    <li><strong>Automated Pipelines</strong> - Implement CI/CD for ML workflows</li>
+  </ul>
+
+  <div class="callout">
+    <div class="callout-title">🎯 ML Integration Excellence</div>
+    <p>
+      Successful machine learning integration requires robust infrastructure,
+      proper model management, and continuous monitoring. Focus on scalable
+      serving, automated training, and comprehensive testing to build reliable
+      AI-powered applications.
+    </p>
+  </div>
+
+</div>

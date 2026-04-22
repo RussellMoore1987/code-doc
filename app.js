@@ -59,12 +59,60 @@ const NAV_DATA = [
     ]
   },
   {
+    id: 'frontend-development',
+    label: 'Frontend Development',
+    children: [
+      { id: 'custom-themes',    label: 'Custom Themes',        page: 'pages/custom-themes.html'    },
+      { id: 'widget-system',    label: 'Widget System',        page: 'pages/widget-system.html'    },
+      { id: 'template-engine',  label: 'Template Engine',      page: 'pages/template-engine.html'  },
+      { id: 'internationalization', label: 'Internationalization', page: 'pages/internationalization.html' }
+    ]
+  },
+  {
+    id: 'backend-development',
+    label: 'Backend Development',
+    children: [
+      { id: 'request-validation',  label: 'Request Validation',   page: 'pages/request-validation.html'  },
+      { id: 'response-formatting', label: 'Response Formatting',  page: 'pages/response-formatting.html' },
+      { id: 'session-management',  label: 'Session Management',   page: 'pages/session-management.html'  },
+      { id: 'file-upload-handling', label: 'File Upload Handling', page: 'pages/file-upload-handling.html' },
+      { id: 'background-jobs',     label: 'Background Jobs',      page: 'pages/background-jobs.html'     }
+    ]
+  },
+  {
+    id: 'performance',
+    label: 'Performance & Optimization',
+    children: [
+      { id: 'perf',               label: 'Performance Basics',    page: 'pages/performance.html'        },
+      { id: 'caching-strategies', label: 'Caching Strategies',    page: 'pages/caching-strategies.html' },
+      { id: 'rate-limiting',      label: 'Rate Limiting',         page: 'pages/rate-limiting.html'      }
+    ]
+  },
+  {
     id: 'advanced',
     label: 'Advanced Topics',
     children: [
       { id: 'config',   label: 'Configuration',   page: 'pages/configuration.html' },
       { id: 'plugins',  label: 'Plugins',         page: 'pages/plugins.html'      },
-      { id: 'perf',     label: 'Performance',     page: 'pages/performance.html' }
+      { id: 'microservices-architecture', label: 'Microservices Architecture', page: 'pages/microservices-architecture.html' },
+      { id: 'api-versioning',     label: 'API Versioning',       page: 'pages/api-versioning.html'     }
+    ]
+  },
+  {
+    id: 'real-time',
+    label: 'Real-Time Features',
+    children: [
+      { id: 'websocket-communication', label: 'WebSocket Communication', page: 'pages/websocket-communication.html' },
+      { id: 'real-time-analytics',     label: 'Real-Time Analytics',     page: 'pages/real-time-analytics.html'     }
+    ]
+  },
+  {
+    id: 'media-processing',
+    label: 'Media & Document Processing',
+    children: [
+      { id: 'image-processing',   label: 'Image Processing',     page: 'pages/image-processing.html'   },
+      { id: 'pdf-generation',     label: 'PDF Generation',       page: 'pages/pdf-generation.html'     },
+      { id: 'email-notifications', label: 'Email Notifications', page: 'pages/email-notifications.html' }
     ]
   },
   {
@@ -95,7 +143,16 @@ const NAV_DATA = [
       { id: 'authorization',           label: 'Authorization',           page: 'pages/authorization.html'           },
       { id: 'api-security',            label: 'API Security',            page: 'pages/api-security.html'            },
       { id: 'content-security-policy', label: 'Content Security Policy', page: 'pages/content-security-policy.html' },
-      { id: 'secrets-management',      label: 'Secrets Management',      page: 'pages/secrets-management.html'      }
+      { id: 'secrets-management',      label: 'Secrets Management',      page: 'pages/secrets-management.html'      },
+      { id: 'data-encryption',         label: 'Data Encryption',         page: 'pages/data-encryption.html'         }
+    ]
+  },
+  {
+    id: 'testing-monitoring',
+    label: 'Testing & Monitoring',
+    children: [
+      { id: 'testing-strategies',  label: 'Testing Strategies',   page: 'pages/testing-strategies.html'  },
+      { id: 'monitoring-systems',  label: 'Monitoring Systems',   page: 'pages/monitoring-systems.html'  }
     ]
   },
   {
@@ -106,7 +163,8 @@ const NAV_DATA = [
       { id: 'ci-cd',            label: 'CI/CD Integration',         page: 'pages/ci-cd.html'            },
       { id: 'cloud-deployment', label: 'Cloud Deployment',          page: 'pages/cloud-deployment.html' },
       { id: 'env-variables',    label: 'Environment Variables',     page: 'pages/env-variables.html'    },
-      { id: 'health-checks',    label: 'Health Checks & Monitoring',page: 'pages/health-checks.html'   }
+      { id: 'health-checks',    label: 'Health Checks & Monitoring',page: 'pages/health-checks.html'   },
+      { id: 'deployment-automation', label: 'Deployment Automation', page: 'pages/deployment-automation.html' }
     ]
   },
   {
@@ -117,7 +175,9 @@ const NAV_DATA = [
       { id: 'rest-clients',         label: 'REST Clients',         page: 'pages/rest-clients.html'         },
       { id: 'oauth2',               label: 'OAuth 2.0',            page: 'pages/oauth2.html'               },
       { id: 'database-connections', label: 'Database Connections', page: 'pages/database-connections.html' },
-      { id: 'message-queues',       label: 'Message Queues',       page: 'pages/message-queues.html'       }
+      { id: 'message-queues',       label: 'Message Queues',       page: 'pages/message-queues.html'       },
+      { id: 'machine-learning-integration', label: 'Machine Learning Integration', page: 'pages/machine-learning-integration.html' },
+      { id: 'blockchain-integration', label: 'Blockchain Integration', page: 'pages/blockchain-integration.html' }
     ]
   },
   {

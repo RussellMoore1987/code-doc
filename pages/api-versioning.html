@@ -1,0 +1,958 @@
+<div class="content-body">
+
+  <h1 id="api-versioning">API Versioning</h1>
+
+  <p>
+    Implement comprehensive API versioning strategies to manage API evolution,
+    maintain backward compatibility, and enable smooth transitions between
+    API versions. This guide covers versioning approaches, implementation
+    patterns, and migration strategies.
+  </p>
+
+  <div class="callout">
+    <div class="callout-title">🔄 Evolution Management</div>
+    <p>
+      API versioning is crucial for maintaining stable integrations while
+      enabling continuous improvement. Proper versioning strategies allow
+      APIs to evolve without breaking existing clients, ensuring long-term
+      maintainability and developer satisfaction.
+    </p>
+  </div>
+
+  <!-- ─── VERSIONING STRATEGIES ──────────── -->
+  <h2 id="versioning-strategies">Versioning Strategies</h2>
+
+  <h3 id="url-path-versioning">URL Path Versioning</h3>
+
+  <pre><code>const express = require('express');
+const app = express();
+
+class APIVersionManager {
+  constructor() {
+    this.versions = new Map();
+    this.defaultVersion = 'v1';
+    this.supportedVersions = ['v1', 'v2', 'v3'];
+    this.deprecatedVersions = new Set(['v1']);
+    this.sunsetDates = new Map([
+      ['v1', new Date('2024-12-31')]
+    ]);
+  }
+
+  // Register version-specific handlers
+  registerVersion(version, handler) {
+    this.versions.set(version, handler);
+  }
+
+  // Version middleware
+  versionMiddleware() {
+    return (req, res, next) => {
+      // Extract version from URL path: /api/v1/users
+      const versionMatch = req.path.match(/^\/api\/(v\d+)\//);
+      const requestedVersion = versionMatch ? versionMatch[1] : this.defaultVersion;
+      
+      // Validate version
+      if (!this.supportedVersions.includes(requestedVersion)) {
+        return res.status(400).json({
+          error: 'Unsupported API version',
+          supportedVersions: this.supportedVersions,
+          requestedVersion
+        });
+      }
+
+      // Add deprecation warnings
+      if (this.deprecatedVersions.has(requestedVersion)) {
+        res.set('Warning', '299 - "This API version is deprecated"');
+        res.set('Deprecation', 'true');
+        
+        const sunsetDate = this.sunsetDates.get(requestedVersion);
+        if (sunsetDate) {
+          res.set('Sunset', sunsetDate.toISOString());
+        }
+      }
+
+      // Set version context
+      req.apiVersion = requestedVersion;
+      req.versionHandler = this.versions.get(requestedVersion);
+      
+      next();
+    };
+  }
+
+  // Dynamic route registration
+  setupVersionedRoutes(router) {
+    // V1 Routes
+    this.registerVersion('v1', {
+      getUser: (req, res) => {
+        // V1 user format
+        const user = {
+          id: req.params.id,
+          name: req.userData.full_name, // Old field name
+          email: req.userData.email_address // Old field name
+        };
+        res.json(user);
+      },
+      
+      createUser: (req, res) => {
+        // V1 creation logic
+        const userData = {
+          full_name: req.body.name,
+          email_address: req.body.email
+        };
+        // Create user...
+        res.status(201).json({ message: 'User created', id: 123 });
+      }
+    });
+
+    // V2 Routes
+    this.registerVersion('v2', {
+      getUser: (req, res) => {
+        // V2 user format with additional fields
+        const user = {
+          id: req.params.id,
+          name: req.userData.full_name,
+          email: req.userData.email_address,
+          profile: req.userData.profile,
+          preferences: req.userData.preferences,
+          created_at: req.userData.created_at
+        };
+        res.json(user);
+      },
+      
+      createUser: (req, res) => {
+        // V2 creation with validation
+        const errors = this.validateUserV2(req.body);
+        if (errors.length > 0) {
+          return res.status(400).json({ errors });
+        }
+        
+        const userData = {
+          full_name: req.body.name,
+          email_address: req.body.email,
+          profile: req.body.profile,
+          preferences: req.body.preferences
+        };
+        // Create user...
+        res.status(201).json({ message: 'User created', id: 123, version: 'v2' });
+      }
+    });
+
+    // V3 Routes
+    this.registerVersion('v3', {
+      getUser: (req, res) => {
+        // V3 user format with restructured data
+        const user = {
+          id: req.params.id,
+          personalInfo: {
+            firstName: req.userData.first_name,
+            lastName: req.userData.last_name,
+            email: req.userData.email
+          },
+          profile: req.userData.profile,
+          settings: req.userData.preferences,
+          metadata: {
+            createdAt: req.userData.created_at,
+            updatedAt: req.userData.updated_at
+          }
+        };
+        res.json(user);
+      },
+      
+      createUser: async (req, res) => {
+        // V3 creation with async validation
+        try {
+          await this.validateUserV3(req.body);
+          
+          const userData = {
+            first_name: req.body.personalInfo.firstName,
+            last_name: req.body.personalInfo.lastName,
+            email: req.body.personalInfo.email,
+            profile: req.body.profile,
+            preferences: req.body.settings
+          };
+          
+          // Create user...
+          res.status(201).json({ 
+            message: 'User created', 
+            id: 123, 
+            version: 'v3',
+            createdAt: new Date().toISOString()
+          });
+        } catch (error) {
+          res.status(400).json({ error: error.message });
+        }
+      }
+    });
+
+    // Generic versioned endpoint handler
+    router.get('/api/:version/users/:id', this.versionMiddleware(), (req, res) => {
+      const handler = req.versionHandler?.getUser;
+      if (handler) {
+        handler(req, res);
+      } else {
+        res.status(501).json({ error: 'Handler not implemented' });
+      }
+    });
+
+    router.post('/api/:version/users', this.versionMiddleware(), (req, res) => {
+      const handler = req.versionHandler?.createUser;
+      if (handler) {
+        handler(req, res);
+      } else {
+        res.status(501).json({ error: 'Handler not implemented' });
+      }
+    });
+  }
+
+  validateUserV2(userData) {
+    const errors = [];
+    if (!userData.name) errors.push('Name is required');
+    if (!userData.email) errors.push('Email is required');
+    return errors;
+  }
+
+  async validateUserV3(userData) {
+    if (!userData.personalInfo?.firstName) {
+      throw new Error('First name is required');
+    }
+    if (!userData.personalInfo?.lastName) {
+      throw new Error('Last name is required');
+    }
+    if (!userData.personalInfo?.email) {
+      throw new Error('Email is required');
+    }
+    // Additional async validations...
+  }
+}</code></pre>
+
+  <!-- ─── HEADER VERSIONING ──────────────── -->
+  <h2 id="header-versioning">Header-Based Versioning</h2>
+
+  <h3 id="accept-header-versioning">Accept Header Versioning</h3>
+
+  <pre><code>class HeaderVersionManager {
+  constructor() {
+    this.contentTypeVersions = new Map([
+      ['application/vnd.api+json; version=1', 'v1'],
+      ['application/vnd.api+json; version=2', 'v2'],
+      ['application/vnd.api+json; version=3', 'v3'],
+      ['application/vnd.myapi.v1+json', 'v1'],
+      ['application/vnd.myapi.v2+json', 'v2'],
+      ['application/vnd.myapi.v3+json', 'v3']
+    ]);
+    
+    this.defaultVersion = 'v2';
+  }
+
+  // Parse version from Accept header
+  parseAcceptHeader(acceptHeader) {
+    if (!acceptHeader) return this.defaultVersion;
+
+    // Check for custom media types
+    for (const [mediaType, version] of this.contentTypeVersions) {
+      if (acceptHeader.includes(mediaType)) {
+        return version;
+      }
+    }
+
+    // Check for version parameter in standard media types
+    const versionMatch = acceptHeader.match(/version=(\d+)/);
+    if (versionMatch) {
+      return `v${versionMatch[1]}`;
+    }
+
+    return this.defaultVersion;
+  }
+
+  // Header versioning middleware
+  headerVersionMiddleware() {
+    return (req, res, next) => {
+      const acceptHeader = req.get('Accept');
+      const apiVersionHeader = req.get('API-Version');
+      
+      // Priority: API-Version header > Accept header > default
+      let version = this.defaultVersion;
+      
+      if (apiVersionHeader) {
+        version = apiVersionHeader.startsWith('v') ? apiVersionHeader : `v${apiVersionHeader}`;
+      } else if (acceptHeader) {
+        version = this.parseAcceptHeader(acceptHeader);
+      }
+
+      // Validate version
+      if (!['v1', 'v2', 'v3'].includes(version)) {
+        return res.status(400).json({
+          error: 'Unsupported API version',
+          supportedVersions: ['v1', 'v2', 'v3'],
+          requestedVersion: version
+        });
+      }
+
+      // Set response headers
+      res.set('API-Version', version);
+      res.set('Content-Type', `application/vnd.myapi.${version}+json`);
+
+      req.apiVersion = version;
+      next();
+    };
+  }
+
+  // Version-aware response transformer
+  transformResponse(data, version) {
+    switch (version) {
+      case 'v1':
+        return this.transformToV1(data);
+      case 'v2':
+        return this.transformToV2(data);
+      case 'v3':
+        return this.transformToV3(data);
+      default:
+        return data;
+    }
+  }
+
+  transformToV1(data) {
+    // Transform modern data structure to V1 format
+    if (data.personalInfo) {
+      return {
+        id: data.id,
+        name: `${data.personalInfo.firstName} ${data.personalInfo.lastName}`,
+        email: data.personalInfo.email,
+        created: data.metadata?.createdAt
+      };
+    }
+    return data;
+  }
+
+  transformToV2(data) {
+    // Transform to V2 format
+    if (data.personalInfo) {
+      return {
+        id: data.id,
+        fullName: `${data.personalInfo.firstName} ${data.personalInfo.lastName}`,
+        emailAddress: data.personalInfo.email,
+        userProfile: data.profile,
+        preferences: data.settings,
+        timestamps: {
+          created: data.metadata?.createdAt,
+          updated: data.metadata?.updatedAt
+        }
+      };
+    }
+    return data;
+  }
+
+  transformToV3(data) {
+    // V3 uses the modern structure as-is
+    return data;
+  }
+
+  // Versioned endpoint handler
+  createVersionedHandler(handlers) {
+    return (req, res) => {
+      const version = req.apiVersion;
+      const handler = handlers[version];
+      
+      if (!handler) {
+        return res.status(501).json({
+          error: `Version ${version} not implemented for this endpoint`
+        });
+      }
+
+      // Execute version-specific handler
+      const result = handler(req, res);
+      
+      // Transform response if needed
+      if (result && typeof result === 'object') {
+        const transformedResult = this.transformResponse(result, version);
+        res.json(transformedResult);
+      }
+    };
+  }
+}</code></pre>
+
+  <!-- ─── MIGRATION STRATEGIES ──────────── -->
+  <h2 id="migration-strategies">Migration Strategies</h2>
+
+  <h3 id="gradual-migration">Gradual Migration System</h3>
+
+  <pre><code>class APIMigrationManager {
+  constructor() {
+    this.migrationRules = new Map();
+    this.migrationStats = new Map();
+    this.clientVersions = new Map(); // Track client versions
+  }
+
+  // Register migration rule
+  addMigrationRule(fromVersion, toVersion, transformer) {
+    const key = `${fromVersion}->${toVersion}`;
+    this.migrationRules.set(key, transformer);
+  }
+
+  // Track client API usage
+  trackClientVersion(clientId, version, endpoint) {
+    const key = `${clientId}:${version}`;
+    
+    if (!this.clientVersions.has(key)) {
+      this.clientVersions.set(key, {
+        clientId,
+        version,
+        firstSeen: new Date(),
+        lastSeen: new Date(),
+        endpointUsage: new Map()
+      });
+    }
+
+    const clientInfo = this.clientVersions.get(key);
+    clientInfo.lastSeen = new Date();
+    
+    const endpointCount = clientInfo.endpointUsage.get(endpoint) || 0;
+    clientInfo.endpointUsage.set(endpoint, endpointCount + 1);
+  }
+
+  // Client tracking middleware
+  clientTrackingMiddleware() {
+    return (req, res, next) => {
+      const clientId = req.get('X-Client-ID') || req.ip;
+      const version = req.apiVersion;
+      const endpoint = `${req.method} ${req.route?.path || req.path}`;
+      
+      this.trackClientVersion(clientId, version, endpoint);
+      next();
+    };
+  }
+
+  // Get migration suggestions
+  getMigrationSuggestions() {
+    const suggestions = [];
+    
+    for (const [key, clientInfo] of this.clientVersions) {
+      const { clientId, version, lastSeen } = clientInfo;
+      
+      // Suggest migration for old versions
+      if (version === 'v1' && this.migrationRules.has('v1->v2')) {
+        suggestions.push({
+          clientId,
+          currentVersion: version,
+          suggestedVersion: 'v2',
+          lastSeen,
+          migrationGuide: this.generateMigrationGuide('v1', 'v2')
+        });
+      }
+    }
+    
+    return suggestions;
+  }
+
+  // Generate migration guide
+  generateMigrationGuide(fromVersion, toVersion) {
+    const changes = [];
+    
+    if (fromVersion === 'v1' && toVersion === 'v2') {
+      changes.push({
+        type: 'field_rename',
+        old: 'name',
+        new: 'fullName',
+        description: 'User name field renamed to fullName'
+      });
+      
+      changes.push({
+        type: 'field_rename',
+        old: 'email',
+        new: 'emailAddress',
+        description: 'Email field renamed to emailAddress'
+      });
+      
+      changes.push({
+        type: 'field_addition',
+        field: 'preferences',
+        description: 'New preferences object added for user settings'
+      });
+      
+      changes.push({
+        type: 'response_structure',
+        description: 'Timestamps moved to nested timestamps object'
+      });
+    }
+    
+    return {
+      fromVersion,
+      toVersion,
+      changes,
+      migrationSteps: this.generateMigrationSteps(changes),
+      breakingChanges: changes.filter(c => c.breaking),
+      codeExamples: this.generateCodeExamples(fromVersion, toVersion)
+    };
+  }
+
+  generateMigrationSteps(changes) {
+    return [
+      '1. Update your Accept header or API-Version header',
+      '2. Update field names in request/response handling',
+      '3. Handle new response structure',
+      '4. Test thoroughly before deploying to production',
+      '5. Monitor for any issues after migration'
+    ];
+  }
+
+  generateCodeExamples(fromVersion, toVersion) {
+    return {
+      request: {
+        [fromVersion]: {
+          headers: { 'API-Version': fromVersion },
+          body: { name: 'John Doe', email: 'john@example.com' }
+        },
+        [toVersion]: {
+          headers: { 'API-Version': toVersion },
+          body: { fullName: 'John Doe', emailAddress: 'john@example.com' }
+        }
+      },
+      response: {
+        [fromVersion]: {
+          id: 1,
+          name: 'John Doe',
+          email: 'john@example.com',
+          created: '2023-01-01T00:00:00Z'
+        },
+        [toVersion]: {
+          id: 1,
+          fullName: 'John Doe',
+          emailAddress: 'john@example.com',
+          preferences: {},
+          timestamps: {
+            created: '2023-01-01T00:00:00Z',
+            updated: '2023-01-01T00:00:00Z'
+          }
+        }
+      }
+    };
+  }
+
+  // Automated migration for compatible clients
+  autoMigrateMiddleware() {
+    return async (req, res, next) => {
+      const clientId = req.get('X-Client-ID');
+      const currentVersion = req.apiVersion;
+      const targetVersion = req.get('X-Migrate-To');
+      
+      if (targetVersion && this.canAutoMigrate(currentVersion, targetVersion)) {
+        try {
+          await this.performAutoMigration(req, currentVersion, targetVersion);
+          req.apiVersion = targetVersion;
+        } catch (error) {
+          console.error('Auto-migration failed:', error);
+          // Continue with original version
+        }
+      }
+      
+      next();
+    };
+  }
+
+  canAutoMigrate(fromVersion, toVersion) {
+    const key = `${fromVersion}->${toVersion}`;
+    return this.migrationRules.has(key);
+  }
+
+  async performAutoMigration(req, fromVersion, toVersion) {
+    const key = `${fromVersion}->${toVersion}`;
+    const transformer = this.migrationRules.get(key);
+    
+    if (transformer) {
+      // Transform request body
+      if (req.body) {
+        req.body = transformer.transformRequest(req.body);
+      }
+      
+      // Set response transformer
+      req.responseTransformer = transformer.transformResponse;
+    }
+  }
+
+  // Version analytics
+  getVersionAnalytics() {
+    const analytics = {
+      totalClients: this.clientVersions.size,
+      versionDistribution: new Map(),
+      endpointUsage: new Map(),
+      migrationReadiness: new Map()
+    };
+
+    for (const [key, clientInfo] of this.clientVersions) {
+      const { version } = clientInfo;
+      
+      // Count version distribution
+      const versionCount = analytics.versionDistribution.get(version) || 0;
+      analytics.versionDistribution.set(version, versionCount + 1);
+      
+      // Analyze endpoint usage
+      for (const [endpoint, count] of clientInfo.endpointUsage) {
+        const currentCount = analytics.endpointUsage.get(endpoint) || 0;
+        analytics.endpointUsage.set(endpoint, currentCount + count);
+      }
+      
+      // Assess migration readiness
+      const daysSinceLastSeen = Math.floor(
+        (new Date() - clientInfo.lastSeen) / (1000 * 60 * 60 * 24)
+      );
+      
+      if (version === 'v1' && daysSinceLastSeen < 30) {
+        const readinessCount = analytics.migrationReadiness.get('v1->v2') || 0;
+        analytics.migrationReadiness.set('v1->v2', readinessCount + 1);
+      }
+    }
+
+    return analytics;
+  }
+
+  // Generate migration timeline
+  generateMigrationTimeline(deprecatedVersion, sunsetDate) {
+    const now = new Date();
+    const sunset = new Date(sunsetDate);
+    const daysUntilSunset = Math.floor((sunset - now) / (1000 * 60 * 60 * 24));
+    
+    const timeline = [
+      {
+        phase: 'Announcement',
+        date: new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000), // 30 days from now
+        description: 'Announce deprecation to all clients',
+        status: 'pending'
+      },
+      {
+        phase: 'Migration Period',
+        date: new Date(now.getTime() + 90 * 24 * 60 * 60 * 1000), // 90 days
+        description: 'Provide migration tools and support',
+        status: 'pending'
+      },
+      {
+        phase: 'Final Warning',
+        date: new Date(sunset.getTime() - 30 * 24 * 60 * 60 * 1000), // 30 days before sunset
+        description: 'Final migration reminder',
+        status: 'pending'
+      },
+      {
+        phase: 'Sunset',
+        date: sunset,
+        description: `${deprecatedVersion} will be discontinued`,
+        status: 'pending'
+      }
+    ];
+    
+    return {
+      deprecatedVersion,
+      sunsetDate,
+      daysUntilSunset,
+      timeline,
+      affectedClients: this.getClientsUsingVersion(deprecatedVersion)
+    };
+  }
+
+  getClientsUsingVersion(version) {
+    const clients = [];
+    
+    for (const [key, clientInfo] of this.clientVersions) {
+      if (clientInfo.version === version) {
+        clients.push({
+          clientId: clientInfo.clientId,
+          lastSeen: clientInfo.lastSeen,
+          endpointCount: clientInfo.endpointUsage.size
+        });
+      }
+    }
+    
+    return clients.sort((a, b) => b.lastSeen - a.lastSeen);
+  }
+}</code></pre>
+
+  <!-- ─── SEMANTIC VERSIONING ──────────────── -->
+  <h2 id="semantic-versioning">Semantic Versioning</h2>
+
+  <h3 id="semantic-api-versioning">Semantic API Versioning</h3>
+
+  <pre><code>class SemanticVersionManager {
+  constructor() {
+    this.currentVersion = '1.0.0';
+    this.supportedVersions = ['1.0.0', '1.1.0', '2.0.0'];
+    this.apiChanges = new Map();
+    this.compatibilityMatrix = new Map();
+    
+    this.initializeCompatibilityMatrix();
+  }
+
+  initializeCompatibilityMatrix() {
+    // Define compatibility between versions
+    this.compatibilityMatrix.set('1.0.0->1.1.0', {
+      compatible: true,
+      breaking: false,
+      changes: ['Added optional fields', 'New endpoints added']
+    });
+    
+    this.compatibilityMatrix.set('1.1.0->2.0.0', {
+      compatible: false,
+      breaking: true,
+      changes: ['Response structure changed', 'Required field added']
+    });
+  }
+
+  // Parse semantic version
+  parseVersion(versionString) {
+    const match = versionString.match(/^(\d+)\.(\d+)\.(\d+)(?:-([a-zA-Z0-9-]+))?$/);
+    
+    if (!match) {
+      throw new Error('Invalid semantic version format');
+    }
+    
+    return {
+      major: parseInt(match[1]),
+      minor: parseInt(match[2]),
+      patch: parseInt(match[3]),
+      prerelease: match[4] || null,
+      full: versionString
+    };
+  }
+
+  // Compare versions
+  compareVersions(version1, version2) {
+    const v1 = this.parseVersion(version1);
+    const v2 = this.parseVersion(version2);
+    
+    if (v1.major !== v2.major) {
+      return v1.major - v2.major;
+    }
+    
+    if (v1.minor !== v2.minor) {
+      return v1.minor - v2.minor;
+    }
+    
+    return v1.patch - v2.patch;
+  }
+
+  // Check compatibility
+  isCompatible(requestedVersion, currentVersion = this.currentVersion) {
+    const requested = this.parseVersion(requestedVersion);
+    const current = this.parseVersion(currentVersion);
+    
+    // Same major version is generally compatible (backward compatibility)
+    if (requested.major === current.major) {
+      // Can serve newer minor/patch versions to older clients
+      return this.compareVersions(requestedVersion, currentVersion) <= 0;
+    }
+    
+    // Different major versions require explicit compatibility mapping
+    const key = `${requestedVersion}->${currentVersion}`;
+    const compatibility = this.compatibilityMatrix.get(key);
+    return compatibility?.compatible || false;
+  }
+
+  // Version negotiation middleware
+  semanticVersionMiddleware() {
+    return (req, res, next) => {
+      const acceptVersion = req.get('Accept-Version');
+      const apiVersion = req.get('API-Version');
+      
+      let requestedVersion = apiVersion || acceptVersion;
+      
+      if (!requestedVersion) {
+        // Default to latest compatible version
+        requestedVersion = this.getLatestCompatibleVersion();
+      }
+      
+      try {
+        const parsedVersion = this.parseVersion(requestedVersion);
+        
+        if (!this.supportedVersions.includes(requestedVersion)) {
+          return res.status(400).json({
+            error: 'Unsupported API version',
+            requestedVersion,
+            supportedVersions: this.supportedVersions,
+            suggestion: this.suggestVersion(requestedVersion)
+          });
+        }
+        
+        // Check if we can serve this version
+        if (!this.isCompatible(requestedVersion)) {
+          return res.status(400).json({
+            error: 'Incompatible API version',
+            requestedVersion,
+            currentVersion: this.currentVersion,
+            migrationRequired: true,
+            migrationGuide: this.getMigrationGuide(requestedVersion, this.currentVersion)
+          });
+        }
+        
+        req.apiVersion = requestedVersion;
+        req.parsedVersion = parsedVersion;
+        
+        // Set response version headers
+        res.set('API-Version', requestedVersion);
+        res.set('API-Current-Version', this.currentVersion);
+        
+        next();
+      } catch (error) {
+        res.status(400).json({
+          error: 'Invalid version format',
+          message: error.message,
+          example: '1.0.0'
+        });
+      }
+    };
+  }
+
+  getLatestCompatibleVersion() {
+    return this.supportedVersions
+      .filter(v => this.isCompatible(v))
+      .sort((a, b) => this.compareVersions(b, a))[0];
+  }
+
+  suggestVersion(requestedVersion) {
+    try {
+      const requested = this.parseVersion(requestedVersion);
+      
+      // Find the closest supported version
+      let closestVersion = this.supportedVersions[0];
+      let minDifference = Infinity;
+      
+      for (const version of this.supportedVersions) {
+        const parsed = this.parseVersion(version);
+        const difference = Math.abs(
+          (requested.major * 10000 + requested.minor * 100 + requested.patch) -
+          (parsed.major * 10000 + parsed.minor * 100 + parsed.patch)
+        );
+        
+        if (difference < minDifference) {
+          minDifference = difference;
+          closestVersion = version;
+        }
+      }
+      
+      return closestVersion;
+    } catch {
+      return this.currentVersion;
+    }
+  }
+
+  getMigrationGuide(fromVersion, toVersion) {
+    const from = this.parseVersion(fromVersion);
+    const to = this.parseVersion(toVersion);
+    
+    const guide = {
+      fromVersion,
+      toVersion,
+      breakingChanges: [],
+      newFeatures: [],
+      deprecations: [],
+      migrationSteps: []
+    };
+    
+    // Major version change
+    if (from.major !== to.major) {
+      guide.breakingChanges.push('Major version change - review all integrations');
+      guide.migrationSteps.push('Test thoroughly in staging environment');
+    }
+    
+    // Minor version changes
+    if (from.minor < to.minor) {
+      guide.newFeatures.push('New optional features available');
+      guide.migrationSteps.push('Review new features and update if needed');
+    }
+    
+    return guide;
+  }
+
+  // Version-specific response transformers
+  createVersionedResponse(data, version) {
+    const parsed = this.parseVersion(version);
+    
+    // Apply transformations based on version
+    if (parsed.major === 1) {
+      return this.transformForV1(data, parsed);
+    } else if (parsed.major === 2) {
+      return this.transformForV2(data, parsed);
+    }
+    
+    return data;
+  }
+
+  transformForV1(data, parsedVersion) {
+    // V1 transformations
+    const transformed = { ...data };
+    
+    if (parsedVersion.minor === 0) {
+      // V1.0.x - basic format
+      delete transformed.advancedFeatures;
+    } else if (parsedVersion.minor >= 1) {
+      // V1.1.x+ - includes some advanced features
+      if (transformed.advancedFeatures) {
+        transformed.betaFeatures = transformed.advancedFeatures;
+        delete transformed.advancedFeatures;
+      }
+    }
+    
+    return transformed;
+  }
+
+  transformForV2(data, parsedVersion) {
+    // V2 transformations - modern format
+    return data;
+  }
+
+  // API change tracking
+  recordAPIChange(version, changeType, description, breaking = false) {
+    if (!this.apiChanges.has(version)) {
+      this.apiChanges.set(version, []);
+    }
+    
+    this.apiChanges.get(version).push({
+      type: changeType,
+      description,
+      breaking,
+      timestamp: new Date()
+    });
+  }
+
+  getChangeLog(fromVersion = null, toVersion = null) {
+    const changelog = [];
+    
+    for (const [version, changes] of this.apiChanges) {
+      if (fromVersion && this.compareVersions(version, fromVersion) < 0) {
+        continue;
+      }
+      
+      if (toVersion && this.compareVersions(version, toVersion) > 0) {
+        continue;
+      }
+      
+      changelog.push({
+        version,
+        changes,
+        releaseDate: changes[0]?.timestamp
+      });
+    }
+    
+    return changelog.sort((a, b) => this.compareVersions(b.version, a.version));
+  }
+}</code></pre>
+
+  <!-- ─── BEST PRACTICES ─────────────────── -->
+  <h2 id="best-practices">Best Practices</h2>
+
+  <ul>
+    <li><strong>Consistent Strategy</strong> - Choose one versioning approach and stick to it</li>
+    <li><strong>Backward Compatibility</strong> - Maintain compatibility within major versions</li>
+    <li><strong>Clear Documentation</strong> - Document all changes and migration paths</li>
+    <li><strong>Gradual Migration</strong> - Provide migration periods and tools</li>
+    <li><strong>Version Analytics</strong> - Track API version usage and adoption</li>
+    <li><strong>Deprecation Notices</strong> - Communicate deprecation timeline clearly</li>
+    <li><strong>Testing</strong> - Test all supported versions thoroughly</li>
+  </ul>
+
+  <div class="callout">
+    <div class="callout-title">🎯 Versioning Excellence</div>
+    <p>
+      Successful API versioning requires careful planning, clear communication,
+      and gradual migration strategies. Focus on maintaining stability for
+      existing clients while enabling innovation and improvements for new
+      integrations.
+    </p>
+  </div>
+
+</div>

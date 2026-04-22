@@ -1,0 +1,654 @@
+<div class="content-body">
+
+  <h1 id="email-notifications">Email Notifications</h1>
+
+  <p>
+    Build a comprehensive email notification system with template management,
+    delivery tracking, and advanced features like scheduling, personalization,
+    and multi-channel communication. Ensure reliable delivery and professional presentation.
+  </p>
+
+  <div class="callout">
+    <div class="callout-title">📧 Communication Excellence</div>
+    <p>
+      Email notifications are crucial for user engagement, system alerts, and
+      business processes. A well-designed email system improves user experience,
+      increases engagement rates, and provides reliable communication channels.
+    </p>
+  </div>
+
+  <!-- ─── EMAIL INFRASTRUCTURE ─────────── -->
+  <h2 id="email-infrastructure">Email Infrastructure</h2>
+
+  <h3 id="email-service-setup">Email Service Setup</h3>
+
+  <pre><code>const nodemailer = require('nodemailer');
+const aws = require('aws-sdk');
+
+class EmailService {
+  constructor(config) {
+    this.config = config;
+    this.transporter = this.createTransporter();
+    this.templateEngine = new EmailTemplateEngine();
+    this.deliveryTracking = new DeliveryTracker();
+  }
+
+  createTransporter() {
+    const { provider, config } = this.config;
+
+    switch (provider) {
+      case 'smtp':
+        return nodemailer.createTransporter({
+          host: config.host,
+          port: config.port,
+          secure: config.secure,
+          auth: {
+            user: config.username,
+            pass: config.password
+          },
+          pool: true,
+          maxConnections: 5,
+          maxMessages: 100
+        });
+
+      case 'ses':
+        aws.config.update({
+          region: config.region,
+          accessKeyId: config.accessKeyId,
+          secretAccessKey: config.secretAccessKey
+        });
+        
+        return nodemailer.createTransporter({
+          SES: new aws.SES({ apiVersion: '2010-12-01' }),
+          sendingRate: 14 // SES default limit
+        });
+
+      case 'sendgrid':
+        return nodemailer.createTransporter({
+          service: 'SendGrid',
+          auth: {
+            user: 'apikey',
+            pass: config.apiKey
+          }
+        });
+
+      default:
+        throw new Error(`Unsupported email provider: ${provider}`);
+    }
+  }
+
+  async send(emailOptions) {
+    try {
+      const processedEmail = await this.preprocessEmail(emailOptions);
+      const result = await this.transporter.sendMail(processedEmail);
+      
+      await this.deliveryTracking.recordSent(emailOptions, result);
+      
+      return {
+        success: true,
+        messageId: result.messageId,
+        response: result.response
+      };
+      
+    } catch (error) {
+      console.error('Email send failed:', error);
+      await this.deliveryTracking.recordFailed(emailOptions, error);
+      
+      throw new Error(`Failed to send email: ${error.message}`);
+    }
+  }
+
+  async preprocessEmail(options) {
+    const {
+      to,
+      cc,
+      bcc,
+      subject,
+      template,
+      templateData,
+      html,
+      text,
+      attachments,
+      priority = 'normal'
+    } = options;
+
+    let processedHtml = html;
+    let processedText = text;
+
+    // Process template if provided
+    if (template) {
+      const rendered = await this.templateEngine.render(template, templateData);
+      processedHtml = rendered.html;
+      processedText = rendered.text;
+    }
+
+    // Add tracking pixels
+    if (processedHtml && this.config.enableTracking) {
+      processedHtml = this.addTrackingPixel(processedHtml, options);
+    }
+
+    return {
+      from: this.config.fromAddress,
+      to: Array.isArray(to) ? to.join(', ') : to,
+      cc: cc ? (Array.isArray(cc) ? cc.join(', ') : cc) : undefined,
+      bcc: bcc ? (Array.isArray(bcc) ? bcc.join(', ') : bcc) : undefined,
+      subject,
+      html: processedHtml,
+      text: processedText,
+      attachments,
+      priority,
+      headers: {
+        'X-Mailer': 'CustomEmailService',
+        'X-Priority': priority === 'high' ? '1' : '3'
+      }
+    };
+  }
+
+  addTrackingPixel(html, options) {
+    const trackingId = this.generateTrackingId(options);
+    const trackingUrl = `${this.config.baseUrl}/email/track/${trackingId}`;
+    const pixel = `<img src="${trackingUrl}" width="1" height="1" alt="" style="display:block;" />`;
+    
+    return html.replace('</body>', `${pixel}</body>`);
+  }
+}</code></pre>
+
+  <!-- ─── TEMPLATE ENGINE ───────────────── -->
+  <h2 id="template-engine">Template Engine</h2>
+
+  <h3 id="template-system">Template System</h3>
+
+  <pre><code>class EmailTemplateEngine {
+  constructor(templatesPath = './email-templates') {
+    this.templatesPath = templatesPath;
+    this.templateCache = new Map();
+    this.helpers = new Map();
+    this.partials = new Map();
+    
+    this.registerDefaultHelpers();
+    this.loadPartials();
+  }
+
+  async render(templateName, data = {}) {
+    const template = await this.getTemplate(templateName);
+    
+    const context = {
+      ...data,
+      helpers: this.helpers,
+      formatDate: (date) => new Date(date).toLocaleDateString(),
+      formatCurrency: (amount) => new Intl.NumberFormat('en-US', {
+        style: 'currency',
+        currency: 'USD'
+      }).format(amount)
+    };
+
+    const html = this.processTemplate(template.html, context);
+    const text = this.processTemplate(template.text || this.htmlToText(html), context);
+
+    return { html, text };
+  }
+
+  async getTemplate(templateName) {
+    if (this.templateCache.has(templateName)) {
+      return this.templateCache.get(templateName);
+    }
+
+    try {
+      const htmlPath = path.join(this.templatesPath, `${templateName}.html`);
+      const textPath = path.join(this.templatesPath, `${templateName}.txt`);
+
+      const [html, text] = await Promise.all([
+        fs.readFile(htmlPath, 'utf8'),
+        fs.readFile(textPath, 'utf8').catch(() => null)
+      ]);
+
+      const template = { html, text };
+      this.templateCache.set(templateName, template);
+      
+      return template;
+    } catch (error) {
+      throw new Error(`Template '${templateName}' not found`);
+    }
+  }
+
+  processTemplate(template, context) {
+    // Replace variables: {{variable}}
+    let processed = template.replace(/\{\{(\w+)\}\}/g, (match, key) => {
+      return context[key] || '';
+    });
+
+    // Process conditionals: {{#if condition}}...{{/if}}
+    processed = processed.replace(/\{\{#if\s+(\w+)\}\}(.*?)\{\{\/if\}\}/gs, (match, condition, content) => {
+      return context[condition] ? content : '';
+    });
+
+    // Process loops: {{#each items}}...{{/each}}
+    processed = processed.replace(/\{\{#each\s+(\w+)\}\}(.*?)\{\{\/each\}\}/gs, (match, arrayName, itemTemplate) => {
+      const array = context[arrayName];
+      if (!Array.isArray(array)) return '';
+      
+      return array.map(item => {
+        return itemTemplate.replace(/\{\{(\w+)\}\}/g, (match, key) => {
+          return item[key] || '';
+        });
+      }).join('');
+    });
+
+    // Process partials: {{>partial}}
+    processed = processed.replace(/\{\{>(\w+)\}\}/g, (match, partialName) => {
+      const partial = this.partials.get(partialName);
+      return partial ? this.processTemplate(partial, context) : '';
+    });
+
+    return processed;
+  }
+
+  registerHelper(name, helper) {
+    this.helpers.set(name, helper);
+  }
+
+  registerDefaultHelpers() {
+    this.registerHelper('capitalize', (str) => 
+      str.charAt(0).toUpperCase() + str.slice(1)
+    );
+    
+    this.registerHelper('truncate', (str, length = 100) => 
+      str.length > length ? str.substring(0, length) + '...' : str
+    );
+    
+    this.registerHelper('formatDate', (date, format = 'short') => 
+      new Intl.DateTimeFormat('en-US', { dateStyle: format }).format(new Date(date))
+    );
+  }
+
+  async loadPartials() {
+    try {
+      const partialsPath = path.join(this.templatesPath, 'partials');
+      const files = await fs.readdir(partialsPath);
+      
+      for (const file of files) {
+        if (file.endsWith('.html')) {
+          const partialName = path.basename(file, '.html');
+          const content = await fs.readFile(path.join(partialsPath, file), 'utf8');
+          this.partials.set(partialName, content);
+        }
+      }
+    } catch (error) {
+      // Partials directory doesn't exist, continue without partials
+    }
+  }
+}</code></pre>
+
+  <!-- ─── NOTIFICATION TYPES ────────────── -->
+  <h2 id="notification-types">Notification Types</h2>
+
+  <h3 id="transactional-emails">Transactional Emails</h3>
+
+  <pre><code>class NotificationManager {
+  constructor(emailService) {
+    this.emailService = emailService;
+    this.notificationQueue = new JobQueue('notifications');
+    this.setupNotificationTypes();
+  }
+
+  setupNotificationTypes() {
+    // Welcome email
+    this.registerNotification('user.welcome', {
+      template: 'welcome',
+      subject: 'Welcome to {{appName}}!',
+      priority: 'high',
+      delay: 0
+    });
+
+    // Password reset
+    this.registerNotification('user.password-reset', {
+      template: 'password-reset',
+      subject: 'Reset your password',
+      priority: 'high',
+      delay: 0,
+      expiresIn: 3600000 // 1 hour
+    });
+
+    // Order confirmation
+    this.registerNotification('order.confirmed', {
+      template: 'order-confirmation',
+      subject: 'Order #{{orderNumber}} confirmed',
+      priority: 'high',
+      delay: 0,
+      attachInvoice: true
+    });
+
+    // Payment reminders
+    this.registerNotification('payment.reminder', {
+      template: 'payment-reminder',
+      subject: 'Payment due for invoice #{{invoiceNumber}}',
+      priority: 'normal',
+      schedule: [
+        { days: -3, template: 'payment-reminder-3d' },
+        { days: -1, template: 'payment-reminder-1d' },
+        { days: 0, template: 'payment-due-today' },
+        { days: 7, template: 'payment-overdue' }
+      ]
+    });
+
+    // Activity digest
+    this.registerNotification('user.digest', {
+      template: 'weekly-digest',
+      subject: 'Your weekly summary',
+      priority: 'low',
+      schedule: { cron: '0 8 * * 1' } // Monday 8 AM
+    });
+  }
+
+  registerNotification(type, config) {
+    this.notificationQueue.process(type, async (data) => {
+      return this.processNotification(type, data, config);
+    });
+  }
+
+  async send(type, recipient, data = {}) {
+    const notification = {
+      type,
+      recipient,
+      data,
+      timestamp: new Date()
+    };
+
+    // Add to queue for processing
+    await this.notificationQueue.add(type, notification);
+    
+    return notification;
+  }
+
+  async processNotification(type, notification, config) {
+    const { recipient, data } = notification;
+    
+    try {
+      // Prepare email data
+      const emailData = {
+        to: recipient.email || recipient,
+        subject: this.processSubject(config.subject, data),
+        template: config.template,
+        templateData: {
+          ...data,
+          recipient,
+          unsubscribeUrl: this.generateUnsubscribeUrl(recipient, type)
+        },
+        priority: config.priority
+      };
+
+      // Add attachments if configured
+      if (config.attachInvoice && data.invoiceId) {
+        emailData.attachments = await this.generateInvoiceAttachment(data.invoiceId);
+      }
+
+      // Send email
+      const result = await this.emailService.send(emailData);
+      
+      // Log notification
+      await this.logNotification(type, recipient, result);
+      
+      return result;
+      
+    } catch (error) {
+      console.error(`Failed to send ${type} notification:`, error);
+      await this.logNotificationFailure(type, recipient, error);
+      throw error;
+    }
+  }
+
+  processSubject(template, data) {
+    return template.replace(/\{\{(\w+)\}\}/g, (match, key) => {
+      return data[key] || match;
+    });
+  }
+
+  async scheduleRecurringNotification(type, recipients, data, schedule) {
+    if (schedule.cron) {
+      // Schedule recurring job
+      await this.notificationQueue.schedule(`${type}-recurring`, {
+        type,
+        recipients,
+        data
+      }, schedule.cron);
+    } else if (schedule.length) {
+      // Schedule multiple notifications
+      for (const item of schedule) {
+        const delay = item.days * 24 * 60 * 60 * 1000; // Convert days to milliseconds
+        
+        await this.notificationQueue.add(type, {
+          type,
+          recipient: recipients,
+          data: { ...data, template: item.template }
+        }, { delay });
+      }
+    }
+  }
+}</code></pre>
+
+  <!-- ─── DELIVERY TRACKING ─────────────── -->
+  <h2 id="delivery-tracking">Delivery Tracking</h2>
+
+  <h3 id="tracking-system">Tracking System</h3>
+
+  <pre><code>class DeliveryTracker {
+  constructor() {
+    this.trackingData = new Map();
+    this.webhookHandlers = new Map();
+    this.setupWebhookRoutes();
+  }
+
+  async recordSent(emailOptions, sendResult) {
+    const trackingId = this.generateTrackingId(emailOptions);
+    
+    const record = {
+      trackingId,
+      messageId: sendResult.messageId,
+      to: emailOptions.to,
+      subject: emailOptions.subject,
+      template: emailOptions.template,
+      sentAt: new Date(),
+      status: 'sent',
+      events: [{
+        type: 'sent',
+        timestamp: new Date(),
+        data: { messageId: sendResult.messageId }
+      }]
+    };
+
+    await EmailDelivery.create(record);
+    this.trackingData.set(trackingId, record);
+    
+    return trackingId;
+  }
+
+  async recordDelivered(trackingId, deliveryData) {
+    const record = await this.getTrackingRecord(trackingId);
+    
+    if (record) {
+      record.status = 'delivered';
+      record.deliveredAt = new Date();
+      record.events.push({
+        type: 'delivered',
+        timestamp: new Date(),
+        data: deliveryData
+      });
+
+      await this.updateRecord(record);
+    }
+  }
+
+  async recordOpened(trackingId, openData) {
+    const record = await this.getTrackingRecord(trackingId);
+    
+    if (record) {
+      if (!record.openedAt) {
+        record.openedAt = new Date();
+        record.status = 'opened';
+      }
+      
+      record.events.push({
+        type: 'opened',
+        timestamp: new Date(),
+        data: {
+          userAgent: openData.userAgent,
+          ip: openData.ip,
+          location: await this.getLocationFromIP(openData.ip)
+        }
+      });
+
+      await this.updateRecord(record);
+    }
+  }
+
+  async recordClicked(trackingId, clickData) {
+    const record = await this.getTrackingRecord(trackingId);
+    
+    if (record) {
+      if (!record.clickedAt) {
+        record.clickedAt = new Date();
+      }
+      
+      record.events.push({
+        type: 'clicked',
+        timestamp: new Date(),
+        data: {
+          url: clickData.url,
+          userAgent: clickData.userAgent,
+          ip: clickData.ip
+        }
+      });
+
+      await this.updateRecord(record);
+    }
+  }
+
+  async recordBounced(trackingId, bounceData) {
+    const record = await this.getTrackingRecord(trackingId);
+    
+    if (record) {
+      record.status = 'bounced';
+      record.bouncedAt = new Date();
+      record.bounceReason = bounceData.reason;
+      record.events.push({
+        type: 'bounced',
+        timestamp: new Date(),
+        data: bounceData
+      });
+
+      await this.updateRecord(record);
+      
+      // Handle hard bounces
+      if (bounceData.bounceType === 'Permanent') {
+        await this.handleHardBounce(record.to, bounceData);
+      }
+    }
+  }
+
+  setupWebhookRoutes() {
+    // Express routes for tracking
+    app.get('/email/track/:trackingId', async (req, res) => {
+      const trackingId = req.params.trackingId;
+      const userAgent = req.get('User-Agent');
+      const ip = req.ip;
+
+      await this.recordOpened(trackingId, { userAgent, ip });
+      
+      // Return 1x1 transparent pixel
+      const pixel = Buffer.from(
+        'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==',
+        'base64'
+      );
+      
+      res.set({
+        'Content-Type': 'image/png',
+        'Content-Length': pixel.length,
+        'Cache-Control': 'no-cache, no-store, must-revalidate'
+      });
+      
+      res.send(pixel);
+    });
+
+    // Click tracking
+    app.get('/email/click/:trackingId', async (req, res) => {
+      const trackingId = req.params.trackingId;
+      const url = req.query.url;
+      const userAgent = req.get('User-Agent');
+      const ip = req.ip;
+
+      await this.recordClicked(trackingId, { url, userAgent, ip });
+      
+      res.redirect(url);
+    });
+
+    // Webhook endpoints for email service providers
+    app.post('/webhook/sendgrid', (req, res) => {
+      this.handleSendGridWebhook(req.body);
+      res.sendStatus(200);
+    });
+
+    app.post('/webhook/ses', (req, res) => {
+      this.handleSESWebhook(req.body);
+      res.sendStatus(200);
+    });
+  }
+
+  async getDeliveryStats(timeframe = '7d') {
+    const startDate = new Date();
+    startDate.setDate(startDate.getDate() - parseInt(timeframe));
+
+    const stats = await EmailDelivery.aggregate([
+      {
+        $match: {
+          sentAt: { $gte: startDate }
+        }
+      },
+      {
+        $group: {
+          _id: '$status',
+          count: { $sum: 1 }
+        }
+      }
+    ]);
+
+    const totalSent = stats.reduce((sum, stat) => sum + stat.count, 0);
+    
+    return {
+      totalSent,
+      deliveryRate: this.calculateRate(stats, 'delivered', totalSent),
+      openRate: this.calculateRate(stats, 'opened', totalSent),
+      clickRate: this.calculateRate(stats, 'clicked', totalSent),
+      bounceRate: this.calculateRate(stats, 'bounced', totalSent),
+      stats
+    };
+  }
+
+  calculateRate(stats, status, total) {
+    const statusStat = stats.find(s => s._id === status);
+    return statusStat ? ((statusStat.count / total) * 100).toFixed(2) : '0.00';
+  }
+}</code></pre>
+
+  <!-- ─── BEST PRACTICES ─────────────────── -->
+  <h2 id="best-practices">Best Practices</h2>
+
+  <ul>
+    <li><strong>Template Management</strong> - Use a structured template system with partials and helpers</li>
+    <li><strong>Deliverability</strong> - Implement SPF, DKIM, and DMARC records</li>
+    <li><strong>Personalization</strong> - Use recipient data for targeted, relevant content</li>
+    <li><strong>Unsubscribe Handling</strong> - Provide easy unsubscribe mechanisms</li>
+    <li><strong>Rate Limiting</strong> - Respect email service provider limits</li>
+    <li><strong>Monitoring</strong> - Track delivery, opens, clicks, and bounces</li>
+    <li><strong>Testing</strong> - Test emails across different clients and devices</li>
+  </ul>
+
+  <div class="callout">
+    <div class="callout-title">📈 Email Success</div>
+    <p>
+      Successful email notifications combine technical reliability with compelling
+      content. Focus on deliverability, personalization, and user experience
+      to create email communications that users actually want to receive and engage with.
+    </p>
+  </div>
+
+</div>

@@ -1,0 +1,357 @@
+<div class="content-body">
+
+  <h1 id="caching-strategies">Caching Strategies</h1>
+
+  <p>
+    Implement effective caching strategies to improve performance, reduce server load, 
+    and enhance user experience. This guide covers various caching approaches, from 
+    browser-level caching to distributed cache systems.
+  </p>
+
+  <div class="callout">
+    <div class="callout-title">🚀 Performance Impact</div>
+    <p>
+      Proper caching can reduce page load times by 50-90% and significantly decrease
+      server resource usage. Strategic cache implementation is one of the most effective
+      performance optimizations available.
+    </p>
+  </div>
+
+  <!-- ─── BROWSER CACHING ────────────────── -->
+  <h2 id="browser-caching">Browser Caching</h2>
+
+  <p>
+    Configure HTTP headers to control how browsers cache static assets and dynamic content:
+  </p>
+
+  <h3 id="cache-control-headers">Cache-Control Headers</h3>
+
+  <pre><code>// Static assets (CSS, JS, images)
+Cache-Control: public, max-age=31536000, immutable
+
+// HTML pages
+Cache-Control: public, max-age=3600, must-revalidate
+
+// API responses
+Cache-Control: private, max-age=300, stale-while-revalidate=60
+
+// Sensitive data
+Cache-Control: no-store, no-cache, must-revalidate</code></pre>
+
+  <h3 id="etag-validation">ETag Validation</h3>
+
+  <pre><code>// Generate ETags for content validation
+const crypto = require('crypto');
+
+function generateETag(content) {
+  return crypto
+    .createHash('md5')
+    .update(content)
+    .digest('hex');
+}
+
+// Express middleware example
+app.use((req, res, next) => {
+  const etag = generateETag(res.content);
+  res.set('ETag', etag);
+  
+  if (req.headers['if-none-match'] === etag) {
+    return res.status(304).end();
+  }
+  
+  next();
+});</code></pre>
+
+  <!-- ─── APPLICATION CACHING ───────────── -->
+  <h2 id="application-caching">Application Caching</h2>
+
+  <p>
+    Implement in-memory and persistent caching within your application to reduce
+    database queries and API calls:
+  </p>
+
+  <h3 id="memory-caching">Memory Caching</h3>
+
+  <pre><code>class MemoryCache {
+  constructor(maxSize = 1000, ttl = 3600000) {
+    this.cache = new Map();
+    this.maxSize = maxSize;
+    this.defaultTTL = ttl;
+  }
+
+  set(key, value, ttl = this.defaultTTL) {
+    if (this.cache.size >= this.maxSize) {
+      // Remove oldest entry
+      const firstKey = this.cache.keys().next().value;
+      this.cache.delete(firstKey);
+    }
+
+    const expiry = Date.now() + ttl;
+    this.cache.set(key, { value, expiry });
+  }
+
+  get(key) {
+    const item = this.cache.get(key);
+    
+    if (!item) return null;
+    
+    if (Date.now() > item.expiry) {
+      this.cache.delete(key);
+      return null;
+    }
+    
+    return item.value;
+  }
+
+  clear() {
+    this.cache.clear();
+  }
+}</code></pre>
+
+  <h3 id="redis-caching">Redis Caching</h3>
+
+  <pre><code>const redis = require('redis');
+const client = redis.createClient();
+
+class RedisCache {
+  async set(key, value, ttl = 3600) {
+    const serialized = JSON.stringify(value);
+    await client.setex(key, ttl, serialized);
+  }
+
+  async get(key) {
+    const cached = await client.get(key);
+    return cached ? JSON.parse(cached) : null;
+  }
+
+  async invalidate(pattern) {
+    const keys = await client.keys(pattern);
+    if (keys.length > 0) {
+      await client.del(...keys);
+    }
+  }
+
+  async getOrSet(key, fetchFn, ttl = 3600) {
+    let cached = await this.get(key);
+    
+    if (cached === null) {
+      cached = await fetchFn();
+      await this.set(key, cached, ttl);
+    }
+    
+    return cached;
+  }
+}</code></pre>
+
+  <!-- ─── CDN INTEGRATION ────────────────── -->
+  <h2 id="cdn-integration">CDN Integration</h2>
+
+  <p>
+    Leverage Content Delivery Networks for global asset distribution and edge caching:
+  </p>
+
+  <h3 id="asset-optimization">Asset Optimization</h3>
+
+  <pre><code>// Webpack configuration for CDN
+module.exports = {
+  output: {
+    publicPath: 'https://cdn.example.com/assets/',
+    filename: '[name].[contenthash].js',
+    chunkFilename: '[name].[contenthash].chunk.js'
+  },
+  
+  optimization: {
+    splitChunks: {
+      chunks: 'all',
+      cacheGroups: {
+        vendor: {
+          test: /[\\/]node_modules[\\/]/,
+          name: 'vendors',
+          chunks: 'all',
+        }
+      }
+    }
+  }
+};</code></pre>
+
+  <h3 id="cache-invalidation">Cache Invalidation</h3>
+
+  <pre><code>// Automated cache invalidation
+class CDNManager {
+  constructor(apiKey, zone) {
+    this.apiKey = apiKey;
+    this.zone = zone;
+  }
+
+  async purgeCache(urls) {
+    const response = await fetch(`/zones/${this.zone}/purge_cache`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${this.apiKey}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ files: urls })
+    });
+
+    return response.json();
+  }
+
+  async purgeAll() {
+    return this.purgeCache(['*']);
+  }
+}</code></pre>
+
+  <!-- ─── CACHE PATTERNS ─────────────────── -->
+  <h2 id="cache-patterns">Cache Patterns</h2>
+
+  <p>
+    Common caching patterns to handle different scenarios effectively:
+  </p>
+
+  <h3 id="cache-aside">Cache-Aside Pattern</h3>
+
+  <pre><code>async function getCachedData(id) {
+  // 1. Check cache first
+  let data = await cache.get(`user:${id}`);
+  
+  if (data) {
+    return data; // Cache hit
+  }
+  
+  // 2. Cache miss - fetch from database
+  data = await database.getUser(id);
+  
+  // 3. Update cache
+  await cache.set(`user:${id}`, data, 3600);
+  
+  return data;
+}</code></pre>
+
+  <h3 id="write-through">Write-Through Pattern</h3>
+
+  <pre><code>async function updateUser(id, updates) {
+  // 1. Update database
+  const user = await database.updateUser(id, updates);
+  
+  // 2. Update cache immediately
+  await cache.set(`user:${id}`, user, 3600);
+  
+  return user;
+}</code></pre>
+
+  <h3 id="refresh-ahead">Refresh-Ahead Pattern</h3>
+
+  <pre><code>class RefreshAheadCache {
+  constructor(cache, refreshThreshold = 0.8) {
+    this.cache = cache;
+    this.refreshThreshold = refreshThreshold;
+  }
+
+  async get(key, fetchFn, ttl) {
+    const item = await this.cache.getWithMetadata(key);
+    
+    if (!item) {
+      // Cache miss
+      const value = await fetchFn();
+      await this.cache.set(key, value, ttl);
+      return value;
+    }
+
+    // Check if refresh is needed
+    const age = Date.now() - item.timestamp;
+    const refreshTime = ttl * this.refreshThreshold;
+
+    if (age > refreshTime) {
+      // Async refresh - don't wait
+      fetchFn().then(value => {
+        this.cache.set(key, value, ttl);
+      });
+    }
+
+    return item.value;
+  }
+}</code></pre>
+
+  <!-- ─── MONITORING & ANALYTICS ─────────── -->
+  <h2 id="monitoring-analytics">Monitoring & Analytics</h2>
+
+  <p>
+    Track cache performance metrics to optimize your caching strategy:
+  </p>
+
+  <h3 id="cache-metrics">Cache Metrics</h3>
+
+  <pre><code>class CacheMetrics {
+  constructor() {
+    this.hits = 0;
+    this.misses = 0;
+    this.sets = 0;
+    this.evictions = 0;
+  }
+
+  recordHit() {
+    this.hits++;
+  }
+
+  recordMiss() {
+    this.misses++;
+  }
+
+  getHitRatio() {
+    const total = this.hits + this.misses;
+    return total > 0 ? this.hits / total : 0;
+  }
+
+  getStats() {
+    return {
+      hits: this.hits,
+      misses: this.misses,
+      hitRatio: this.getHitRatio(),
+      sets: this.sets,
+      evictions: this.evictions
+    };
+  }
+}</code></pre>
+
+  <h3 id="performance-monitoring">Performance Monitoring</h3>
+
+  <pre><code>// Monitor cache performance
+setInterval(async () => {
+  const stats = cache.getStats();
+  const memoryUsage = process.memoryUsage();
+  
+  console.log({
+    cacheHitRatio: stats.hitRatio,
+    cacheSize: stats.size,
+    heapUsed: memoryUsage.heapUsed,
+    timestamp: new Date()
+  });
+
+  // Alert if hit ratio drops below threshold
+  if (stats.hitRatio < 0.7) {
+    console.warn('Cache hit ratio below optimal threshold');
+  }
+}, 60000);</code></pre>
+
+  <!-- ─── BEST PRACTICES ─────────────────── -->
+  <h2 id="best-practices">Best Practices</h2>
+
+  <ul>
+    <li><strong>Cache Key Design</strong> - Use consistent, hierarchical naming conventions</li>
+    <li><strong>TTL Strategy</strong> - Set appropriate expiration times based on data volatility</li>
+    <li><strong>Memory Management</strong> - Monitor cache memory usage and implement size limits</li>
+    <li><strong>Cache Warming</strong> - Pre-populate critical cache entries during deployment</li>
+    <li><strong>Graceful Degradation</strong> - Handle cache failures without breaking functionality</li>
+    <li><strong>Security Considerations</strong> - Never cache sensitive data like passwords or tokens</li>
+  </ul>
+
+  <div class="callout">
+    <div class="callout-title">🎯 Cache Strategy</div>
+    <p>
+      The most effective caching strategy combines multiple layers: browser caching
+      for static assets, application caching for dynamic data, and CDN caching for
+      global distribution. Monitor performance metrics to fine-tune your approach.
+    </p>
+  </div>
+
+</div>

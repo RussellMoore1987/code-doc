@@ -1,0 +1,841 @@
+<div class="content-body">
+
+  <h1 id="image-processing">Image Processing</h1>
+
+  <p>
+    Implement comprehensive image processing capabilities including resizing, format
+    conversion, optimization, and advanced transformations. This guide covers multiple
+    image processing libraries, batch operations, and performance optimization.
+  </p>
+
+  <div class="callout">
+    <div class="callout-title">🖼️ Visual Excellence</div>
+    <p>
+      Image processing is essential for modern web applications, enabling responsive
+      images, thumbnails, format optimization, and visual enhancements that improve
+      user experience and reduce bandwidth usage.
+    </p>
+  </div>
+
+  <!-- ─── IMAGE PROCESSING SETUP ───────── -->
+  <h2 id="image-processing-setup">Image Processing Setup</h2>
+
+  <h3 id="sharp-implementation">Sharp Implementation</h3>
+
+  <pre><code>const sharp = require('sharp');
+const path = require('path');
+const fs = require('fs').promises;
+
+class ImageProcessor {
+  constructor(options = {}) {
+    this.options = {
+      quality: 85,
+      progressive: true,
+      optimizeScans: true,
+      mozjpeg: true,
+      ...options
+    };
+    
+    this.supportedFormats = [
+      'jpeg', 'jpg', 'png', 'webp', 'avif', 'tiff', 'svg'
+    ];
+  }
+
+  async processImage(inputPath, outputPath, transformations = {}) {
+    try {
+      let pipeline = sharp(inputPath);
+      
+      // Apply transformations
+      pipeline = this.applyTransformations(pipeline, transformations);
+      
+      // Save processed image
+      await pipeline.toFile(outputPath);
+      
+      // Return metadata
+      const metadata = await sharp(outputPath).metadata();
+      const stats = await fs.stat(outputPath);
+      
+      return {
+        success: true,
+        outputPath,
+        metadata: {
+          width: metadata.width,
+          height: metadata.height,
+          format: metadata.format,
+          size: stats.size,
+          channels: metadata.channels
+        }
+      };
+      
+    } catch (error) {
+      console.error('Image processing failed:', error);
+      throw new Error(`Image processing failed: ${error.message}`);
+    }
+  }
+
+  applyTransformations(pipeline, transformations) {
+    const {
+      resize,
+      crop,
+      rotate,
+      flip,
+      flop,
+      blur,
+      sharpen,
+      brightness,
+      contrast,
+      saturation,
+      hue,
+      format,
+      quality,
+      watermark
+    } = transformations;
+
+    // Resize
+    if (resize) {
+      pipeline = pipeline.resize({
+        width: resize.width,
+        height: resize.height,
+        fit: resize.fit || 'cover',
+        position: resize.position || 'center',
+        withoutEnlargement: resize.withoutEnlargement !== false
+      });
+    }
+
+    // Crop
+    if (crop) {
+      pipeline = pipeline.extract({
+        left: crop.x,
+        top: crop.y,
+        width: crop.width,
+        height: crop.height
+      });
+    }
+
+    // Rotate
+    if (rotate) {
+      pipeline = pipeline.rotate(rotate, {
+        background: { r: 255, g: 255, b: 255, alpha: 0 }
+      });
+    }
+
+    // Flip and flop
+    if (flip) pipeline = pipeline.flip();
+    if (flop) pipeline = pipeline.flop();
+
+    // Blur
+    if (blur) {
+      pipeline = pipeline.blur(blur);
+    }
+
+    // Sharpen
+    if (sharpen) {
+      pipeline = pipeline.sharpen({
+        sigma: sharpen.sigma || 1,
+        flat: sharpen.flat || 1,
+        jagged: sharpen.jagged || 2
+      });
+    }
+
+    // Color adjustments
+    if (brightness || contrast || saturation || hue) {
+      pipeline = pipeline.modulate({
+        brightness: brightness || 1,
+        saturation: saturation || 1,
+        hue: hue || 0,
+        contrast: contrast || 1
+      });
+    }
+
+    // Format conversion
+    if (format) {
+      switch (format.toLowerCase()) {
+        case 'jpeg':
+        case 'jpg':
+          pipeline = pipeline.jpeg({
+            quality: quality || this.options.quality,
+            progressive: this.options.progressive,
+            mozjpeg: this.options.mozjpeg
+          });
+          break;
+        case 'png':
+          pipeline = pipeline.png({
+            compressionLevel: 9,
+            progressive: true
+          });
+          break;
+        case 'webp':
+          pipeline = pipeline.webp({
+            quality: quality || this.options.quality,
+            effort: 6
+          });
+          break;
+        case 'avif':
+          pipeline = pipeline.avif({
+            quality: quality || this.options.quality,
+            effort: 4
+          });
+          break;
+      }
+    }
+
+    return pipeline;
+  }
+
+  async generateThumbnails(inputPath, sizes, options = {}) {
+    const { outputDir, format = 'jpeg', quality = 85 } = options;
+    const thumbnails = [];
+
+    for (const size of sizes) {
+      const outputFilename = this.generateThumbnailName(inputPath, size);
+      const outputPath = path.join(outputDir || path.dirname(inputPath), outputFilename);
+
+      const result = await this.processImage(inputPath, outputPath, {
+        resize: {
+          width: size.width,
+          height: size.height,
+          fit: size.fit || 'cover'
+        },
+        format,
+        quality
+      });
+
+      thumbnails.push({
+        size,
+        path: outputPath,
+        metadata: result.metadata
+      });
+    }
+
+    return thumbnails;
+  }
+
+  generateThumbnailName(originalPath, size) {
+    const ext = path.extname(originalPath);
+    const name = path.basename(originalPath, ext);
+    const dir = path.dirname(originalPath);
+    
+    return `${name}_${size.width}x${size.height}${ext}`;
+  }
+
+  async optimizeImage(inputPath, outputPath, options = {}) {
+    const metadata = await sharp(inputPath).metadata();
+    const optimizations = {
+      format: this.getBestFormat(metadata.format, options),
+      quality: options.quality || this.getOptimalQuality(metadata)
+    };
+
+    return this.processImage(inputPath, outputPath, optimizations);
+  }
+
+  getBestFormat(originalFormat, options) {
+    if (options.preferWebP && this.supportsWebP()) {
+      return 'webp';
+    }
+    
+    if (options.preferAVIF && this.supportsAVIF()) {
+      return 'avif';
+    }
+    
+    return originalFormat;
+  }
+
+  getOptimalQuality(metadata) {
+    // Determine optimal quality based on image characteristics
+    const { width, height, channels } = metadata;
+    const pixels = width * height;
+    
+    if (pixels > 2000000) return 75; // Large images
+    if (pixels > 500000) return 80;  // Medium images
+    return 85; // Small images
+  }
+}</code></pre>
+
+  <!-- ─── BATCH PROCESSING ──────────────── -->
+  <h2 id="batch-processing">Batch Processing</h2>
+
+  <h3 id="batch-image-processor">Batch Image Processor</h3>
+
+  <pre><code>const Queue = require('bull');
+
+class BatchImageProcessor {
+  constructor(concurrency = 3) {
+    this.concurrency = concurrency;
+    this.imageProcessor = new ImageProcessor();
+    this.queue = new Queue('image processing', {
+      redis: { port: 6379, host: 'localhost' }
+    });
+    
+    this.setupQueue();
+  }
+
+  setupQueue() {
+    this.queue.process('process-image', this.concurrency, async (job) => {
+      return this.processJob(job.data);
+    });
+
+    this.queue.on('completed', (job, result) => {
+      console.log(`Image processing job ${job.id} completed:`, result);
+    });
+
+    this.queue.on('failed', (job, error) => {
+      console.error(`Image processing job ${job.id} failed:`, error);
+    });
+
+    this.queue.on('progress', (job, progress) => {
+      console.log(`Job ${job.id} progress: ${progress}%`);
+    });
+  }
+
+  async processBatch(images, transformations, options = {}) {
+    const jobs = [];
+    
+    for (const [index, image] of images.entries()) {
+      const job = await this.queue.add('process-image', {
+        inputPath: image.inputPath,
+        outputPath: image.outputPath,
+        transformations,
+        options,
+        batchId: options.batchId,
+        index,
+        total: images.length
+      });
+      
+      jobs.push(job);
+    }
+
+    return {
+      batchId: options.batchId || Date.now(),
+      jobIds: jobs.map(job => job.id),
+      total: images.length
+    };
+  }
+
+  async processJob(data) {
+    const {
+      inputPath,
+      outputPath,
+      transformations,
+      options,
+      index,
+      total
+    } = data;
+
+    try {
+      // Update progress
+      const progress = Math.round(((index + 1) / total) * 100);
+      
+      // Process image
+      const result = await this.imageProcessor.processImage(
+        inputPath,
+        outputPath,
+        transformations
+      );
+
+      return {
+        ...result,
+        progress,
+        processedAt: new Date()
+      };
+      
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async generateResponsiveImages(imagePath, outputDir) {
+    const breakpoints = [
+      { width: 320, suffix: 'mobile' },
+      { width: 768, suffix: 'tablet' },
+      { width: 1024, suffix: 'desktop' },
+      { width: 1920, suffix: 'large' }
+    ];
+
+    const formats = ['webp', 'jpeg'];
+    const jobs = [];
+
+    for (const breakpoint of breakpoints) {
+      for (const format of formats) {
+        const ext = format === 'jpeg' ? 'jpg' : format;
+        const filename = `${path.basename(imagePath, path.extname(imagePath))}_${breakpoint.suffix}.${ext}`;
+        const outputPath = path.join(outputDir, filename);
+
+        jobs.push({
+          inputPath: imagePath,
+          outputPath,
+          transformations: {
+            resize: {
+              width: breakpoint.width,
+              fit: 'inside'
+            },
+            format,
+            quality: 85
+          }
+        });
+      }
+    }
+
+    return this.processBatch(jobs, {}, {
+      batchId: `responsive_${Date.now()}`
+    });
+  }
+
+  async getBatchStatus(batchId) {
+    const jobs = await this.queue.getJobs(['waiting', 'active', 'completed', 'failed']);
+    const batchJobs = jobs.filter(job => job.data.batchId === batchId);
+    
+    const stats = {
+      total: batchJobs.length,
+      waiting: 0,
+      active: 0,
+      completed: 0,
+      failed: 0
+    };
+
+    batchJobs.forEach(job => {
+      stats[job.opts.jobId ? 'active' : job.finishedOn ? (job.failedReason ? 'failed' : 'completed') : 'waiting']++;
+    });
+
+    return {
+      batchId,
+      stats,
+      progress: stats.total > 0 ? Math.round((stats.completed / stats.total) * 100) : 0,
+      jobs: batchJobs.map(job => ({
+        id: job.id,
+        status: job.finishedOn ? (job.failedReason ? 'failed' : 'completed') : 'processing',
+        progress: job.progress(),
+        result: job.returnvalue
+      }))
+    };
+  }
+}</code></pre>
+
+  <!-- ─── ADVANCED TRANSFORMATIONS ─────── -->
+  <h2 id="advanced-transformations">Advanced Transformations</h2>
+
+  <h3 id="filters-effects">Filters & Effects</h3>
+
+  <pre><code>class AdvancedImageProcessor extends ImageProcessor {
+  async applyFilter(inputPath, outputPath, filterType, options = {}) {
+    let pipeline = sharp(inputPath);
+    
+    switch (filterType) {
+      case 'vintage':
+        pipeline = this.applyVintageFilter(pipeline, options);
+        break;
+      case 'black-white':
+        pipeline = this.applyBlackWhiteFilter(pipeline);
+        break;
+      case 'sepia':
+        pipeline = this.applySepiaFilter(pipeline);
+        break;
+      case 'vignette':
+        pipeline = this.applyVignetteFilter(pipeline, options);
+        break;
+      case 'emboss':
+        pipeline = this.applyEmbossFilter(pipeline);
+        break;
+      case 'oil-painting':
+        pipeline = this.applyOilPaintingFilter(pipeline);
+        break;
+      default:
+        throw new Error(`Unknown filter type: ${filterType}`);
+    }
+
+    await pipeline.toFile(outputPath);
+    
+    return {
+      success: true,
+      outputPath,
+      filter: filterType,
+      options
+    };
+  }
+
+  applyVintageFilter(pipeline, options) {
+    const { intensity = 0.8 } = options;
+    
+    return pipeline
+      .modulate({
+        brightness: 0.9,
+        saturation: 0.7,
+        hue: 15
+      })
+      .tint({ r: 255, g: 248, b: 220 }) // Warm tint
+      .blur(0.3);
+  }
+
+  applyBlackWhiteFilter(pipeline) {
+    return pipeline.greyscale();
+  }
+
+  applySepiaFilter(pipeline) {
+    return pipeline
+      .greyscale()
+      .tint({ r: 255, g: 235, b: 205 });
+  }
+
+  applyVignetteFilter(pipeline, options) {
+    const { intensity = 0.5 } = options;
+    
+    // Create vignette overlay
+    const { width, height } = pipeline.metadata();
+    const vignetteOverlay = Buffer.from(`
+      <svg width="${width}" height="${height}">
+        <defs>
+          <radialGradient id="vignette" cx="50%" cy="50%" r="70%">
+            <stop offset="0%" style="stop-color:white;stop-opacity:1" />
+            <stop offset="100%" style="stop-color:black;stop-opacity:${intensity}" />
+          </radialGradient>
+        </defs>
+        <rect width="100%" height="100%" fill="url(#vignette)"/>
+      </svg>
+    `);
+    
+    return pipeline.composite([{
+      input: vignetteOverlay,
+      blend: 'multiply'
+    }]);
+  }
+
+  applyEmbossFilter(pipeline) {
+    const kernel = [
+      [-2, -1, 0],
+      [-1, 1, 1],
+      [0, 1, 2]
+    ];
+    
+    return pipeline.convolve({
+      width: 3,
+      height: 3,
+      kernel: kernel.flat()
+    });
+  }
+
+  async addWatermark(inputPath, outputPath, watermarkPath, options = {}) {
+    const {
+      position = 'bottom-right',
+      opacity = 0.7,
+      margin = 20,
+      scale = 0.2
+    } = options;
+
+    const image = sharp(inputPath);
+    const imageMetadata = await image.metadata();
+    
+    // Process watermark
+    const watermark = sharp(watermarkPath);
+    const watermarkMetadata = await watermark.metadata();
+    
+    // Calculate watermark size
+    const maxWatermarkWidth = imageMetadata.width * scale;
+    const watermarkRatio = watermarkMetadata.height / watermarkMetadata.width;
+    const finalWatermarkWidth = Math.min(maxWatermarkWidth, watermarkMetadata.width);
+    const finalWatermarkHeight = finalWatermarkWidth * watermarkRatio;
+    
+    // Process watermark
+    const processedWatermark = await watermark
+      .resize(Math.round(finalWatermarkWidth), Math.round(finalWatermarkHeight))
+      .png()
+      .toBuffer();
+
+    // Calculate position
+    const { left, top } = this.calculateWatermarkPosition(
+      imageMetadata.width,
+      imageMetadata.height,
+      finalWatermarkWidth,
+      finalWatermarkHeight,
+      position,
+      margin
+    );
+
+    // Apply watermark
+    await image
+      .composite([{
+        input: processedWatermark,
+        left: Math.round(left),
+        top: Math.round(top),
+        blend: 'over'
+      }])
+      .toFile(outputPath);
+
+    return {
+      success: true,
+      outputPath,
+      watermarkPosition: { left, top },
+      watermarkSize: { width: finalWatermarkWidth, height: finalWatermarkHeight }
+    };
+  }
+
+  calculateWatermarkPosition(imageWidth, imageHeight, watermarkWidth, watermarkHeight, position, margin) {
+    let left, top;
+    
+    switch (position) {
+      case 'top-left':
+        left = margin;
+        top = margin;
+        break;
+      case 'top-center':
+        left = (imageWidth - watermarkWidth) / 2;
+        top = margin;
+        break;
+      case 'top-right':
+        left = imageWidth - watermarkWidth - margin;
+        top = margin;
+        break;
+      case 'center-left':
+        left = margin;
+        top = (imageHeight - watermarkHeight) / 2;
+        break;
+      case 'center':
+        left = (imageWidth - watermarkWidth) / 2;
+        top = (imageHeight - watermarkHeight) / 2;
+        break;
+      case 'center-right':
+        left = imageWidth - watermarkWidth - margin;
+        top = (imageHeight - watermarkHeight) / 2;
+        break;
+      case 'bottom-left':
+        left = margin;
+        top = imageHeight - watermarkHeight - margin;
+        break;
+      case 'bottom-center':
+        left = (imageWidth - watermarkWidth) / 2;
+        top = imageHeight - watermarkHeight - margin;
+        break;
+      case 'bottom-right':
+      default:
+        left = imageWidth - watermarkWidth - margin;
+        top = imageHeight - watermarkHeight - margin;
+        break;
+    }
+    
+    return { left, top };
+  }
+
+  async createCollage(images, layout, outputPath, options = {}) {
+    const {
+      width = 1200,
+      height = 800,
+      background = { r: 255, g: 255, b: 255 },
+      spacing = 10
+    } = options;
+
+    // Create base canvas
+    let canvas = sharp({
+      create: {
+        width,
+        height,
+        channels: 3,
+        background
+      }
+    });
+
+    const composites = [];
+    
+    // Process each image according to layout
+    for (let i = 0; i < images.length && i < layout.length; i++) {
+      const imagePath = images[i];
+      const position = layout[i];
+      
+      const processedImage = await sharp(imagePath)
+        .resize(position.width, position.height, { fit: 'cover' })
+        .toBuffer();
+      
+      composites.push({
+        input: processedImage,
+        left: position.x,
+        top: position.y
+      });
+    }
+
+    await canvas
+      .composite(composites)
+      .jpeg({ quality: 90 })
+      .toFile(outputPath);
+
+    return {
+      success: true,
+      outputPath,
+      dimensions: { width, height },
+      imageCount: composites.length
+    };
+  }
+}</code></pre>
+
+  <!-- ─── PERFORMANCE OPTIMIZATION ─────── -->
+  <h2 id="performance-optimization">Performance Optimization</h2>
+
+  <h3 id="caching-optimization">Caching & Optimization</h3>
+
+  <pre><code>class OptimizedImageProcessor extends AdvancedImageProcessor {
+  constructor(options = {}) {
+    super(options);
+    
+    this.cache = new Map();
+    this.cacheDir = options.cacheDir || './image-cache';
+    this.maxCacheSize = options.maxCacheSize || 100; // MB
+    this.enableCache = options.enableCache !== false;
+    
+    if (this.enableCache) {
+      this.ensureCacheDir();
+    }
+  }
+
+  async ensureCacheDir() {
+    try {
+      await fs.mkdir(this.cacheDir, { recursive: true });
+    } catch (error) {
+      console.error('Failed to create cache directory:', error);
+      this.enableCache = false;
+    }
+  }
+
+  async processImage(inputPath, outputPath, transformations = {}) {
+    if (!this.enableCache) {
+      return super.processImage(inputPath, outputPath, transformations);
+    }
+
+    const cacheKey = this.generateCacheKey(inputPath, transformations);
+    const cachedPath = path.join(this.cacheDir, `${cacheKey}.jpg`);
+    
+    // Check if cached version exists
+    if (await this.isCacheValid(inputPath, cachedPath)) {
+      // Copy from cache
+      await fs.copyFile(cachedPath, outputPath);
+      
+      const metadata = await sharp(outputPath).metadata();
+      const stats = await fs.stat(outputPath);
+      
+      return {
+        success: true,
+        outputPath,
+        fromCache: true,
+        metadata: {
+          width: metadata.width,
+          height: metadata.height,
+          format: metadata.format,
+          size: stats.size,
+          channels: metadata.channels
+        }
+      };
+    }
+
+    // Process image normally
+    const result = await super.processImage(inputPath, cachedPath, transformations);
+    
+    // Copy to final destination
+    await fs.copyFile(cachedPath, outputPath);
+    
+    // Clean cache if needed
+    await this.cleanCache();
+    
+    return {
+      ...result,
+      outputPath,
+      fromCache: false
+    };
+  }
+
+  generateCacheKey(inputPath, transformations) {
+    const inputStats = fs.statSync(inputPath);
+    const keyData = {
+      path: inputPath,
+      mtime: inputStats.mtime.getTime(),
+      size: inputStats.size,
+      transformations
+    };
+    
+    return crypto
+      .createHash('md5')
+      .update(JSON.stringify(keyData))
+      .digest('hex');
+  }
+
+  async isCacheValid(inputPath, cachedPath) {
+    try {
+      const [inputStats, cachedStats] = await Promise.all([
+        fs.stat(inputPath),
+        fs.stat(cachedPath)
+      ]);
+      
+      return inputStats.mtime <= cachedStats.mtime;
+    } catch (error) {
+      return false;
+    }
+  }
+
+  async cleanCache() {
+    try {
+      const files = await fs.readdir(this.cacheDir);
+      let totalSize = 0;
+      const fileStats = [];
+      
+      for (const file of files) {
+        const filePath = path.join(this.cacheDir, file);
+        const stats = await fs.stat(filePath);
+        totalSize += stats.size;
+        fileStats.push({ path: filePath, size: stats.size, mtime: stats.mtime });
+      }
+      
+      const maxSizeBytes = this.maxCacheSize * 1024 * 1024;
+      
+      if (totalSize > maxSizeBytes) {
+        // Sort by last modified, oldest first
+        fileStats.sort((a, b) => a.mtime - b.mtime);
+        
+        let currentSize = totalSize;
+        for (const file of fileStats) {
+          if (currentSize <= maxSizeBytes * 0.8) break; // Leave 20% buffer
+          
+          await fs.unlink(file.path);
+          currentSize -= file.size;
+        }
+      }
+    } catch (error) {
+      console.error('Cache cleanup failed:', error);
+    }
+  }
+
+  async preloadImages(imagePaths, transformations) {
+    const preloadPromises = imagePaths.map(async (imagePath) => {
+      const cacheKey = this.generateCacheKey(imagePath, transformations);
+      const cachedPath = path.join(this.cacheDir, `${cacheKey}.jpg`);
+      
+      if (!(await this.isCacheValid(imagePath, cachedPath))) {
+        await this.processImage(imagePath, cachedPath, transformations);
+      }
+    });
+    
+    await Promise.all(preloadPromises);
+    
+    return {
+      preloadedCount: imagePaths.length,
+      message: 'Images preloaded successfully'
+    };
+  }
+}</code></pre>
+
+  <!-- ─── BEST PRACTICES ─────────────────── -->
+  <h2 id="best-practices">Best Practices</h2>
+
+  <ul>
+    <li><strong>Format Selection</strong> - Use WebP/AVIF for web, JPEG for photos, PNG for graphics</li>
+    <li><strong>Quality Optimization</strong> - Balance file size with visual quality</li>
+    <li><strong>Responsive Images</strong> - Generate multiple sizes for different breakpoints</li>
+    <li><strong>Caching Strategy</strong> - Cache processed images to avoid reprocessing</li>
+    <li><strong>Memory Management</strong> - Use streaming for large images when possible</li>
+    <li><strong>Error Handling</strong> - Gracefully handle corrupt or unsupported images</li>
+    <li><strong>Security</strong> - Validate image files and sanitize filenames</li>
+  </ul>
+
+  <div class="callout">
+    <div class="callout-title">🎨 Image Excellence</div>
+    <p>
+      Effective image processing balances quality, performance, and user experience.
+      Choose appropriate formats and quality settings, implement smart caching,
+      and always consider the end user's bandwidth and device capabilities.
+    </p>
+  </div>
+
+</div>

@@ -1,0 +1,674 @@
+<div class="content-body">
+
+  <h1 id="background-jobs">Background Jobs</h1>
+
+  <p>
+    Implement robust background job processing for time-consuming tasks, scheduled
+    operations, and asynchronous workflows. This guide covers job queues, worker
+    processes, error handling, and monitoring strategies.
+  </p>
+
+  <div class="callout">
+    <div class="callout-title">⚡ Async Processing</div>
+    <p>
+      Background jobs enable your application to handle heavy workloads without
+      blocking user interactions, improve perceived performance, and scale
+      processing independently from web traffic patterns.
+    </p>
+  </div>
+
+  <!-- ─── JOB QUEUE SYSTEM ──────────────── -->
+  <h2 id="job-queue-system">Job Queue System</h2>
+
+  <h3 id="queue-implementation">Queue Implementation</h3>
+
+  <pre><code>const Queue = require('bull');
+const Redis = require('redis');
+
+class JobQueue {
+  constructor(queueName, redisConfig = {}) {
+    this.queueName = queueName;
+    this.queue = new Queue(queueName, {
+      redis: redisConfig,
+      defaultJobOptions: {
+        removeOnComplete: 100,
+        removeOnFail: 50,
+        attempts: 3,
+        backoff: {
+          type: 'exponential',
+          delay: 2000
+        }
+      }
+    });
+
+    this.setupEventHandlers();
+  }
+
+  // Add job to queue
+  async add(jobType, data, options = {}) {
+    const jobOptions = {
+      priority: options.priority || 0,
+      delay: options.delay || 0,
+      attempts: options.attempts || 3,
+      repeat: options.repeat,
+      ...options
+    };
+
+    try {
+      const job = await this.queue.add(jobType, data, jobOptions);
+      console.log(`Job ${jobType} added with ID: ${job.id}`);
+      return job;
+    } catch (error) {
+      console.error(`Failed to add job ${jobType}:`, error);
+      throw error;
+    }
+  }
+
+  // Schedule recurring job
+  async schedule(jobType, data, cronPattern, options = {}) {
+    return this.add(jobType, data, {
+      ...options,
+      repeat: { cron: cronPattern }
+    });
+  }
+
+  // Process jobs
+  process(jobType, concurrency, processor) {
+    if (typeof concurrency === 'function') {
+      processor = concurrency;
+      concurrency = 1;
+    }
+
+    this.queue.process(jobType, concurrency, async (job, done) => {
+      try {
+        console.log(`Processing job ${jobType} (${job.id})`);
+        const result = await processor(job.data, job);
+        done(null, result);
+      } catch (error) {
+        console.error(`Job ${jobType} (${job.id}) failed:`, error);
+        done(error);
+      }
+    });
+  }
+
+  setupEventHandlers() {
+    this.queue.on('completed', (job, result) => {
+      console.log(`Job ${job.id} completed successfully`);
+    });
+
+    this.queue.on('failed', (job, error) => {
+      console.error(`Job ${job.id} failed:`, error.message);
+    });
+
+    this.queue.on('stalled', (job) => {
+      console.warn(`Job ${job.id} stalled`);
+    });
+
+    this.queue.on('progress', (job, progress) => {
+      console.log(`Job ${job.id} progress: ${progress}%`);
+    });
+  }
+
+  // Queue management
+  async getQueueStats() {
+    const [active, completed, failed, delayed, waiting] = await Promise.all([
+      this.queue.getActive(),
+      this.queue.getCompleted(),
+      this.queue.getFailed(),
+      this.queue.getDelayed(),
+      this.queue.getWaiting()
+    ]);
+
+    return {
+      active: active.length,
+      completed: completed.length,
+      failed: failed.length,
+      delayed: delayed.length,
+      waiting: waiting.length
+    };
+  }
+
+  async pause() {
+    await this.queue.pause();
+    console.log(`Queue ${this.queueName} paused`);
+  }
+
+  async resume() {
+    await this.queue.resume();
+    console.log(`Queue ${this.queueName} resumed`);
+  }
+
+  async clean(grace = 5000) {
+    await Promise.all([
+      this.queue.clean(grace, 'completed'),
+      this.queue.clean(grace, 'failed')
+    ]);
+    console.log(`Queue ${this.queueName} cleaned`);
+  }
+}</code></pre>
+
+  <h3 id="job-types">Job Types & Processors</h3>
+
+  <pre><code>// Email job processor
+const emailQueue = new JobQueue('email', {
+  host: process.env.REDIS_HOST,
+  port: process.env.REDIS_PORT
+});
+
+emailQueue.process('send-email', 5, async (data) => {
+  const { to, subject, template, templateData } = data;
+  
+  const html = await renderEmailTemplate(template, templateData);
+  
+  const emailOptions = {
+    to,
+    subject,
+    html,
+    from: process.env.FROM_EMAIL
+  };
+
+  await emailService.send(emailOptions);
+  
+  return { sent: true, timestamp: new Date() };
+});
+
+// Image processing job
+const imageQueue = new JobQueue('image-processing');
+
+imageQueue.process('resize-image', 3, async (data, job) => {
+  const { imagePath, sizes, outputPath } = data;
+  
+  const totalSizes = sizes.length;
+  let processed = 0;
+
+  const results = [];
+  
+  for (const size of sizes) {
+    const resizedPath = await resizeImage(imagePath, size, outputPath);
+    results.push({ size, path: resizedPath });
+    
+    processed++;
+    const progress = Math.round((processed / totalSizes) * 100);
+    job.progress(progress);
+  }
+
+  return { processedImages: results };
+});
+
+// Data export job
+const exportQueue = new JobQueue('data-export');
+
+exportQueue.process('generate-report', 1, async (data) => {
+  const { reportType, filters, userId, format } = data;
+  
+  const reportData = await generateReportData(reportType, filters);
+  
+  let filePath;
+  switch (format) {
+    case 'csv':
+      filePath = await exportToCSV(reportData, `report-${Date.now()}.csv`);
+      break;
+    case 'pdf':
+      filePath = await exportToPDF(reportData, `report-${Date.now()}.pdf`);
+      break;
+    case 'xlsx':
+      filePath = await exportToExcel(reportData, `report-${Date.now()}.xlsx`);
+      break;
+    default:
+      throw new Error(`Unsupported format: ${format}`);
+  }
+
+  // Notify user that report is ready
+  await emailQueue.add('send-email', {
+    to: await getUserEmail(userId),
+    subject: 'Your report is ready',
+    template: 'report-ready',
+    templateData: {
+      reportType,
+      downloadUrl: `/downloads/${path.basename(filePath)}`
+    }
+  });
+
+  return { filePath, downloadUrl: `/downloads/${path.basename(filePath)}` };
+});</code></pre>
+
+  <!-- ─── SCHEDULED JOBS ─────────────────── -->
+  <h2 id="scheduled-jobs">Scheduled Jobs</h2>
+
+  <h3 id="cron-jobs">Cron Jobs</h3>
+
+  <pre><code>class JobScheduler {
+  constructor() {
+    this.scheduledJobs = new Map();
+    this.maintenanceQueue = new JobQueue('maintenance');
+    this.setupScheduledJobs();
+  }
+
+  setupScheduledJobs() {
+    // Daily cleanup at 2 AM
+    this.schedule('cleanup-temp-files', {}, '0 2 * * *', async () => {
+      const tempDir = path.join(__dirname, 'temp');
+      const files = await fs.readdir(tempDir);
+      const oneWeekAgo = Date.now() - (7 * 24 * 60 * 60 * 1000);
+
+      for (const file of files) {
+        const filePath = path.join(tempDir, file);
+        const stats = await fs.stat(filePath);
+        
+        if (stats.mtime.getTime() < oneWeekAgo) {
+          await fs.unlink(filePath);
+        }
+      }
+
+      return { deletedFiles: files.length };
+    });
+
+    // Weekly database maintenance
+    this.schedule('database-maintenance', {}, '0 3 * * 0', async () => {
+      await Promise.all([
+        this.optimizeTables(),
+        this.updateStatistics(),
+        this.cleanupSessions()
+      ]);
+
+      return { maintenance: 'completed' };
+    });
+
+    // Hourly metrics collection
+    this.schedule('collect-metrics', {}, '0 * * * *', async () => {
+      const metrics = await this.collectSystemMetrics();
+      await this.storeMetrics(metrics);
+      
+      return { metricsCollected: Object.keys(metrics).length };
+    });
+
+    // Daily user engagement emails
+    this.schedule('send-digest', {}, '0 8 * * *', async () => {
+      const users = await User.find({ 
+        emailPreferences: { digest: true },
+        lastLogin: { $gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) }
+      });
+
+      const emailPromises = users.map(user => 
+        emailQueue.add('send-email', {
+          to: user.email,
+          subject: 'Your Daily Digest',
+          template: 'daily-digest',
+          templateData: { user }
+        })
+      );
+
+      await Promise.all(emailPromises);
+      
+      return { digestsSent: users.length };
+    });
+  }
+
+  schedule(jobName, data, cronPattern, processor) {
+    this.maintenanceQueue.schedule(jobName, data, cronPattern);
+    this.maintenanceQueue.process(jobName, processor);
+    
+    this.scheduledJobs.set(jobName, {
+      cronPattern,
+      processor,
+      lastRun: null
+    });
+  }
+
+  async collectSystemMetrics() {
+    const metrics = {
+      timestamp: new Date(),
+      memory: process.memoryUsage(),
+      cpu: process.cpuUsage(),
+      uptime: process.uptime(),
+      activeConnections: await this.getActiveConnections(),
+      queueStats: await this.getAllQueueStats()
+    };
+
+    return metrics;
+  }
+
+  async getAllQueueStats() {
+    const queues = ['email', 'image-processing', 'data-export', 'maintenance'];
+    const stats = {};
+
+    for (const queueName of queues) {
+      const queue = new JobQueue(queueName);
+      stats[queueName] = await queue.getQueueStats();
+    }
+
+    return stats;
+  }
+}</code></pre>
+
+  <!-- ─── ERROR HANDLING & RETRY ────────── -->
+  <h2 id="error-handling">Error Handling & Retry Logic</h2>
+
+  <h3 id="retry-strategies">Retry Strategies</h3>
+
+  <pre><code>class RetryHandler {
+  static exponentialBackoff(attempt) {
+    return Math.min(1000 * Math.pow(2, attempt), 30000);
+  }
+
+  static linearBackoff(attempt) {
+    return Math.min(1000 * attempt, 10000);
+  }
+
+  static fixedDelay(attempt) {
+    return 5000; // Always 5 seconds
+  }
+
+  static customBackoff(attempt, error) {
+    // Different strategies based on error type
+    if (error.code === 'RATE_LIMITED') {
+      return 60000; // Wait 1 minute for rate limits
+    }
+    
+    if (error.code === 'NETWORK_ERROR') {
+      return this.exponentialBackoff(attempt);
+    }
+    
+    if (error.code === 'VALIDATION_ERROR') {
+      return -1; // Don't retry validation errors
+    }
+    
+    return this.exponentialBackoff(attempt);
+  }
+}
+
+// Enhanced job processing with error handling
+class RobustJobProcessor {
+  constructor(queue) {
+    this.queue = queue;
+    this.deadLetterQueue = new JobQueue(`${queue.queueName}-dlq`);
+  }
+
+  process(jobType, processor, options = {}) {
+    const {
+      maxAttempts = 3,
+      retryStrategy = RetryHandler.exponentialBackoff,
+      onError = null,
+      onSuccess = null,
+      deadLetterAfter = 5
+    } = options;
+
+    this.queue.process(jobType, async (job, done) => {
+      const attempt = job.attemptsMade + 1;
+
+      try {
+        const result = await processor(job.data, job);
+        
+        if (onSuccess) {
+          await onSuccess(job, result);
+        }
+
+        done(null, result);
+        
+      } catch (error) {
+        console.error(`Job ${job.id} attempt ${attempt} failed:`, error);
+
+        if (onError) {
+          await onError(job, error, attempt);
+        }
+
+        // Check if we should retry
+        if (attempt >= maxAttempts) {
+          // Move to dead letter queue
+          await this.moveToDeadLetter(job, error);
+          done(new Error(`Job failed after ${maxAttempts} attempts`));
+        } else {
+          // Schedule retry
+          const delay = retryStrategy(attempt, error);
+          
+          if (delay === -1) {
+            // Don't retry this type of error
+            done(error);
+          } else {
+            // Retry with delay
+            setTimeout(() => done(error), delay);
+          }
+        }
+      }
+    });
+  }
+
+  async moveToDeadLetter(job, error) {
+    await this.deadLetterQueue.add('failed-job', {
+      originalQueue: this.queue.queueName,
+      originalJobId: job.id,
+      originalData: job.data,
+      error: {
+        message: error.message,
+        stack: error.stack,
+        code: error.code
+      },
+      attempts: job.attemptsMade,
+      failedAt: new Date()
+    });
+
+    console.log(`Job ${job.id} moved to dead letter queue`);
+  }
+
+  // Process dead letter queue for manual review
+  setupDeadLetterProcessing() {
+    this.deadLetterQueue.process('failed-job', async (data) => {
+      // Log for manual review
+      console.error('Dead letter job:', JSON.stringify(data, null, 2));
+      
+      // Could implement:
+      // - Send alert to administrators
+      // - Store in database for analysis
+      // - Attempt automatic recovery for certain error types
+      
+      await this.logFailedJob(data);
+      
+      return { logged: true };
+    });
+  }
+
+  async logFailedJob(data) {
+    await FailedJob.create({
+      queue: data.originalQueue,
+      jobId: data.originalJobId,
+      data: data.originalData,
+      error: data.error,
+      attempts: data.attempts,
+      failedAt: data.failedAt
+    });
+  }
+}</code></pre>
+
+  <!-- ─── MONITORING & HEALTH CHECKS ────── -->
+  <h2 id="monitoring">Monitoring & Health Checks</h2>
+
+  <h3 id="queue-monitoring">Queue Monitoring</h3>
+
+  <pre><code>class QueueMonitor {
+  constructor(queues) {
+    this.queues = queues;
+    this.metrics = {
+      processed: 0,
+      failed: 0,
+      avgProcessingTime: 0,
+      throughput: 0
+    };
+    
+    this.startMonitoring();
+  }
+
+  startMonitoring() {
+    // Collect metrics every minute
+    setInterval(async () => {
+      await this.collectMetrics();
+      await this.checkHealth();
+    }, 60000);
+
+    // Generate hourly reports
+    setInterval(async () => {
+      await this.generateHourlyReport();
+    }, 3600000);
+  }
+
+  async collectMetrics() {
+    const allStats = {};
+    let totalProcessed = 0;
+    let totalFailed = 0;
+
+    for (const [name, queue] of this.queues) {
+      const stats = await queue.getQueueStats();
+      allStats[name] = stats;
+      
+      totalProcessed += stats.completed;
+      totalFailed += stats.failed;
+    }
+
+    this.metrics = {
+      ...this.metrics,
+      processed: totalProcessed,
+      failed: totalFailed,
+      queueStats: allStats,
+      timestamp: new Date()
+    };
+
+    await this.storeMetrics(this.metrics);
+  }
+
+  async checkHealth() {
+    const healthStatus = {
+      healthy: true,
+      issues: [],
+      timestamp: new Date()
+    };
+
+    for (const [name, queue] of this.queues) {
+      const stats = await queue.getQueueStats();
+      
+      // Check for stalled jobs
+      if (stats.active > 0) {
+        const stalledThreshold = 10 * 60 * 1000; // 10 minutes
+        const activeJobs = await queue.queue.getActive();
+        
+        for (const job of activeJobs) {
+          if (Date.now() - job.processedOn > stalledThreshold) {
+            healthStatus.healthy = false;
+            healthStatus.issues.push({
+              type: 'stalled_job',
+              queue: name,
+              jobId: job.id,
+              stalledFor: Date.now() - job.processedOn
+            });
+          }
+        }
+      }
+
+      // Check for high failure rate
+      const failureRate = stats.failed / (stats.completed + stats.failed || 1);
+      if (failureRate > 0.1) { // More than 10% failure rate
+        healthStatus.healthy = false;
+        healthStatus.issues.push({
+          type: 'high_failure_rate',
+          queue: name,
+          failureRate: failureRate
+        });
+      }
+
+      // Check queue backlog
+      if (stats.waiting > 1000) {
+        healthStatus.healthy = false;
+        healthStatus.issues.push({
+          type: 'queue_backlog',
+          queue: name,
+          waitingJobs: stats.waiting
+        });
+      }
+    }
+
+    if (!healthStatus.healthy) {
+      await this.sendHealthAlert(healthStatus);
+    }
+
+    return healthStatus;
+  }
+
+  async sendHealthAlert(healthStatus) {
+    const alertData = {
+      subject: 'Queue Health Alert',
+      issues: healthStatus.issues,
+      timestamp: healthStatus.timestamp
+    };
+
+    await emailQueue.add('send-email', {
+      to: process.env.ADMIN_EMAIL,
+      subject: 'Job Queue Health Alert',
+      template: 'queue-health-alert',
+      templateData: alertData
+    });
+  }
+
+  async generateHourlyReport() {
+    const report = {
+      period: 'hourly',
+      timestamp: new Date(),
+      metrics: this.metrics,
+      topFailedJobs: await this.getTopFailedJobs(),
+      performance: await this.getPerformanceStats()
+    };
+
+    await this.storeReport(report);
+    
+    // Send to monitoring dashboard
+    await this.sendToMonitoringService(report);
+  }
+
+  async getTopFailedJobs() {
+    const failedJobs = await FailedJob.aggregate([
+      {
+        $match: {
+          failedAt: {
+            $gte: new Date(Date.now() - 3600000) // Last hour
+          }
+        }
+      },
+      {
+        $group: {
+          _id: '$error.message',
+          count: { $sum: 1 },
+          queues: { $addToSet: '$queue' }
+        }
+      },
+      {
+        $sort: { count: -1 }
+      },
+      {
+        $limit: 10
+      }
+    ]);
+
+    return failedJobs;
+  }
+}</code></pre>
+
+  <!-- ─── BEST PRACTICES ─────────────────── -->
+  <h2 id="best-practices">Best Practices</h2>
+
+  <ul>
+    <li><strong>Job Isolation</strong> - Keep jobs idempotent and stateless</li>
+    <li><strong>Error Handling</strong> - Implement comprehensive error handling and retry logic</li>
+    <li><strong>Monitoring</strong> - Monitor queue health, performance, and failure rates</li>
+    <li><strong>Resource Management</strong> - Set appropriate concurrency limits and memory usage</li>
+    <li><strong>Dead Letter Queues</strong> - Handle persistently failing jobs gracefully</li>
+    <li><strong>Job Prioritization</strong> - Use priority queues for time-sensitive tasks</li>
+    <li><strong>Testing</strong> - Test job processors thoroughly, including failure scenarios</li>
+  </ul>
+
+  <div class="callout">
+    <div class="callout-title">🔄 Job Design</div>
+    <p>
+      Design jobs to be idempotent, resumable, and fail-safe. Always include proper
+      error handling, logging, and monitoring to ensure reliable background processing
+      that can handle failures gracefully and provide visibility into system health.
+    </p>
+  </div>
+
+</div>

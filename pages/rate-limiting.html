@@ -1,0 +1,426 @@
+<div class="content-body">
+
+  <h1 id="rate-limiting">Rate Limiting</h1>
+
+  <p>
+    Implement robust rate limiting to protect your API from abuse, ensure fair resource
+    allocation, and maintain service quality. This guide covers various rate limiting
+    algorithms, implementation strategies, and best practices.
+  </p>
+
+  <div class="callout">
+    <div class="callout-title">🛡️ Protection Strategy</div>
+    <p>
+      Rate limiting acts as your first line of defense against API abuse, DDoS attacks,
+      and resource exhaustion. It ensures consistent performance for all users while
+      preventing individual clients from overwhelming your services.
+    </p>
+  </div>
+
+  <!-- ─── RATE LIMITING ALGORITHMS ──────── -->
+  <h2 id="algorithms">Rate Limiting Algorithms</h2>
+
+  <h3 id="token-bucket">Token Bucket Algorithm</h3>
+
+  <p>
+    The token bucket algorithm allows bursts of traffic while maintaining an average rate:
+  </p>
+
+  <pre><code>class TokenBucket {
+  constructor(capacity, refillRate, refillPeriod = 1000) {
+    this.capacity = capacity;
+    this.tokens = capacity;
+    this.refillRate = refillRate;
+    this.refillPeriod = refillPeriod;
+    this.lastRefill = Date.now();
+  }
+
+  consume(tokens = 1) {
+    this.refill();
+    
+    if (this.tokens >= tokens) {
+      this.tokens -= tokens;
+      return true;
+    }
+    
+    return false;
+  }
+
+  refill() {
+    const now = Date.now();
+    const timePassed = now - this.lastRefill;
+    const tokensToAdd = (timePassed / this.refillPeriod) * this.refillRate;
+    
+    this.tokens = Math.min(this.capacity, this.tokens + tokensToAdd);
+    this.lastRefill = now;
+  }
+
+  getRemainingTokens() {
+    this.refill();
+    return Math.floor(this.tokens);
+  }
+}</code></pre>
+
+  <h3 id="sliding-window">Sliding Window Algorithm</h3>
+
+  <pre><code>class SlidingWindow {
+  constructor(windowSize, maxRequests) {
+    this.windowSize = windowSize;
+    this.maxRequests = maxRequests;
+    this.requests = new Map();
+  }
+
+  isAllowed(clientId) {
+    const now = Date.now();
+    const windowStart = now - this.windowSize;
+    
+    // Get client's request history
+    if (!this.requests.has(clientId)) {
+      this.requests.set(clientId, []);
+    }
+    
+    const clientRequests = this.requests.get(clientId);
+    
+    // Remove requests outside the window
+    const validRequests = clientRequests.filter(
+      time => time > windowStart
+    );
+    
+    // Update the request history
+    this.requests.set(clientId, validRequests);
+    
+    if (validRequests.length < this.maxRequests) {
+      validRequests.push(now);
+      return true;
+    }
+    
+    return false;
+  }
+}</code></pre>
+
+  <h3 id="fixed-window">Fixed Window Counter</h3>
+
+  <pre><code>class FixedWindow {
+  constructor(windowSize, maxRequests) {
+    this.windowSize = windowSize;
+    this.maxRequests = maxRequests;
+    this.windows = new Map();
+  }
+
+  isAllowed(clientId) {
+    const now = Date.now();
+    const windowStart = Math.floor(now / this.windowSize) * this.windowSize;
+    const key = `${clientId}:${windowStart}`;
+    
+    const count = this.windows.get(key) || 0;
+    
+    if (count < this.maxRequests) {
+      this.windows.set(key, count + 1);
+      return true;
+    }
+    
+    return false;
+  }
+
+  cleanup() {
+    const now = Date.now();
+    const currentWindow = Math.floor(now / this.windowSize) * this.windowSize;
+    
+    for (const [key] of this.windows) {
+      const [, windowStart] = key.split(':');
+      if (parseInt(windowStart) < currentWindow) {
+        this.windows.delete(key);
+      }
+    }
+  }
+}</code></pre>
+
+  <!-- ─── MIDDLEWARE IMPLEMENTATION ─────── -->
+  <h2 id="middleware-implementation">Middleware Implementation</h2>
+
+  <p>
+    Integrate rate limiting into your application middleware for automatic protection:
+  </p>
+
+  <h3 id="express-middleware">Express Middleware</h3>
+
+  <pre><code>const rateLimit = (options = {}) => {
+  const {
+    windowMs = 15 * 60 * 1000, // 15 minutes
+    max = 100,                  // limit each IP to 100 requests per windowMs
+    message = 'Too many requests',
+    standardHeaders = true,
+    legacyHeaders = false,
+    keyGen = (req) => req.ip,
+    skip = (req) => false,
+    onLimitReached = () => {}
+  } = options;
+
+  const store = new Map();
+
+  return (req, res, next) => {
+    if (skip(req)) {
+      return next();
+    }
+
+    const key = keyGen(req);
+    const now = Date.now();
+    const windowStart = now - windowMs;
+
+    // Clean up old entries
+    if (!store.has(key)) {
+      store.set(key, []);
+    }
+
+    const requests = store.get(key).filter(time => time > windowStart);
+    store.set(key, requests);
+
+    if (requests.length >= max) {
+      onLimitReached(req, res);
+      
+      if (standardHeaders) {
+        res.set({
+          'RateLimit-Limit': max,
+          'RateLimit-Remaining': 0,
+          'RateLimit-Reset': new Date(now + windowMs)
+        });
+      }
+
+      return res.status(429).json({
+        error: message,
+        retryAfter: Math.ceil(windowMs / 1000)
+      });
+    }
+
+    requests.push(now);
+
+    if (standardHeaders) {
+      res.set({
+        'RateLimit-Limit': max,
+        'RateLimit-Remaining': max - requests.length,
+        'RateLimit-Reset': new Date(now + windowMs)
+      });
+    }
+
+    next();
+  };
+};</code></pre>
+
+  <h3 id="distributed-rate-limiting">Distributed Rate Limiting</h3>
+
+  <pre><code>const Redis = require('redis');
+
+class DistributedRateLimit {
+  constructor(redis, options = {}) {
+    this.redis = redis;
+    this.windowSize = options.windowSize || 3600000; // 1 hour
+    this.maxRequests = options.maxRequests || 1000;
+    this.keyPrefix = options.keyPrefix || 'rate_limit:';
+  }
+
+  async isAllowed(clientId) {
+    const key = `${this.keyPrefix}${clientId}`;
+    const now = Date.now();
+    const windowStart = now - this.windowSize;
+
+    // Use Redis sorted sets for efficient time-based operations
+    const pipeline = this.redis.multi();
+    
+    // Remove expired entries
+    pipeline.zremrangebyscore(key, 0, windowStart);
+    
+    // Count current requests in window
+    pipeline.zcard(key);
+    
+    // Add current request
+    pipeline.zadd(key, now, `${now}-${Math.random()}`);
+    
+    // Set expiration
+    pipeline.expire(key, Math.ceil(this.windowSize / 1000));
+
+    const results = await pipeline.exec();
+    const currentCount = results[1][1];
+
+    return currentCount < this.maxRequests;
+  }
+
+  async getRemainingRequests(clientId) {
+    const key = `${this.keyPrefix}${clientId}`;
+    const now = Date.now();
+    const windowStart = now - this.windowSize;
+
+    await this.redis.zremrangebyscore(key, 0, windowStart);
+    const currentCount = await this.redis.zcard(key);
+
+    return Math.max(0, this.maxRequests - currentCount);
+  }
+}</code></pre>
+
+  <!-- ─── ADVANCED FEATURES ──────────────── -->
+  <h2 id="advanced-features">Advanced Features</h2>
+
+  <h3 id="dynamic-rate-limits">Dynamic Rate Limits</h3>
+
+  <pre><code>class DynamicRateLimit {
+  constructor() {
+    this.baseLimits = new Map([
+      ['free', { requests: 100, window: 3600000 }],
+      ['premium', { requests: 1000, window: 3600000 }],
+      ['enterprise', { requests: 10000, window: 3600000 }]
+    ]);
+    this.userTiers = new Map();
+  }
+
+  async getUserLimit(userId) {
+    const tier = await this.getUserTier(userId);
+    const baseLimit = this.baseLimits.get(tier);
+    
+    // Apply dynamic adjustments
+    const multiplier = await this.getLoadMultiplier();
+    
+    return {
+      requests: Math.floor(baseLimit.requests * multiplier),
+      window: baseLimit.window
+    };
+  }
+
+  async getLoadMultiplier() {
+    const serverLoad = await this.getServerLoad();
+    
+    if (serverLoad > 0.9) return 0.5;      // Reduce by 50% under high load
+    if (serverLoad > 0.7) return 0.75;     // Reduce by 25% under medium load
+    return 1.0;                            // Normal limits
+  }
+
+  async adaptToTraffic() {
+    const metrics = await this.getTrafficMetrics();
+    
+    if (metrics.errorRate > 0.1) {
+      // Reduce limits temporarily
+      this.applyEmergencyLimits();
+    }
+  }
+}</code></pre>
+
+  <h3 id="rate-limit-bypass">Rate Limit Bypass</h3>
+
+  <pre><code>class RateLimitBypass {
+  constructor() {
+    this.whitelistedIPs = new Set([
+      '127.0.0.1',
+      '::1',
+      '10.0.0.0/8'
+    ]);
+    
+    this.priorityClients = new Map();
+  }
+
+  shouldSkip(clientInfo) {
+    // Skip for whitelisted IPs
+    if (this.isWhitelisted(clientInfo.ip)) {
+      return true;
+    }
+
+    // Skip for internal services
+    if (clientInfo.userAgent?.includes('InternalService')) {
+      return true;
+    }
+
+    // Skip for priority clients
+    if (this.isPriorityClient(clientInfo.clientId)) {
+      return true;
+    }
+
+    return false;
+  }
+
+  isWhitelisted(ip) {
+    return this.whitelistedIPs.has(ip) || 
+           this.isInWhitelistedRange(ip);
+  }
+
+  addPriorityClient(clientId, reason, expires) {
+    this.priorityClients.set(clientId, {
+      reason,
+      expires: Date.now() + expires
+    });
+  }
+}</code></pre>
+
+  <!-- ─── MONITORING & ALERTS ───────────── -->
+  <h2 id="monitoring-alerts">Monitoring & Alerts</h2>
+
+  <h3 id="rate-limit-metrics">Rate Limit Metrics</h3>
+
+  <pre><code>class RateLimitMonitor {
+  constructor() {
+    this.metrics = {
+      totalRequests: 0,
+      blockedRequests: 0,
+      uniqueClients: new Set(),
+      topOffenders: new Map()
+    };
+  }
+
+  recordRequest(clientId, blocked = false) {
+    this.metrics.totalRequests++;
+    this.metrics.uniqueClients.add(clientId);
+    
+    if (blocked) {
+      this.metrics.blockedRequests++;
+      
+      const count = this.metrics.topOffenders.get(clientId) || 0;
+      this.metrics.topOffenders.set(clientId, count + 1);
+    }
+  }
+
+  getStats() {
+    return {
+      totalRequests: this.metrics.totalRequests,
+      blockedRequests: this.metrics.blockedRequests,
+      blockRate: this.metrics.blockedRequests / this.metrics.totalRequests,
+      uniqueClients: this.metrics.uniqueClients.size,
+      topOffenders: Array.from(this.metrics.topOffenders.entries())
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 10)
+    };
+  }
+
+  async checkThresholds() {
+    const stats = this.getStats();
+    
+    if (stats.blockRate > 0.1) {
+      await this.sendAlert('High block rate detected', stats);
+    }
+
+    if (stats.topOffenders.length > 0 && stats.topOffenders[0][1] > 1000) {
+      await this.sendAlert('Potential abuse detected', {
+        client: stats.topOffenders[0][0],
+        violations: stats.topOffenders[0][1]
+      });
+    }
+  }
+}</code></pre>
+
+  <!-- ─── BEST PRACTICES ─────────────────── -->
+  <h2 id="best-practices">Best Practices</h2>
+
+  <ul>
+    <li><strong>Graceful Degradation</strong> - Provide clear error messages and retry guidance</li>
+    <li><strong>Tiered Limits</strong> - Implement different limits based on user plans or roles</li>
+    <li><strong>Header Communication</strong> - Include rate limit headers in responses</li>
+    <li><strong>Distributed Coordination</strong> - Use Redis or similar for multi-server setups</li>
+    <li><strong>Monitoring Integration</strong> - Track rate limiting metrics and patterns</li>
+    <li><strong>Emergency Controls</strong> - Have mechanisms to quickly adjust limits during incidents</li>
+  </ul>
+
+  <div class="callout">
+    <div class="callout-title">⚖️ Balance is Key</div>
+    <p>
+      Effective rate limiting strikes a balance between protection and usability.
+      Set limits high enough to accommodate legitimate use cases while low enough
+      to prevent abuse. Monitor usage patterns and adjust limits based on real data.
+    </p>
+  </div>
+
+</div>
