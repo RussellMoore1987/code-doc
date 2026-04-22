@@ -311,19 +311,6 @@ function performSearch(query) {
   for (const page of searchState.index) {
     pageQueryIndex[page.url] = -1;
 
-    // Search in page title
-    if (page.title.toLowerCase().includes(query)) {
-      searchState.results.push({
-        type: 'page',
-        page: page,
-        section: null,
-        title: page.title,
-        snippet: getSnippet(page.title, query),
-        navId: page.navInfo ? page.navInfo.id : null,
-        instanceIndex: ++pageQueryIndex[page.url]
-      });
-    }
-    
     // Search in sections
     for (const section of page.sections) {
       const titleMatch = section.title.toLowerCase().includes(query);
