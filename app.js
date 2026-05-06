@@ -462,6 +462,7 @@ function performSearch(query) {
       const contentMatch = section.content.toLowerCase().includes(query);
       
       if (titleMatch || contentMatch) {
+        const matchCount = countQueryInstances(`${section.title} ${section.content}`, query);
         const matchText = titleMatch ? section.title : section.content;
         searchState.results.push({
           type: 'section',
@@ -469,6 +470,7 @@ function performSearch(query) {
           section: section,
           title: section.title,
           snippet: getSnippet(matchText, query),
+          matchCount: Math.max(matchCount, 1),
           navId: page.navInfo ? page.navInfo.id : null,
           sectionId: section.id,
           instanceIndex: ++pageQueryIndex[page.url]
@@ -533,6 +535,17 @@ function getSnippet(text, query, maxLength = 150) {
  */
 function escapeRegex(string) {
   return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+/**
+ * Count case-insensitive query occurrences in section text.
+ */
+function countQueryInstances(text, query) {
+  if (!text || !query) return 0;
+
+  const regex = new RegExp(escapeRegex(query), 'gi');
+  const matches = text.match(regex);
+  return matches ? matches.length : 0;
 }
 
 /**
@@ -603,10 +616,16 @@ function renderSearchResults() {
   const resultsHTML = searchState.results.map((result, index) => {
     const pageName = result.page.navInfo ? result.page.navInfo.label : result.page.title;
     const isHighlighted = index === searchState.selectedResult ? ' highlighted' : '';
+    const hasInstanceCount = result.matchCount > 1;
+    const instanceCountClass = hasInstanceCount ? ' has-instance-count' : '';
+    const instanceCountBadge = hasInstanceCount
+      ? `<span class="search-result-instance-count" title="${result.matchCount} matches in this section" aria-label="${result.matchCount} matches in this section">${result.matchCount}</span>`
+      : '';
     const textOnly = stripHtmlExceptMark(result.snippet);
     
     return `
-      <div class="search-result-item${isHighlighted}" data-index="${index}" data-instance-index="${result.instanceIndex}" role="option">
+      <div class="search-result-item${isHighlighted}${instanceCountClass}" data-index="${index}" data-instance-index="${result.instanceIndex}" role="option">
+        ${instanceCountBadge}
         <div class="search-result-title">${escapeHtml(result.title)}</div>
         <div class="search-result-page">${escapeHtml(pageName)}</div>
         <div class="search-result-snippet">${textOnly}</div>
@@ -1000,8 +1019,6 @@ function initSearch() {
   elSearchResults.addEventListener('click', (e) => {
     const resultItem = e.target.closest('.search-result-item');
     if (resultItem) {
-      console.log(resultItem);
-      
       const index = parseInt(resultItem.dataset.index);
       selectSearchResult(index); // starts here
     }
