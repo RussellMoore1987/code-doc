@@ -655,6 +655,11 @@ button {
   overflow: hidden;
   border: 1px solid var(--border);
 }
+.img-center {
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+}
 .img-placeholder {
   background: var(--bg-code);
   display: flex;
