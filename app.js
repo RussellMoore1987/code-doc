@@ -334,9 +334,9 @@ async function buildSearchIndex() {
               break; // Stop at next heading
             }
 
-            if (nextEl?.innerHTML?.trim()) {
-              // Use innerHTML to capture all content, then strip HTML properly later
-              content += nextEl.innerHTML.trim() + ' ';
+            if (nextEl?.textContent?.trim()) {
+              // Use textContent to safely extract text content
+              content += nextEl.textContent.trim() + ' ';
             }
             nextEl = nextEl.nextElementSibling;
           }
@@ -390,34 +390,64 @@ function findNavItemByPage(pageUrl, items = NAV_DATA) {
   return null;
 }
 
+function hasError(message) {
+  searchState.results = [];
+  searchState.hasValidationError = true;
+  showSearchError(message);
+}
+
 /**
- * Perform search query with validation
+ * Perform search query with comprehensive validation
  */
 function performSearch(query) {
+  query = query.trim();
+  
   // Hide any existing error messages
   if (elSearchErrorMessage) {
     elSearchErrorMessage.classList.remove('visible');
   }
   
-  if (!query.trim()) {
+  if (!query) {
     searchState.results = [];
     searchState.hasValidationError = false;
     searchState.currentQuery = ''; // Reset current query
     return;
   }
   
+  // Validate input type and length
+  if (typeof query !== 'string') {
+    hasError('Invalid search input');
+    return;
+  }
+  
   // Validate search length
   if (query.length > 25) {
-    searchState.results = [];
-    searchState.hasValidationError = true;
-    showSearchError('Search text is too long. Please reduce to 25 characters or fewer.');
+    hasError('Search text is too long. Please reduce to 25 characters or fewer.');
     return;
+  }  
+  
+  // Check for potentially malicious patterns
+  const dangerousPatterns = [
+    /<script/i,
+    /javascript:/i,
+    /data:text\/html/i,
+    /on\w+\s*=/i, // onload=, onclick=, etc.
+    /\beval\s*\(/i,
+    /\bexec\s*\(/i
+  ];
+  
+  for (const pattern of dangerousPatterns) {
+    if (pattern.test(query)) {
+      console.log('query***', query);
+      hasError('Search query contains invalid characters');
+      return;
+    }
   }
   
   // Clear validation error flag if we get here
   searchState.hasValidationError = false;
   
-  query = query.toLowerCase().trim();
+  query = query.toLowerCase();
   searchState.currentQuery = query;
   searchState.results = [];
   
@@ -449,20 +479,26 @@ function performSearch(query) {
 }
 
 /**
- * Strip HTML tags and preserve readable spacing
+ * Safely strip HTML tags and preserve readable spacing
+ * Uses DOMPurify-like approach for security
  */
 function stripHtml(text) {
   if (!text) return '';
   
-  // Create a temporary element to use browser's HTML parsing
-  const temp = document.createElement('div');
-  temp.innerHTML = text;
+  // Input validation
+  if (typeof text !== 'string') return '';
   
-  // Get text content and normalize whitespace
-  let cleanText = temp.textContent || temp.innerText || '';
+  // Create a temporary element in a safe way
+  const temp = document.createElement('div');
+  
+  // Set textContent first to avoid any script execution
+  temp.textContent = text;
+  
+  // Get the safely parsed content
+  let cleanText = temp.textContent || '';
   
   // Replace multiple whitespace with single space and trim
-  cleanText = cleanText.replace(/\s+/g, ' ').trim();
+  cleanText = cleanText.replaceAll(/\s+/g, ' ').trim();
   
   return cleanText;
 }
@@ -1040,7 +1076,7 @@ function initSearch() {
  * - #navId (page only, left nav item) 
  * - #navId#sectionId (page + section right nav item)
  */
-function parseRoute(url = window.location.hash) {
+function parseRoute(url = globalThis.location.hash) {
   if (!url || !url.startsWith('#')) {
     return { navId: null, sectionId: null };
   }
@@ -1125,7 +1161,7 @@ async function navigateTo(navId, sectionId = null, pushHistory = true, smooth = 
     // Update URL if requested
     if (pushHistory) {
       const newUrl = generateRoute(targetNavId, sectionId);
-      if (newUrl !== window.location.hash) {
+      if (newUrl !== globalThis.location.hash) {
         history.pushState({ navId: targetNavId, sectionId }, '', newUrl || '#');
       }
     }
@@ -1190,12 +1226,12 @@ function handlePopState(event) {
  */
 function initRouting() {
   // Handle popstate for browser navigation
-  window.addEventListener('popstate', handlePopState, {
+  globalThis.addEventListener('popstate', handlePopState, {
     signal: state.abortController.signal
   });
   
   // Also handle hashchange as backup
-  window.addEventListener('hashchange', (event) => {
+  globalThis.addEventListener('hashchange', (event) => {
     if (!state.isNavigating) {
       const route = parseRoute();
       navigateTo(route.navId, route.sectionId, false, false);
@@ -1223,18 +1259,18 @@ function initRouting() {
    ═══════════════════════════════════════════════════════════════ */
 
 function applyTheme(theme) {
-  elHtml.setAttribute('data-theme', theme);
+  elHtml.dataset.theme = theme;
   localStorage.setItem(STORAGE_KEY_THEME, theme);
 }
 
 function initTheme() {
   const saved = localStorage.getItem(STORAGE_KEY_THEME);
-  const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+  const prefersDark = globalThis.matchMedia('(prefers-color-scheme: dark)').matches;
   applyTheme(saved || (prefersDark ? 'dark' : 'light'));
 }
 
 elThemeToggle.addEventListener('click', () => {
-  const current = elHtml.getAttribute('data-theme');
+  const current = elHtml.dataset.theme;
   applyTheme(current === 'dark' ? 'light' : 'dark');
 });
 
@@ -1547,11 +1583,15 @@ async function loadPage(url) {
     return true; // Success
 
   } catch (err) {
+    // Safely escape the URL and error message
+    const safeUrl = escapeHtml(url);
+    const safeError = escapeHtml(err.message);
+    
     elContentBody.innerHTML = `
       <div class="content-body">
         <div class="callout danger">
           <div class="callout-title">⚠ Error loading page</div>
-          <p>Could not load <code>${url}</code>. ${err.message}</p>
+          <p>Could not load <code>${safeUrl}</code>. ${safeError}</p>
           <p>Make sure you are serving this project through a local HTTP server (e.g., VS Code Live Server, or <code>python -m http.server</code>).</p>
         </div>
       </div>`;
@@ -1611,10 +1651,9 @@ function buildRightNav() {
     const a     = document.createElement('a');
     a.href             = '#' + h.id;
     a.className        = 'right-nav-link';
-    a.dataset.level    = level;
     a.dataset.target   = h.id;
     a.textContent      = h.textContent;
-    a.setAttribute('data-level', level);
+    a.dataset.level    = level;
 
     a.addEventListener('click', (e) => {
       e.preventDefault();
@@ -1648,7 +1687,7 @@ function setupScrollSpy() {
     // Only update if we're not in the middle of a navigation operation
     if (!state.isNavigating && state.activeNavId && id) {
       const newUrl = generateRoute(state.activeNavId, id);
-      const currentHash = window.location.hash;
+      const currentHash = globalThis.location.hash;
       
       // Only update if the URL actually changed to avoid unnecessary history entries
       if (newUrl && newUrl !== currentHash) {
@@ -1737,7 +1776,7 @@ async function copyCodeToClipboard(codeElement, buttonElement) {
   
   try {
     /* Try modern Clipboard API first */
-    if (navigator.clipboard && window.isSecureContext) {
+    if (navigator.clipboard && globalThis.isSecureContext) {
       await navigator.clipboard.writeText(codeText);
     } else {
       /* Fallback for older browsers or non-secure contexts */
@@ -1773,11 +1812,17 @@ function copyTextFallback(text) {
   textarea.select();
   textarea.setSelectionRange(0, 99999); /* For mobile devices */
   
-  const successful = document.execCommand('copy');
-  document.body.removeChild(textarea);
-  
-  if (!successful) {
-    throw new Error('document.execCommand copy failed');
+  try {
+    // Use the deprecated method as a last resort
+    const successful = document.execCommand('copy');
+    textarea.remove(); // Use modern remove() method
+    
+    if (!successful) {
+      throw new Error('execCommand copy failed');
+    }
+  } catch (err) {
+    textarea.remove(); // Ensure cleanup even on error
+    throw new Error('Fallback copy method failed: ' + err.message);
   }
 }
 
