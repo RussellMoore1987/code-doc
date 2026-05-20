@@ -255,6 +255,16 @@ const elSearchPrevBtn = document.getElementById('search-prev-btn');
 const elSearchNextBtn = document.getElementById('search-next-btn');
 const elSearchClearBtn = document.getElementById('search-clear-btn');
 
+/* Image Modal DOM refs */
+const elImageModal            = document.getElementById('image-modal');
+const elImageModalImg         = document.getElementById('image-modal-img');
+const elImageModalCaption     = document.getElementById('image-modal-caption');
+const elImageModalSectionLink = document.getElementById('image-modal-section-link');
+const elImageModalClose       = document.getElementById('image-modal-close');
+const elImageModalPrev        = document.getElementById('image-modal-prev');
+const elImageModalNext        = document.getElementById('image-modal-next');
+const elImageModalCounter     = document.getElementById('image-modal-counter');
+
 /* ═══════════════════════════════════════════════════════════════
    SEARCH FUNCTIONALITY
    ═══════════════════════════════════════════════════════════════ */
@@ -1553,6 +1563,9 @@ function expandActiveNavPath(activeId) {
    ═══════════════════════════════════════════════════════════════ */
 
 async function loadPage(url) {
+  /* Close image modal if open when navigating to a new page */
+  closeImageModal();
+
   /* Show loading state */
   elContentBody.innerHTML = `
     <div class="content-loading" aria-live="polite">
@@ -1596,6 +1609,7 @@ async function loadPage(url) {
     setupScrollSpy();
     setupCopyButtons();
     clearPageHighlights(); // Clear any previous search highlights
+    setupImageModal();     // Wire up .image-modal images on the new page
 
     return true; // Success
 
@@ -1866,6 +1880,206 @@ function showCopyFeedback(buttonElement, success) {
 }
 
 /* ═══════════════════════════════════════════════════════════════
+   IMAGE MODAL
+   ═══════════════════════════════════════════════════════════════ */
+
+const imageModalState = {
+  images: [],       // [{ src, alt, sectionId, sectionTitle }]
+  currentIndex: -1,
+  lastFocused: null,
+  isOpen: false,
+};
+
+/**
+ * Find the nearest preceding heading with an id for the given element.
+ */
+function findNearestSection(el) {
+  const headings = Array.from(elContentBody.querySelectorAll('h1[id], h2[id], h3[id], h4[id]'));
+  if (!headings.length) return null;
+  let nearest = null;
+  for (const h of headings) {
+    // DOCUMENT_POSITION_FOLLOWING (4) means el comes after h in document order
+    if (h.compareDocumentPosition(el) & Node.DOCUMENT_POSITION_FOLLOWING) {
+      nearest = h;
+    }
+  }
+  return nearest;
+}
+
+/**
+ * Scan current page content for img.image-modal elements,
+ * store their metadata, and wire click / keyboard handlers.
+ * Safe to call on every page load — resets state each time.
+ */
+function setupImageModal() {
+  imageModalState.images = [];
+
+  const imgs = Array.from(elContentBody.querySelectorAll('img.image-modal'));
+  imgs.forEach((img, i) => {
+    const section      = findNearestSection(img);
+    const sectionId    = section ? section.id               : null;
+    const sectionTitle = section ? section.textContent.trim() : null;
+
+    imageModalState.images.push({ src: img.src, alt: img.alt || '', sectionId, sectionTitle });
+
+    img.setAttribute('tabindex', '0');
+    img.setAttribute('role', 'button');
+    img.setAttribute('aria-label', `View image${img.alt ? ': ' + img.alt : ''}`);
+
+    img.addEventListener('click', () => openImageModal(i));
+    img.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        openImageModal(i);
+      }
+    });
+  });
+}
+
+/**
+ * Open the modal at the given index.
+ */
+function openImageModal(index) {
+  if (!elImageModal || !imageModalState.images.length) return;
+
+  imageModalState.lastFocused = document.activeElement;
+  imageModalState.isOpen = true;
+
+  elImageModal.removeAttribute('hidden');
+  document.body.style.overflow = 'hidden';
+
+  showImageAt(index);
+  elImageModalClose.focus();
+
+  elImageModal.addEventListener('keydown', trapModalFocus);
+  document.addEventListener('keydown', handleModalKeydown);
+}
+
+/**
+ * Close the modal and restore focus to the triggering element.
+ */
+function closeImageModal() {
+  if (!elImageModal || !imageModalState.isOpen) return;
+
+  imageModalState.isOpen = false;
+  elImageModal.setAttribute('hidden', '');
+  document.body.style.overflow = '';
+
+  elImageModal.removeEventListener('keydown', trapModalFocus);
+  document.removeEventListener('keydown', handleModalKeydown);
+
+  if (imageModalState.lastFocused && typeof imageModalState.lastFocused.focus === 'function') {
+    imageModalState.lastFocused.focus();
+  }
+  imageModalState.lastFocused = null;
+}
+
+/**
+ * Populate the modal with the image at the given index.
+ */
+function showImageAt(index) {
+  const total = imageModalState.images.length;
+  if (index < 0 || index >= total) return;
+
+  imageModalState.currentIndex = index;
+  const entry = imageModalState.images[index];
+
+  elImageModalImg.src = entry.src;
+  elImageModalImg.alt = entry.alt;
+
+  elImageModalCaption.textContent = entry.alt;
+
+  if (entry.sectionId && entry.sectionTitle) {
+    elImageModalSectionLink.textContent = `\u2191 Back to section: ${entry.sectionTitle}`;
+    elImageModalSectionLink.dataset.sectionId = entry.sectionId;
+    elImageModalSectionLink.hidden = false;
+  } else {
+    elImageModalSectionLink.hidden = true;
+  }
+
+  elImageModalCounter.textContent = total > 1 ? `${index + 1} / ${total}` : '';
+  elImageModalPrev.disabled = index <= 0;
+  elImageModalNext.disabled = index >= total - 1;
+}
+
+/**
+ * Focus trap - keep keyboard focus inside the open modal.
+ */
+function trapModalFocus(e) {
+  if (e.key !== 'Tab') return;
+
+  const focusable = Array.from(
+    elImageModal.querySelectorAll('button:not([disabled]), a:not([hidden])')
+  );
+  if (!focusable.length) return;
+
+  const first = focusable[0];
+  const last  = focusable.at(-1);
+
+  if (e.shiftKey && document.activeElement === first) {
+    e.preventDefault();
+    last.focus();
+  } else if (!e.shiftKey && document.activeElement === last) {
+    e.preventDefault();
+    first.focus();
+  }
+}
+
+/**
+ * Keyboard shortcuts while the modal is open.
+ * Escape closes; ArrowLeft/ArrowRight navigate images.
+ */
+function handleModalKeydown(e) {
+  if (!imageModalState.isOpen) return;
+  switch (e.key) {
+    case 'Escape':
+      e.preventDefault();
+      closeImageModal();
+      break;
+    case 'ArrowLeft':
+      e.preventDefault();
+      if (imageModalState.currentIndex > 0) showImageAt(imageModalState.currentIndex - 1);
+      break;
+    case 'ArrowRight':
+      e.preventDefault();
+      if (imageModalState.currentIndex < imageModalState.images.length - 1) showImageAt(imageModalState.currentIndex + 1);
+      break;
+  }
+}
+
+/**
+ * Wire static modal controls once at app startup.
+ */
+function initImageModal() {
+  if (!elImageModal) return;
+
+  elImageModalClose.addEventListener('click', closeImageModal);
+
+  elImageModalPrev.addEventListener('click', () => {
+    showImageAt(imageModalState.currentIndex - 1);
+  });
+
+  elImageModalNext.addEventListener('click', () => {
+    showImageAt(imageModalState.currentIndex + 1);
+  });
+
+  /* Backdrop click - click directly on overlay (not its children) closes modal */
+  elImageModal.addEventListener('click', (e) => {
+    if (e.target === elImageModal) closeImageModal();
+  });
+
+  /* Section link - close modal then scroll to section using existing navigation */
+  elImageModalSectionLink.addEventListener('click', (e) => {
+    e.preventDefault();
+    const sectionId = elImageModalSectionLink.dataset.sectionId;
+    if (sectionId) {
+      closeImageModal();
+      navigateTo(state.activeNavId, sectionId, true, true);
+    }
+  });
+}
+
+/* ═══════════════════════════════════════════════════════════════
    INIT
    ═══════════════════════════════════════════════════════════════ */
 
@@ -1902,6 +2116,9 @@ function init() {
   
   /* Initialize search functionality */
   initSearch();
+
+  /* Initialize image modal controls (wired once; content scanned per page load) */
+  initImageModal();
   
   /* Setup copy buttons for any pre-existing code blocks */
   setupCopyButtons();

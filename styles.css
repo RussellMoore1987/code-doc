@@ -152,6 +152,17 @@ button {
 }
 .btn-icon:hover { background: var(--bg-hover); color: var(--text-base); }
 
+.flex-sb {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+}
+
+.w-100 {
+  width: 100%;
+}
+
 /* ═══════════════════════════════════════════════════════════════
    HEADER
    ═══════════════════════════════════════════════════════════════ */
@@ -1241,5 +1252,180 @@ body.right-collapsed .search-nav-controls {
     max-height: 250px;
     left: 0;
     right: auto;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   IMAGE MODAL
+   ═══════════════════════════════════════════════════════════════ */
+
+/* Clickable gallery images */
+img.image-modal {
+  cursor: pointer;
+  outline: 0px solid var(--primary-color);
+}
+img.image-modal:hover {
+  opacity: 0.9;
+  outline: 2px solid var(--primary-color);
+}
+img.image-modal:focus-visible {
+  outline: 2px solid var(--primary-color);
+}
+
+/* Modal backdrop / overlay */
+.image-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: rgba(0, 0, 0, 0.85);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+.image-modal-overlay[hidden] {
+  display: none;
+}
+
+/* Counter pill */
+.image-modal-counter {
+  position: fixed;
+  top: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 13px;
+  pointer-events: none;
+  white-space: nowrap;
+  z-index: 1001;
+}
+
+/* Close button */
+.image-modal-close {
+  position: fixed;
+  top: 14px;
+  right: 14px;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.72);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  color: #fff;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s;
+  z-index: 1001;
+}
+.image-modal-close:hover,
+.image-modal-close:focus-visible {
+  background: rgba(0, 0, 0, 0.85);
+  outline: 2px solid rgba(255, 255, 255, 0.6);
+  outline-offset: 2px;
+}
+
+/* Prev / Content / Next row */
+.image-modal-container {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  max-width: 90vw;
+  max-height: 90vh;
+}
+
+/* Prev / Next buttons */
+.image-modal-prev,
+.image-modal-next {
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.72);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  color: #fff;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s;
+}
+.image-modal-prev:hover:not(:disabled),
+.image-modal-next:hover:not(:disabled),
+.image-modal-prev:focus-visible,
+.image-modal-next:focus-visible {
+  background: rgba(0, 0, 0, 0.85);
+  outline: 2px solid rgba(255, 255, 255, 0.6);
+  outline-offset: 2px;
+}
+.image-modal-prev:disabled,
+.image-modal-next:disabled {
+  opacity: 0.25;
+  cursor: not-allowed;
+}
+
+/* Image + caption + section-link column */
+.image-modal-content {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-width: calc(90vw - 160px);
+  max-height: 85vh;
+}
+
+.image-modal-img {
+  max-width: 100%;
+  max-height: 68vh;
+  object-fit: contain;
+  border-radius: 6px;
+  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.5);
+  display: block;
+}
+
+.img-info {
+  position: absolute;
+  left: 0;
+  top: calc(100% + 10px);
+  width: 100%;
+}
+
+.image-modal-caption {
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 14px;
+  margin: 0;
+}
+.image-modal-caption:empty {
+  display: none;
+}
+
+.image-modal-section-link {
+  color: var(--primary-color);
+  font-size: 13px;
+  text-decoration: underline;
+  cursor: pointer;
+}
+.image-modal-section-link:hover,
+.image-modal-section-link:focus-visible {
+  color: #fff;
+  outline: 2px solid rgba(255, 255, 255, 0.6);
+  outline-offset: 2px;
+}
+
+@media (max-width: 600px) {
+  .image-modal-prev,
+  .image-modal-next {
+    width: 36px;
+    height: 36px;
+  }
+  .image-modal-img {
+    max-height: 55vh;
+  }
+  .image-modal-container {
+    gap: 8px;
   }
 }

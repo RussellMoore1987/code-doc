@@ -155,6 +155,36 @@
     </div>
   </footer>
 
+  <!-- ═══════════════════════════════════════════ IMAGE MODAL -->
+  <dialog id="image-modal" class="image-modal-overlay" aria-label="Image viewer" hidden>
+    <button class="image-modal-close" id="image-modal-close" aria-label="Close image viewer">
+      <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+        <line x1="18" y1="6" x2="6" y2="18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        <line x1="6" y1="6" x2="18" y2="18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+      </svg>
+    </button>
+    <span class="image-modal-counter" id="image-modal-counter" aria-live="polite" aria-atomic="true"></span>
+    <div class="image-modal-container">
+      <button class="image-modal-prev" id="image-modal-prev" aria-label="Previous image">
+        <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+          <polyline points="15 18 9 12 15 6" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
+      <div class="image-modal-content">
+        <img id="image-modal-img" src="" alt="" class="image-modal-img">
+          <div class="img-info">
+            <p id="image-modal-caption" class="image-modal-caption"></p>
+            <a id="image-modal-section-link" href="#" class="image-modal-section-link" hidden>Back to section</a>
+          </div>
+      </div>
+      <button class="image-modal-next" id="image-modal-next" aria-label="Next image">
+        <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+          <polyline points="9 18 15 12 9 6" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
+    </div>
+  </dialog>
+
   <script src="app.js"></script>
 </body>
 </html>
