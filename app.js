@@ -119,6 +119,7 @@ const NAV_DATA = [
     id: 'reference',
     label: 'Reference',
     children: [
+      { id: 'image-galleries', label: 'Image Galleries', page: 'pages/image-galleries.html' },
       { id: 'api-ref',  label: 'API Reference',  page: 'pages/api-reference.html' },
       { id: 'cli-ref',  label: 'CLI Reference',  page: 'pages/cli-reference.html' },
       { id: 'faq',      label: 'FAQ',            page: 'pages/faq.html'      }
@@ -1609,6 +1610,7 @@ async function loadPage(url) {
     setupScrollSpy();
     setupCopyButtons();
     clearPageHighlights(); // Clear any previous search highlights
+    setupGallerySystems(); // Enhance gallery layouts before wiring modal triggers
     setupImageModal();     // Wire up .image-modal images on the new page
 
     return true; // Success
@@ -1883,6 +1885,149 @@ function showCopyFeedback(buttonElement, success) {
    IMAGE MODAL
    ═══════════════════════════════════════════════════════════════ */
 
+/* ═══════════════════════════════════════════════════════════════
+   GALLERY SYSTEMS
+   ═══════════════════════════════════════════════════════════════ */
+
+function setGalleryImageAttrs(img) {
+  if (!img.hasAttribute('loading')) img.setAttribute('loading', 'lazy');
+  if (!img.hasAttribute('decoding')) img.setAttribute('decoding', 'async');
+}
+
+function setupGallerySystems() {
+  setupFlexGalleries();
+  setupCoverGalleries();
+  setupThumbnailGalleries();
+}
+
+function setupFlexGalleries() {
+  const galleries = elContentBody.querySelectorAll('.flex-img-gallery');
+  galleries.forEach((gallery) => {
+    if (gallery.dataset.galleryFlexInit === 'true') return;
+    gallery.dataset.galleryFlexInit = 'true';
+
+    const imgs = gallery.querySelectorAll('img');
+    imgs.forEach((img) => {
+      img.classList.add('image-modal');
+      setGalleryImageAttrs(img);
+    });
+  });
+}
+
+function setupCoverGalleries() {
+  const galleries = elContentBody.querySelectorAll('.cover-img-gallery');
+  galleries.forEach((gallery) => {
+    if (gallery.dataset.galleryCoverInit === 'true') return;
+    gallery.dataset.galleryCoverInit = 'true';
+    gallery.classList.add('is-enhanced');
+
+    const imgs = Array.from(gallery.querySelectorAll('img'));
+    imgs.forEach((img) => {
+      if (img.closest('.cover-img-item')) return;
+
+      const wrapper = document.createElement('div');
+      wrapper.className = 'cover-img-item';
+
+      const tile = document.createElement('button');
+      tile.type = 'button';
+      tile.className = 'cover-img-tile image-modal-trigger';
+
+      const alt = img.alt || '';
+      const modalSrc = img.dataset.full || img.dataset.modalSrc || img.getAttribute('src') || img.src;
+
+      if (modalSrc) tile.dataset.modalSrc = modalSrc;
+      if (alt) tile.dataset.modalAlt = alt;
+
+      tile.setAttribute('aria-label', alt ? `View image: ${alt}` : 'View image');
+      tile.dataset.coverSrc = img.getAttribute('src') || img.currentSrc || img.src;
+      if (tile.dataset.coverSrc) {
+        tile.style.setProperty('--cover-src', `url("${tile.dataset.coverSrc}")`);
+      }
+
+      img.classList.add('cover-img-source');
+      img.setAttribute('aria-hidden', 'true');
+      setGalleryImageAttrs(img);
+
+      const parent = img.parentNode;
+      if (!parent) return;
+
+      wrapper.appendChild(tile);
+      parent.insertBefore(wrapper, img);
+      wrapper.appendChild(img);
+    });
+
+    hydrateCoverTiles(gallery);
+  });
+}
+
+function hydrateCoverTiles(gallery) {
+  const tiles = gallery.querySelectorAll('.cover-img-tile');
+  if (!tiles.length) return;
+
+  if (!('IntersectionObserver' in window)) {
+    tiles.forEach((tile) => {
+      if (tile.dataset.coverSrc && !tile.style.getPropertyValue('--cover-src')) {
+        tile.style.setProperty('--cover-src', `url("${tile.dataset.coverSrc}")`);
+      }
+    });
+    return;
+  }
+
+  const observer = new IntersectionObserver((entries, obs) => {
+    entries.forEach((entry) => {
+      if (!entry.isIntersecting) return;
+      const tile = entry.target;
+      if (tile.dataset.coverSrc && !tile.style.getPropertyValue('--cover-src')) {
+        tile.style.setProperty('--cover-src', `url("${tile.dataset.coverSrc}")`);
+      }
+      obs.unobserve(tile);
+    });
+  }, { root: elContentScroll, rootMargin: '100px 0px' });
+
+  tiles.forEach((tile) => observer.observe(tile));
+}
+
+function setupThumbnailGalleries() {
+  const galleries = elContentBody.querySelectorAll('.thumbnail-img-gallery');
+  galleries.forEach((gallery) => {
+    if (gallery.dataset.galleryThumbInit === 'true') return;
+    gallery.dataset.galleryThumbInit = 'true';
+
+    const imgs = gallery.querySelectorAll('img');
+    imgs.forEach((img) => {
+      img.classList.add('image-modal');
+      setGalleryImageAttrs(img);
+
+      const explicit = img.dataset.full || img.dataset.modalSrc;
+      if (explicit) {
+        img.dataset.modalSrc = explicit;
+        return;
+      }
+
+      const derived = deriveLargeImageSrc(img.getAttribute('src') || img.src);
+      if (!derived || derived === img.getAttribute('src') || derived === img.src) return;
+
+      const probe = new Image();
+      probe.onload = () => { img.dataset.modalSrc = derived; };
+      probe.onerror = () => { img.dataset.modalSrc = img.getAttribute('src') || img.src; };
+      probe.src = derived;
+    });
+  });
+}
+
+function deriveLargeImageSrc(src) {
+  if (!src) return '';
+  if (src.includes('_big.')) return src;
+
+  const match = src.match(/(\.[a-zA-Z0-9]+)(\?.*)?$/);
+  if (!match) return src;
+
+  const ext = match[1];
+  const query = match[2] || '';
+  const base = src.slice(0, match.index);
+  return `${base}_big${ext}${query}`;
+}
+
 const imageModalState = {
   images: [],       // [{ src, alt, sectionId, sectionTitle }]
   currentIndex: -1,
@@ -1909,28 +2054,47 @@ function findNearestSection(el) {
 /**
  * Scan current page content for img.image-modal elements,
  * store their metadata, and wire click / keyboard handlers.
- * Safe to call on every page load — resets state each time.
+ * Safe to call on every page load - resets state each time.
  */
 function setupImageModal() {
   imageModalState.images = [];
 
-  const imgs = Array.from(elContentBody.querySelectorAll('img.image-modal'));
-  imgs.forEach((img, i) => {
-    const section      = findNearestSection(img);
-    const sectionId    = section ? section.id               : null;
+  const elements = Array.from(
+    elContentBody.querySelectorAll('img.image-modal, .image-modal-trigger')
+  );
+  let modalIndex = 0;
+
+  elements.forEach((el) => {
+    const section      = findNearestSection(el);
+    const sectionId    = section ? section.id                : null;
     const sectionTitle = section ? section.textContent.trim() : null;
 
-    imageModalState.images.push({ src: img.src, alt: img.alt || '', sectionId, sectionTitle });
+    const isImage = el.tagName === 'IMG';
+    const alt = isImage ? (el.alt || '') : (el.dataset.modalAlt || el.getAttribute('aria-label') || '');
+    const src = isImage ? (el.dataset.modalSrc || el.src) : (el.dataset.modalSrc || '');
 
-    img.setAttribute('tabindex', '0');
-    img.setAttribute('role', 'button');
-    img.setAttribute('aria-label', `View image${img.alt ? ': ' + img.alt : ''}`);
+    if (!src) return;
 
-    img.addEventListener('click', () => openImageModal(i));
-    img.addEventListener('keydown', (e) => {
+    const index = modalIndex++;
+    imageModalState.images.push({ src, alt, sectionId, sectionTitle });
+
+    if (isImage) {
+      el.setAttribute('tabindex', '0');
+      el.setAttribute('role', 'button');
+      el.setAttribute('aria-label', `View image${alt ? ': ' + alt : ''}`);
+    } else if (el.tagName !== 'BUTTON' && el.tagName !== 'A') {
+      el.setAttribute('tabindex', '0');
+      el.setAttribute('role', 'button');
+      if (!el.getAttribute('aria-label')) {
+        el.setAttribute('aria-label', alt ? `View image: ${alt}` : 'View image');
+      }
+    }
+
+    el.addEventListener('click', () => openImageModal(index));
+    el.addEventListener('keydown', (e) => {
       if (e.key === 'Enter' || e.key === ' ') {
         e.preventDefault();
-        openImageModal(i);
+        openImageModal(index);
       }
     });
   });
