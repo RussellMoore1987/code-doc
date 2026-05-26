@@ -488,6 +488,8 @@ button {
   max-width: 1400px;
   margin: 0 auto;
   padding: 40px 48px 80px;
+  container-type: inline-size;
+  container-name: content-body;
 }
 
 /* Welcome screen  */
@@ -785,6 +787,50 @@ button {
   border: 1px solid var(--border);
 }
 
+/* ═══════════════════════════════════════════════════════════════
+   GALLERY CONTAINER QUERIES
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ~1200px viewport equivalent: right sidebar has collapsed */
+@container content-body (max-width: 920px) {
+  .img-col-12 { --gallery-cols: 6; }
+  .img-col-8  { --gallery-cols: 5; }
+  .img-col-6  { --gallery-cols: 4; }
+  .img-col-4  { --gallery-cols: 3; }
+}
+
+/* ~800px viewport equivalent: both sidebars have collapsed */
+@container content-body (max-width: 800px) {
+  .img-col-12 { --gallery-cols: 4; }
+  .img-col-8  { --gallery-cols: 4; }
+  .img-col-6  { --gallery-cols: 3; }
+  .img-col-4  { --gallery-cols: 2; }
+  .img-col-3  { --gallery-cols: 2; }
+}
+
+/* ~600px viewport equivalent: narrow single-column layout */
+@container content-body (max-width: 600px) {
+  .flex-img-gallery,
+  .cover-img-gallery,
+  .thumbnail-img-gallery {
+    --gallery-cols: 2;
+    --gallery-gap: 12px;
+  }
+
+  .cover-img-tile {
+    aspect-ratio: 3 / 2;
+  }
+}
+
+/* ~480px viewport equivalent: very narrow */
+@container content-body (max-width: 480px) {
+  .flex-img-gallery,
+  .cover-img-gallery,
+  .thumbnail-img-gallery {
+    --gallery-cols: 1;
+  }
+}
+
 /* Anchor targets - offset for sticky header */
 .content-body h1[id],
 .content-body h2[id],
@@ -913,44 +959,12 @@ button {
   .content-body {
     padding: 32px 28px 60px;
   }
-
-  .img-col-12 { --gallery-cols: 6; }
-  .img-col-8 { --gallery-cols: 5; }
-  .img-col-6 { --gallery-cols: 4; }
-  .img-col-4 { --gallery-cols: 3; }
 }
 
 /* Breakpoint: < 800px - auto collapse left sidebar */
 @media (max-width: 800px) {
   .content-body {
     padding: 24px 18px 48px;
-  }
-
-  .img-col-12 { --gallery-cols: 4; }
-  .img-col-8 { --gallery-cols: 4; }
-  .img-col-6 { --gallery-cols: 3; }
-  .img-col-4 { --gallery-cols: 2; }
-  .img-col-3 { --gallery-cols: 2; }
-}
-
-@media (max-width: 600px) {
-  .flex-img-gallery,
-  .cover-img-gallery,
-  .thumbnail-img-gallery {
-    --gallery-cols: 2;
-    --gallery-gap: 12px;
-  }
-
-  .cover-img-tile {
-    aspect-ratio: 3 / 2;
-  }
-}
-
-@media (max-width: 480px) {
-  .flex-img-gallery,
-  .cover-img-gallery,
-  .thumbnail-img-gallery {
-    --gallery-cols: 1;
   }
 }
 
