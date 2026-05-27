@@ -2012,10 +2012,8 @@ function setupThumbnailGalleries() {
       const derived = deriveLargeImageSrc(img.getAttribute('src') || img.src);
       if (!derived || derived === img.getAttribute('src') || derived === img.src) return;
 
-      const probe = new Image();
-      probe.onload = () => { img.dataset.modalSrc = derived; };
-      probe.onerror = () => { img.dataset.modalSrc = img.getAttribute('src') || img.src; };
-      probe.src = derived;
+      // Set optimistically - modal will fall back via onerror if the _big file doesn't exist.
+      img.dataset.modalSrc = derived;
     });
   });
 }
@@ -2155,10 +2153,21 @@ function showImageAt(index) {
   imageModalState.currentIndex = index;
   const entry = imageModalState.images[index];
 
-  // If we have the element reference, re-read data-modal-src now (probes may have resolved since setup).
+  // Re-read data-modal-src from the element at click time (set during gallery setup).
   const src = (entry.el && (entry.el.dataset.modalSrc || entry.el.getAttribute('src') || entry.el.src)) || entry.src;
+  const fallbackSrc = (entry.el && (entry.el.getAttribute('src') || entry.el.src)) || entry.src;
+
+  elImageModalImg.onerror = null;
   elImageModalImg.src = src;
   elImageModalImg.alt = entry.alt;
+
+  // If the _big file doesn't exist, fall back to the original thumbnail src silently.
+  if (src !== fallbackSrc) {
+    elImageModalImg.onerror = () => {
+      elImageModalImg.onerror = null;
+      elImageModalImg.src = fallbackSrc;
+    };
+  }
 
   elImageModalCaption.textContent = entry.alt;
 
