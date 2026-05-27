@@ -2076,12 +2076,14 @@ function setupImageModal() {
 
     const isImage = el.tagName === 'IMG';
     const alt = isImage ? (el.alt || '') : (el.dataset.modalAlt || el.getAttribute('aria-label') || '');
-    const src = isImage ? (el.dataset.modalSrc || el.src) : (el.dataset.modalSrc || '');
 
-    if (!src) return;
+    // Resolve src lazily (at open time) so async _big probes in thumbnail galleries
+    // have time to set data-modal-src before the user clicks.
+    const eagerSrc = isImage ? (el.dataset.modalSrc || el.getAttribute('src') || el.src) : (el.dataset.modalSrc || '');
+    if (!eagerSrc) return;
 
     const index = modalIndex++;
-    imageModalState.images.push({ src, alt, sectionId, sectionTitle });
+    imageModalState.images.push({ el: isImage ? el : null, src: eagerSrc, alt, sectionId, sectionTitle });
 
     if (isImage) {
       el.setAttribute('tabindex', '0');
@@ -2153,7 +2155,9 @@ function showImageAt(index) {
   imageModalState.currentIndex = index;
   const entry = imageModalState.images[index];
 
-  elImageModalImg.src = entry.src;
+  // If we have the element reference, re-read data-modal-src now (probes may have resolved since setup).
+  const src = (entry.el && (entry.el.dataset.modalSrc || entry.el.getAttribute('src') || entry.el.src)) || entry.src;
+  elImageModalImg.src = src;
   elImageModalImg.alt = entry.alt;
 
   elImageModalCaption.textContent = entry.alt;
