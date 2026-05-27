@@ -1910,6 +1910,11 @@ function setupFlexGalleries() {
     imgs.forEach((img) => {
       img.classList.add('image-modal');
       setGalleryImageAttrs(img);
+
+      const explicit = img.dataset.full || img.dataset.modalSrc;
+      if (explicit) {
+        img.dataset.modalSrc = explicit;
+      }
     });
   });
 }
