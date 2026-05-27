@@ -1,8 +1,26 @@
 <h1>Image Gallery Systems</h1>
-<p>Use these gallery containers to build responsive, modal-ready image grids with zero JavaScript. Drop images inside a container with the right classes and the system wires up layout, lazy loading, and the existing modal viewer automatically.</p>
+<p>Use these gallery containers to build a responsive, modal-ready image grids. Drop images inside a container with the right classes and the system wires up the layout, it also provides lazy loading.</p>
+
+<p>All Galleries use the same markup structure and can be customized with different column counts.</p>
+<p>Here are the available gallery types:</p>
+<ul>
+  <li><strong>Flex Image Gallery</strong> <code>flex-img-gallery</code> for natural image sizes and flexible layouts.</li>
+  <li><strong>Uniform Cover Gallery</strong> <code>cover-img-gallery</code> for consistent tile sizes with cover cropping.</li>
+  <li><strong>Thumbnail Gallery</strong> <code>thumbnail-img-gallery</code> for auto-cropped square thumbnails with large image support.</li>
+</ul>
+<p>Here are the available gallery column options:</p>
+<ul>
+  <li><strong>2 Columns</strong> <code>img-col-2</code> for larger images and fewer items per row.</li>
+  <li><strong>3 Columns</strong> <code>img-col-3</code> for a balanced layout with moderate image sizes.</li>
+  <li><strong>4 Columns</strong> <code>img-col-4</code> for smaller images and more items per row.</li>
+  <li><strong>6 Columns</strong> <code>img-col-6</code> for compact layouts with small images.</li>
+  <li><strong>8 Columns</strong> <code>img-col-8</code> for very compact layouts with very small images.</li>
+  <li><strong>12 Columns</strong> <code>img-col-12</code> for extremely compact layouts with tiny images.</li>
+</ul>
+<p>Each gallery images can utilize the <code>data-full</code> attribute to specify a larger version of the image for modal or lightbox views. But only the Thumbnail Gallery supports the default image selection behavior, see more <a href="#thumbnail-grid" data-target="thumbnail-grid">here</a>.</p>
 
 <h2 id="flex-image-gallery">Flex Image Gallery</h2>
-<p>Flexible, natural-size images laid out with flexbox. Add a column modifier to control how many items appear per row.</p>
+<p>Flexible, natural-size images laid out with a grid. Add a column modifier to control how many items appear per row.</p>
 
 <pre><code>&lt;div class="flex-img-gallery img-col-3"&gt;
   &lt;img src="images/pic1.jpg" alt="Sample diagram"&gt;
@@ -12,7 +30,7 @@
 
 <h3 id="flex-2-columns">2 Columns</h3>
 <div class="flex-img-gallery img-col-2">
-  <img src="images/pic1.jpg" alt="Gallery sample 1">
+  <img src="images/pic1.jpg" data-full="images/pic3.jpg" alt="Gallery sample 1">
   <img src="images/pic2.png" alt="Gallery sample 2">
   <img src="images/pic3.jpg" alt="Gallery sample 3">
   <img src="images/pic2.png" alt="Gallery sample 4">
@@ -85,7 +103,7 @@
 </div>
 
 <h2 id="uniform-cover-gallery">Uniform Cover Gallery</h2>
-<p>Uniform tiles with cover-style crops. The gallery converts your images into equal-sized cards with background cover and connects them to the modal viewer.</p>
+<p>Uniform tiles with cover-style crops. The gallery converts your images into equal-sized cards with background cover and connects them to the modal viewer. The Uniform Cover Gallery makes equally sized cards with a consistent 4 / 3 aspect ratio.</p>
 
 <pre><code>&lt;div class="cover-img-gallery img-col-4"&gt;
   &lt;img src="images/pic1.jpg" alt="Release banner"&gt;
@@ -95,7 +113,7 @@
 
 <h3 id="cover-2-columns">2 Columns</h3>
 <div class="cover-img-gallery img-col-2">
-  <img src="images/pic1.jpg" alt="Cover tile sample 1">
+  <img src="images/pic1.jpg" data-full="images/pic3.jpg" alt="Cover tile sample 1">
   <img src="images/pic2.png" alt="Cover tile sample 2">
   <img src="images/pic3.jpg" alt="Cover tile sample 3">
   <img src="images/pic3.jpg" alt="Cover tile sample 4">
@@ -168,43 +186,22 @@
 </div>
 
 <h2 id="thumbnail-gallery">Thumbnail Gallery</h2>
-<p>Small thumbnails that open larger images in the modal viewer. The system tries to locate a larger image using the <code>_big</code> filename pattern and falls back to <code>data-full</code> when provided.</p>
+<p>The thumbnail gallery auto crops the image to a square aspect ratio.</p>
+<p>Small thumbnails that open larger images in the modal viewer. The system tries to locate a larger image using the <code>_big</code> filename pattern if the <code>data-full</code> attribute is not provided.</p>
 
 <pre><code>&lt;div class="thumbnail-img-gallery img-col-6"&gt;
-  &lt;img src="images/pic1.jpg" data-full="images/pic1_big.png" alt="System overview"&gt;
-  &lt;img src="images/pic2.png" data-full="images/pic2.png" alt="Dashboard"&gt;
+  &lt;img src="images/pic1.jpg" data-full="images/other_pic.png" alt="System overview"&gt;
+  &lt;img src="images/pic2.png" alt="Dashboard"&gt; // will get "images/pic2_big.png" automatically
 &lt;/div&gt;</code></pre>
 
 <h3 id="thumbnail-grid">Thumbnail Grid</h3>
 <div class="thumbnail-img-gallery img-col-12">
-  <img src="images/pic1.jpg" data-full="images/pic1_big.png" alt="Thumbnail sample 1">
-  <img src="images/pic2.png" data-full="images/pic3.jpg" alt="Thumbnail sample 2">
+  <img src="images/pic1.jpg" data-full="images/pic3.jpg" alt="Thumbnail sample 1">
+  <img src="images/pic2.png" data-full="images/pic4.jpg" alt="Thumbnail sample 2">
   <img src="images/pic3.jpg" data-full="images/pic4.jpg" alt="Thumbnail sample 3">
   <img src="images/pic3.jpg" data-full="images/pic5.jpg" alt="Thumbnail sample 4">
-  <img src="images/pic5.jpg" data-full="images/pic1.jpg" alt="Thumbnail sample 5">
-  <img src="images/pic3.jpg" data-full="images/pic2.png" alt="Thumbnail sample 6">
+  <img src="images/pic1.jpg" alt="Thumbnail sample 5">
+  <img src="images/pic1.jpg" alt="Thumbnail sample 6">
 </div>
 
 <p>Tip: Use <code>data-full</code> whenever the large image filename does not follow the <code>_big</code> convention.</p>
-
-
-<!-- flex-img-gallery * -->
-<!-- cover-img-gallery * -->
-<!-- thumbnail-img-gallery * -->
-<h3 id="test">test</h3>
-<div class="thumbnail-img-gallery img-col-12">
-  <img src="images/pic1.jpg" data-full="images/pic3.jpg" alt="Gallery sample 1">
-  <img src="images/pic2.png" data-full="images/pic4.jpg" alt="Gallery sample 2">
-  <img src="images/pic3.jpg" data-full="images/pic4.jpg" alt="Gallery sample 3">
-  <img src="images/pic1.jpg" alt="Gallery sample 4">
-  <img src="images/pic1.jpg" alt="Gallery sample 5">
-  <img src="images/pic3.jpg" alt="Gallery sample 6">
-  <img src="images/pic3.jpg" alt="Gallery sample 7">
-  <img src="images/pic3.jpg" alt="Gallery sample 8">
-  <img src="images/pic1.jpg" alt="Gallery sample 9">
-  <img src="images/pic1.jpg" alt="Gallery sample 10">
-  <img src="images/pic1.jpg" alt="Gallery sample 11">
-  <img src="images/pic1.jpg" alt="Gallery sample 12">
-  <img src="images/pic1.jpg" alt="Gallery sample 13">
-  <img src="images/pic1.jpg" alt="Gallery sample 14">
-</div>
