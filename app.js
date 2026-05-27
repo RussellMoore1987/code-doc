@@ -1612,6 +1612,7 @@ async function loadPage(url) {
     clearPageHighlights(); // Clear any previous search highlights
     setupGallerySystems(); // Enhance gallery layouts before wiring modal triggers
     setupImageModal();     // Wire up .image-modal images on the new page
+    setupContentSectionLinks(); // Wire smooth-scroll for in-content a[data-target] links
 
     return true; // Success
 
@@ -1892,6 +1893,19 @@ function showCopyFeedback(buttonElement, success) {
 function setGalleryImageAttrs(img) {
   if (!img.hasAttribute('loading')) img.setAttribute('loading', 'lazy');
   if (!img.hasAttribute('decoding')) img.setAttribute('decoding', 'async');
+}
+
+/**
+ * Wire smooth-scroll navigation for in-content links that use data-target
+ * to reference a heading id on the same page (e.g. <a data-target="some-id">).
+ */
+function setupContentSectionLinks() {
+  elContentBody.querySelectorAll('a[data-target]').forEach((a) => {
+    a.addEventListener('click', (e) => {
+      e.preventDefault();
+      navigateTo(null, a.dataset.target, true, true);
+    });
+  });
 }
 
 function setupGallerySystems() {
