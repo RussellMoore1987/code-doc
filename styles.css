@@ -1556,6 +1556,23 @@ img.image-modal:focus-visible {
   outline-offset: 2px;
 }
 
+.image-modal-view-link {
+  margin-top: 4px;
+  margin-left: 10px;
+}
+
+@keyframes image-locate-flash {
+  0%   { box-shadow: 0 0 0 4px var(--primary-color); }
+  50%  { box-shadow: 0 0 0 4px var(--primary-color); }
+  100% { box-shadow: 0 0 0 0   transparent; }
+}
+
+.image-locate-highlight {
+  animation: image-locate-flash 2s ease-out forwards;
+  position: relative;
+  z-index: 1;
+}
+
 @media (max-width: 600px) {
   .image-modal-prev,
   .image-modal-next {

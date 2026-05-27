@@ -261,6 +261,7 @@ const elImageModal            = document.getElementById('image-modal');
 const elImageModalImg         = document.getElementById('image-modal-img');
 const elImageModalCaption     = document.getElementById('image-modal-caption');
 const elImageModalSectionLink = document.getElementById('image-modal-section-link');
+const elImageModalViewLink    = document.getElementById('image-modal-view-link');
 const elImageModalClose       = document.getElementById('image-modal-close');
 const elImageModalPrev        = document.getElementById('image-modal-prev');
 const elImageModalNext        = document.getElementById('image-modal-next');
@@ -2095,7 +2096,8 @@ function setupImageModal() {
     if (!eagerSrc) return;
 
     const index = modalIndex++;
-    imageModalState.images.push({ el: isImage ? el : null, src: eagerSrc, alt, sectionId, sectionTitle });
+    // Store the trigger element for all gallery types so "View in page" can scroll back to it.
+    imageModalState.images.push({ el, src: eagerSrc, alt, sectionId, sectionTitle });
 
     if (isImage) {
       el.setAttribute('tabindex', '0');
@@ -2193,6 +2195,15 @@ function showImageAt(index) {
     elImageModalSectionLink.hidden = true;
   }
 
+  if (elImageModalViewLink) {
+    if (entry.el) {
+      elImageModalViewLink.dataset.imageIndex = index;
+      elImageModalViewLink.hidden = false;
+    } else {
+      elImageModalViewLink.hidden = true;
+    }
+  }
+
   elImageModalCounter.textContent = total > 1 ? `${index + 1} / ${total}` : '';
   elImageModalPrev.disabled = index <= 0;
   elImageModalNext.disabled = index >= total - 1;
@@ -2244,6 +2255,23 @@ function handleModalKeydown(e) {
 }
 
 /**
+ * Close the modal, scroll the trigger element into view, and flash-highlight it.
+ */
+function scrollToImageElement(el) {
+  closeImageModal();
+  el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  // Remove any stale highlight from a previous call
+  elContentBody.querySelectorAll('.image-locate-highlight').forEach((e) => {
+    e.classList.remove('image-locate-highlight');
+  });
+  // Short delay lets the scroll settle before the animation starts
+  setTimeout(() => {
+    el.classList.add('image-locate-highlight');
+    el.addEventListener('animationend', () => el.classList.remove('image-locate-highlight'), { once: true });
+  }, 200);
+}
+
+/**
  * Wire static modal controls once at app startup.
  */
 function initImageModal() {
@@ -2273,6 +2301,16 @@ function initImageModal() {
       navigateTo(state.activeNavId, sectionId, true, true);
     }
   });
+
+  /* View-in-page link - close modal, scroll to the image element, flash-highlight it */
+  if (elImageModalViewLink) {
+    elImageModalViewLink.addEventListener('click', (e) => {
+      e.preventDefault();
+      const idx = parseInt(elImageModalViewLink.dataset.imageIndex, 10);
+      const entry = imageModalState.images[idx];
+      if (entry && entry.el) scrollToImageElement(entry.el);
+    });
+  }
 }
 
 /* ═══════════════════════════════════════════════════════════════
