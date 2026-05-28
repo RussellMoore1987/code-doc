@@ -767,21 +767,23 @@ function highlightSearchTermsOnPage(query, instanceIndex) {
     const regex = new RegExp(`(${escapeRegex(searchTerms)})`, 'gi');
     
     if (regex.test(text)) {
-      const highlightedHtml = text.replace(regex, '<span class="search-highlight">$1</span>');
-      
-      // Create a temporary container to parse the HTML
-      const temp = document.createElement('div');
-      temp.innerHTML = highlightedHtml;
-      
-      // Replace the text node with the highlighted content
+      // Split on matches and build DOM nodes - never use innerHTML here,
+      // because textContent of <pre><code> nodes contains decoded characters
+      // (e.g. "<img>") that would be re-parsed as real HTML if set via innerHTML.
+      const parts = text.split(new RegExp(`(${escapeRegex(searchTerms)})`, 'gi'));
       const fragment = document.createDocumentFragment();
-      while (temp.firstChild) {
-        if (temp.firstChild.classList && temp.firstChild.classList.contains('search-highlight')) {
-          searchState.currentHighlights.push(temp.firstChild);
+
+      parts.forEach(part => {
+        if (part.toLowerCase() === searchTerms.toLowerCase()) {
+          const span = document.createElement('span');
+          span.className = 'search-highlight';
+          span.textContent = part;
+          fragment.appendChild(span);
+        } else if (part) {
+          fragment.appendChild(document.createTextNode(part));
         }
-        fragment.appendChild(temp.firstChild);
-      }
-      
+      });
+
       textNode.parentNode.replaceChild(fragment, textNode);
     }
   });
