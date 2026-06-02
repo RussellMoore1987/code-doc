@@ -34,6 +34,41 @@
     <li>Provide a responsive layout that degrades gracefully on smaller screens. **Search Test**</li>
   </ul>
 
+  <h2 id="doc-link-usage">Doc Link Usage</h2>
+  <p>
+    Use <code>a[data-nav]</code> links anywhere in page content to navigate to another page — or a specific section
+    of another page — without a full page reload. The left sidebar will open the correct menu automatically.
+  </p>
+  <div class="callout">
+    <div class="callout-title">Syntax</div>
+    <p><strong>Page only:</strong></p>
+    <pre><code>&lt;a href="#navId" data-nav="navId"&gt;Link text&lt;/a&gt;</code></pre>
+    <p><strong>Page + section:</strong></p>
+    <pre><code>&lt;a href="#navId#sectionId" data-nav="navId" data-section="sectionId"&gt;Link text&lt;/a&gt;</code></pre>
+    <p>
+      <code>navId</code> is the <code>id</code> field of the nav item in <code>NAV_DATA</code> (e.g. <code>image-processing</code>).<br>
+      <code>sectionId</code> is the <code>id</code> of any heading on the target page (e.g. <code>resize-section</code>).
+    </p>
+  </div>
+  <p><strong>Live examples — click to navigate:</strong></p>
+  <ul>
+    <li>
+      Go to the
+      <a href="#image-processing" data-nav="image-processing">Image Processing page</a>
+      (opens page, expands left nav).
+    </li>
+    <li>
+      Go directly to the
+      <a href="#image-processing#image-optimization" data-nav="image-processing" data-section="image-optimization">Image Optimization section</a>
+      of Image Processing (opens page, expands left nav, scrolls to section).
+    </li>
+    <li>
+      Go to
+      <a href="#oauth-sso" data-nav="authentication">Authentication</a>
+      in the Security section. <a href="#installation#nav-structure" data-nav="installation" data-section="nav-structure">Link text</a>
+    </li>
+  </ul>
+
   <div class="flex-sb">
     <img src="images/pic1.jpg" style="width: 150px" alt="Graphic made by ChatGPT based off of input data from a chat session. Adilas value add-on core model concept shows how additional features and functionalities can be layered on top of the core system to enhance its capabilities and provide more value to users. Everybody starts with the core and then builds from there. Graphic made by ChatGPT based off of input data from a chat session. Adilas value add-on core model concept shows how additional features and functionalities can be layered on top of the core system to enhance its capabilities and provide more value to users. Everybody starts with the core and then builds from there. Graphic made by ChatGPT based off of input data from a chat session. Adilas value add-on core model concept shows how additional features and functionalities can be layered on top of the core system to enhance its capabilities and provide more value to users. Everybody starts with the core and then builds from there. Graphic made by ChatGPT based off of input data from a chat session. Adilas value add-on core model concept shows how additional features and functionalities can be layered on top of the core system to enhance its capabilities and provide more value to users. Everybody starts with the core and then builds from there. Graphic made by ChatGPT based off of input data from a chat session. Adilas value add-on core model concept shows how additional features and functionalities can be layered on top of the core system to enhance its capabilities and provide more value to users. Everybody starts with the core and then builds from there." class="img-block image-modal">
     <img src="images/pic5.jpg" style="width: 150px" alt="Graphic made by ChatGPT based off of input data from a chat session. Adilas value add-on core model concept shows how additional features and functionalities can be layered on top of the core system to enhance its capabilities and provide more value to users." class="img-block image-modal">

@@ -1586,3 +1586,54 @@ img.image-modal:focus-visible {
     gap: 8px;
   }
 }
+
+/* ═══════════════════════════════════════════════════════════════
+   DOC LINK  -  cross-page content links (a[data-nav])
+   Usage: <a href="#navId" data-nav="navId">…</a>
+          <a href="#navId#sectionId" data-nav="navId" data-section="sectionId">…</a>
+   ═══════════════════════════════════════════════════════════════ */
+
+a[data-nav] {
+  color: var(--text-link);
+  text-decoration: none;
+  font-weight: 500;
+  border-bottom: 1px solid transparent;
+  transition: border-color 0.15s, color 0.15s;
+  white-space: nowrap;
+}
+
+a[data-nav]::after {
+  content: '';
+  display: inline-block;
+  width:  11px;
+  height: 11px;
+  margin-left: 4px;
+  vertical-align: middle;
+  background-color: currentColor;
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpolyline points='9 18 15 12 9 6' stroke='currentColor' stroke-width='2.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpolyline points='9 18 15 12 9 6' stroke='currentColor' stroke-width='2.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  -webkit-mask-size: contain;
+  mask-size: contain;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  mask-position: center;
+  opacity: 0.75;
+  transition: transform 0.15s, opacity 0.15s;
+}
+
+a[data-nav]:hover {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+}
+
+a[data-nav]:hover::after {
+  opacity: 1;
+  transform: translateX(2px);
+}
+
+a[data-nav]:focus-visible {
+  outline: 2px solid var(--border-focus);
+  outline-offset: 2px;
+  border-radius: 2px;
+}

@@ -1212,27 +1212,34 @@ async function navigateTo(navId, sectionId = null, pushHistory = true, smooth = 
     
     // Scroll to section if provided
     if (sectionId) {
-      // Wait a bit for content to render and scrollspy to initialize
+      // Wait for content to render, then use rAF so layout is fully painted
+      // before we measure positions. Scroll the container directly instead of
+      // scrollIntoView() which only scrolls relative to the viewport.
       setTimeout(() => {
-        const target = elContentBody.querySelector(`#${sectionId}`);
-        if (target) {
-          target.scrollIntoView({ 
-            behavior: smooth ? 'smooth' : 'auto', 
-            block: 'start' 
-          });
-          
-          // Update right nav active state
-          const rightNavLink = elRightNav.querySelector(`[data-target="${sectionId}"]`);
-          if (rightNavLink) {
-            elRightNav.querySelectorAll('.right-nav-link').forEach(a => {
-              a.classList.remove('is-active');
+        requestAnimationFrame(() => {
+          const target = elContentBody.querySelector(`#${CSS.escape(sectionId)}`);
+          if (target) {
+            const containerTop  = elContentScroll.getBoundingClientRect().top;
+            const targetTop     = target.getBoundingClientRect().top;
+            const scrollOffset  = targetTop - containerTop + elContentScroll.scrollTop;
+            elContentScroll.scrollTo({
+              top: scrollOffset,
+              behavior: smooth ? 'smooth' : 'auto'
             });
-            rightNavLink.classList.add('is-active');
+
+            // Update right nav active state
+            const rightNavLink = elRightNav.querySelector(`[data-target="${sectionId}"]`);
+            if (rightNavLink) {
+              elRightNav.querySelectorAll('.right-nav-link').forEach(a => {
+                a.classList.remove('is-active');
+              });
+              rightNavLink.classList.add('is-active');
+            }
+          } else {
+            console.warn(`Section not found: ${sectionId}`);
           }
-        } else {
-          console.warn(`Section not found: ${sectionId}`);
-        }
-      }, 150);
+        });
+      }, 100);
     }
     
     state.currentRoute = { navId: targetNavId, sectionId };
@@ -1903,10 +1910,27 @@ function setGalleryImageAttrs(img) {
  * to reference a heading id on the same page (e.g. <a data-target="some-id">).
  */
 function setupContentSectionLinks() {
+  /* Same-page section scroll: a[data-target] */
   elContentBody.querySelectorAll('a[data-target]').forEach((a) => {
     a.addEventListener('click', (e) => {
       e.preventDefault();
       navigateTo(null, a.dataset.target, true, true);
+    });
+  });
+
+  /* Cross-page doc links: a[data-nav]
+   * Usage:  <a href="#navId" data-nav="navId">Label</a>
+   *         <a href="#navId#sectionId" data-nav="navId" data-section="sectionId">Label</a>
+   *
+   * Loads the target page via AJAX, opens the correct left-nav menu,
+   * and (optionally) scrolls to data-section within that page.
+   */
+  elContentBody.querySelectorAll('a[data-nav]').forEach((a) => {
+    a.addEventListener('click', (e) => {
+      e.preventDefault();
+      const navId     = a.dataset.nav     || null;
+      const sectionId = a.dataset.section || null;
+      navigateTo(navId, sectionId, true, true);
     });
   });
 }
