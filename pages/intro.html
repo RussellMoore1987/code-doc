@@ -3,7 +3,7 @@
   <h1 id="introduction">Introduction</h1>
 
   <p>
-    Welcome to <strong>DevDocs</strong> — a lightweight, generic documentation platform built for
+    Welcome to <strong>DevDocs</strong> - a lightweight, generic documentation platform built for
     teams who need fast, structured technical content without heavy toolchain overhead.
     This guide walks you through the core concepts and helps you understand how everything fits together.
   </p>
@@ -28,7 +28,7 @@
   <p>Key design goals include:</p>
 
   <ul>
-    <li>Keep dependencies to zero — pure HTML, CSS, and vanilla JavaScript.</li>
+    <li>Keep dependencies to zero - pure HTML, CSS, and vanilla JavaScript.</li>
     <li>Make it trivial to add or reorganise content by editing a single data structure in <code>app.js</code>.</li>
     <li>Support light and dark themes with a single CSS variable system.</li>
     <li>Provide a responsive layout that degrades gracefully on smaller screens. **Search Test**</li>
@@ -36,8 +36,8 @@
 
   <h2 id="doc-link-usage">Doc Link Usage</h2>
   <p>
-    Use <code>a[data-nav]</code> links anywhere in page content to navigate to another page — or a specific section
-    of another page — without a full page reload. The left sidebar will open the correct menu automatically.
+    Use <code>a[data-nav]</code> links anywhere in page content to navigate to another page - or a specific section
+    of another page - without a full page reload. The left sidebar will open the correct menu automatically.
   </p>
   <div class="callout">
     <div class="callout-title">Syntax</div>
@@ -45,27 +45,33 @@
     <pre><code>&lt;a href="#navId" data-nav="navId"&gt;Link text&lt;/a&gt;</code></pre>
     <p><strong>Page + section:</strong></p>
     <pre><code>&lt;a href="#navId#sectionId" data-nav="navId" data-section="sectionId"&gt;Link text&lt;/a&gt;</code></pre>
+    <p><strong>In-page navigation only:</strong></p>
+    <pre><code>&lt;a href="#sectionId" data-target="sectionId"&gt;Link text&lt;/a&gt;</code></pre>
     <p>
-      <code>navId</code> is the <code>id</code> field of the nav item in <code>NAV_DATA</code> (e.g. <code>image-processing</code>).<br>
-      <code>sectionId</code> is the <code>id</code> of any heading on the target page (e.g. <code>resize-section</code>).
+      <code>navId</code> is the <code>data-id</code> data attribute of the nav item in the left hand menu, or page name in URL, e.g. <code>image-processing</code> in <code>.../index.html#image-processing</code>.
+    </p>
+    <p>
+      <code>sectionId</code> is the <code>data-target</code> data attribute of any heading on the target page, right hand menu, or in the URL as e.g. <code>filters-effects</code> in <code>.../index.html#image-processing#filters-effects</code>.
     </p>
   </div>
-  <p><strong>Live examples — click to navigate:</strong></p>
+  <p><strong>Live examples - click to navigate:</strong></p>
   <ul>
     <li>
       Go to the
       <a href="#image-processing" data-nav="image-processing">Image Processing page</a>
-      (opens page, expands left nav).
     </li>
     <li>
       Go directly to the
-      <a href="#image-processing#image-optimization" data-nav="image-processing" data-section="image-optimization">Image Optimization section</a>
-      of Image Processing (opens page, expands left nav, scrolls to section).
+      <a href="#image-processing#caching-optimization" data-nav="image-processing" data-section="caching-optimization">Image Caching Optimization section</a>
+      of Image Processing
     </li>
     <li>
-      Go to
-      <a href="#oauth-sso" data-nav="authentication">Authentication</a>
-      in the Security section. <a href="#installation#nav-structure" data-nav="installation" data-section="nav-structure">Link text</a>
+      Go to deeply nested content like the
+      <a href="#step1-env#testing-environment" data-nav="step1-env" data-section="testing-environment">Environment Setup -> testing-environment</a> section. 
+    </li>
+    <li>
+      Go to a section on this page
+      <a href="#theming" data-target="theming">theming section</a>
     </li>
   </ul>
 
@@ -90,7 +96,7 @@
   <figure class="img-block">
     <div class="img-placeholder" aria-label="Architecture diagram placeholder">
       <svg viewBox="0 0 48 48" width="48" height="48" aria-hidden="true"><rect x="4" y="4" width="40" height="40" rx="6" stroke="currentColor" stroke-width="2" fill="none"/><path d="M16 4v40M32 4v40M4 24h40" stroke="currentColor" stroke-width="1.5" stroke-dasharray="3 2"/></svg>
-      <span>Figure 1 — Three-column layout schematic</span>
+      <span>Figure 1 - Three-column layout schematic</span>
     </div>
     <figcaption>The three-column layout with left nav, center content, and right outline.</figcaption>
   </figure>
@@ -112,7 +118,7 @@
   <h3 id="content-loading">Content Loading</h3>
 
   <p>
-    Each page in <code>pages/</code> is an <em>HTML fragment</em> — just a <code>&lt;div class="content-body"&gt;</code>
+    Each page in <code>pages/</code> is an <em>HTML fragment</em> - just a <code>&lt;div class="content-body"&gt;</code>
     wrapper with your content inside. When a user clicks a left-nav link, <code>app.js</code> fetches that
     fragment via the Fetch API and injects it into the center column.
   </p>
@@ -175,11 +181,11 @@
   </p>
 
   <ul>
-    <li><code>fetch()</code> — page loading</li>
-    <li><code>IntersectionObserver</code> — scroll spy</li>
-    <li><code>CSS Custom Properties</code> — theming</li>
-    <li><code>DOMParser</code> — HTML fragment parsing</li>
-    <li><code>localStorage</code> — theme &amp; sidebar persistence</li>
+    <li><code>fetch()</code> - page loading</li>
+    <li><code>IntersectionObserver</code> - scroll spy</li>
+    <li><code>CSS Custom Properties</code> - theming</li>
+    <li><code>DOMParser</code> - HTML fragment parsing</li>
+    <li><code>localStorage</code> - theme &amp; sidebar persistence</li>
   </ul>
 
   <div class="callout danger">
@@ -194,9 +200,9 @@
   get your local environment running in minutes.</p>
 
   <ul>
-    <li><a href="#" onclick="return false;">Installation</a> — clone, serve, customise</li>
-    <li><a href="#" onclick="return false;">First Steps</a> — add your first pages and nav entries</li>
-    <li><a href="#" onclick="return false;">Deep Topic</a> — advanced configuration</li>
+    <li><a href="#" onclick="return false;">Installation</a> - clone, serve, customise</li>
+    <li><a href="#" onclick="return false;">First Steps</a> - add your first pages and nav entries</li>
+    <li><a href="#" onclick="return false;">Deep Topic</a> - advanced configuration</li>
   </ul>
 
   <img src="images/temp.gif" alt="Screenshot of DevDocs..." class="img-block img-center image-modal">
