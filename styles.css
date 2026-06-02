@@ -1611,3 +1611,97 @@ a[data-nav]:focus-visible {
   outline-offset: 2px;
   border-radius: 2px;
 }
+
+/* ═══════════════════════════════════════════════════════════════
+   TOOLTIP SYSTEM  -  [data-tooltip]
+   Usage: <button data-tooltip="Text" data-tooltip-position="top">…</button>
+   Positions: top (default) | top-right | top-left
+              right | bottom | bottom-right | bottom-left | left
+   ═══════════════════════════════════════════════════════════════ */
+
+#app-tooltip {
+  position: fixed;
+  z-index: 9000;
+  max-width: 260px;
+  padding: 6px 10px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-family: inherit;
+  font-weight: 500;
+  line-height: 1.45;
+  color: var(--bg-content);
+  background: var(--text-base);
+  border: 1px solid var(--border);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.18);
+  pointer-events: none;
+  white-space: pre-wrap;
+  word-break: break-word;
+  opacity: 0;
+  transform: scale(0.96);
+  transition: opacity 0.12s ease, transform 0.12s ease;
+}
+
+#app-tooltip.is-visible {
+  opacity: 1;
+  transform: scale(1);
+}
+
+/* Arrow shared */
+#app-tooltip::before {
+  content: '';
+  position: absolute;
+  width: 0;
+  height: 0;
+  border: 5px solid transparent;
+}
+
+/* Arrow per placement - class set by JS */
+#app-tooltip.tt-top::before {
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border-top-color: var(--text-base);
+}
+#app-tooltip.tt-top-left::before {
+  top: 100%;
+  left: 12px;
+  border-top-color: var(--text-base);
+}
+#app-tooltip.tt-top-right::before {
+  top: 100%;
+  right: 12px;
+  border-top-color: var(--text-base);
+}
+#app-tooltip.tt-bottom::before {
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border-bottom-color: var(--text-base);
+}
+#app-tooltip.tt-bottom-left::before {
+  bottom: 100%;
+  left: 12px;
+  border-bottom-color: var(--text-base);
+}
+#app-tooltip.tt-bottom-right::before {
+  bottom: 100%;
+  right: 12px;
+  border-bottom-color: var(--text-base);
+}
+#app-tooltip.tt-left::before {
+  left: 100%;
+  top: 50%;
+  transform: translateY(-50%);
+  border-left-color: var(--text-base);
+}
+#app-tooltip.tt-right::before {
+  right: 100%;
+  top: 50%;
+  transform: translateY(-50%);
+  border-right-color: var(--text-base);
+}
+
+/* Touch device: no hover transitions - snap in/out immediately */
+@media (hover: none) {
+  #app-tooltip { transition: none; }
+}

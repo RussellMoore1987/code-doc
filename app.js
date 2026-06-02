@@ -1623,6 +1623,7 @@ async function loadPage(url) {
     setupGallerySystems(); // Enhance gallery layouts before wiring modal triggers
     setupImageModal();     // Wire up .image-modal images on the new page
     setupContentSectionLinks(); // Wire smooth-scroll for in-content a[data-target] links
+    setupTooltipsIn(elContentBody); // Wire any tooltips in the newly loaded content
 
     return true; // Success
 
@@ -2340,6 +2341,247 @@ function initImageModal() {
 }
 
 /* ═══════════════════════════════════════════════════════════════
+   TOOLTIP SYSTEM
+   Attach data-tooltip="…" (and optionally data-tooltip-position)
+   to any element to get a smart, accessible tooltip.
+   ═══════════════════════════════════════════════════════════════ */
+
+const TOOLTIP_GAP = 8; // px between anchor and tooltip box
+
+/* All 8 placement names and their opposites (used for flip fallback) */
+const TOOLTIP_OPPOSITES = {
+  'top':          'bottom',
+  'top-left':     'bottom-left',
+  'top-right':    'bottom-right',
+  'bottom':       'top',
+  'bottom-left':  'top-left',
+  'bottom-right': 'top-right',
+  'left':         'right',
+  'right':        'left'
+};
+
+/* Ordered fallback chain for each preferred position */
+const TOOLTIP_FALLBACKS = {
+  'top':          ['top',          'bottom',       'right',  'left'],
+  'top-left':     ['top-left',     'bottom-left',  'top',    'bottom'],
+  'top-right':    ['top-right',    'bottom-right', 'top',    'bottom'],
+  'bottom':       ['bottom',       'top',          'right',  'left'],
+  'bottom-left':  ['bottom-left',  'top-left',     'bottom', 'top'],
+  'bottom-right': ['bottom-right', 'top-right',    'bottom', 'top'],
+  'left':         ['left',         'right',        'top',    'bottom'],
+  'right':        ['right',        'left',         'top',    'bottom']
+};
+
+let tooltipEl = null;      // single shared <div id="app-tooltip">
+let tooltipTarget = null;  // currently hovered / focused element
+let tooltipHideTimer = null;
+
+/**
+ * Create the singleton tooltip element and append it to <body>.
+ * Called once from initTooltips().
+ */
+function createTooltipElement() {
+  const el = document.createElement('div');
+  el.id = 'app-tooltip';
+  el.setAttribute('role', 'tooltip');
+  el.setAttribute('aria-hidden', 'true');
+  document.body.appendChild(el);
+  return el;
+}
+
+/**
+ * Compute { left, top } (px, viewport-relative) for a given placement.
+ * Returns null if the box would overflow off-screen.
+ */
+function computeTooltipPosition(anchorRect, ttRect, placement) {
+  const vw = window.innerWidth;
+  const vh = window.innerHeight;
+  const g  = TOOLTIP_GAP;
+  let left, top;
+
+  switch (placement) {
+    case 'top':
+      left = anchorRect.left + anchorRect.width / 2 - ttRect.width / 2;
+      top  = anchorRect.top  - ttRect.height - g;
+      break;
+    case 'top-left':
+      left = anchorRect.left;
+      top  = anchorRect.top  - ttRect.height - g;
+      break;
+    case 'top-right':
+      left = anchorRect.right - ttRect.width;
+      top  = anchorRect.top  - ttRect.height - g;
+      break;
+    case 'bottom':
+      left = anchorRect.left + anchorRect.width / 2 - ttRect.width / 2;
+      top  = anchorRect.bottom + g;
+      break;
+    case 'bottom-left':
+      left = anchorRect.left;
+      top  = anchorRect.bottom + g;
+      break;
+    case 'bottom-right':
+      left = anchorRect.right - ttRect.width;
+      top  = anchorRect.bottom + g;
+      break;
+    case 'left':
+      left = anchorRect.left  - ttRect.width - g;
+      top  = anchorRect.top   + anchorRect.height / 2 - ttRect.height / 2;
+      break;
+    case 'right':
+      left = anchorRect.right + g;
+      top  = anchorRect.top   + anchorRect.height / 2 - ttRect.height / 2;
+      break;
+    default:
+      return null;
+  }
+
+  // Check if this placement fits inside the viewport
+  if (left < 0 || top < 0 || left + ttRect.width > vw || top + ttRect.height > vh) {
+    return null; // Overflows — caller will try next fallback
+  }
+
+  return { left, top };
+}
+
+/**
+ * Show the tooltip for the given anchor element.
+ */
+function showTooltip(anchor) {
+  clearTimeout(tooltipHideTimer);
+
+  const text = anchor.dataset.tooltip;
+  if (!text) return;
+
+  tooltipTarget = anchor;
+
+  // Populate and initially hide to measure size
+  tooltipEl.textContent = text;
+  tooltipEl.className = '';           // clear previous placement class
+  tooltipEl.style.left = '-9999px';
+  tooltipEl.style.top  = '-9999px';
+  tooltipEl.removeAttribute('aria-hidden');
+  // Make it "rendered but invisible" so we can measure it
+  tooltipEl.style.visibility = 'hidden';
+  tooltipEl.style.display    = '';
+
+  const preferred = (anchor.dataset.tooltipPosition || 'top')
+    .toLowerCase().trim().replace(/\s+/g, '-');
+  const fallbacks = TOOLTIP_FALLBACKS[preferred] || TOOLTIP_FALLBACKS['top'];
+
+  const anchorRect = anchor.getBoundingClientRect();
+
+  // Force a layout pass so getBoundingClientRect is accurate
+  tooltipEl.style.maxWidth = '260px';
+  const ttRect = tooltipEl.getBoundingClientRect();
+
+  let chosenPlacement = fallbacks[fallbacks.length - 1]; // last-resort fallback
+  let chosenPos       = null;
+
+  for (const placement of fallbacks) {
+    const pos = computeTooltipPosition(anchorRect, ttRect, placement);
+    if (pos) {
+      chosenPlacement = placement;
+      chosenPos       = pos;
+      break;
+    }
+  }
+
+  // If every fallback overflows (tiny viewport), clamp to screen edges
+  if (!chosenPos) {
+    chosenPos = computeTooltipPosition(anchorRect, ttRect, chosenPlacement) || { left: 4, top: 4 };
+    chosenPos.left = Math.max(4, Math.min(chosenPos.left, window.innerWidth  - ttRect.width  - 4));
+    chosenPos.top  = Math.max(4, Math.min(chosenPos.top,  window.innerHeight - ttRect.height - 4));
+  }
+
+  // Apply placement class (controls the arrow direction)
+  tooltipEl.classList.add('tt-' + chosenPlacement);
+  tooltipEl.style.left       = chosenPos.left + 'px';
+  tooltipEl.style.top        = chosenPos.top  + 'px';
+  tooltipEl.style.visibility = '';
+
+  // Trigger transition
+  requestAnimationFrame(() => {
+    if (tooltipTarget === anchor) {
+      tooltipEl.classList.add('is-visible');
+    }
+  });
+
+  // Link anchor to tooltip for screen readers
+  anchor.setAttribute('aria-describedby', 'app-tooltip');
+}
+
+/**
+ * Hide the tooltip immediately or after an optional delay.
+ */
+function hideTooltip(delay = 0) {
+  clearTimeout(tooltipHideTimer);
+  tooltipHideTimer = setTimeout(() => {
+    if (tooltipEl) {
+      tooltipEl.classList.remove('is-visible');
+      tooltipEl.setAttribute('aria-hidden', 'true');
+    }
+    if (tooltipTarget) {
+      tooltipTarget.removeAttribute('aria-describedby');
+      tooltipTarget = null;
+    }
+  }, delay);
+}
+
+/**
+ * Wire tooltip events on a single element.
+ * Uses event delegation for elements added after init via setupTooltipsIn().
+ */
+function wireTooltipElement(el) {
+  el.addEventListener('mouseenter', () => showTooltip(el));
+  el.addEventListener('mouseleave', () => hideTooltip());
+  el.addEventListener('focus',      () => showTooltip(el));
+  el.addEventListener('blur',       () => hideTooltip());
+
+  // Hide on touch-tap elsewhere (mobile)
+  el.addEventListener('touchstart', (e) => {
+    e.stopPropagation();
+    showTooltip(el);
+  }, { passive: true });
+}
+
+/**
+ * Scan a container (or the whole document) and wire any un-wired tooltip elements.
+ * Safe to call multiple times — skips already-wired elements.
+ */
+function setupTooltipsIn(root = document) {
+  root.querySelectorAll('[data-tooltip]:not([data-tooltip-wired])').forEach((el) => {
+    el.dataset.tooltipWired = 'true';
+    wireTooltipElement(el);
+  });
+}
+
+/**
+ * One-time global setup: create the tooltip DOM, wire static UI,
+ * and add global hide-on-scroll / resize / Escape listeners.
+ */
+function initTooltips() {
+  tooltipEl = createTooltipElement();
+
+  // Wire tooltips on static page chrome (header, sidebars, etc.)
+  setupTooltipsIn(document);
+
+  // Hide on Escape
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && tooltipTarget) hideTooltip();
+  }, { signal: state.abortController.signal });
+
+  // Hide on scroll or resize (position would be stale)
+  const hideImmediate = () => hideTooltip();
+  window.addEventListener('scroll',  hideImmediate, { passive: true, signal: state.abortController.signal });
+  window.addEventListener('resize',  hideImmediate, { passive: true, signal: state.abortController.signal });
+  elContentScroll.addEventListener('scroll', hideImmediate, { passive: true, signal: state.abortController.signal });
+
+  // Hide on tap anywhere else (touch devices)
+  document.addEventListener('touchstart', () => hideTooltip(), { passive: true, signal: state.abortController.signal });
+}
+
+/* ═══════════════════════════════════════════════════════════════
    INIT
    ═══════════════════════════════════════════════════════════════ */
 
@@ -2379,6 +2621,9 @@ function init() {
 
   /* Initialize image modal controls (wired once; content scanned per page load) */
   initImageModal();
+
+  /* Initialize tooltip system (static chrome wired once; content re-scanned per load) */
+  initTooltips();
   
   /* Setup copy buttons for any pre-existing code blocks */
   setupCopyButtons();

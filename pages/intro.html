@@ -82,6 +82,58 @@
     <img src="images/pic5.jpg" style="width: 150px" alt="Graphic made by " class="img-block image-modal">
   </div>
 
+  <!-- ─── TOOLTIP EXAMPLES ───────────────────── -->
+  <h2 id="tooltip-usage">Tooltip Usage</h2>
+
+  <p>
+    Add <code>data-tooltip="…"</code> to any element to give it a tooltip. Use the optional
+    <code>data-tooltip-position</code> attribute to set a preferred direction. If the tooltip would
+    overflow the screen, it flips to a better position automatically.
+  </p>
+
+  <div class="callout">
+    <div class="callout-title">Syntax</div>
+    <pre><code>&lt;!-- Default (top) --&gt;
+&lt;button data-tooltip="Tooltip text here"&gt;Hover me&lt;/button&gt;
+
+&lt;!-- With preferred position --&gt;
+&lt;button data-tooltip="Opens settings" data-tooltip-position="right"&gt;⚙&lt;/button&gt;
+
+&lt;!-- Available positions --&gt;
+top | top-left | top-right
+bottom | bottom-left | bottom-right
+left | right</code></pre>
+  </div>
+
+  <p><strong>Live examples - hover or focus each button:</strong></p>
+
+  <div style="display:flex; flex-wrap:wrap; gap:10px; align-items:center; margin-bottom:20px;">
+    <button class="copy-btn" style="position:static;" data-tooltip="This is the default top position">top (default)</button>
+    <button class="copy-btn" style="position:static;" data-tooltip="Anchored to the top-left corner" data-tooltip-position="top-left">top-left</button>
+    <button class="copy-btn" style="position:static;" data-tooltip="Anchored to the top-right corner" data-tooltip-position="top-right">top-right</button>
+    <button class="copy-btn" style="position:static;" data-tooltip="Appears below the element" data-tooltip-position="bottom">bottom</button>
+    <button class="copy-btn" style="position:static;" data-tooltip="Below, aligned to the left" data-tooltip-position="bottom-left">bottom-left</button>
+    <button class="copy-btn" style="position:static;" data-tooltip="Below, aligned to the right" data-tooltip-position="bottom-right">bottom-right</button>
+    <button class="copy-btn" style="position:static;" data-tooltip="Appears to the left of the element" data-tooltip-position="left">left</button>
+    <button class="copy-btn" style="position:static;" data-tooltip="Appears to the right of the element" data-tooltip-position="right">right</button>
+  </div>
+
+  <p>Tooltips also work on non-button elements and support multi-line text:</p>
+
+  <div style="display:flex; flex-wrap:wrap; gap:14px; align-items:center; margin-bottom:20px;">
+    <code data-tooltip="Inline code elements work too" style="cursor:default;">data-tooltip</code>
+    <span
+      style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:var(--accent);color:#fff;font-size:12px;font-weight:700;cursor:default;flex-shrink:0;"
+      data-tooltip="Any element works - spans, icons, images, links…"
+      data-tooltip-position="right">ℹ</span>
+    <a href="#" onclick="return false;"
+      data-tooltip="Links get tooltips too"
+      data-tooltip-position="bottom">Hover this link</a>
+    <span style="cursor:default;"
+      data-tooltip="Tooltips support longer descriptions that wrap across multiple lines when needed."
+      data-tooltip-position="top">Long tooltip text ↑</span>
+  </div>
+
   <!-- ─── ARCHITECTURE ─────────────────────── -->
   <h2 id="architecture">Architecture Overview</h2>
 
