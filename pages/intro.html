@@ -93,11 +93,15 @@
 
   <div class="callout">
     <div class="callout-title">Syntax</div>
-    <pre><code>&lt;!-- Default (top) --&gt;
+    <pre><code>&lt;!-- Plain-text tooltip (default position: top) --&gt;
 &lt;button data-tooltip="Tooltip text here"&gt;Hover me&lt;/button&gt;
 
 &lt;!-- With preferred position --&gt;
 &lt;button data-tooltip="Opens settings" data-tooltip-position="right"&gt;⚙&lt;/button&gt;
+
+&lt;!-- HTML tooltip — write real HTML inside a &lt;template&gt; element --&gt;
+&lt;template id="my-tip"&gt;&lt;strong&gt;Bold&lt;/strong&gt; and &lt;em&gt;italic&lt;/em&gt;&lt;br&gt;Line two&lt;/template&gt;
+&lt;button data-tooltip-template="my-tip"&gt;Hover me&lt;/button&gt;
 
 &lt;!-- Available positions --&gt;
 top | top-left | top-right
@@ -118,13 +122,17 @@ left | right</code></pre>
     <button class="copy-btn" style="position:static;" data-tooltip="Appears to the right of the element" data-tooltip-position="right">right</button>
   </div>
 
-  <p>Tooltips also work on non-button elements and support multi-line text:</p>
+  <p>Tooltips also work on non-button elements and support rich HTML content via <code>data-tooltip-template</code>:</p>
+
+  <!-- Tooltip HTML content lives in <template> elements — real HTML, no escaping needed -->
+  <template id="tt-html-example"><strong>Bold</strong> and <em>italic</em><br>Plus a <code style="background:rgba(255,255,255,0.15);padding:1px 4px;border-radius:3px;">code</code> snippet</template>
+  <template id="tt-multiline">Line one<br>Line two<br>Line three</template>
 
   <div style="display:flex; flex-wrap:wrap; gap:14px; align-items:center; margin-bottom:20px;">
     <code data-tooltip="Inline code elements work too" style="cursor:default;">data-tooltip</code>
     <span
       style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:var(--accent);color:#fff;font-size:12px;font-weight:700;cursor:default;flex-shrink:0;"
-      data-tooltip="Any element works - spans, icons, images, links…"
+      data-tooltip="Any element works — spans, icons, images, links…"
       data-tooltip-position="right">ℹ</span>
     <a href="#" onclick="return false;"
       data-tooltip="Links get tooltips too"
@@ -132,6 +140,12 @@ left | right</code></pre>
     <span style="cursor:default;"
       data-tooltip="Tooltips support longer descriptions that wrap across multiple lines when needed."
       data-tooltip-position="top">Long tooltip text ↑</span>
+    <button class="copy-btn" style="position:static;"
+      data-tooltip-template="tt-html-example"
+      data-tooltip-position="top">HTML tooltip ↑</button>
+    <button class="copy-btn" style="position:static;"
+      data-tooltip-template="tt-multiline"
+      data-tooltip-position="bottom">Multi-line HTML ↓</button>
   </div>
 
   <!-- ─── ARCHITECTURE ─────────────────────── -->

@@ -2438,7 +2438,7 @@ function computeTooltipPosition(anchorRect, ttRect, placement) {
 
   // Check if this placement fits inside the viewport
   if (left < 0 || top < 0 || left + ttRect.width > vw || top + ttRect.height > vh) {
-    return null; // Overflows — caller will try next fallback
+    return null; // Overflows - caller will try next fallback
   }
 
   return { left, top };
@@ -2450,13 +2450,24 @@ function computeTooltipPosition(anchorRect, ttRect, placement) {
 function showTooltip(anchor) {
   clearTimeout(tooltipHideTimer);
 
-  const text = anchor.dataset.tooltip;
+  // data-tooltip-template="id" lets authors write real HTML inside a <template> element.
+  // Fall back to data-tooltip for plain-text tooltips.
+  const templateId = anchor.dataset.tooltipTemplate;
+  let text;
+  if (templateId) {
+    const tmpl = document.getElementById(templateId);
+    text = tmpl ? tmpl.innerHTML : '';
+  } else {
+    text = anchor.dataset.tooltip;
+  }
   if (!text) return;
 
   tooltipTarget = anchor;
 
-  // Populate and initially hide to measure size
-  tooltipEl.textContent = text;
+  // Populate and initially hide to measure size.
+  // innerHTML is intentional - tooltip content is authored in HTML source,
+  // not supplied by end users, so the trust level matches the rest of the page.
+  tooltipEl.innerHTML = text;
   tooltipEl.className = '';           // clear previous placement class
   tooltipEl.style.left = '-9999px';
   tooltipEl.style.top  = '-9999px';
@@ -2547,10 +2558,12 @@ function wireTooltipElement(el) {
 
 /**
  * Scan a container (or the whole document) and wire any un-wired tooltip elements.
- * Safe to call multiple times — skips already-wired elements.
+ * Safe to call multiple times - skips already-wired elements.
  */
 function setupTooltipsIn(root = document) {
-  root.querySelectorAll('[data-tooltip]:not([data-tooltip-wired])').forEach((el) => {
+  root.querySelectorAll(
+    '[data-tooltip]:not([data-tooltip-wired]), [data-tooltip-template]:not([data-tooltip-wired])'
+  ).forEach((el) => {
     el.dataset.tooltipWired = 'true';
     wireTooltipElement(el);
   });
