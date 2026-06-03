@@ -283,11 +283,18 @@ const searchState = {
   currentMatchIndex: -1
 };
 
+const tagState = {
+  index: [],        // [{tag, pageTitle, pageUrl, navId, sectionTitle, sectionId, snippet, tagElIndex}]
+  isViewOpen: false,
+  currentTag: null
+};
+
 /**
  * Build search index by loading and parsing all pages
  */
 async function buildSearchIndex() {
   searchState.index = [];
+  tagState.index = [];
   
   try {
     // Get all unique pages from NAV_DATA
@@ -361,13 +368,50 @@ async function buildSearchIndex() {
           });
         });
         
+        // Extract tag data from [data-tags] elements — reuse this same fetch
+        const tagEntries = [];
+        const tagEls = Array.from(doc.querySelectorAll('[data-tags]'));
+        const headingsWithIds = Array.from(doc.querySelectorAll('h1[id], h2[id], h3[id], h4[id]'));
+        tagEls.forEach((el, tagElIdx) => {
+          const raw = el.dataset.tags || '';
+          const tags = raw.split(',').map(t => t.trim().toLowerCase()).filter(Boolean);
+          if (!tags.length) return;
+
+          // Find nearest preceding heading with an id
+          let nearestHeading = null;
+          for (const h of headingsWithIds) {
+            if (h.compareDocumentPosition(el) & Node.DOCUMENT_POSITION_FOLLOWING) {
+              nearestHeading = h;
+            }
+          }
+
+          const sectionTitle = nearestHeading ? nearestHeading.textContent.trim() : title;
+          const sectionId    = nearestHeading ? nearestHeading.id               : null;
+          let snippet = (el.textContent || '').replace(/\s+/g, ' ').trim();
+          if (snippet.length > 200) snippet = snippet.substring(0, 200) + '...';
+
+          tags.forEach(tag => {
+            tagEntries.push({
+              tag,
+              pageTitle: title,
+              pageUrl,
+              navId: findNavItemByPage(pageUrl)?.id ?? null,
+              sectionTitle,
+              sectionId,
+              snippet,
+              tagElIndex: tagElIdx
+            });
+          });
+        });
+
         // Return page data for index
         return {
           url: pageUrl,
           title,
           sections,
           // Get nav item info for this page
-          navInfo: findNavItemByPage(pageUrl)
+          navInfo: findNavItemByPage(pageUrl),
+          tagEntries
         };
         
       } catch (error) {
@@ -381,6 +425,7 @@ async function buildSearchIndex() {
     
     // Filter out failed pages and add to index
     searchState.index = results.filter(page => page !== null);
+    tagState.index = results.filter(page => page !== null).flatMap(page => page.tagEntries || []);
   } catch (error) {
     console.error('Failed to build search index:', error);
   }
@@ -1578,6 +1623,9 @@ async function loadPage(url) {
   /* Close image modal if open when navigating to a new page */
   closeImageModal();
 
+  /* Close tag results view if open when navigating to a new page */
+  if (tagState.isViewOpen) closeTagView();
+
   /* Show loading state */
   elContentBody.innerHTML = `
     <div class="content-loading" aria-live="polite">
@@ -1624,7 +1672,9 @@ async function loadPage(url) {
     setupGallerySystems(); // Enhance gallery layouts before wiring modal triggers
     setupImageModal();     // Wire up .image-modal images on the new page
     setupContentSectionLinks(); // Wire smooth-scroll for in-content a[data-target] links
+    setupTagIndicators();             // Wire tag indicator icons on [data-tags] elements (before tooltip scan)
     setupTooltipsIn(elContentBody); // Wire any tooltips in the newly loaded content
+    renderTagBadgesInSidebar();       // Show page tags in the right sidebar
 
     return true; // Success
 
@@ -1712,6 +1762,227 @@ function buildRightNav() {
 
   elRightNav.innerHTML = '';
   elRightNav.appendChild(list);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   TAG SYSTEM
+   ═══════════════════════════════════════════════════════════════ */
+
+const TAG_SVG = `<svg viewBox="0 0 12 12" width="11" height="11" aria-hidden="true"><path d="M1.5 1.5h4.086a.5.5 0 0 1 .354.146l4.5 4.5a.5.5 0 0 1 0 .708l-4.086 4.086a.5.5 0 0 1-.708 0l-4.5-4.5A.5.5 0 0 1 1 6.086V2a.5.5 0 0 1 .5-.5z" fill="none" stroke="currentColor" stroke-width="1.2"/><circle cx="3.5" cy="3.5" r="0.8" fill="currentColor"/></svg>`;
+
+/**
+ * Render tag badges in the right sidebar for the current page.
+ * Called after every page load.
+ */
+function renderTagBadgesInSidebar() {
+  const existing = document.getElementById('right-tags');
+  if (existing) existing.remove();
+
+  const tagEls = elContentBody.querySelectorAll('[data-tags]');
+  if (!tagEls.length) return;
+
+  const uniqueTags = new Set();
+  tagEls.forEach(el => {
+    const raw = el.dataset.tags || '';
+    raw.split(',').forEach(t => {
+      const tag = t.trim().toLowerCase();
+      if (tag) uniqueTags.add(tag);
+    });
+  });
+  if (!uniqueTags.size) return;
+
+  const section = document.createElement('div');
+  section.id = 'right-tags';
+  section.className = 'right-tags';
+
+  const header = document.createElement('div');
+  header.className = 'right-tags-header';
+  header.textContent = 'Tags';
+  section.appendChild(header);
+
+  const list = document.createElement('div');
+  list.className = 'right-tags-list';
+
+  uniqueTags.forEach(tag => {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'tag-badge';
+    btn.dataset.tag = tag;
+    btn.setAttribute('aria-label', `View all content tagged: ${tag}`);
+    btn.innerHTML = `${TAG_SVG}<span>${escapeHtml(tag)}</span>`;
+    btn.addEventListener('click', () => openTagView(tag));
+    list.appendChild(btn);
+  });
+
+  section.appendChild(list);
+  elRightSidebar.appendChild(section);
+}
+
+/**
+ * Insert tag indicator icon groups into all [data-tags] elements in current content.
+ * Called after every page load.
+ */
+function setupTagIndicators() {
+  const tagEls = elContentBody.querySelectorAll('[data-tags]');
+  tagEls.forEach((el, idx) => {
+    el.dataset.tagElIndex = idx;
+    if (el.querySelector('.tag-indicator-group')) return; // already wired
+
+    const raw = el.dataset.tags || '';
+    const tags = raw.split(',').map(t => t.trim().toLowerCase()).filter(Boolean);
+    if (!tags.length) return;
+
+    // Ensure the element can contain an absolutely-positioned child
+    if (globalThis.getComputedStyle(el).position === 'static') {
+      el.style.position = 'relative';
+    }
+
+    const group = document.createElement('div');
+    group.className = 'tag-indicator-group';
+    group.setAttribute('aria-hidden', 'true');
+
+    tags.forEach(tag => {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'tag-indicator-btn';
+      btn.dataset.tag = tag;
+      btn.setAttribute('aria-label', `View tag: ${tag}`);
+      btn.dataset.tooltip = `#${tag}`;
+      btn.innerHTML = TAG_SVG;
+      btn.addEventListener('click', e => {
+        e.stopPropagation();
+        openTagView(tag);
+      });
+      group.appendChild(btn);
+    });
+
+    el.insertBefore(group, el.firstChild);
+  });
+}
+
+/**
+ * Open the Tag Results View for the given tag.
+ * Hides the normal page content and right-nav, shows the results panel.
+ */
+function openTagView(tag) {
+  const results = tagState.index.filter(e => e.tag === tag);
+
+  tagState.isViewOpen = true;
+  tagState.currentTag = tag;
+
+  // Hide the right-nav page outline and tag badges
+  elRightNav.classList.add('tag-view-hidden');
+  const rightTagsEl = document.getElementById('right-tags');
+  if (rightTagsEl) rightTagsEl.style.display = 'none';
+
+  // Hide the normal page content
+  elContentBody.style.display = 'none';
+
+  // Build and inject the results panel
+  const tagView = document.createElement('div');
+  tagView.id = 'tag-results-view';
+  tagView.className = 'tag-results-view';
+  tagView.innerHTML = buildTagResultsHTML(tag, results);
+  elContentScroll.appendChild(tagView);
+
+  elContentScroll.scrollTop = 0;
+
+  // Wire close button
+  const closeBtn = tagView.querySelector('#tag-results-close');
+  if (closeBtn) closeBtn.addEventListener('click', closeTagView);
+
+  // Wire result item navigation via event delegation
+  tagView.addEventListener('click', e => {
+    const item = e.target.closest('.tag-result-item');
+    if (item) navigateToTaggedElement(item.dataset.navId, Number.parseInt(item.dataset.tagElIndex, 10));
+  });
+
+  tagView.addEventListener('keydown', e => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      const item = e.target.closest('.tag-result-item');
+      if (item) {
+        e.preventDefault();
+        navigateToTaggedElement(item.dataset.navId, Number.parseInt(item.dataset.tagElIndex, 10));
+      }
+    }
+  });
+}
+
+/**
+ * Build the inner HTML string for the Tag Results View.
+ */
+function buildTagResultsHTML(tag, results) {
+  const TAG_SVG_LG = `<svg viewBox="0 0 12 12" width="14" height="14" aria-hidden="true"><path d="M1.5 1.5h4.086a.5.5 0 0 1 .354.146l4.5 4.5a.5.5 0 0 1 0 .708l-4.086 4.086a.5.5 0 0 1-.708 0l-4.5-4.5A.5.5 0 0 1 1 6.086V2a.5.5 0 0 1 .5-.5z" fill="none" stroke="currentColor" stroke-width="1.5"/><circle cx="3.5" cy="3.5" r="0.9" fill="currentColor"/></svg>`;
+  const countText = results.length === 0 ? 'No results'
+    : results.length === 1 ? '1 result'
+    : `${results.length} results`;
+
+  const itemsHTML = results.length === 0
+    ? '<div class="tag-results-empty">No indexed content found for this tag. The index may still be loading.</div>'
+    : results.map(r => `
+        <div class="tag-result-item" data-nav-id="${escapeHtml(r.navId || '')}" data-tag-el-index="${r.tagElIndex}" role="button" tabindex="0">
+          <div class="tag-result-page">${escapeHtml(r.pageTitle)}</div>
+          <div class="tag-result-section">${escapeHtml(r.sectionTitle || '')}</div>
+          <div class="tag-result-snippet">${escapeHtml(r.snippet)}</div>
+        </div>`).join('');
+
+  return `
+    <div class="tag-results-header">
+      <div class="tag-results-title">${TAG_SVG_LG}<span>Tag: <strong>${escapeHtml(tag)}</strong></span></div>
+      <span class="tag-results-count">${escapeHtml(countText)}</span>
+      <button type="button" id="tag-results-close" class="btn-icon" aria-label="Close tag results" title="Close tag results">
+        <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">
+          <line x1="18" y1="6" x2="6" y2="18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          <line x1="6" y1="6" x2="18" y2="18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+      </button>
+    </div>
+    <div class="tag-results-list">${itemsHTML}</div>`;
+}
+
+/**
+ * Close the Tag Results View and restore the normal page state.
+ */
+function closeTagView() {
+  if (!tagState.isViewOpen) return;
+  tagState.isViewOpen = false;
+  tagState.currentTag = null;
+
+  elRightNav.classList.remove('tag-view-hidden');
+  const rightTagsEl = document.getElementById('right-tags');
+  if (rightTagsEl) rightTagsEl.style.display = '';
+  elContentBody.style.display = '';
+
+  const tagView = document.getElementById('tag-results-view');
+  if (tagView) tagView.remove();
+}
+
+/**
+ * Navigate to a specific tagged element on a (possibly different) page,
+ * then scroll to it and flash-highlight it.
+ */
+async function navigateToTaggedElement(navId, tagElIndex) {
+  closeTagView();
+
+  if (navId) {
+    await navigateTo(navId, null, true, true);
+  }
+
+  // After navigation / same-page restore, scroll to the tagged element
+  setTimeout(() => {
+    const tagEls = elContentBody.querySelectorAll('[data-tags]');
+    const target = tagEls[tagElIndex];
+    if (!target) return;
+
+    const containerTop  = elContentScroll.getBoundingClientRect().top;
+    const targetTop     = target.getBoundingClientRect().top;
+    const scrollOffset  = targetTop - containerTop + elContentScroll.scrollTop - 80;
+    elContentScroll.scrollTo({ top: Math.max(0, scrollOffset), behavior: 'smooth' });
+
+    // Flash highlight
+    target.classList.add('tag-highlight');
+    target.addEventListener('animationend', () => target.classList.remove('tag-highlight'), { once: true });
+  }, 300);
 }
 
 /* ═══════════════════════════════════════════════════════════════

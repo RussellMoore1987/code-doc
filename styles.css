@@ -1743,3 +1743,224 @@ a[data-nav]:focus-visible {
 @media (hover: none) {
   #app-tooltip { transition: none; }
 }
+
+/* ═══════════════════════════════════════════════════════════════
+   TAG SYSTEM
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ── Right-sidebar tags section ─────────────────────────────── */
+
+.right-tags {
+  flex-shrink: 0;
+  border-top: 1px solid var(--border);
+  padding: 12px 12px 16px;
+}
+
+.right-tags-header {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+  margin-bottom: 10px;
+  padding: 0 4px;
+}
+
+.right-tags-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+/* Tag badges — inspired by copy-btn but more rounded */
+.tag-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: var(--bg-sidebar);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 4px 10px 4px 7px;
+  font-size: 11.5px;
+  font-family: inherit;
+  font-weight: 500;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+  user-select: none;
+  line-height: 1.3;
+}
+
+.tag-badge:hover {
+  background: var(--bg-hover);
+  color: var(--text-base);
+  border-color: var(--border-focus);
+}
+
+.tag-badge:active {
+  background: var(--bg-active);
+}
+
+.tag-badge svg {
+  flex-shrink: 0;
+  color: var(--text-muted);
+  transition: color 0.2s ease;
+}
+
+.tag-badge:hover svg {
+  color: var(--text-link);
+}
+
+/* Hide right-nav outline when tag results view is open */
+.right-nav.tag-view-hidden {
+  display: none;
+}
+
+/* ── Tag indicator icons on [data-tags] elements ─────────────── */
+
+.tag-indicator-group {
+  position: absolute;
+  top: 6px;
+  right: 8px;
+  display: flex;
+  gap: 3px;
+  z-index: 5;
+  opacity: 0;
+  transition: opacity 0.15s;
+  pointer-events: none;
+}
+
+[data-tags]:hover .tag-indicator-group,
+[data-tags]:focus-within .tag-indicator-group {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.tag-indicator-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 999px;
+  background: var(--bg-sidebar);
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s, transform 0.15s;
+  padding: 0;
+  flex-shrink: 0;
+}
+
+.tag-indicator-btn:hover {
+  background: var(--bg-active);
+  color: var(--text-link);
+  border-color: var(--border-focus);
+  transform: scale(1.12);
+}
+
+/* ── Tag Results View ─────────────────────────────────────────── */
+
+.tag-results-view {
+  display: flex;
+  flex-direction: column;
+  padding: 28px 32px 40px;
+  min-height: 100%;
+}
+
+.tag-results-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 24px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--border);
+  flex-wrap: wrap;
+}
+
+.tag-results-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text-base);
+  flex: 1;
+  min-width: 0;
+}
+
+.tag-results-title svg {
+  flex-shrink: 0;
+  color: var(--text-link);
+}
+
+.tag-results-count {
+  font-size: 13px;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.tag-results-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.tag-results-empty {
+  color: var(--text-muted);
+  font-size: 14px;
+  padding: 32px 0;
+  text-align: center;
+}
+
+.tag-result-item {
+  padding: 14px 16px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+  background: var(--bg-content);
+}
+
+.tag-result-item:hover {
+  background: var(--bg-hover);
+  border-color: var(--border-focus);
+}
+
+.tag-result-item:focus-visible {
+  outline: 2px solid var(--border-focus);
+  outline-offset: 2px;
+}
+
+.tag-result-page {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-base);
+  margin-bottom: 3px;
+}
+
+.tag-result-section {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-bottom: 6px;
+}
+
+.tag-result-snippet {
+  font-size: 13px;
+  color: var(--text-base);
+  line-height: 1.5;
+  opacity: 0.85;
+}
+
+/* ── Flash highlight for navigated-to tagged elements ─────────── */
+
+@keyframes tag-element-flash {
+  0%   { outline: 3px solid var(--accent); outline-offset: 4px; background-color: var(--accent-light); }
+  55%  { outline: 3px solid var(--accent); outline-offset: 4px; background-color: var(--accent-light); }
+  100% { outline: 3px solid transparent;  outline-offset: 4px; background-color: transparent; }
+}
+
+.tag-highlight {
+  animation: tag-element-flash 2s ease-out forwards;
+  border-radius: 4px;
+}

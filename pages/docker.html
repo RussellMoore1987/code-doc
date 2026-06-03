@@ -18,6 +18,7 @@
   </div>
 
   <!-- ─── DOCKERFILE ────────────────────── -->
+  <section data-tags="docker,nginx,deployment">
   <h2 id="dockerfile">Writing the Dockerfile</h2>
 
   <pre><code># Dockerfile
@@ -67,6 +68,9 @@ server {
 }</code></pre>
 
   <!-- ─── BUILD & RUN ───────────────────── -->
+  </section>
+
+  <section data-tags="docker,build,deployment">
   <h2 id="build-and-run">Building and Running</h2>
 
   <pre><code># Build the image
@@ -89,7 +93,10 @@ docker tag devdocs:latest registry.example.com/devdocs:latest
 # Push
 docker push registry.example.com/devdocs:latest</code></pre>
 
+  </section>
+
   <!-- ─── DOCKER COMPOSE ─────────────────── -->
+  <section data-tags="docker,docker-compose,deployment">
   <h2 id="docker-compose">Docker Compose</h2>
 
   <p>
@@ -115,6 +122,8 @@ docker compose up -d
 docker compose down</code></pre>
 
   <!-- ─── MULTI-STAGE BUILDS ────────────── -->
+  </section>
+
   <h2 id="multi-stage">Multi-Stage Builds</h2>
 
   <p>
