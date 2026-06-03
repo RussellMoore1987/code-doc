@@ -2545,9 +2545,9 @@ function hideTooltip(delay = 0) {
  */
 function wireTooltipElement(el) {
   el.addEventListener('mouseenter', () => showTooltip(el));
-  el.addEventListener('mouseleave', () => hideTooltip());
+  el.addEventListener('mouseleave', () => hideTooltip(120));
   el.addEventListener('focus',      () => showTooltip(el));
-  el.addEventListener('blur',       () => hideTooltip());
+  el.addEventListener('blur',       () => hideTooltip(120));
 
   // Hide on touch-tap elsewhere (mobile)
   el.addEventListener('touchstart', (e) => {
@@ -2575,6 +2575,10 @@ function setupTooltipsIn(root = document) {
  */
 function initTooltips() {
   tooltipEl = createTooltipElement();
+
+  // Keep tooltip open while the mouse is over it (so links etc. can be clicked).
+  tooltipEl.addEventListener('mouseenter', () => clearTimeout(tooltipHideTimer));
+  tooltipEl.addEventListener('mouseleave', () => hideTooltip(80));
 
   // Wire tooltips on static page chrome (header, sidebars, etc.)
   setupTooltipsIn(document);

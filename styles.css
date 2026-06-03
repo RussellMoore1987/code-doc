@@ -51,6 +51,13 @@
   /* Nav indent accent */
   --nav-indent-line:  #e5e7eb;
   --nav-active-bar:   var(--primary-color);
+
+  /* Tooltip */
+  --tooltip-bg:       #1e2025;
+  --tooltip-text:     #f9fafb;
+  --tooltip-border:   #374151;
+  --tooltip-link:     #93c5fd;
+  --tooltip-arrow:    #1e2025;
 }
 
 [data-theme="dark"] {
@@ -94,6 +101,13 @@
 
   --nav-indent-line:  #30363d;
   --nav-active-bar:   var(--primary-color);
+
+  /* Tooltip */
+  --tooltip-bg:       #2d333b;
+  --tooltip-text:     #e6edf3;
+  --tooltip-border:   #444c56;
+  --tooltip-link:     #58a6ff;
+  --tooltip-arrow:    #2d333b;
 }
 
 /* ═══════════════════════════════════════════════════════════════
@@ -562,6 +576,7 @@ button {
 .content-body em     { font-style: italic; }
 
 /* Inline code */
+code,
 .content-body code {
   background: var(--bg-code);
   border-radius: 4px;
@@ -593,6 +608,17 @@ button {
 /* Copy to clipboard button */
 .content-body pre {
   position: relative;
+}
+
+.display-span {
+  background: var(--bg-sidebar);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 4px 8px;
+  font-size: 11px;
+  font-family: inherit;
+  font-weight: 500;
+  color: var(--text-muted);
 }
 
 .copy-btn {
@@ -1629,16 +1655,27 @@ a[data-nav]:focus-visible {
   font-family: inherit;
   font-weight: 500;
   line-height: 1.45;
-  color: var(--bg-content);
-  background: var(--text-base);
-  border: 1px solid var(--border);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.18);
-  pointer-events: none;
+  color: var(--tooltip-text);
+  background: var(--tooltip-bg);
+  border: 1px solid var(--tooltip-border);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
+  pointer-events: auto;
   white-space: normal;
   word-break: break-word;
   opacity: 0;
   transform: scale(0.96);
   transition: opacity 0.12s ease, transform 0.12s ease;
+}
+
+#app-tooltip a {
+  color: var(--tooltip-link);
+}
+
+#app-tooltip code {
+  background: rgba(255, 255, 255, 0.12);
+  color: inherit;
+  padding: 1px 4px;
+  border-radius: 3px;
 }
 
 #app-tooltip.is-visible {
@@ -1660,45 +1697,45 @@ a[data-nav]:focus-visible {
   top: 100%;
   left: 50%;
   transform: translateX(-50%);
-  border-top-color: var(--text-base);
+  border-top-color: var(--tooltip-arrow);
 }
 #app-tooltip.tt-top-left::before {
   top: 100%;
   left: 12px;
-  border-top-color: var(--text-base);
+  border-top-color: var(--tooltip-arrow);
 }
 #app-tooltip.tt-top-right::before {
   top: 100%;
   right: 12px;
-  border-top-color: var(--text-base);
+  border-top-color: var(--tooltip-arrow);
 }
 #app-tooltip.tt-bottom::before {
   bottom: 100%;
   left: 50%;
   transform: translateX(-50%);
-  border-bottom-color: var(--text-base);
+  border-bottom-color: var(--tooltip-arrow);
 }
 #app-tooltip.tt-bottom-left::before {
   bottom: 100%;
   left: 12px;
-  border-bottom-color: var(--text-base);
+  border-bottom-color: var(--tooltip-arrow);
 }
 #app-tooltip.tt-bottom-right::before {
   bottom: 100%;
   right: 12px;
-  border-bottom-color: var(--text-base);
+  border-bottom-color: var(--tooltip-arrow);
 }
 #app-tooltip.tt-left::before {
   left: 100%;
   top: 50%;
   transform: translateY(-50%);
-  border-left-color: var(--text-base);
+  border-left-color: var(--tooltip-arrow);
 }
 #app-tooltip.tt-right::before {
   right: 100%;
   top: 50%;
   transform: translateY(-50%);
-  border-right-color: var(--text-base);
+  border-right-color: var(--tooltip-arrow);
 }
 
 /* Touch device: no hover transitions - snap in/out immediately */
