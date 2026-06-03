@@ -631,7 +631,7 @@ function renderSearchResults() {
     const hasInstanceCount = result.matchCount > 1;
     const instanceCountClass = hasInstanceCount ? ' has-instance-count' : '';
     const instanceCountBadge = hasInstanceCount
-      ? `<span class="search-result-instance-count" title="${result.matchCount} matches in this section" aria-label="${result.matchCount} matches in this section">${result.matchCount}</span>`
+      ? `<span class="search-result-instance-count" data-tooltip="${result.matchCount} matches in this section" aria-label="${result.matchCount} matches in this section">${result.matchCount}</span>`
       : '';
     const textOnly = stripHtmlExceptMark(result.snippet);
     
@@ -648,6 +648,7 @@ function renderSearchResults() {
   elSearchResults.innerHTML = resultsHTML;
   elSearchResults.classList.add('visible');
   showResultCount(searchState.results.length, searchState.results.length);
+  setupTooltipsIn(elSearchResults);
 }
 
 function stripHtmlExceptMark(html) {

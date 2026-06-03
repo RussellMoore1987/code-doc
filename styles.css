@@ -1659,7 +1659,7 @@ a[data-nav]:focus-visible {
   background: var(--tooltip-bg);
   border: 1px solid var(--tooltip-border);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
-  pointer-events: auto;
+  pointer-events: none;
   white-space: normal;
   word-break: break-word;
   opacity: 0;
@@ -1681,6 +1681,7 @@ a[data-nav]:focus-visible {
 #app-tooltip.is-visible {
   opacity: 1;
   transform: scale(1);
+  pointer-events: auto;
 }
 
 /* Arrow shared */
