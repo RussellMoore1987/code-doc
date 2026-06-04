@@ -377,17 +377,39 @@ async function buildSearchIndex() {
           const tags = raw.split(',').map(t => t.trim().toLowerCase()).filter(Boolean);
           if (!tags.length) return;
 
-          // Find nearest preceding heading with an id
-          let nearestHeading = null;
-          for (const h of headingsWithIds) {
-            if (h.compareDocumentPosition(el) & Node.DOCUMENT_POSITION_FOLLOWING) {
-              nearestHeading = h;
+          // Check if the tagged element is a heading or is nested inside one
+          const HEADING_TAGS = ['H1', 'H2', 'H3', 'H4', 'H5', 'H6'];
+          const containingHeading = HEADING_TAGS.includes(el.tagName)
+            ? el
+            : el.closest('h1,h2,h3,h4,h5,h6');
+
+          let sectionTitle, sectionId, snippet;
+
+          if (containingHeading) {
+            // Tag is on or inside a heading - use the section content that follows
+            sectionTitle = containingHeading.textContent.trim();
+            sectionId    = containingHeading.id || null;
+            let sectionContent = '';
+            let nextEl = containingHeading.nextElementSibling;
+            while (nextEl) {
+              if (/^h[1-6]$/i.test(nextEl.tagName)) break;
+              if (nextEl.textContent?.trim()) sectionContent += nextEl.textContent.trim() + ' ';
+              nextEl = nextEl.nextElementSibling;
             }
+            snippet = sectionContent.trim() || sectionTitle;
+          } else {
+            // Find nearest preceding heading with an id
+            let nearestHeading = null;
+            for (const h of headingsWithIds) {
+              if (h.compareDocumentPosition(el) & Node.DOCUMENT_POSITION_FOLLOWING) {
+                nearestHeading = h;
+              }
+            }
+            sectionTitle = nearestHeading ? nearestHeading.textContent.trim() : title;
+            sectionId    = nearestHeading ? nearestHeading.id               : null;
+            snippet      = (el.textContent || '').replace(/\s+/g, ' ').trim();
           }
 
-          const sectionTitle = nearestHeading ? nearestHeading.textContent.trim() : title;
-          const sectionId    = nearestHeading ? nearestHeading.id               : null;
-          let snippet = (el.textContent || '').replace(/\s+/g, ' ').trim();
           if (snippet.length > 200) snippet = snippet.substring(0, 200) + '...';
 
           tags.forEach(tag => {
@@ -1834,7 +1856,7 @@ function setupTagIndicators() {
 
     // Ensure the element can contain an absolutely-positioned child
     if (globalThis.getComputedStyle(el).position === 'static') {
-      el.style.position = 'relative';
+      el.classList.add('has-tag-indicators');
     }
 
     const group = document.createElement('div');

@@ -34,7 +34,7 @@
     <li>Provide a responsive layout that degrades gracefully on smaller screens. **Search Test**</li>
   </ul>
 
-  <h2 id="doc-link-usage" data-tags="test">Doc Link Usage</h2>
+  <h2 id="doc-link-usage"><span data-tags="test">Doc Link Usage</span></h2>
   <p>
     Use <code>a[data-nav]</code> links anywhere in page content to navigate to another page - or a specific section
     of another page - without a full page reload. The left sidebar will open the correct menu automatically.
@@ -112,7 +112,7 @@ left | right</code></pre>
   <p><strong>Live examples - hover or focus each button:</strong></p>
 
   <div style="display:flex; flex-wrap:wrap; gap:10px; align-items:center; margin-bottom:20px;">
-    <span class="display-span" data-tags="test,test2" data-tooltip="This is the default top position">top (default)</span>
+    <span class="display-span" data-tooltip="This is the default top position">top (default)</span>
     <span class="display-span" data-tooltip="Anchored to the top-left corner" data-tooltip-position="top-left">top-left</span>
     <span class="display-span" data-tooltip="Anchored to the top-right corner" data-tooltip-position="top-right">top-right</span>
     <span class="display-span" data-tooltip="Appears below the element" data-tooltip-position="bottom">bottom</span>
@@ -131,6 +131,7 @@ left | right</code></pre>
       data-tooltip="Any element works - spans, icons, images, links…"
       data-tooltip-position="right">ℹ</span>
     <a href="#" onclick="return false;"
+      data-tags="test,test2"
       data-tooltip="Links get tooltips too"
       data-tooltip-position="bottom">Hover this link</a>
     <span style="cursor:default;"

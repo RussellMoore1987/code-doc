@@ -1818,10 +1818,15 @@ a[data-nav]:focus-visible {
 
 /* ── Tag indicator icons on [data-tags] elements ─────────────── */
 
+/* Applied by JS to give [data-tags] elements a positioning context */
+.has-tag-indicators {
+  position: relative;
+}
+
 .tag-indicator-group {
   position: absolute;
-  top: 6px;
-  right: 8px;
+  top: -18px;
+  right: -15px;
   display: flex;
   gap: 3px;
   z-index: 5;
@@ -1856,7 +1861,6 @@ a[data-nav]:focus-visible {
   background: var(--bg-active);
   color: var(--text-link);
   border-color: var(--border-focus);
-  transform: scale(1.12);
 }
 
 /* ── Tag Results View ─────────────────────────────────────────── */
