@@ -1853,7 +1853,7 @@ a[data-nav]:focus-visible {
   color: var(--text-muted);
   cursor: pointer;
   transition: background 0.15s, color 0.15s, border-color 0.15s, transform 0.15s;
-  padding: 0;
+  padding: 0 0 0 1px;
   flex-shrink: 0;
 }
 

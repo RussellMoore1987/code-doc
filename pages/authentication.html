@@ -29,11 +29,11 @@
   </p>
 
   <section data-tags="nginx,http-basic-auth,authentication">
-  <pre><code># Nginx example
-location /docs/ {
-  auth_basic "Documentation";
-  auth_basic_user_file /etc/nginx/.htpasswd;
-}</code></pre>
+    <pre><code># Nginx example
+  location /docs/ {
+    auth_basic "Documentation";
+    auth_basic_user_file /etc/nginx/.htpasswd;
+  }</code></pre>
   </section>
 
   <h3 id="jwt-token">JWT Token Validation</h3>
@@ -70,18 +70,18 @@ function isTokenExpired(token) {
   <h3 id="oauth-sso">SSO via OAuth 2.0</h3>
 
   <div data-tags="oauth,sso,security">
-  <p>
-    For enterprise environments, integrate with an Identity Provider (IdP) such as Okta,
-    Azure AD, or Auth0. The authentication flow works as follows:
-  </p>
+    <p>
+      For enterprise environments, integrate with an Identity Provider (IdP) such as Okta,
+      Azure AD, or Auth0. The authentication flow works as follows:
+    </p>
 
-  <ol>
-    <li>User visits the docs URL without a valid session cookie.</li>
-    <li>A server-side edge function redirects to the IdP authorization endpoint.</li>
-    <li>After successful login, the IdP redirects back with an authorization code.</li>
-    <li>The edge function exchanges the code for tokens and sets a secure session cookie.</li>
-    <li>Subsequent requests are validated against the session cookie.</li>
-  </ol>
+    <ol>
+      <li>User visits the docs URL without a valid session cookie.</li>
+      <li>A server-side edge function redirects to the IdP authorization endpoint.</li>
+      <li>After successful login, the IdP redirects back with an authorization code.</li>
+      <li>The edge function exchanges the code for tokens and sets a secure session cookie.</li>
+      <li>Subsequent requests are validated against the session cookie.</li>
+    </ol>
 
   </div>
 
