@@ -1986,27 +1986,38 @@ function closeTagView() {
  * then scroll to it and flash-highlight it.
  */
 async function navigateToTaggedElement(navId, tagElIndex) {
+  const isSamePage = !navId || navId === state.activeNavId;
+  const previousScrollTop = tagState.previousScrollTop;
+
   closeTagView();
 
-  if (navId) {
+  if (isSamePage) {
+    elContentScroll.scrollTop = previousScrollTop;
+  } else {
     await navigateTo(navId, null, true, true);
   }
 
-  // After navigation / same-page restore, scroll to the tagged element
   setTimeout(() => {
     const tagEls = elContentBody.querySelectorAll('[data-tags]');
     const target = tagEls[tagElIndex];
     if (!target) return;
 
-    const containerTop  = elContentScroll.getBoundingClientRect().top;
-    const targetTop     = target.getBoundingClientRect().top;
-    const scrollOffset  = targetTop - containerTop + elContentScroll.scrollTop - 80;
-    elContentScroll.scrollTo({ top: Math.max(0, scrollOffset), behavior: 'smooth' });
+    const containerTop = elContentScroll.getBoundingClientRect().top;
+    const targetTop = target.getBoundingClientRect().top;
 
-    // Flash highlight
+    const scrollOffset =
+      targetTop - containerTop + elContentScroll.scrollTop - 80;
+
+    elContentScroll.scrollTo({
+      top: Math.max(0, scrollOffset),
+      behavior: 'smooth'
+    });
+
     target.classList.add('tag-highlight');
-    target.addEventListener('animationend', () => target.classList.remove('tag-highlight'), { once: true });
-  }, 300);
+    target.addEventListener('animationend', () => {
+      target.classList.remove('tag-highlight');
+    }, { once: true });
+  }, isSamePage ? 0 : 300);
 }
 
 /* ═══════════════════════════════════════════════════════════════
