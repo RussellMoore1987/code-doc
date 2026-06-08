@@ -533,7 +533,7 @@ function performSearch(query) {
   const pageQueryIndex = {};
   // Search through index
   for (const page of searchState.index) {
-    pageQueryIndex[page.url] = -1;
+    pageQueryIndex[page.url] = 0; // cumulative highlight offset for this page
 
     // Search in sections
     for (const section of page.sections) {
@@ -543,17 +543,19 @@ function performSearch(query) {
       if (titleMatch || contentMatch) {
         const matchCount = countQueryInstances(`${section.title} ${section.content}`, query);
         const matchText = titleMatch ? section.title : section.content;
+        const normalizedCount = Math.max(matchCount, 1);
         searchState.results.push({
           type: 'section',
           page: page,
           section: section,
           title: section.title,
           snippet: getSnippet(matchText, query),
-          matchCount: Math.max(matchCount, 1),
+          matchCount: normalizedCount,
           navId: page.navInfo ? page.navInfo.id : null,
           sectionId: section.id,
-          instanceIndex: ++pageQueryIndex[page.url]
+          instanceIndex: pageQueryIndex[page.url] // first highlight index for this section
         });
+        pageQueryIndex[page.url] += normalizedCount; // advance by actual match count
       }
     }
   }
