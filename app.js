@@ -286,7 +286,8 @@ const searchState = {
 const tagState = {
   index: [],        // [{tag, pageTitle, pageUrl, navId, sectionTitle, sectionId, snippet, tagElIndex}]
   isViewOpen: false,
-  currentTag: null
+  currentTag: null,
+  previousScrollTop: 0  // scroll position saved when the tag view opens
 };
 
 /**
@@ -1899,6 +1900,9 @@ function openTagView(tag) {
   const rightTagsEl = document.getElementById('right-tags');
   if (rightTagsEl) rightTagsEl.style.display = 'none';
 
+  // Save current scroll position before hiding content and resetting scroll
+  tagState.previousScrollTop = elContentScroll.scrollTop;
+
   // Hide the normal page content
   elContentBody.style.display = 'none';
 
@@ -1987,37 +1991,48 @@ function closeTagView() {
  */
 async function navigateToTaggedElement(navId, tagElIndex) {
   const isSamePage = !navId || navId === state.activeNavId;
-  const previousScrollTop = tagState.previousScrollTop;
+  const savedScrollTop = tagState.previousScrollTop;
 
-  closeTagView();
+  closeTagView(); // restores elContentBody visibility
 
   if (isSamePage) {
-    elContentScroll.scrollTop = previousScrollTop;
+    // Restore the original scroll position immediately (no animation) so the
+    // browser paints from the correct position, then rAF to measure & smooth-scroll.
+    elContentScroll.scrollTop = savedScrollTop;
+
+    requestAnimationFrame(() => {
+      const tagEls = elContentBody.querySelectorAll('[data-tags]');
+      const target = tagEls[tagElIndex];
+      if (!target) return;
+
+      const containerTop  = elContentScroll.getBoundingClientRect().top;
+      const targetTop     = target.getBoundingClientRect().top;
+      const scrollOffset  = targetTop - containerTop + elContentScroll.scrollTop - 80;
+
+      elContentScroll.scrollTo({ top: Math.max(0, scrollOffset), behavior: 'smooth' });
+
+      target.classList.add('tag-highlight');
+      target.addEventListener('animationend', () => target.classList.remove('tag-highlight'), { once: true });
+    });
   } else {
     await navigateTo(navId, null, true, true);
+
+    // Give the newly loaded page time to paint before measuring.
+    setTimeout(() => {
+      const tagEls = elContentBody.querySelectorAll('[data-tags]');
+      const target = tagEls[tagElIndex];
+      if (!target) return;
+
+      const containerTop  = elContentScroll.getBoundingClientRect().top;
+      const targetTop     = target.getBoundingClientRect().top;
+      const scrollOffset  = targetTop - containerTop + elContentScroll.scrollTop - 80;
+
+      elContentScroll.scrollTo({ top: Math.max(0, scrollOffset), behavior: 'smooth' });
+
+      target.classList.add('tag-highlight');
+      target.addEventListener('animationend', () => target.classList.remove('tag-highlight'), { once: true });
+    }, 300);
   }
-
-  setTimeout(() => {
-    const tagEls = elContentBody.querySelectorAll('[data-tags]');
-    const target = tagEls[tagElIndex];
-    if (!target) return;
-
-    const containerTop = elContentScroll.getBoundingClientRect().top;
-    const targetTop = target.getBoundingClientRect().top;
-
-    const scrollOffset =
-      targetTop - containerTop + elContentScroll.scrollTop - 80;
-
-    elContentScroll.scrollTo({
-      top: Math.max(0, scrollOffset),
-      behavior: 'smooth'
-    });
-
-    target.classList.add('tag-highlight');
-    target.addEventListener('animationend', () => {
-      target.classList.remove('tag-highlight');
-    }, { once: true });
-  }, isSamePage ? 0 : 300);
 }
 
 /* ═══════════════════════════════════════════════════════════════
