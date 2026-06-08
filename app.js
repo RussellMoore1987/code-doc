@@ -707,9 +707,9 @@ function renderSearchResults() {
     return `
       <div class="search-result-item${isHighlighted}${instanceCountClass}" data-index="${index}" data-instance-index="${result.instanceIndex}" role="option">
         ${instanceCountBadge}
-        <div class="search-result-title">${escapeHtml(result.title)}</div>
-        <div class="search-result-page">${escapeHtml(pageName)}</div>
-        <div class="search-result-snippet">${textOnly}</div>
+        <div class="result-page">${escapeHtml(pageName)}</div>
+        <div class="result-section">${escapeHtml(result.title)}</div>
+        <div class="result-snippet">${textOnly}</div>
       </div>
     `;
   }).join('');
@@ -1945,9 +1945,9 @@ function buildTagResultsHTML(tag, results) {
     ? '<div class="tag-results-empty">No indexed content found for this tag. The index may still be loading.</div>'
     : results.map(r => `
         <div class="tag-result-item" data-nav-id="${escapeHtml(r.navId || '')}" data-tag-el-index="${r.tagElIndex}" role="button" tabindex="0">
-          <div class="tag-result-page">${escapeHtml(r.pageTitle)}</div>
-          <div class="tag-result-section">${escapeHtml(r.sectionTitle || '')}</div>
-          <div class="tag-result-snippet">${escapeHtml(r.snippet)}</div>
+          <div class="result-page">${escapeHtml(r.pageTitle)}</div>
+          <div class="result-section">${escapeHtml(r.sectionTitle || '')}</div>
+          <div class="result-snippet">${escapeHtml(r.snippet)}</div>
         </div>`).join('');
 
   return `

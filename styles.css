@@ -1093,7 +1093,7 @@ body.is-resizing {
   transition: background 0.2s ease;
 }
 
-.search-result-item.has-instance-count .search-result-title {
+.search-result-item.has-instance-count .result-page {
   padding-right: 34px;
 }
 
@@ -1123,33 +1123,33 @@ body.is-resizing {
   background: var(--bg-hover);
 }
 
-.search-result-title {
+.result-page {
   font-size: 14px;
   font-weight: 600;
   color: var(--text-base);
   margin-bottom: 4px;
 }
 
-.search-result-page {
+.result-section {
   font-size: 12px;
   color: var(--text-muted);
   margin-bottom: 6px;
 }
 
-.search-result-snippet {
+.result-snippet {
   font-size: 13px;
   color: var(--text-base);
   line-height: 1.4;
 }
 
-.search-result-snippet mark {
+.result-snippet mark {
   background: var(--accent-light);
   color: var(--text-base);
   padding: 0 2px;
   border-radius: 2px;
 }
 
-[data-theme="dark"] .search-result-snippet mark {
+[data-theme="dark"] .result-snippet mark {
   background: var(--accent-light);
   color: var(--text-base);
 }
@@ -1936,25 +1936,7 @@ a[data-nav]:focus-visible {
   outline-offset: 2px;
 }
 
-.tag-result-page {
-  font-size: 13px;
-  font-weight: 700;
-  color: var(--text-base);
-  margin-bottom: 3px;
-}
-
-.tag-result-section {
-  font-size: 12px;
-  color: var(--text-muted);
-  margin-bottom: 6px;
-}
-
-.tag-result-snippet {
-  font-size: 13px;
-  color: var(--text-base);
-  line-height: 1.5;
-  opacity: 0.85;
-}
+/* result-page / result-section / result-snippet are defined in the Search section above */
 
 /* ── Flash highlight for navigated-to tagged elements ─────────── */
 
