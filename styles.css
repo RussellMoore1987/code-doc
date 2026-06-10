@@ -177,6 +177,14 @@ button {
   width: 100%;
 }
 
+.text-muted {
+  color: var(--text-muted);
+}
+
+.d-block {
+  display: block;
+}
+
 /* ═══════════════════════════════════════════════════════════════
    HEADER
    ═══════════════════════════════════════════════════════════════ */
@@ -717,6 +725,25 @@ code,
   color: var(--text-muted);
   border-top: 1px solid var(--border);
   background: var(--bg-sidebar-strip);
+}
+
+.image-wrapper {
+  position: relative;
+  margin: 24px 0 30px 0;
+}
+
+.image-wrapper img,
+.image-wrapper .img-block {
+  margin: 0;
+}
+
+.image-wrapper::after {
+    content: attr(data-caption);
+    position: absolute;
+    bottom: -16px;
+    left: 0;
+    font-size: 0.75rem;
+    color: var(--text-muted);
 }
 
 /* ═══════════════════════════════════════════════════════════════

@@ -59,6 +59,14 @@ const NAV_DATA = [
     ]
   },
   {
+    id: 'reference',
+    label: 'Reference',
+    children: [
+      { id: 'image-galleries', label: 'Image Galleries', page: 'pages/image-galleries.html' },
+      { id: 'utilities',  label: 'Element Utilities',  page: 'pages/utilities.html' },
+    ]
+  },
+  {
     id: 'frontend-development',
     label: 'Frontend Development',
     children: [
@@ -113,16 +121,6 @@ const NAV_DATA = [
       { id: 'image-processing',   label: 'Image Processing',     page: 'pages/image-processing.html'   },
       { id: 'pdf-generation',     label: 'PDF Generation',       page: 'pages/pdf-generation.html'     },
       { id: 'email-notifications', label: 'Email Notifications', page: 'pages/email-notifications.html' }
-    ]
-  },
-  {
-    id: 'reference',
-    label: 'Reference',
-    children: [
-      { id: 'image-galleries', label: 'Image Galleries', page: 'pages/image-galleries.html' },
-      { id: 'api-ref',  label: 'API Reference',  page: 'pages/api-reference.html' },
-      { id: 'cli-ref',  label: 'CLI Reference',  page: 'pages/cli-reference.html' },
-      { id: 'faq',      label: 'FAQ',            page: 'pages/faq.html'      }
     ]
   },
   {
@@ -1828,13 +1826,13 @@ function renderTagBadgesInSidebar() {
   const list = document.createElement('div');
   list.className = 'right-tags-list';
 
-  uniqueTags.forEach(tag => {
+  [...uniqueTags].sort((a, b) => a.localeCompare(b)).forEach(tag => {
     const btn = document.createElement('button');
     btn.type = 'button';
     btn.className = 'tag-badge';
     btn.dataset.tag = tag;
-    btn.setAttribute('aria-label', `View all content tagged: ${tag}`);
-    btn.innerHTML = `${TAG_SVG}<span>${escapeHtml(tag)}</span>`;
+    btn.setAttribute("aria-label", `View all content tagged: ${tag}`);
+    btn.innerHTML = `${TAG_SVG}<span style="text-align: left;">${escapeHtml(tag)}</span>`;
     btn.addEventListener('click', () => openTagView(tag));
     list.appendChild(btn);
   });
