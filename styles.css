@@ -1028,6 +1028,110 @@ body.is-resizing {
 }
 
 /* ═══════════════════════════════════════════════════════════════
+   MOBILE LAYOUT  ≤ 800px
+   Both nav panels become fixed overlays; content uses full width.
+   Desktop behavior above 800px is completely unchanged.
+   ═══════════════════════════════════════════════════════════════ */
+
+/* Mobile toggle buttons – hidden at desktop widths */
+.mobile-nav-btn {
+  display: none;
+}
+
+@media (max-width: 800px) {
+  /* ── Pull sidebars out of flex flow → fixed overlays ─────────
+     Use IDs (specificity 1,0,0) to beat .sidebar.is-collapsed
+     { width: 0 !important } which has specificity 0,2,0.        */
+  #sidebar-left,
+  #sidebar-right {
+    position: fixed;
+    top: 0;
+    height: 100vh;
+    height: 100dvh;
+    width: 285px !important;  /* override is-collapsed: width 0 */
+    max-width: 90vw;
+    z-index: 500;
+    overflow: hidden;
+    box-shadow: 0 0 32px rgba(0, 0, 0, 0.2);
+    transition: transform 0.25s ease, background 0.2s;
+  }
+
+  #sidebar-left {
+    left: 0;
+    right: auto;
+    border-right: 1px solid var(--border) !important;
+    border-left: none !important;
+    transform: translateX(-100%);
+  }
+
+  #sidebar-right {
+    right: 0;
+    left: auto;
+    border-left: 1px solid var(--border) !important;
+    border-right: none !important;
+    transform: translateX(100%);
+  }
+
+  #sidebar-left.is-mobile-open  { transform: translateX(0); }
+  #sidebar-right.is-mobile-open { transform: translateX(0); }
+
+  /* ── Hide resize handles and collapse strips ─────────────────── */
+  .resize-handle,
+  .sidebar-strip {
+    display: none !important;
+  }
+
+  /* ── Content takes full width ────────────────────────────────── */
+  .content-body {
+    padding: 56px 16px 48px; /* extra top padding for toggle buttons */
+  }
+
+  /* ── Backdrop / scrim behind open panel ─────────────────────── */
+  .mobile-nav-backdrop {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.45);
+    z-index: 490;
+  }
+  .mobile-nav-backdrop.is-visible {
+    display: block;
+  }
+
+  /* ── Mobile toggle buttons ───────────────────────────────────── */
+  .mobile-nav-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: absolute;
+    top: 12px;
+    width: 36px;
+    height: 36px;
+    padding: 0;
+    background: var(--bg-sidebar);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text-muted);
+    cursor: pointer;
+    z-index: 50;
+    transition: background 0.15s, color 0.15s;
+    flex-shrink: 0;
+  }
+  .mobile-nav-btn:hover,
+  .mobile-nav-btn:focus-visible {
+    background: var(--bg-hover);
+    color: var(--text-base);
+    outline: none;
+  }
+  .mobile-nav-btn:focus-visible {
+    outline: 2px solid var(--border-focus);
+    outline-offset: 2px;
+  }
+  .mobile-nav-btn-left  { left: 12px; }
+  .mobile-nav-btn-right { right: 12px; }
+}
+
+/* ═══════════════════════════════════════════════════════════════
    SEARCH FUNCTIONALITY
    ═══════════════════════════════════════════════════════════════ */
 

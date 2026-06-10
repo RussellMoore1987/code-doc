@@ -265,6 +265,11 @@ const elImageModalPrev        = document.getElementById('image-modal-prev');
 const elImageModalNext        = document.getElementById('image-modal-next');
 const elImageModalCounter     = document.getElementById('image-modal-counter');
 
+/* Mobile Navigation DOM refs */
+const elMobileNavLeft     = document.getElementById('mobile-nav-left');
+const elMobileNavRight    = document.getElementById('mobile-nav-right');
+const elMobileNavBackdrop = document.getElementById('mobile-nav-backdrop');
+
 /* ═══════════════════════════════════════════════════════════════
    SEARCH FUNCTIONALITY
    ═══════════════════════════════════════════════════════════════ */
@@ -1445,6 +1450,64 @@ elExpandLeft.addEventListener('click',    expandLeft);
 elExpandRight.addEventListener('click',   expandRight);
 
 /* ═══════════════════════════════════════════════════════════════
+   MOBILE OVERLAY NAVIGATION  (≤800px)
+   ═══════════════════════════════════════════════════════════════ */
+
+function isMobileLayout() {
+  return window.innerWidth <= 800;
+}
+
+function openMobilePanel(side) {
+  const el  = side === 'left' ? elLeftSidebar  : elRightSidebar;
+  const btn = side === 'left' ? elMobileNavLeft : elMobileNavRight;
+
+  /* Close the opposite panel first */
+  closeMobilePanel(side === 'left' ? 'right' : 'left');
+
+  el.classList.add('is-mobile-open');
+  if (btn) btn.setAttribute('aria-expanded', 'true');
+  if (elMobileNavBackdrop) elMobileNavBackdrop.classList.add('is-visible');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeMobilePanel(side) {
+  const el  = side === 'left' ? elLeftSidebar  : elRightSidebar;
+  const btn = side === 'left' ? elMobileNavLeft : elMobileNavRight;
+
+  el.classList.remove('is-mobile-open');
+  if (btn) btn.setAttribute('aria-expanded', 'false');
+}
+
+function closeMobilePanels() {
+  closeMobilePanel('left');
+  closeMobilePanel('right');
+  if (elMobileNavBackdrop) elMobileNavBackdrop.classList.remove('is-visible');
+  document.body.style.overflow = '';
+}
+
+function initMobileNav() {
+  if (!elMobileNavLeft || !elMobileNavRight || !elMobileNavBackdrop) return;
+
+  elMobileNavLeft.addEventListener('click', () => {
+    if (elLeftSidebar.classList.contains('is-mobile-open')) {
+      closeMobilePanels();
+    } else {
+      openMobilePanel('left');
+    }
+  });
+
+  elMobileNavRight.addEventListener('click', () => {
+    if (elRightSidebar.classList.contains('is-mobile-open')) {
+      closeMobilePanels();
+    } else {
+      openMobilePanel('right');
+    }
+  });
+
+  elMobileNavBackdrop.addEventListener('click', closeMobilePanels);
+}
+
+/* ═══════════════════════════════════════════════════════════════
    RESIZE HANDLES
    ═══════════════════════════════════════════════════════════════ */
 
@@ -1648,6 +1711,9 @@ async function loadPage(url) {
 
   /* Close tag results view if open when navigating to a new page */
   if (tagState.isViewOpen) closeTagView();
+
+  /* Close mobile overlay panels when navigating to a new page */
+  closeMobilePanels();
 
   /* Show loading state */
   elContentBody.innerHTML = `
@@ -2100,7 +2166,12 @@ function checkResponsiveCollapse() {
   if (vw < 800 && !state.leftCollapsed) {
     collapseLeft();
   }
-  
+
+  /* Above mobile breakpoint - ensure no lingering mobile overlay state */
+  if (vw > 800) {
+    closeMobilePanels();
+  }
+
   // Update search navigation position on resize
   updateSearchNavPosition();
 }
@@ -2961,7 +3032,10 @@ function init() {
 
   /* Initialize tooltip system (static chrome wired once; content re-scanned per load) */
   initTooltips();
-  
+
+  /* Initialize mobile navigation overlays */
+  initMobileNav();
+
   /* Setup copy buttons for any pre-existing code blocks */
   setupCopyButtons();
 }
