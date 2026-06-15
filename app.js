@@ -199,7 +199,7 @@ const NAV_DATA = [
 const MIN_SIDEBAR_WIDTH  = 220;   // absolute floor (px)
 const DEFAULT_LEFT_WIDTH = 280;   // initial left sidebar width
 const DEFAULT_RIGHT_WIDTH = 250;  // initial right sidebar width
-const HEADER_NAV_TOGGLE_WIDTH = 34;
+const HEADER_NAV_FORCE_OVERFLOW_WIDTH = 550;
 const STORAGE_KEY_THEME  = 'devdocs-theme';
 const STORAGE_KEY_LEFT_W = 'devdocs-left-w';
 const STORAGE_KEY_RIGHT_W= 'devdocs-right-w';
@@ -217,7 +217,12 @@ const state = {
   isNavigating:    false, // Prevent recursion during navigation
   abortController: null,  // For cleanup of event listeners
   headerNavCollapsed: false,
-  headerNavOpen: false
+  headerNavOpen: false,
+  headerNavItems: [],
+  headerNavUpdateScheduled: false,
+  isUpdatingHeaderNav: false,
+  headerNavMutationObserver: null,
+  headerNavResizeObserver: null
 };
 
 /* ═══════════════════════════════════════════════════════════════
@@ -246,6 +251,8 @@ const elHeaderBrand  = document.querySelector('.header-brand');
 const elHeaderNav    = document.getElementById('header-nav');
 const elHeaderNavToggle = document.getElementById('header-nav-toggle');
 const elHeaderActions = document.querySelector('.header-actions');
+const elHeaderOverflow = document.getElementById('header-overflow');
+const elHeaderOverflowMenu = document.getElementById('header-overflow-menu');
 
 // Search DOM References
 const elSearchContainer = document.getElementById('search-container');
@@ -283,84 +290,249 @@ const elMobileNavBackdrop = document.getElementById('mobile-nav-backdrop');
    ═══════════════════════════════════════════════════════════════ */
 
 function closeHeaderNavMenu() {
-  if (!elHeaderNav || !elHeaderNavToggle) return;
+  if (!elHeaderNavToggle || !elHeaderOverflow || !elHeaderOverflowMenu) return;
 
   state.headerNavOpen = false;
-  elHeaderNav.classList.remove('is-open');
+  elHeaderOverflow.classList.remove('is-open');
+  elHeaderOverflowMenu.hidden = true;
   elHeaderNavToggle.setAttribute('aria-expanded', 'false');
 }
 
-function setHeaderNavCollapsed(collapsed) {
-  if (!elHeaderNav || !elHeaderNavToggle || !elHeaderInner) return;
+function setHeaderOverflowButtonVisibility(visible) {
+  if (!elHeaderNavToggle || !elHeaderOverflow) return;
 
-  state.headerNavCollapsed = collapsed;
-  elHeaderInner.classList.toggle('is-nav-collapsed', collapsed);
-  elHeaderNav.classList.toggle('is-collapsed', collapsed);
-  elHeaderNavToggle.hidden = !collapsed;
-  elHeaderNavToggle.classList.toggle('is-visible', collapsed);
+  state.headerNavCollapsed = visible;
+  elHeaderOverflow.classList.toggle('has-visible-toggle', visible);
+  elHeaderNavToggle.hidden = !visible;
+  elHeaderNavToggle.classList.toggle('is-visible', visible);
 
-  if (!collapsed) {
+  if (!visible) {
     closeHeaderNavMenu();
   }
 }
 
-function measureHeaderNavWidth() {
-  if (!elHeaderNav || !elHeaderInner) return 0;
+function getOrderedHeaderNavItems() {
+  const navLinks = [];
 
-  const clone = elHeaderNav.cloneNode(true);
-  clone.removeAttribute('id');
-  clone.classList.remove('is-collapsed', 'is-open');
-  clone.style.position = 'absolute';
-  clone.style.left = '-9999px';
-  clone.style.top = '0';
-  clone.style.visibility = 'hidden';
-  clone.style.pointerEvents = 'none';
-  clone.style.display = 'flex';
-  clone.style.width = 'max-content';
+  if (elHeaderNav) {
+    navLinks.push(...elHeaderNav.querySelectorAll('.header-nav-link'));
+  }
 
-  elHeaderInner.appendChild(clone);
+  if (elHeaderOverflowMenu) {
+    navLinks.push(...elHeaderOverflowMenu.querySelectorAll('.header-nav-link'));
+  }
+
+  navLinks.forEach((link, index) => {
+    if (!link.dataset.headerNavOrder) {
+      link.dataset.headerNavOrder = String(index);
+    }
+  });
+
+  return navLinks.sort((a, b) => Number.parseInt(a.dataset.headerNavOrder, 10) - Number.parseInt(b.dataset.headerNavOrder, 10));
+}
+
+function ensureHeaderNavItems() {
+  if (!elHeaderNav || !elHeaderOverflowMenu) return;
+
+  state.headerNavItems = getOrderedHeaderNavItems();
+}
+
+function getHeaderNavItemInlineWidth(item) {
+  if (!item || !elHeaderNav || !elHeaderInner) return 0;
+
+  const clone = item.cloneNode(true);
+  const cloneContainer = document.createElement('div');
+  const navStyles = globalThis.getComputedStyle(elHeaderNav);
+
+  cloneContainer.style.position = 'absolute';
+  cloneContainer.style.left = '-9999px';
+  cloneContainer.style.top = '0';
+  cloneContainer.style.visibility = 'hidden';
+  cloneContainer.style.pointerEvents = 'none';
+  cloneContainer.style.display = 'flex';
+  cloneContainer.style.alignItems = navStyles.alignItems;
+  cloneContainer.style.gap = navStyles.gap;
+  cloneContainer.style.width = 'max-content';
+
+  cloneContainer.appendChild(clone);
+  elHeaderInner.appendChild(cloneContainer);
   const width = Math.ceil(clone.getBoundingClientRect().width);
-  clone.remove();
+  cloneContainer.remove();
+
   return width;
 }
 
-function updateHeaderNavCollapse() {
-  if (!elHeaderInner || !elHeaderBrand || !elHeaderNav || !elHeaderActions) return;
+function measureVisibleHeaderNavWidth() {
+  if (!elHeaderNav) return 0;
+
+  const visibleItems = Array.from(elHeaderNav.querySelectorAll('.header-nav-link'));
+  if (!visibleItems.length) return 0;
+
+  const navStyles = globalThis.getComputedStyle(elHeaderNav);
+  const gap = Number.parseFloat(navStyles.columnGap || navStyles.gap) || 0;
+  const itemsWidth = visibleItems.reduce((total, item) => total + Math.ceil(item.getBoundingClientRect().width), 0);
+
+  return itemsWidth + gap * Math.max(visibleItems.length - 1, 0);
+}
+
+function calculateAvailableNavigationSpace() {
+  if (!elHeaderInner || !elHeaderBrand || !elHeaderActions || !elHeaderNav) return 0;
 
   const innerStyles = globalThis.getComputedStyle(elHeaderInner);
   const navStyles = globalThis.getComputedStyle(elHeaderNav);
-  const gap = parseFloat(innerStyles.columnGap || innerStyles.gap) || 0;
-  const navMarginLeft = parseFloat(navStyles.marginLeft) || 0;
+  const gap = Number.parseFloat(innerStyles.columnGap || innerStyles.gap) || 0;
+  const navMarginLeft = Number.parseFloat(navStyles.marginLeft) || 0;
   const availableWidth = elHeaderInner.clientWidth;
-  const requiredWidth = Math.ceil(
-    elHeaderBrand.getBoundingClientRect().width +
-    elHeaderActions.getBoundingClientRect().width +
-    measureHeaderNavWidth() +
-    navMarginLeft +
-    gap * 2
+
+  return Math.max(
+    0,
+    Math.floor(
+      availableWidth -
+      Math.ceil(elHeaderBrand.getBoundingClientRect().width) -
+      Math.ceil(elHeaderActions.getBoundingClientRect().width) -
+      gap * 2 -
+      navMarginLeft
+    )
+  );
+}
+
+function insertHeaderNavItemInOrder(container, item) {
+  const itemOrder = Number.parseInt(item.dataset.headerNavOrder, 10);
+  const siblings = Array.from(container.querySelectorAll('.header-nav-link'));
+  const nextSibling = siblings.find((link) => Number.parseInt(link.dataset.headerNavOrder, 10) > itemOrder);
+
+  if (nextSibling) {
+    nextSibling.before(item);
+    return;
+  }
+
+  container.appendChild(item);
+}
+
+function moveItemsToOverflow(forceAll = false) {
+  if (!elHeaderNav || !elHeaderOverflowMenu) return;
+
+  let visibleItems = Array.from(elHeaderNav.querySelectorAll('.header-nav-link'));
+
+  while (visibleItems.length > 0) {
+    const availableSpace = calculateAvailableNavigationSpace();
+    const visibleWidth = measureVisibleHeaderNavWidth();
+
+    if (!forceAll && visibleWidth <= availableSpace) {
+      break;
+    }
+
+    const itemToMove = visibleItems.at(-1);
+    insertHeaderNavItemInOrder(elHeaderOverflowMenu, itemToMove);
+    visibleItems = Array.from(elHeaderNav.querySelectorAll('.header-nav-link'));
+  }
+}
+
+function restoreItemsFromOverflow() {
+  if (!elHeaderNav || !elHeaderOverflowMenu) return;
+
+  let overflowItems = Array.from(elHeaderOverflowMenu.querySelectorAll('.header-nav-link')).sort(
+    (a, b) => Number.parseInt(a.dataset.headerNavOrder, 10) - Number.parseInt(b.dataset.headerNavOrder, 10)
   );
 
-  setHeaderNavCollapsed(requiredWidth > availableWidth);
+  while (overflowItems.length > 0) {
+    const itemToRestore = overflowItems[0];
+    const inlineWidth = getHeaderNavItemInlineWidth(itemToRestore);
 
-  if (!state.headerNavCollapsed) {
-    closeHeaderNavMenu();
+    if (measureVisibleHeaderNavWidth() + inlineWidth > calculateAvailableNavigationSpace()) {
+      break;
+    }
+
+    insertHeaderNavItemInOrder(elHeaderNav, itemToRestore);
+    overflowItems = Array.from(elHeaderOverflowMenu.querySelectorAll('.header-nav-link')).sort(
+      (a, b) => Number.parseInt(a.dataset.headerNavOrder, 10) - Number.parseInt(b.dataset.headerNavOrder, 10)
+    );
+  }
+}
+
+function updateHeaderNavigationOverflow() {
+  if (!elHeaderNav || !elHeaderNavToggle || !elHeaderOverflow || !elHeaderOverflowMenu) return;
+  if (state.isUpdatingHeaderNav) return;
+
+  state.isUpdatingHeaderNav = true;
+
+  try {
+    ensureHeaderNavItems();
+
+    const forceAllToOverflow = globalThis.innerWidth <= HEADER_NAV_FORCE_OVERFLOW_WIDTH;
+    const hasOverflowItemsBefore = elHeaderOverflowMenu.querySelectorAll('.header-nav-link').length > 0;
+
+    setHeaderOverflowButtonVisibility(hasOverflowItemsBefore || forceAllToOverflow);
+
+    if (forceAllToOverflow) {
+      moveItemsToOverflow(true);
+      setHeaderOverflowButtonVisibility(true);
+      return;
+    }
+
+    restoreItemsFromOverflow();
+
+    if (measureVisibleHeaderNavWidth() > calculateAvailableNavigationSpace()) {
+      setHeaderOverflowButtonVisibility(true);
+      moveItemsToOverflow(false);
+    }
+
+    const hasOverflowItems = elHeaderOverflowMenu.querySelectorAll('.header-nav-link').length > 0;
+    setHeaderOverflowButtonVisibility(hasOverflowItems);
+  } finally {
+    state.isUpdatingHeaderNav = false;
+  }
+}
+
+function scheduleHeaderNavigationOverflowUpdate() {
+  if (state.headerNavUpdateScheduled) return;
+
+  state.headerNavUpdateScheduled = true;
+  setTimeout(() => {
+    state.headerNavUpdateScheduled = false;
+    updateHeaderNavigationOverflow();
+  }, 0);
+}
+
+function initHeaderNavObservers() {
+  if (!elHeaderNav || !elHeaderOverflowMenu || !elHeaderInner || !elHeaderActions) return;
+
+  state.headerNavMutationObserver = new MutationObserver(() => {
+    if (state.isUpdatingHeaderNav) return;
+    ensureHeaderNavItems();
+    scheduleHeaderNavigationOverflowUpdate();
+  });
+
+  state.headerNavMutationObserver.observe(elHeaderNav, { childList: true });
+  state.headerNavMutationObserver.observe(elHeaderOverflowMenu, { childList: true });
+
+  if ('ResizeObserver' in globalThis) {
+    state.headerNavResizeObserver = new ResizeObserver(() => {
+      scheduleHeaderNavigationOverflowUpdate();
+    });
+
+    state.headerNavResizeObserver.observe(elHeaderInner);
+    state.headerNavResizeObserver.observe(elHeaderActions);
   }
 }
 
 function initHeaderNavCollapse() {
-  if (!elHeaderNav || !elHeaderNavToggle) return;
+  if (!elHeaderNav || !elHeaderNavToggle || !elHeaderOverflow || !elHeaderOverflowMenu) return;
+
+  ensureHeaderNavItems();
 
   elHeaderNavToggle.addEventListener('click', () => {
     if (!state.headerNavCollapsed) return;
 
     state.headerNavOpen = !state.headerNavOpen;
-    elHeaderNav.classList.toggle('is-open', state.headerNavOpen);
+    elHeaderOverflow.classList.toggle('is-open', state.headerNavOpen);
+    elHeaderOverflowMenu.hidden = !state.headerNavOpen;
     elHeaderNavToggle.setAttribute('aria-expanded', state.headerNavOpen ? 'true' : 'false');
   });
 
   document.addEventListener('click', (e) => {
     if (!state.headerNavCollapsed || !state.headerNavOpen) return;
-    if (elHeaderNav.contains(e.target) || elHeaderNavToggle.contains(e.target)) return;
+    if (elHeaderOverflow.contains(e.target)) return;
     closeHeaderNavMenu();
   }, {
     signal: state.abortController.signal
@@ -375,7 +547,14 @@ function initHeaderNavCollapse() {
     signal: state.abortController.signal
   });
 
-  updateHeaderNavCollapse();
+  elHeaderOverflowMenu.addEventListener('click', (e) => {
+    if (e.target.closest('.header-nav-link')) {
+      closeHeaderNavMenu();
+    }
+  });
+
+  initHeaderNavObservers();
+  scheduleHeaderNavigationOverflowUpdate();
 }
 
 /* ═══════════════════════════════════════════════════════════════
@@ -2282,7 +2461,7 @@ function checkResponsiveCollapse() {
 
   // Update search navigation position on resize
   updateSearchNavPosition();
-  updateHeaderNavCollapse();
+  scheduleHeaderNavigationOverflowUpdate();
 }
 
 /* ═══════════════════════════════════════════════════════════════
@@ -3200,6 +3379,16 @@ function cleanup() {
     if (state.abortController) {
       state.abortController.abort();
       state.abortController = null;
+    }
+
+    if (state.headerNavMutationObserver) {
+      state.headerNavMutationObserver.disconnect();
+      state.headerNavMutationObserver = null;
+    }
+
+    if (state.headerNavResizeObserver) {
+      state.headerNavResizeObserver.disconnect();
+      state.headerNavResizeObserver = null;
     }
     
     // Clear search state and cache
