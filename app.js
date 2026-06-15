@@ -199,6 +199,7 @@ const NAV_DATA = [
 const MIN_SIDEBAR_WIDTH  = 220;   // absolute floor (px)
 const DEFAULT_LEFT_WIDTH = 280;   // initial left sidebar width
 const DEFAULT_RIGHT_WIDTH = 250;  // initial right sidebar width
+const HEADER_NAV_TOGGLE_WIDTH = 34;
 const STORAGE_KEY_THEME  = 'devdocs-theme';
 const STORAGE_KEY_LEFT_W = 'devdocs-left-w';
 const STORAGE_KEY_RIGHT_W= 'devdocs-right-w';
@@ -214,7 +215,9 @@ const state = {
   rightWidth:      parseInt(localStorage.getItem(STORAGE_KEY_RIGHT_W)) || DEFAULT_RIGHT_WIDTH,
   currentRoute:    null,
   isNavigating:    false, // Prevent recursion during navigation
-  abortController: null   // For cleanup of event listeners
+  abortController: null,  // For cleanup of event listeners
+  headerNavCollapsed: false,
+  headerNavOpen: false
 };
 
 /* ═══════════════════════════════════════════════════════════════
@@ -238,6 +241,11 @@ const elStripLeft    = document.getElementById('strip-left');
 const elStripRight   = document.getElementById('strip-right');
 const elThemeToggle  = document.getElementById('theme-toggle');
 const elAppWrapper   = document.getElementById('app-wrapper');
+const elHeaderInner  = document.querySelector('.header-inner');
+const elHeaderBrand  = document.querySelector('.header-brand');
+const elHeaderNav    = document.getElementById('header-nav');
+const elHeaderNavToggle = document.getElementById('header-nav-toggle');
+const elHeaderActions = document.querySelector('.header-actions');
 
 // Search DOM References
 const elSearchContainer = document.getElementById('search-container');
@@ -269,6 +277,106 @@ const elImageModalCounter     = document.getElementById('image-modal-counter');
 const elMobileNavLeft     = document.getElementById('mobile-nav-left');
 const elMobileNavRight    = document.getElementById('mobile-nav-right');
 const elMobileNavBackdrop = document.getElementById('mobile-nav-backdrop');
+
+/* ═══════════════════════════════════════════════════════════════
+   HEADER NAV COLLAPSE
+   ═══════════════════════════════════════════════════════════════ */
+
+function closeHeaderNavMenu() {
+  if (!elHeaderNav || !elHeaderNavToggle) return;
+
+  state.headerNavOpen = false;
+  elHeaderNav.classList.remove('is-open');
+  elHeaderNavToggle.setAttribute('aria-expanded', 'false');
+}
+
+function setHeaderNavCollapsed(collapsed) {
+  if (!elHeaderNav || !elHeaderNavToggle || !elHeaderInner) return;
+
+  state.headerNavCollapsed = collapsed;
+  elHeaderInner.classList.toggle('is-nav-collapsed', collapsed);
+  elHeaderNav.classList.toggle('is-collapsed', collapsed);
+  elHeaderNavToggle.hidden = !collapsed;
+  elHeaderNavToggle.classList.toggle('is-visible', collapsed);
+
+  if (!collapsed) {
+    closeHeaderNavMenu();
+  }
+}
+
+function measureHeaderNavWidth() {
+  if (!elHeaderNav || !elHeaderInner) return 0;
+
+  const clone = elHeaderNav.cloneNode(true);
+  clone.removeAttribute('id');
+  clone.classList.remove('is-collapsed', 'is-open');
+  clone.style.position = 'absolute';
+  clone.style.left = '-9999px';
+  clone.style.top = '0';
+  clone.style.visibility = 'hidden';
+  clone.style.pointerEvents = 'none';
+  clone.style.display = 'flex';
+  clone.style.width = 'max-content';
+
+  elHeaderInner.appendChild(clone);
+  const width = Math.ceil(clone.getBoundingClientRect().width);
+  clone.remove();
+  return width;
+}
+
+function updateHeaderNavCollapse() {
+  if (!elHeaderInner || !elHeaderBrand || !elHeaderNav || !elHeaderActions) return;
+
+  const innerStyles = globalThis.getComputedStyle(elHeaderInner);
+  const navStyles = globalThis.getComputedStyle(elHeaderNav);
+  const gap = parseFloat(innerStyles.columnGap || innerStyles.gap) || 0;
+  const navMarginLeft = parseFloat(navStyles.marginLeft) || 0;
+  const availableWidth = elHeaderInner.clientWidth;
+  const requiredWidth = Math.ceil(
+    elHeaderBrand.getBoundingClientRect().width +
+    elHeaderActions.getBoundingClientRect().width +
+    measureHeaderNavWidth() +
+    navMarginLeft +
+    gap * 2
+  );
+
+  setHeaderNavCollapsed(requiredWidth > availableWidth);
+
+  if (!state.headerNavCollapsed) {
+    closeHeaderNavMenu();
+  }
+}
+
+function initHeaderNavCollapse() {
+  if (!elHeaderNav || !elHeaderNavToggle) return;
+
+  elHeaderNavToggle.addEventListener('click', () => {
+    if (!state.headerNavCollapsed) return;
+
+    state.headerNavOpen = !state.headerNavOpen;
+    elHeaderNav.classList.toggle('is-open', state.headerNavOpen);
+    elHeaderNavToggle.setAttribute('aria-expanded', state.headerNavOpen ? 'true' : 'false');
+  });
+
+  document.addEventListener('click', (e) => {
+    if (!state.headerNavCollapsed || !state.headerNavOpen) return;
+    if (elHeaderNav.contains(e.target) || elHeaderNavToggle.contains(e.target)) return;
+    closeHeaderNavMenu();
+  }, {
+    signal: state.abortController.signal
+  });
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && state.headerNavOpen) {
+      closeHeaderNavMenu();
+      elHeaderNavToggle.focus();
+    }
+  }, {
+    signal: state.abortController.signal
+  });
+
+  updateHeaderNavCollapse();
+}
 
 /* ═══════════════════════════════════════════════════════════════
    SEARCH FUNCTIONALITY
@@ -2174,6 +2282,7 @@ function checkResponsiveCollapse() {
 
   // Update search navigation position on resize
   updateSearchNavPosition();
+  updateHeaderNavCollapse();
 }
 
 /* ═══════════════════════════════════════════════════════════════
@@ -2999,6 +3108,9 @@ function init() {
   
   /* Theme */
   initTheme();
+
+  /* Header nav collapse */
+  initHeaderNavCollapse();
 
   /* Sidebar widths from storage */
   applySidebarWidths();

@@ -1,72 +1,69 @@
-<div class="content-body">
+<h1 id="api-reference">Element Utilities</h1>
 
-    <h1 id="api-reference">Element Utilities</h1>
+<p>These sections cover the various tools/elements available in the DevDocs.</p>
 
-    <p>These sections cover the various tools/elements available in the DevDocs.</p>
-
-    <h2 id="doc-link-usage"><span data-tags="test">Doc Link Usage</span></h2>
+<h2 id="doc-link-usage"><span data-tags="test">Doc Link Usage</span></h2>
+<p>
+    Use <code>a[data-nav]</code> links anywhere in page content to navigate to another page - or a specific section
+    of another page - without a full page reload. The left sidebar will open the correct menu automatically.
+</p>
+<div class="callout">
+    <div class="callout-title">Syntax</div>
+    <p><strong>Page only:</strong></p>
+    <pre><code>&lt;a href="#navId" data-nav="navId"&gt;Link text&lt;/a&gt;</code></pre>
+    <p><strong>Page + section:</strong></p>
+    <pre><code>&lt;a href="#navId#sectionId" data-nav="navId" data-section="sectionId"&gt;Link text&lt;/a&gt;</code></pre>
+    <p><strong>In-page navigation only:</strong></p>
+    <pre><code>&lt;a href="#sectionId" data-target="sectionId"&gt;Link text&lt;/a&gt;</code></pre>
     <p>
-        Use <code>a[data-nav]</code> links anywhere in page content to navigate to another page - or a specific section
-        of another page - without a full page reload. The left sidebar will open the correct menu automatically.
+    <code>navId</code> is the <code>data-id</code> data attribute of the nav item in the left hand menu, or page name in URL, e.g. <code>image-processing</code> in <code>.../index.html#image-processing</code>.
     </p>
-    <div class="callout">
-        <div class="callout-title">Syntax</div>
-        <p><strong>Page only:</strong></p>
-        <pre><code>&lt;a href="#navId" data-nav="navId"&gt;Link text&lt;/a&gt;</code></pre>
-        <p><strong>Page + section:</strong></p>
-        <pre><code>&lt;a href="#navId#sectionId" data-nav="navId" data-section="sectionId"&gt;Link text&lt;/a&gt;</code></pre>
-        <p><strong>In-page navigation only:</strong></p>
-        <pre><code>&lt;a href="#sectionId" data-target="sectionId"&gt;Link text&lt;/a&gt;</code></pre>
-        <p>
-        <code>navId</code> is the <code>data-id</code> data attribute of the nav item in the left hand menu, or page name in URL, e.g. <code>image-processing</code> in <code>.../index.html#image-processing</code>.
-        </p>
-        <p>
-        <code>sectionId</code> is the <code>data-target</code> data attribute of any heading on the target page, right hand menu, or in the URL as e.g. <code>filters-effects</code> in <code>.../index.html#image-processing#filters-effects</code>.
-        </p>
-    </div>
-    <p><strong>Live examples - click to navigate:</strong></p>
-    <ul>
-        <li>
-        Go to the
-        <a href="#image-processing" data-nav="image-processing">Image Processing page</a>
-        </li>
-        <li>
-        Go directly to the
-        <a href="#image-processing#caching-optimization" data-nav="image-processing" data-section="caching-optimization">Image Caching Optimization section</a>
-        of Image Processing
-        </li>
-        <li>
-        Go to deeply nested content like the
-        <a href="#step1-env#testing-environment" data-nav="step1-env" data-section="testing-environment">Environment Setup -> testing-environment</a> section. 
-        </li>
-        <li>
-        Go to a section on this page
-        <a href="#theming" data-target="theming">theming section</a>
-        </li>
-    </ul>
-
-    <h2 id="image_model"><span data-tags="Image Model">Image Model</span></h2>
     <p>
-        DevDocs includes a simple image model for displaying screenshots and diagrams. The image model supports
-        both single images and ****galleries, and includes a built-in lightbox for viewing larger versions of the images.
+    <code>sectionId</code> is the <code>data-target</code> data attribute of any heading on the target page, right hand menu, or in the URL as e.g. <code>filters-effects</code> in <code>.../index.html#image-processing#filters-effects</code>.
     </p>
-    <h3 id="single-images">Single Images</h3>
-    <p>
-        To add a single image, use an <code>&lt;img&gt;</code> tag with the <code>.img-block</code> class. The image will
-        be sized to fit the content area while maintaining its aspect ratio. If the image is smaller than the content width, it will be displayed at its natural size.
-    </p>
-    <!-- TODO: switch out with a better pic -->
-    <div class="image-wrapper" data-caption="Shorter picture then content full length">
-        <img src="images/pic1.jpg" alt="Architecture diagram placeholder" class="img-block">
-    </div>
-    <div class="image-wrapper" data-caption="Longer picture then content full width">
-        <img src="images/pic3.jpg" alt="Architecture diagram placeholder" class="img-block">
-    </div>
-
-    <h3 id="single-images">Single Image With Lightbox</h3>
-    <p>
-        To add a single image with a lightbox, use an <code>&lt;img&gt;</code> tag with the <code>.img-block</code> and <code>.image-modal</code> classes. Clicking on it will open a larger version in a lightbox.
-    </p>
-    <!-- TODO: switch out with a better pic -->
-    <img src="images/pic1.jpg" alt="Architecture diagram placeholder" class="img-block image-modal">
 </div>
+<p><strong>Live examples - click to navigate:</strong></p>
+<ul>
+    <li>
+    Go to the
+    <a href="#image-processing" data-nav="image-processing">Image Processing page</a>
+    </li>
+    <li>
+    Go directly to the
+    <a href="#image-processing#caching-optimization" data-nav="image-processing" data-section="caching-optimization">Image Caching Optimization section</a>
+    of Image Processing
+    </li>
+    <li>
+    Go to deeply nested content like the
+    <a href="#step1-env#testing-environment" data-nav="step1-env" data-section="testing-environment">Environment Setup -> testing-environment</a> section. 
+    </li>
+    <li>
+    Go to a section on this page
+    <a href="#theming" data-target="theming">theming section</a>
+    </li>
+</ul>
+
+<h2 id="image_model"><span data-tags="Image Model">Image Model</span></h2>
+<p>
+    DevDocs includes a simple image model for displaying screenshots and diagrams. The image model supports
+    both single images and ****galleries, and includes a built-in lightbox for viewing larger versions of the images.
+</p>
+<h3 id="single-images">Single Images</h3>
+<p>
+    To add a single image, use an <code>&lt;img&gt;</code> tag with the <code>.img-block</code> class. The image will
+    be sized to fit the content area while maintaining its aspect ratio. If the image is smaller than the content width, it will be displayed at its natural size.
+</p>
+<!-- TODO: switch out with a better pic -->
+<div class="image-wrapper" data-caption="Shorter picture then content full length">
+    <img src="images/pic1.jpg" alt="Architecture diagram placeholder" class="img-block">
+</div>
+<div class="image-wrapper" data-caption="Longer picture then content full width">
+    <img src="images/pic3.jpg" alt="Architecture diagram placeholder" class="img-block">
+</div>
+
+<h3 id="single-images">Single Image With Lightbox</h3>
+<p>
+    To add a single image with a lightbox, use an <code>&lt;img&gt;</code> tag with the <code>.img-block</code> and <code>.image-modal</code> classes. Clicking on it will open a larger version in a lightbox.
+</p>
+<!-- TODO: switch out with a better pic -->
+<img src="images/pic1.jpg" alt="Architecture diagram placeholder" class="img-block image-modal">

@@ -206,6 +206,7 @@ button {
   display: flex;
   align-items: center;
   gap: 24px;
+  position: relative;
 }
 
 .header-brand {
@@ -231,6 +232,8 @@ button {
   align-items: center;
   gap: 4px;
   margin-left: 8px;
+  flex: 0 1 auto;
+  min-width: 0;
 }
 .header-nav-link {
   padding: 4px 12px;
@@ -243,6 +246,47 @@ button {
   background: var(--bg-hover);
   color: var(--text-base);
   text-decoration: none;
+}
+
+.header-nav-toggle {
+  display: none;
+  width: 34px;
+  height: 34px;
+}
+
+.header-nav-toggle.is-visible {
+  display: inline-flex;
+}
+
+.header-inner.is-nav-collapsed .header-nav {
+  position: absolute;
+  top: calc(100% - 4px);
+  right: 20px;
+  margin-left: 0;
+  min-width: 180px;
+  padding: 8px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--bg-header);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.12);
+  flex-direction: column;
+  align-items: stretch;
+  gap: 4px;
+  display: none;
+  z-index: 130;
+}
+
+[data-theme="dark"] .header-inner.is-nav-collapsed .header-nav {
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.32);
+}
+
+.header-inner.is-nav-collapsed .header-nav.is-open {
+  display: flex;
+}
+
+.header-inner.is-nav-collapsed .header-nav-link {
+  display: block;
+  width: 100%;
 }
 
 .header-actions {
