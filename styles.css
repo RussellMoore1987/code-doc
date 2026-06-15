@@ -1529,12 +1529,11 @@ body.right-collapsed .search-nav-controls {
 
 @media (max-width: 800px) {
   .search-nav-controls {
-    right: 8px;
-    top: 8px;
+    right: 56px;
+    top: 10px;
     padding: 6px 8px;
     font-size: 10px;
     min-width: 160px;
-    flex-wrap: wrap;
   }
   
   .search-nav-btn {
@@ -1546,7 +1545,6 @@ body.right-collapsed .search-nav-controls {
     font-size: 10px;
     width: 100%;
     text-align: center;
-    margin-bottom: 4px;
   }
 }
 
