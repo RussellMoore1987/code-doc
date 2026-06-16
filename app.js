@@ -2243,6 +2243,10 @@ function setupTagIndicators() {
 function openTagView(tag) {
   const results = tagState.index.filter(e => e.tag === tag);
 
+  if (isMobileLayout() && elRightSidebar.classList.contains('is-mobile-open')) {
+    closeMobilePanels();
+  }
+
   tagState.isViewOpen = true;
   tagState.currentTag = tag;
 
