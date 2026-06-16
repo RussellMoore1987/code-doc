@@ -1689,6 +1689,9 @@ function applySidebarWidths() {
 function collapseLeft() {
   state.leftCollapsed = true;
   elLeftSidebar.classList.add('is-collapsed');
+  if (elLeftSidebar.classList.contains('is-mobile-open')) {
+    closeMobilePanels();
+  }
   elResizeLeft.classList.add('is-hidden');
   elStripLeft.classList.add('is-visible');
   elStripLeft.setAttribute('aria-hidden', 'false');
@@ -1709,6 +1712,9 @@ function expandLeft() {
 function collapseRight() {
   state.rightCollapsed = true;
   elRightSidebar.classList.add('is-collapsed');
+  if (elRightSidebar.classList.contains('is-mobile-open')) {
+    closeMobilePanels();
+  }
   elResizeRight.classList.add('is-hidden');
   elStripRight.classList.add('is-visible');
   elStripRight.setAttribute('aria-hidden', 'false');
