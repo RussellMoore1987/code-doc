@@ -2274,8 +2274,6 @@ function openTagView(tag) {
   tagView.innerHTML = buildTagResultsHTML(tag, results);
   elContentScroll.appendChild(tagView);
 
-  elContentScroll.scrollTop = 0;
-
   // Wire close button
   const closeBtn = tagView.querySelector('#tag-results-close');
   if (closeBtn) closeBtn.addEventListener('click', closeTagView);
@@ -2336,6 +2334,7 @@ function closeTagView() {
   if (!tagState.isViewOpen) return;
   tagState.isViewOpen = false;
   tagState.currentTag = null;
+  const restoreScrollTop = tagState.previousScrollTop;
 
   elRightNav.classList.remove('tag-view-hidden');
   const rightTagsEl = document.getElementById('right-tags');
@@ -2344,6 +2343,11 @@ function closeTagView() {
 
   const tagView = document.getElementById('tag-results-view');
   if (tagView) tagView.remove();
+
+  // Restore the user's prior scroll position after normal content is visible again.
+  requestAnimationFrame(() => {
+    elContentScroll.scrollTop = restoreScrollTop;
+  });
 }
 
 /**
