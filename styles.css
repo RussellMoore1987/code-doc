@@ -1546,6 +1546,11 @@ body.right-collapsed .search-nav-controls {
     width: 100%;
     text-align: center;
   }
+
+  .tag-results-header {
+    width: calc(100% - 60px);
+    margin: 0 auto;
+  }
 }
 
 /* Search error message responsive */
