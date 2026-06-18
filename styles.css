@@ -754,6 +754,25 @@ code,
   overflow: hidden;
   border: 1px solid var(--border);
 }
+figure.img-block {
+  width: fit-content;
+}
+figure.img-block .img-block {
+  margin: 0;
+  border-radius: 0;
+  outline: 0px solid var(--border);
+}
+figure.img-block .img-block {
+  margin: 0;
+  border-radius: 0;
+}
+figure.img-block .image-modal:hover {
+  outline: 0px solid var(--border);
+}
+figure.img-block.image-modal:hover {
+  opacity: 0.9;
+  outline: 2px solid var(--primary-color);
+}
 .img-center {
   display: block;
   margin-left: auto;
@@ -770,13 +789,16 @@ code,
   color: var(--text-muted);
   font-size: 14px;
 }
-.img-placeholder svg { opacity: .4; }
+.img-placeholder svg {
+  opacity: .4;
+}
 .img-block figcaption {
   padding: 8px 14px;
   font-size: 13px;
   color: var(--text-muted);
   border-top: 1px solid var(--border);
   background: var(--bg-sidebar-strip);
+  margin-top: -7px;
 }
 
 .image-wrapper {

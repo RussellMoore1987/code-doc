@@ -34,82 +34,6 @@
     <li>Provide a responsive layout that degrades gracefully on smaller screens.</li>
   </ul>
 
-  
-
-  <div class="flex-sb">
-    <img src="images/pic1.jpg" style="width: 150px" alt="Graphic made by ChatGPT based off of input data from a chat session. Adilas value add-on core model concept shows how additional features and functionalities can be layered on top of the core system to enhance its capabilities and provide more value to users. Everybody starts with the core and then builds from there. Graphic made by ChatGPT based off of input data from a chat session. Adilas value add-on core model concept shows how additional features and functionalities can be layered on top of the core system to enhance its capabilities and provide more value to users. Everybody starts with the core and then builds from there. Graphic made by ChatGPT based off of input data from a chat session. Adilas value add-on core model concept shows how additional features and functionalities can be layered on top of the core system to enhance its capabilities and provide more value to users. Everybody starts with the core and then builds from there. Graphic made by ChatGPT based off of input data from a chat session. Adilas value add-on core model concept shows how additional features and functionalities can be layered on top of the core system to enhance its capabilities and provide more value to users. Everybody starts with the core and then builds from there. Graphic made by ChatGPT based off of input data from a chat session. Adilas value add-on core model concept shows how additional features and functionalities can be layered on top of the core system to enhance its capabilities and provide more value to users. Everybody starts with the core and then builds from there." class="img-block image-modal">
-    <img src="images/pic5.jpg" style="width: 150px" alt="Graphic made by ChatGPT based off of input data from a chat session. Adilas value add-on core model concept shows how additional features and functionalities can be layered on top of the core system to enhance its capabilities and provide more value to users." class="img-block image-modal">
-    <img src="images/pic5.jpg" style="width: 150px" alt="Graphic made by ChatGPT based off of input data from a chat session. Adilas value add-on core model concept shows how additional features " class="img-block image-modal">
-    <img src="images/pic5.jpg" style="width: 150px" alt="Graphic made by " class="img-block image-modal">
-  </div>
-
-  <!-- ─── TOOLTIP EXAMPLES ───────────────────── -->
-  <h2 id="tooltip-usage">Tooltip Usage</h2>
-
-  <p>
-    Add <code>data-tooltip="…"</code> to any element to give it a tooltip. Use the optional
-    <code>data-tooltip-position</code> attribute to set a preferred direction. If the tooltip would
-    overflow the screen, it flips to a better position automatically.
-  </p>
-
-  <div class="callout">
-    <div class="callout-title">Syntax</div>
-    <pre><code>&lt;!-- Plain-text tooltip (default position: top) --&gt;
-&lt;button data-tooltip="Tooltip text here"&gt;Hover me&lt;/button&gt;
-
-&lt;!-- With preferred position --&gt;
-&lt;button data-tooltip="Opens settings" data-tooltip-position="right"&gt;⚙&lt;/button&gt;
-
-&lt;!-- HTML tooltip - write real HTML inside a &lt;template&gt; element --&gt;
-&lt;template id="my-tip"&gt;&lt;strong&gt;Bold&lt;/strong&gt; and &lt;em&gt;italic&lt;/em&gt;&lt;br&gt;Line two&lt;/template&gt;
-&lt;button data-tooltip-template="my-tip"&gt;Hover me&lt;/button&gt;
-
-&lt;!-- Available positions --&gt;
-top | top-left | top-right
-bottom | bottom-left | bottom-right
-left | right</code></pre>
-  </div>
-
-  <p><strong>Live examples - hover or focus each button:</strong></p>
-
-  <div style="display:flex; flex-wrap:wrap; gap:10px; align-items:center; margin-bottom:20px;">
-    <span class="display-span" data-tooltip="This is the default top position">top (default)</span>
-    <span class="display-span" data-tooltip="Anchored to the top-left corner" data-tooltip-position="top-left">top-left</span>
-    <span class="display-span" data-tooltip="Anchored to the top-right corner" data-tooltip-position="top-right">top-right</span>
-    <span class="display-span" data-tooltip="Appears below the element" data-tooltip-position="bottom">bottom</span>
-    <span class="display-span" data-tooltip="Below, aligned to the left" data-tooltip-position="bottom-left">bottom-left</span>
-    <span class="display-span" data-tooltip="Below, aligned to the right" data-tooltip-position="bottom-right">bottom-right</span>
-    <span class="display-span" data-tooltip="Appears to the left of the element" data-tooltip-position="left">left</span>
-    <span class="display-span" data-tooltip="Appears to the right of the element" data-tooltip-position="right">right</span>
-  </div>
-
-  <p>Tooltips also work on non-button elements and support rich HTML content via <code>data-tooltip-template</code>:</p>
-
-  <div style="display:flex; flex-wrap:wrap; gap:14px; align-items:center; margin-bottom:20px;">
-    <code data-tooltip="Inline code elements work too" style="cursor:default;">data-tooltip</code>
-    <span
-      style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:var(--accent);color:#fff;font-size:12px;font-weight:700;cursor:default;flex-shrink:0;"
-      data-tooltip="Any element works - spans, icons, images, links…"
-      data-tooltip-position="right">ℹ</span>
-    <a href="#" onclick="return false;"
-      data-tags="test,test2"
-      data-tooltip="Links get tooltips too"
-      data-tooltip-position="bottom">Hover this link</a>
-    <span style="cursor:default;"
-      data-tooltip="Tooltips support longer descriptions that wrap across multiple lines when needed."
-      data-tooltip-position="top">Long tooltip text ↑</span>
-    <template id="tt-html-example">
-      <strong>Bold</strong> and <em>italic</em><br>Plus a <code style="background:rgba(255,255,255,0.15);padding:1px 4px;border-radius:3px;">code</code> snippet <a href="#theming" data-target="theming">theming section</a>
-    </template>
-    <button class="copy-btn" style="position:static;"
-      data-tooltip-template="tt-html-example"
-      data-tooltip-position="top">HTML tooltip ↑</button>
-    <template id="tt-multiline">Line one<br>Line two<br>Line three</template>
-    <button class="copy-btn" style="position:static;"
-      data-tooltip-template="tt-multiline"
-      data-tooltip-position="bottom">Multi-line HTML ↓</button>
-  </div>
-
   <!-- ─── ARCHITECTURE ─────────────────────── -->
   <h2 id="architecture">Architecture Overview</h2>
 
@@ -118,16 +42,6 @@ left | right</code></pre>
     HTML fragments. The host page (<code>index.html</code>) loads <code>styles.css</code> and
     <code>app.js</code>; everything else happens at runtime.
   </p>
-
-  <img src="images/pic4.jpg" alt="Architecture diagram placeholder" class="img-block image-modal">
-
-  <figure class="img-block">
-    <div class="img-placeholder" aria-label="Architecture diagram placeholder">
-      <svg viewBox="0 0 48 48" width="48" height="48" aria-hidden="true"><rect x="4" y="4" width="40" height="40" rx="6" stroke="currentColor" stroke-width="2" fill="none"/><path d="M16 4v40M32 4v40M4 24h40" stroke="currentColor" stroke-width="1.5" stroke-dasharray="3 2"/></svg>
-      <span>Figure 1 - Three-column layout schematic</span>
-    </div>
-    <figcaption>The three-column layout with left nav, center content, and right outline.</figcaption>
-  </figure>
 
   <h3 id="file-structure">File Structure</h3>
 
