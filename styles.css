@@ -950,6 +950,42 @@ figure.image-modal figcaption {
   border: 1px solid var(--border);
 }
 
+.thumbnail-img-gallery > figure {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  margin: 0;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  overflow: hidden;
+  background: var(--bg-sidebar-strip);
+}
+
+.thumbnail-img-gallery > figure > img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  margin: 0;
+  border: 0;
+  border-radius: 0;
+}
+
+.thumbnail-img-gallery > figure > figcaption {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  margin: 0;
+  padding: 8px 10px;
+  font-size: 12px;
+  line-height: 1.35;
+  color: #fff;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.72), rgba(0, 0, 0, 0.0));
+  border-top: 0;
+  z-index: 1;
+}
+
 /* ═══════════════════════════════════════════════════════════════
    GALLERY CONTAINER QUERIES
    ═══════════════════════════════════════════════════════════════ */
