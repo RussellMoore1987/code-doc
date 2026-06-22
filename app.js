@@ -62,8 +62,8 @@ const NAV_DATA = [
     id: 'reference',
     label: 'Reference',
     children: [
-      { id: 'image-galleries', label: 'Image Galleries', page: 'pages/image-galleries.html' },
       { id: 'utilities',  label: 'Element Utilities',  page: 'pages/utilities.html' },
+      { id: 'image-galleries', label: 'Image Galleries', page: 'pages/image-galleries.html' },
     ]
   },
   {
@@ -2593,10 +2593,107 @@ function showCopyFeedback(buttonElement, success) {
 /* ═══════════════════════════════════════════════════════════════
    GALLERY SYSTEMS
    ═══════════════════════════════════════════════════════════════ */
-
+// ! start here ******************************************* check all images, make figure & caption in galleries, keep making it ready for final stage 
 function setGalleryImageAttrs(img) {
-  if (!img.hasAttribute('loading')) img.setAttribute('loading', 'lazy');
-  if (!img.hasAttribute('decoding')) img.setAttribute('decoding', 'async');
+  const component = resolveImageComponent(img);
+  const imageEl = component ? component.image : (img && img.tagName === 'IMG' ? img : null);
+  if (!imageEl) return;
+
+  if (!imageEl.hasAttribute('loading')) imageEl.setAttribute('loading', 'lazy');
+  if (!imageEl.hasAttribute('decoding')) imageEl.setAttribute('decoding', 'async');
+}
+
+/**
+ * Resolve an image component from either a figure/image element (or descendants).
+ * Returns normalized metadata used by galleries and modal wiring.
+ */
+function resolveImageComponent(target) {
+  if (!target || !(target instanceof Element)) return null;
+  if (target.classList.contains('image-modal-trigger')) return null;
+
+  let image = null;
+  let figure = null;
+
+  if (target.tagName === 'IMG') {
+    image = target;
+  } else if (target.tagName === 'FIGURE') {
+    figure = target;
+    image = figure.querySelector('img');
+  } else {
+    image = target.closest('img');
+    if (!image) {
+      figure = target.closest('figure');
+      image = figure ? figure.querySelector('img') : null;
+    }
+  }
+
+  if (!image) return null;
+
+  if (!figure) {
+    const nearestFigure = image.closest('figure');
+    if (nearestFigure && nearestFigure.contains(image)) {
+      figure = nearestFigure;
+    }
+  }
+
+  const captionEl = figure ? figure.querySelector('figcaption') : null;
+  const captionText = captionEl ? captionEl.textContent.trim() : '';
+  const isImageBlock = image.classList.contains('img-block') || Boolean(figure && figure.classList.contains('img-block'));
+  const isModal = image.classList.contains('image-modal') || Boolean(figure && figure.classList.contains('image-modal'));
+  const modalSrc =
+    image.dataset.modalSrc ||
+    image.dataset.full ||
+    (figure ? (figure.dataset.modalSrc || figure.dataset.full) : '') ||
+    image.getAttribute('src') ||
+    image.src;
+
+  return {
+    image,
+    figure,
+    captionEl,
+    captionText,
+    isImageBlock,
+    isModal,
+    inGallery: Boolean(image.closest('.flex-img-gallery, .cover-img-gallery, .thumbnail-img-gallery')),
+    modalSrc,
+  };
+}
+
+/**
+ * Keep figure/image class placement interchangeable by mirroring component flags.
+ */
+function normalizeImageComponent(target) {
+  const resolved = target && target.image ? target : resolveImageComponent(target);
+  if (!resolved || !resolved.image) return null;
+
+  if (resolved.isImageBlock) {
+    resolved.image.classList.add('img-block');
+    if (resolved.figure) resolved.figure.classList.add('img-block');
+  }
+
+  if (resolved.isModal) {
+    resolved.image.classList.add('image-modal');
+    if (resolved.figure) resolved.figure.classList.add('image-modal');
+  }
+
+  return resolveImageComponent(resolved.image);
+}
+
+/**
+ * Collect unique image components that participate in block and/or modal behavior.
+ */
+function collectImageComponents(root = elContentBody) {
+  const components = [];
+  const seen = new Set();
+
+  root.querySelectorAll('figure.img-block, figure.image-modal, img.img-block, img.image-modal').forEach((el) => {
+    const component = normalizeImageComponent(el);
+    if (!component || seen.has(component.image)) return;
+    seen.add(component.image);
+    components.push(component);
+  });
+
+  return components;
 }
 
 /**
@@ -2643,12 +2740,19 @@ function setupFlexGalleries() {
 
     const imgs = gallery.querySelectorAll('img');
     imgs.forEach((img) => {
-      img.classList.add('image-modal');
-      setGalleryImageAttrs(img);
+      const component = normalizeImageComponent(img) || resolveImageComponent(img);
+      const imageEl = component ? component.image : img;
 
-      const explicit = img.dataset.full || img.dataset.modalSrc;
+      imageEl.classList.add('image-modal');
+      if (component?.figure) component.figure.classList.add('image-modal');
+      setGalleryImageAttrs(imageEl);
+
+      const explicit =
+        imageEl.dataset.full ||
+        imageEl.dataset.modalSrc ||
+        (component?.figure ? (component.figure.dataset.full || component.figure.dataset.modalSrc) : '');
       if (explicit) {
-        img.dataset.modalSrc = explicit;
+        imageEl.dataset.modalSrc = explicit;
       }
     });
   });
@@ -2661,9 +2765,22 @@ function setupCoverGalleries() {
     gallery.dataset.galleryCoverInit = 'true';
     gallery.classList.add('is-enhanced');
 
-    const imgs = Array.from(gallery.querySelectorAll('img'));
-    imgs.forEach((img) => {
-      if (img.closest('.cover-img-item')) return;
+    const items = Array.from(gallery.children);
+    items.forEach((item) => {
+      if (!(item instanceof Element)) return;
+      if (item.classList.contains('cover-img-item')) return;
+
+      const isCandidate = item.tagName === 'IMG' || item.tagName === 'FIGURE';
+      if (!isCandidate) return;
+
+      const component = normalizeImageComponent(item) || resolveImageComponent(item);
+      if (!component || !component.image) return;
+
+      const hostEl = component.figure && component.figure.parentElement === gallery
+        ? component.figure
+        : component.image;
+
+      if (hostEl.classList.contains('cover-img-item')) return;
 
       const wrapper = document.createElement('div');
       wrapper.className = 'cover-img-item';
@@ -2672,28 +2789,25 @@ function setupCoverGalleries() {
       tile.type = 'button';
       tile.className = 'cover-img-tile image-modal-trigger';
 
-      const alt = img.alt || '';
-      const modalSrc = img.dataset.full || img.dataset.modalSrc || img.getAttribute('src') || img.src;
+      const alt = component.image.alt || component.captionText || '';
+      const modalSrc = component.modalSrc || component.image.getAttribute('src') || component.image.src;
 
       if (modalSrc) tile.dataset.modalSrc = modalSrc;
       if (alt) tile.dataset.modalAlt = alt;
 
       tile.setAttribute('aria-label', alt ? `View image: ${alt}` : 'View image');
-      tile.dataset.coverSrc = img.getAttribute('src') || img.currentSrc || img.src;
+      tile.dataset.coverSrc = component.image.getAttribute('src') || component.image.currentSrc || component.image.src;
       if (tile.dataset.coverSrc) {
         tile.style.setProperty('--cover-src', `url("${tile.dataset.coverSrc}")`);
       }
 
-      img.classList.add('cover-img-source');
-      img.setAttribute('aria-hidden', 'true');
-      setGalleryImageAttrs(img);
-
-      const parent = img.parentNode;
-      if (!parent) return;
+      hostEl.classList.add('cover-img-source');
+      hostEl.setAttribute('aria-hidden', 'true');
+      setGalleryImageAttrs(component.image);
 
       wrapper.appendChild(tile);
-      parent.insertBefore(wrapper, img);
-      wrapper.appendChild(img);
+      hostEl.before(wrapper);
+      wrapper.appendChild(hostEl);
     });
 
     hydrateCoverTiles(gallery);
@@ -2735,20 +2849,28 @@ function setupThumbnailGalleries() {
 
     const imgs = gallery.querySelectorAll('img');
     imgs.forEach((img) => {
-      img.classList.add('image-modal');
-      setGalleryImageAttrs(img);
+      const component = normalizeImageComponent(img) || resolveImageComponent(img);
+      const imageEl = component ? component.image : img;
 
-      const explicit = img.dataset.full || img.dataset.modalSrc;
+      imageEl.classList.add('image-modal');
+      if (component && component.figure) component.figure.classList.add('image-modal');
+      setGalleryImageAttrs(imageEl);
+
+      const explicit =
+        imageEl.dataset.full ||
+        imageEl.dataset.modalSrc ||
+        (component && component.figure ? (component.figure.dataset.full || component.figure.dataset.modalSrc) : '');
       if (explicit) {
-        img.dataset.modalSrc = explicit;
+        imageEl.dataset.modalSrc = explicit;
         return;
       }
 
-      const derived = deriveLargeImageSrc(img.getAttribute('src') || img.src);
-      if (!derived || derived === img.getAttribute('src') || derived === img.src) return;
+      const rawSrc = imageEl.getAttribute('src') || imageEl.src;
+      const derived = deriveLargeImageSrc(rawSrc);
+      if (!derived || derived === rawSrc || derived === imageEl.src) return;
 
       // Set optimistically - modal will fall back via onerror if the _big file doesn't exist.
-      img.dataset.modalSrc = derived;
+      imageEl.dataset.modalSrc = derived;
     });
   });
 }
@@ -2790,49 +2912,72 @@ function findNearestSection(el) {
 }
 
 /**
- * Scan current page content for img.image-modal elements,
+ * Scan current page content for modal-capable image components,
  * store their metadata, and wire click / keyboard handlers.
  * Safe to call on every page load - resets state each time.
  */
 function setupImageModal() {
   imageModalState.images = [];
 
+  // Normalize figure/img class placement up front so all downstream behavior is uniform.
+  collectImageComponents(elContentBody);
+
   const elements = Array.from(
-    elContentBody.querySelectorAll('img.image-modal, .image-modal-trigger')
+    elContentBody.querySelectorAll('.image-modal-trigger, figure.image-modal, img.image-modal')
   );
+  const seenImages = new Set();
   let modalIndex = 0;
 
   elements.forEach((el) => {
-    const section      = findNearestSection(el);
-    const sectionId    = section ? section.id                : null;
+    const isTrigger = el.classList.contains('image-modal-trigger');
+    const component = isTrigger ? null : normalizeImageComponent(el);
+    const triggerEl = component ? component.image : el;
+
+    if (component) {
+      if (!component.isModal || seenImages.has(component.image)) return;
+      seenImages.add(component.image);
+    }
+
+    const section = findNearestSection(component && component.figure ? component.figure : triggerEl);
+    const sectionId = section ? section.id : null;
     const sectionTitle = section ? section.textContent.trim() : null;
 
-    const isImage = el.tagName === 'IMG';
-    const alt = isImage ? (el.alt || '') : (el.dataset.modalAlt || el.getAttribute('aria-label') || '');
+    const alt = component
+      ? (component.image.alt || component.captionText || '')
+      : (el.dataset.modalAlt || el.getAttribute('aria-label') || '');
 
     // Resolve src lazily (at open time) so async _big probes in thumbnail galleries
     // have time to set data-modal-src before the user clicks.
-    const eagerSrc = isImage ? (el.dataset.modalSrc || el.getAttribute('src') || el.src) : (el.dataset.modalSrc || '');
+    const eagerSrc = component ? component.modalSrc : (el.dataset.modalSrc || '');
     if (!eagerSrc) return;
 
     const index = modalIndex++;
     // Store the trigger element for all gallery types so "View in page" can scroll back to it.
-    imageModalState.images.push({ el, src: eagerSrc, alt, sectionId, sectionTitle });
+    imageModalState.images.push({
+      el: triggerEl,
+      imageEl: component ? component.image : null,
+      figureEl: component ? component.figure : null,
+      src: eagerSrc,
+      alt,
+      captionText: component ? component.captionText : '',
+      sectionId,
+      sectionTitle
+    });
 
-    if (isImage) {
-      el.setAttribute('tabindex', '0');
-      el.setAttribute('role', 'button');
-      el.setAttribute('aria-label', `View image${alt ? ': ' + alt : ''}`);
-    } else if (el.tagName !== 'BUTTON' && el.tagName !== 'A') {
-      el.setAttribute('tabindex', '0');
-      el.setAttribute('role', 'button');
-      if (!el.getAttribute('aria-label')) {
-        el.setAttribute('aria-label', alt ? `View image: ${alt}` : 'View image');
+    if (triggerEl.tagName === 'IMG') {
+      triggerEl.setAttribute('tabindex', '0');
+      triggerEl.setAttribute('role', 'button');
+      triggerEl.setAttribute('aria-label', `View image${alt ? ': ' + alt : ''}`);
+    } else if (triggerEl.tagName !== 'BUTTON' && triggerEl.tagName !== 'A') {
+      triggerEl.setAttribute('tabindex', '0');
+      triggerEl.setAttribute('role', 'button');
+      if (!triggerEl.getAttribute('aria-label')) {
+        triggerEl.setAttribute('aria-label', alt ? `View image: ${alt}` : 'View image');
       }
     }
 
-    el.addEventListener('click', () => openImageModal(index));
-    el.addEventListener('keydown', (e) => {
+    triggerEl.addEventListener('click', () => openImageModal(index));
+    triggerEl.addEventListener('keydown', (e) => {
       if (e.key === 'Enter' || e.key === ' ') {
         e.preventDefault();
         openImageModal(index);
@@ -2888,10 +3033,11 @@ function showImageAt(index) {
 
   imageModalState.currentIndex = index;
   const entry = imageModalState.images[index];
+  const sourceEl = entry.imageEl || entry.el;
 
   // Re-read data-modal-src from the element at click time (set during gallery setup).
-  const src = (entry.el && (entry.el.dataset.modalSrc || entry.el.getAttribute('src') || entry.el.src)) || entry.src;
-  const fallbackSrc = (entry.el && (entry.el.getAttribute('src') || entry.el.src)) || entry.src;
+  const src = (sourceEl && (sourceEl.dataset.modalSrc || sourceEl.getAttribute('src') || sourceEl.src)) || entry.src;
+  const fallbackSrc = (sourceEl && (sourceEl.getAttribute('src') || sourceEl.src)) || entry.src;
 
   elImageModalImg.onerror = null;
   elImageModalImg.src = src;
@@ -2905,7 +3051,7 @@ function showImageAt(index) {
     };
   }
 
-  elImageModalCaption.textContent = entry.alt;
+  elImageModalCaption.textContent = entry.alt || entry.captionText;
 
   if (entry.sectionId && entry.sectionTitle) {
     elImageModalSectionLink.textContent = `\u2191 Back to section: ${entry.sectionTitle}`;
@@ -3026,9 +3172,12 @@ function initImageModal() {
   if (elImageModalViewLink) {
     elImageModalViewLink.addEventListener('click', (e) => {
       e.preventDefault();
-      const idx = parseInt(elImageModalViewLink.dataset.imageIndex, 10);
+      const idx = Number.parseInt(elImageModalViewLink.dataset.imageIndex, 10);
       const entry = imageModalState.images[idx];
-      if (entry && entry.el) scrollToImageElement(entry.el);
+      if (entry) {
+        const targetEl = entry.figureEl || entry.el;
+        if (targetEl) scrollToImageElement(targetEl);
+      }
     });
   }
 }

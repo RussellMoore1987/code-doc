@@ -43,10 +43,10 @@
     </li>
 </ul>
 
-<h2 id="image_model"><span data-tags="Image Model">Image Model</span></h2>
+<h2 id="images"><span data-tags="Images">Images</span></h2>
 <p>
-    DevDocs includes a simple image model for displaying screenshots and diagrams. The image model supports
-    both single images and ****galleries, and includes a built-in lightbox for viewing larger versions of the images.
+    DevDocs includes a few simple ways to display images. Images are supported
+    both as single images and <a href="#image-galleries" data-nav="image-galleries" data-tags="Image Gallery">galleries</a>, and includes a built-in lightbox for viewing larger versions of the images.
 </p>
 <h3 id="single-images">Single Images</h3>
 <p>
@@ -66,12 +66,23 @@
 </figure>
 <h3 id="single-images_with_lightbox">Single Image With Lightbox</h3>
 <p>
-    To add a single image with a lightbox, use an <code>&lt;img&gt;</code> tag with the <code>.img-block</code> and <code>.image-modal</code> classes. Clicking on it will open a larger version in a lightbox.
+    To add a single image with a lightbox, use an <code>&lt;img&gt;</code> tag with the <code>.img-block</code> and <code>.image-modal</code> classes. Clicking on it will open a larger version in a lightbox. The following images show how the alt text and caption are used in the lightbox:
 </p>
-<img src="images/pic1.jpg" alt="Architecture diagram placeholder" class="img-block image-modal">
+<ul>
+    <li>First image: has no alt text, so no text will be used in the lightbox.</li>
+    <li>Second image: has alt text, so the alt text will be used in the lightbox.</li>
+    <li>Third image: is wrapped in a figure with a caption, but has no alt text, so the caption text will be used in the lightbox.</li>
+    <li>Fourth image: is wrapped in a figure with a caption and has alt text, so the alt text will be used in the lightbox and the caption will be ignored in the lightbox.</li>
+</ul>
+<img src="images/pic1.jpg" class="img-block image-modal">
+<img src="images/pic3.jpg" class="img-block image-modal" alt="Image alt text shows up in the image lightbox.">
 <figure class="img-block image-modal">
-    <img src="/images/pic1.jpg" class="img-block image-modal" alt="">
-    <figcaption>With caption in a footer bar.</figcaption>
+    <img src="/images/pic1.jpg" class="img-block image-modal">
+    <figcaption>If the image doesn't have alt text, this caption text will be used in the lightbox.</figcaption>
+</figure>
+<figure class="img-block image-modal">
+    <img src="/images/pic3.jpg" class="img-block image-modal" alt="This is the alt text for the image, which will show up in the lightbox instead of the caption.">
+    <figcaption>If the image does have an alt, this caption text will not be used in the lightbox.</figcaption>
 </figure>
 
 <h2 id="tooltip-usage">Tooltip Usage</h2>
