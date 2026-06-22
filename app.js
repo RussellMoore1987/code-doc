@@ -2779,23 +2779,24 @@ function setupCoverGalleries() {
       const hostEl = component.figure && component.figure.parentElement === gallery
         ? component.figure
         : component.image;
+      const hasFigureSource = hostEl === component.figure;
 
       if (hostEl.classList.contains('cover-img-item')) return;
 
       const wrapper = document.createElement('div');
-      wrapper.className = 'cover-img-item';
+      wrapper.className = 'cover-img-item image-modal-trigger';
 
-      const tile = document.createElement('button');
-      tile.type = 'button';
-      tile.className = 'cover-img-tile image-modal-trigger';
+      const tile = document.createElement('div');
+      tile.className = 'cover-img-tile';
+      if (hasFigureSource) tile.classList.add('is-figure-source');
 
       const alt = component.image.alt || component.captionText || '';
       const modalSrc = component.modalSrc || component.image.getAttribute('src') || component.image.src;
 
-      if (modalSrc) tile.dataset.modalSrc = modalSrc;
-      if (alt) tile.dataset.modalAlt = alt;
+      if (modalSrc) wrapper.dataset.modalSrc = modalSrc;
+      if (alt) wrapper.dataset.modalAlt = alt;
+      wrapper.setAttribute('aria-label', alt ? `View image: ${alt}` : 'View image');
 
-      tile.setAttribute('aria-label', alt ? `View image: ${alt}` : 'View image');
       tile.dataset.coverSrc = component.image.getAttribute('src') || component.image.currentSrc || component.image.src;
       if (tile.dataset.coverSrc) {
         tile.style.setProperty('--cover-src', `url("${tile.dataset.coverSrc}")`);
@@ -2806,6 +2807,14 @@ function setupCoverGalleries() {
       setGalleryImageAttrs(component.image);
 
       wrapper.appendChild(tile);
+
+      if (component.captionText) {
+        const caption = document.createElement('div');
+        caption.className = 'cover-img-caption';
+        caption.textContent = component.captionText;
+        wrapper.appendChild(caption);
+      }
+
       hostEl.before(wrapper);
       wrapper.appendChild(hostEl);
     });
@@ -2932,6 +2941,9 @@ function setupImageModal() {
     const isTrigger = el.classList.contains('image-modal-trigger');
     const component = isTrigger ? null : normalizeImageComponent(el);
     const triggerEl = component ? component.image : el;
+    const highlightEl = isTrigger
+      ? (triggerEl.closest('.cover-img-item') || triggerEl)
+      : (component && component.figure ? component.figure : triggerEl);
 
     if (component) {
       if (!component.isModal || seenImages.has(component.image)) return;
@@ -2955,6 +2967,7 @@ function setupImageModal() {
     // Store the trigger element for all gallery types so "View in page" can scroll back to it.
     imageModalState.images.push({
       el: triggerEl,
+      highlightEl,
       imageEl: component ? component.image : null,
       figureEl: component ? component.figure : null,
       src: eagerSrc,
@@ -3175,7 +3188,7 @@ function initImageModal() {
       const idx = Number.parseInt(elImageModalViewLink.dataset.imageIndex, 10);
       const entry = imageModalState.images[idx];
       if (entry) {
-        const targetEl = entry.figureEl || entry.el;
+        const targetEl = entry.highlightEl || entry.figureEl || entry.el;
         if (targetEl) scrollToImageElement(targetEl);
       }
     });
