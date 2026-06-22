@@ -2921,6 +2921,21 @@ function findNearestSection(el) {
 }
 
 /**
+ * Use the figure as the primary trigger so image and figcaption behave as one
+ * interactive component. Keep hidden cover-gallery source figures non-interactive.
+ */
+function getModalTriggerElement(component, fallbackEl) {
+  if (!component) return fallbackEl;
+
+  const figureEl = component.figure;
+  if (figureEl && !figureEl.classList.contains('cover-img-source')) {
+    return figureEl;
+  }
+
+  return component.image || fallbackEl;
+}
+
+/**
  * Scan current page content for modal-capable image components,
  * store their metadata, and wire click / keyboard handlers.
  * Safe to call on every page load - resets state each time.
@@ -2940,17 +2955,17 @@ function setupImageModal() {
   elements.forEach((el) => {
     const isTrigger = el.classList.contains('image-modal-trigger');
     const component = isTrigger ? null : normalizeImageComponent(el);
-    const triggerEl = component ? component.image : el;
+    const triggerEl = isTrigger ? el : getModalTriggerElement(component, el);
     const highlightEl = isTrigger
       ? (triggerEl.closest('.cover-img-item') || triggerEl)
-      : (component && component.figure ? component.figure : triggerEl);
+      : triggerEl;
 
     if (component) {
       if (!component.isModal || seenImages.has(component.image)) return;
       seenImages.add(component.image);
     }
 
-    const section = findNearestSection(component && component.figure ? component.figure : triggerEl);
+    const section = findNearestSection(triggerEl);
     const sectionId = section ? section.id : null;
     const sectionTitle = section ? section.textContent.trim() : null;
 

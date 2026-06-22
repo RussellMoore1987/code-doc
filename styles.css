@@ -795,6 +795,10 @@ figure.img-block figcaption {
   margin-top: 0;
 }
 
+figure.image-modal figcaption {
+  cursor: pointer;
+}
+
 .image-wrapper {
   position: relative;
   margin: 24px 0 40px 0;
