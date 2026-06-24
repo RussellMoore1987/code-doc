@@ -2232,6 +2232,7 @@ function setupTagIndicators() {
       btn.dataset.tooltip = `#${tag}`;
       btn.innerHTML = TAG_SVG;
       btn.addEventListener('click', e => {
+        e.preventDefault();
         e.stopPropagation();
         openTagView(tag);
       });
@@ -2593,7 +2594,6 @@ function showCopyFeedback(buttonElement, success) {
 /* ═══════════════════════════════════════════════════════════════
    GALLERY SYSTEMS
    ═══════════════════════════════════════════════════════════════ */
-// ! start here ******************************************* check all images, make figure & caption in galleries, keep making it ready for final stage 
 function setGalleryImageAttrs(img) {
   const component = resolveImageComponent(img);
   const imageEl = component ? component.image : (img && img.tagName === 'IMG' ? img : null);
@@ -2704,6 +2704,7 @@ function setupContentSectionLinks() {
   /* Same-page section scroll: a[data-target] */
   elContentBody.querySelectorAll('a[data-target]').forEach((a) => {
     a.addEventListener('click', (e) => {
+      if (e.target.closest('.tag-indicator-btn')) return;
       e.preventDefault();
       navigateTo(null, a.dataset.target, true, true);
     });
@@ -2718,6 +2719,7 @@ function setupContentSectionLinks() {
    */
   elContentBody.querySelectorAll('a[data-nav]').forEach((a) => {
     a.addEventListener('click', (e) => {
+      if (e.target.closest('.tag-indicator-btn')) return;
       e.preventDefault();
       const navId     = a.dataset.nav     || null;
       const sectionId = a.dataset.section || null;
