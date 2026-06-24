@@ -148,3 +148,28 @@
         data-tooltip-template="tt-multiline"
         data-tooltip-position="bottom">Multi-line HTML ↓</button>
 </div>
+
+<h2 id="callouts">Callouts</h2>
+<div class="callout">
+    <div class="callout-title">ℹ Note</div>
+    <p>
+        This documentation site is served as a static project. No server-side rendering or framework is
+        required. All you need is a basic local HTTP server or your IDE's Live Server extension.
+    </p>
+</div>
+<div class="callout warning">
+    <div class="callout-title">⚠ Never Expose API Keys Client-Side</div>
+    <p>
+        Any secret embedded in JavaScript that runs in the browser is publicly visible to anyone
+        who opens DevTools. Route all privileged API calls through a backend proxy or serverless
+        function.
+    </p>
+</div>
+<div class="callout danger">
+    <div class="callout-title">✖ Trailing-slash paths</div>
+    <p>
+        On GitHub Pages, make sure all <code>page</code> paths in <code>NAV_DATA</code> use a relative
+        path from the repository root (e.g., <code>pages/intro.html</code>), not an absolute
+        path starting with <code>/</code>, or your fetches will fail.
+    </p>
+</div>

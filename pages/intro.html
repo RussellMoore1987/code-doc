@@ -20,9 +20,7 @@
   <h2 id="what-is-devdocs">What is DevDocs?</h2>
 
   <p>
-    DevDocs is a three-column documentation layout inspired by modern developer portals. It features
-    a collapsible left navigation tree, a dynamic content area, and a context-sensitive "On this page"
-    outline on the right.
+    DevDocs is a three-column documentation layout inspired by modern developer portals. It features collapsible navigation panels, including a left-side navigation tree for page navigation and a context-sensitive "On This Page" outline on the right for quick access to sections within the current document/page.
   </p>
 
   <p>Key design goals include:</p>
@@ -38,7 +36,7 @@
   <h2 id="architecture">Architecture Overview</h2>
 
   <p>
-    The app consists of three files at the root level plus a <code>pages/</code> directory that holds
+    The app consists of three files at the root level plus a page from the <code>pages/</code> directory that holds
     HTML fragments. The host page (<code>index.html</code>) loads <code>styles.css</code> and
     <code>app.js</code>; everything else happens at runtime.
   </p>
@@ -48,7 +46,7 @@
   <p>All project files live in a flat directory with no build step required:</p>
 
   <pre><code>doc/
-├── index.html          ← Shell HTML (header, layout chrome, footer)
+├── index.html          ← Shell HTML (header, layout, footer)
 ├── styles.css          ← All styles + CSS custom properties for theming
 ├── app.js              ← All behaviour: nav tree, Ajax, scroll spy, resize
 └── pages/
@@ -60,7 +58,7 @@
   <h3 id="content-loading">Content Loading</h3>
 
   <p>
-    Each page in <code>pages/</code> is an <em>HTML fragment</em> - just a <code>&lt;div class="content-body"&gt;</code>
+    Each page in <code>pages/</code> is an <em>HTML fragment</em> - you can wrap the page content in a <code>&lt;div&gt;</code> or just use raw HTML elements, but it should not include a full HTML document structure. The host page's <code>&lt;main&gt; &lt;div class="content-body"&gt;</code> element serves as a
     wrapper with your content inside. When a user clicks a left-nav link, <code>app.js</code> fetches that
     fragment via the Fetch API and injects it into the center column.
   </p>
@@ -74,8 +72,7 @@
     </p>
   </div>
 
-  <img src="images/pic2.png" alt="Screenshot of DevDocs..." class="img-block image-modal">
-
+  <!-- ! start here ********************************************* -->
   <!-- ─── CORE CONCEPTS ─────────────────────── -->
   <h2 id="core-concepts">Core Concepts</h2>
 
@@ -105,8 +102,6 @@
     (light mode) and <code>[data-theme="dark"]</code> (dark mode). Switching themes is a single
     attribute change on <code>&lt;html&gt;</code>, which the browser handles in a single style pass.
   </p>
-
-  <img src="images/pic3.jpg" alt="Graphic made by ChatGPT based off of input data from a chat session. Adilas value add-on core model concept shows how additional features and functionalities can be layered on top of the core system to enhance its capabilities and provide more value to users. Everybody starts with the core and then builds from there." class="img-block image-modal">
 
   <h4 id="adding-tokens">Adding custom tokens</h4>
 
