@@ -873,8 +873,7 @@ figure.image-modal figcaption {
   cursor: pointer;
 }
 
-.cover-img-item:hover,
-.cover-img-item:focus-within {
+.cover-img-item:hover {
   transform: translateY(-2px);
 }
 
