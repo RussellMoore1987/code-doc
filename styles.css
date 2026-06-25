@@ -611,8 +611,21 @@ button {
   margin-top: 22px;
   margin-bottom: 8px;
   color: var(--text-base);
-  text-transform: uppercase;
   letter-spacing: 0.04em;
+}
+.content-body h5 {
+  font-size: 14px;
+  font-weight: 600;
+  margin-top: 20px;
+  margin-bottom: 10px;
+  color: var(--text-base);
+}
+.content-body h6 {
+  font-size: 13px;
+  font-weight: 600;
+  margin-top: 18px;
+  margin-bottom: 10px;
+  color: var(--text-base);
 }
 .content-body h2::before,
 .content-body h3::before {
@@ -1159,13 +1172,6 @@ figure.image-modal figcaption {
   }
 }
 
-/* Breakpoint: < 800px - auto collapse left sidebar */
-@media (max-width: 800px) {
-  .content-body {
-    padding: 24px 18px 48px;
-  }
-}
-
 /* Prevent text selection during resize drag */
 body.is-resizing {
   user-select: none;
@@ -1178,7 +1184,7 @@ body.is-resizing {
    Desktop behavior above 800px is completely unchanged.
    ═══════════════════════════════════════════════════════════════ */
 
-/* Mobile toggle buttons – hidden at desktop widths */
+/* Mobile toggle buttons - hidden at desktop widths */
 .mobile-nav-btn {
   display: none;
 }
@@ -1227,8 +1233,9 @@ body.is-resizing {
   }
 
   /* ── Content takes full width ────────────────────────────────── */
+  /* Breakpoint: < 800px - auto collapse left sidebar */
   .content-body {
-    padding: 56px 16px 48px; /* extra top padding for toggle buttons */
+    padding: 56px 30px 48px;
   }
 
   /* ── Backdrop / scrim behind open panel ─────────────────────── */
