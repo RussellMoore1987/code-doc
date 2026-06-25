@@ -21,6 +21,39 @@
 
 <p>Note: Also notice that the headers above have affected the right side menu.</p>
 
+<h3 id="text-styles"><span data-tags="typography">Text Styles</span></h3>
+<p>DevDocs supports a few text styles for emphasis and clarity. These include:</p>
+<ul>
+    <li><code>&lt;strong&gt;</code> - <strong>for strong emphasis</strong> (bold)</li>
+    <li><code>&lt;em&gt;</code> - <em>for emphasis</em> (italic)</li>
+    <li><code>&lt;code&gt;</code> - <code data-tags="code blocks">for inline code snippets</code></li>
+    <li><code>&lt;mark&gt;</code> - <mark>for highlighting text</mark></li>
+    <li><code>&lt;del&gt;</code> - <del>for strikethrough text</del></li>
+    <li><code>&lt;ins&gt;</code> - <ins>for inserted text</ins> (underline)</li>
+</ul>
+<small>Note: These text styles can be combined for additional emphasis.</small>
+
+<h2 id="code-blocks"><span data-tags="code blocks">Code Blocks</span></h2>
+
+<p>DevDocs supports code blocks for displaying preformatted code snippets. These can be used to show examples, configurations, or any other code-related content. Code blocks are defined using the <code>&lt;pre&gt;</code> and <code>&lt;code&gt;</code> tags.</p>
+<pre><code>// Leaf node (has a page)
+{
+  id: 'installation',
+  label: 'Installation',
+  page: 'pages/installation.html'
+}
+
+// Group node (has children, no page)
+{
+  id: 'getting-started',
+  label: 'Getting Started',
+  children: [
+    { id: 'intro', label: 'Introduction', page: 'pages/intro.html' }
+  ]
+}</code></pre>
+<p>Note: Each code block should be properly formatted to ensure readability and consistency.</p>
+<p>Note: Each code block has a copy button for easy copying.</p>
+
 <h2 id="doc-link-usage"><span data-tags="test">Doc Link Usage</span></h2>
 <p>
     Use <code>a[data-nav]</code> links anywhere in page content to navigate to another page - or a specific section
