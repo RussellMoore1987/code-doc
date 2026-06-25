@@ -1,10 +1,10 @@
-<div class="content-body">
+<div>
 
   <h1 id="installation">Installation</h1>
 
   <p>
     This guide walks you through getting DevDocs running locally on your machine. There is no build step,
-    no package manager, and no framework — just a few files and a local HTTP server.
+    no package manager, and no framework - just a few files and a local HTTP server.
   </p>
 
   <!-- ─── PREREQUISITES ────────────────────── -->
@@ -14,8 +14,8 @@
 
   <ul>
     <li><strong>VS Code</strong> with the <em>Live Server</em> extension installed, <em>or</em></li>
-    <li><strong>Python 3.x</strong> — ships with a built-in HTTP server, <em>or</em></li>
-    <li><strong>Node.js</strong> — use the <code>npx serve</code> package if preferred.</li>
+    <li><strong>Python 3.x</strong> - ships with a built-in HTTP server, <em>or</em></li>
+    <li><strong>Node.js</strong> - use the <code>npx serve</code> package if preferred.</li>
   </ul>
 
   <div class="callout">
@@ -55,7 +55,7 @@ cd devdocs</code></pre>
   <!-- ─── STARTING THE SERVER ──────────────── -->
   <h2 id="starting-the-server">Starting a Local Server</h2>
 
-  <h3 id="vscode-live-server">Option A — VS Code Live Server</h3>
+  <h3 id="vscode-live-server">Option A - VS Code Live Server</h3>
 
   <ol>
     <li>Open the <code>devdocs</code> folder in VS Code.</li>
@@ -67,14 +67,14 @@ cd devdocs</code></pre>
   <figure class="img-block">
     <div class="img-placeholder" aria-label="VS Code Live Server menu screenshot placeholder">
       <svg viewBox="0 0 48 48" width="48" height="48" aria-hidden="true"><rect x="4" y="8" width="40" height="32" rx="3" stroke="currentColor" stroke-width="2" fill="none"/><circle cx="24" cy="24" r="8" stroke="currentColor" stroke-width="2" fill="none"/><line x1="24" y1="16" x2="24" y2="10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-      <span>Screenshot — Right-click context menu in VS Code Explorer</span>
+      <span>Screenshot - Right-click context menu in VS Code Explorer</span>
     </div>
     <figcaption>Right-click <code>index.html</code> and select "Open with Live Server".</figcaption>
   </figure>
 
   <img src="images/pic2.png" alt="Screenshot of DevDocs..." class="img-block image-modal">
 
-  <h3 id="python-server">Option B — Python HTTP Server</h3>
+  <h3 id="python-server">Option B - Python HTTP Server</h3>
 
   <p>From inside the project folder, run:</p>
 
@@ -84,7 +84,7 @@ python -m http.server 8080
 # Then open in your browser:
 # http://localhost:8080</code></pre>
 
-  <h3 id="node-serve">Option C — Node.js <code>serve</code></h3>
+  <h3 id="node-serve">Option C - Node.js <code>serve</code></h3>
 
   <pre><code>npx serve .
 # Opens at http://localhost:3000 (or the next available port)</code></pre>
@@ -144,9 +144,9 @@ python -m http.server 8080
 
   <ol>
     <li>Be wrapped in a single <code>&lt;div class="content-body"&gt;</code> element.</li>
-    <li>Use heading tags (<code>h1</code>–<code>h4</code>) with unique <code>id</code> attributes
+    <li>Use heading tags (<code>h1</code>-<code>h4</code>) with unique <code>id</code> attributes
         (or let <code>app.js</code> auto-generate them from the heading text).</li>
-    <li>Contain only the page body — no <code>&lt;html&gt;</code>, <code>&lt;head&gt;</code>,
+    <li>Contain only the page body - no <code>&lt;html&gt;</code>, <code>&lt;head&gt;</code>,
         or <code>&lt;body&gt;</code> tags.</li>
   </ol>
 
