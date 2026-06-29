@@ -16,6 +16,21 @@
     </p>
   </div>
 
+  <h2 id="grid-anatomy">Grid Anatomy</h2>
+  <ul>
+    <li><code>.container*</code> controls horizontal layout bounds and inner padding.</li>
+    <li><code>.row</code> creates a flex row and manages gutters via CSS variables.</li>
+    <li><code>.col*</code> classes define column width behavior in a 12-column grid.</li>
+    <li><code>.g*</code>, <code>.gx*</code>, and <code>.gy*</code> control spacing between columns/rows.</li>
+  </ul>
+
+  <pre><code>&lt;div class="container"&gt;
+  &lt;div class="row g-3"&gt;
+    &lt;div class="col-12 col-md-8"&gt;Content&lt;/div&gt;
+    &lt;div class="col-12 col-md-4"&gt;Sidebar&lt;/div&gt;
+  &lt;/div&gt;
+&lt;/div&gt;</code></pre>
+
   <h2 id="breakpoints">Breakpoints</h2>
   <ul>
     <li><code>xs</code> default: <code>#content-body</code> width &lt;576px</li>
@@ -27,9 +42,15 @@
   </ul>
 
   <h2 id="containers">Containers</h2>
-  <p>Use fixed-width containers at breakpoints, or full-width with <code>.container-fluid</code>.</p>
+  <p>
+    Use fixed-width containers at breakpoints, or full-width with <code>.container-fluid</code>.
+    The size-specific variants (<code>.container-sm</code>, <code>.container-md</code>, etc.) begin
+    applying a max-width at their named breakpoint.
+  </p>
 
   <pre><code>&lt;div class="container"&gt;...&lt;/div&gt;
+&lt;div class="container-sm"&gt;...&lt;/div&gt;
+&lt;div class="container-lg"&gt;...&lt;/div&gt;
 &lt;div class="container-fluid"&gt;...&lt;/div&gt;</code></pre>
 
   <h2 id="basic-grid">Basic Grid</h2>
@@ -45,6 +66,25 @@
     </div>
   </div>
 
+  <h2 id="fixed-columns">Fixed 12-Column Spans</h2>
+  <p>Use explicit column spans when you need predictable widths.</p>
+
+  <pre><code>&lt;div class="row g-2"&gt;
+  &lt;div class="col-6 col-lg-3"&gt;A&lt;/div&gt;
+  &lt;div class="col-6 col-lg-3"&gt;B&lt;/div&gt;
+  &lt;div class="col-6 col-lg-3"&gt;C&lt;/div&gt;
+  &lt;div class="col-6 col-lg-3"&gt;D&lt;/div&gt;
+&lt;/div&gt;</code></pre>
+
+  <div class="grid-demo-outline">
+    <div class="row g-2">
+      <div class="col-6 col-lg-3"><div class="grid-demo-box">.col-6 .col-lg-3</div></div>
+      <div class="col-6 col-lg-3"><div class="grid-demo-box">.col-6 .col-lg-3</div></div>
+      <div class="col-6 col-lg-3"><div class="grid-demo-box">.col-6 .col-lg-3</div></div>
+      <div class="col-6 col-lg-3"><div class="grid-demo-box">.col-6 .col-lg-3</div></div>
+    </div>
+  </div>
+
   <h2 id="equal-width">Equal Width Columns</h2>
   <pre><code>&lt;div class="row g-2"&gt;
   &lt;div class="col"&gt;1&lt;/div&gt;
@@ -57,6 +97,25 @@
       <div class="col"><div class="grid-demo-box">.col</div></div>
       <div class="col"><div class="grid-demo-box">.col</div></div>
       <div class="col"><div class="grid-demo-box">.col</div></div>
+    </div>
+  </div>
+
+  <h2 id="auto-columns">Auto and Mixed Columns</h2>
+  <p>
+    <code>.col-auto</code> sizes to content width, while <code>.col</code> fills remaining space.
+  </p>
+
+  <pre><code>&lt;div class="row g-2 align-items-center"&gt;
+  &lt;div class="col-auto"&gt;Auto&lt;/div&gt;
+  &lt;div class="col"&gt;Fills remaining width&lt;/div&gt;
+  &lt;div class="col-auto"&gt;Auto&lt;/div&gt;
+&lt;/div&gt;</code></pre>
+
+  <div class="grid-demo-outline">
+    <div class="row g-2 align-items-center">
+      <div class="col-auto"><div class="grid-demo-box">.col-auto</div></div>
+      <div class="col"><div class="grid-demo-box">.col</div></div>
+      <div class="col-auto"><div class="grid-demo-box">.col-auto</div></div>
     </div>
   </div>
 
@@ -79,6 +138,27 @@
     </div>
   </div>
 
+  <h3 id="row-cols-progressive">Progressive Row-Cols Example</h3>
+  <pre><code>&lt;div class="row row-cols-1 row-cols-sm-2 row-cols-lg-4 g-3"&gt;
+  &lt;div class="col"&gt;Item 1&lt;/div&gt;
+  &lt;div class="col"&gt;Item 2&lt;/div&gt;
+  &lt;div class="col"&gt;Item 3&lt;/div&gt;
+  &lt;div class="col"&gt;Item 4&lt;/div&gt;
+  &lt;div class="col"&gt;Item 5&lt;/div&gt;
+  &lt;div class="col"&gt;Item 6&lt;/div&gt;
+&lt;/div&gt;</code></pre>
+
+  <div class="grid-demo-outline">
+    <div class="row row-cols-1 row-cols-sm-2 row-cols-lg-4 g-3">
+      <div class="col"><div class="grid-demo-box">Item 1</div></div>
+      <div class="col"><div class="grid-demo-box">Item 2</div></div>
+      <div class="col"><div class="grid-demo-box">Item 3</div></div>
+      <div class="col"><div class="grid-demo-box">Item 4</div></div>
+      <div class="col"><div class="grid-demo-box">Item 5</div></div>
+      <div class="col"><div class="grid-demo-box">Item 6</div></div>
+    </div>
+  </div>
+
   <h2 id="offsets">Offsets</h2>
   <pre><code>&lt;div class="row g-3"&gt;
   &lt;div class="col-4"&gt;4&lt;/div&gt;
@@ -89,6 +169,19 @@
     <div class="row g-3">
       <div class="col-4"><div class="grid-demo-box">.col-4</div></div>
       <div class="col-4 offset-4"><div class="grid-demo-box">.col-4 .offset-4</div></div>
+    </div>
+  </div>
+
+  <h3 id="responsive-offsets">Responsive Offsets</h3>
+  <pre><code>&lt;div class="row g-3"&gt;
+  &lt;div class="col-12 col-md-5"&gt;Block A&lt;/div&gt;
+  &lt;div class="col-12 col-md-5 offset-md-2"&gt;Block B&lt;/div&gt;
+&lt;/div&gt;</code></pre>
+
+  <div class="grid-demo-outline">
+    <div class="row g-3">
+      <div class="col-12 col-md-5"><div class="grid-demo-box">.col-12 .col-md-5</div></div>
+      <div class="col-12 col-md-5 offset-md-2"><div class="grid-demo-box">.col-12 .col-md-5 .offset-md-2</div></div>
     </div>
   </div>
 
@@ -103,6 +196,43 @@
     </div>
   </div>
 
+  <div class="grid-demo-outline">
+    <p class="mb-10"><strong>Vertical gutters: </strong><code>.gy-4</code></p>
+    <div class="row gy-4 gx-1">
+      <div class="col-12"><div class="grid-demo-box">Row item 1</div></div>
+      <div class="col-12"><div class="grid-demo-box">Row item 2</div></div>
+      <div class="col-12"><div class="grid-demo-box">Row item 3</div></div>
+    </div>
+  </div>
+
+  <h2 id="nested-grids">Nested Grids</h2>
+  <p>
+    You can nest a <code>.row</code> inside any column. Use this to build complex card and dashboard layouts.
+  </p>
+
+  <pre><code>&lt;div class="row g-3"&gt;
+  &lt;div class="col-12 col-lg-8"&gt;
+    &lt;div class="row g-2"&gt;
+      &lt;div class="col-6"&gt;Nested A&lt;/div&gt;
+      &lt;div class="col-6"&gt;Nested B&lt;/div&gt;
+    &lt;/div&gt;
+  &lt;/div&gt;
+  &lt;div class="col-12 col-lg-4"&gt;Side&lt;/div&gt;
+&lt;/div&gt;</code></pre>
+
+  <div class="grid-demo-outline">
+    <div class="row g-3">
+      <div class="col-12 col-lg-8">
+        <div class="grid-demo-box mb-10">Parent .col-12 .col-lg-8</div>
+        <div class="row g-2">
+          <div class="col-6"><div class="grid-demo-box">Nested .col-6</div></div>
+          <div class="col-6"><div class="grid-demo-box">Nested .col-6</div></div>
+        </div>
+      </div>
+      <div class="col-12 col-lg-4"><div class="grid-demo-box">Parent .col-12 .col-lg-4</div></div>
+    </div>
+  </div>
+
   <h2 id="common-patterns">Common Pattern</h2>
   <pre><code>&lt;div class="container"&gt;
   &lt;div class="row g-4"&gt;
@@ -110,6 +240,42 @@
     &lt;div class="col-12 col-lg-9"&gt;Main content&lt;/div&gt;
   &lt;/div&gt;
 &lt;/div&gt;</code></pre>
+
+  <h3 id="pattern-cards">Card Grid Pattern</h3>
+  <pre><code>&lt;div class="row row-cols-1 row-cols-md-2 row-cols-xl-3 g-3"&gt;
+  &lt;div class="col"&gt;Card&lt;/div&gt;
+  &lt;div class="col"&gt;Card&lt;/div&gt;
+  &lt;div class="col"&gt;Card&lt;/div&gt;
+&lt;/div&gt;</code></pre>
+
+  <div class="grid-demo-outline">
+    <div class="row row-cols-1 row-cols-md-2 row-cols-xl-3 g-3">
+      <div class="col"><div class="grid-demo-box">Card 1</div></div>
+      <div class="col"><div class="grid-demo-box">Card 2</div></div>
+      <div class="col"><div class="grid-demo-box">Card 3</div></div>
+      <div class="col"><div class="grid-demo-box">Card 4</div></div>
+      <div class="col"><div class="grid-demo-box">Card 5</div></div>
+      <div class="col"><div class="grid-demo-box">Card 6</div></div>
+    </div>
+  </div>
+
+  <h2 id="quick-reference">Quick Reference</h2>
+  <ul>
+    <li><strong>Containers:</strong> <code>.container</code>, <code>.container-fluid</code>, <code>.container-sm</code> ... <code>.container-xxl</code></li>
+    <li><strong>Rows:</strong> <code>.row</code></li>
+    <li><strong>Columns:</strong> <code>.col</code>, <code>.col-auto</code>, <code>.col-1</code>...<code>.col-12</code>, plus <code>-sm</code>/<code>-md</code>/<code>-lg</code>/<code>-xl</code>/<code>-xxl</code></li>
+    <li><strong>Row-cols:</strong> <code>.row-cols-1</code>...<code>.row-cols-6</code> plus responsive variants</li>
+    <li><strong>Offsets:</strong> <code>.offset-1</code>...<code>.offset-11</code> plus responsive variants</li>
+    <li><strong>Gutters:</strong> <code>.g-0</code>...<code>.g-5</code>, <code>.gx-*</code>, <code>.gy-*</code> and responsive gutter variants</li>
+  </ul>
+
+  <div class="callout warning">
+    <div class="callout-title">Important</div>
+    <p>
+      This utility set intentionally focuses on the core Bootstrap-like grid API. If you need features
+      like ordering helpers, add matching utility classes to <code>styles.css</code> and document them here.
+    </p>
+  </div>
 
   <p class="text-muted">
     Tip: compose these grid classes with spacing and flex utilities for fast page layouts.
