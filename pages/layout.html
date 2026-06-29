@@ -1,0 +1,46 @@
+<div>
+  <h1 id="devdocs-layout">DevDocs Layout</h1>
+  <h2 id="sidebar-layout">Sidebar Layout &amp; Resizing</h2>
+
+  <p>Both sidebars can be collapsed and resized interactively at any time:</p>
+
+  <ul>
+    <li><strong>Collapse</strong> — click the arrow icon (‹ / ›) in the sidebar header.</li>
+    <li><strong>Expand</strong> — click the arrow icon in the narrow strip that appears when collapsed.</li>
+    <li><strong>Resize</strong> — drag the 5 px divider between the sidebar and the center content area.
+        Widths are persisted to <code>localStorage</code> so your preference is remembered across page loads.</li>
+  </ul>
+
+  <h3 id="minimum-widths">Minimum Widths</h3>
+
+  <p>
+    The left and right sidebars each enforce a minimum width of <strong>220 px</strong>.
+    If you drag a sidebar below that threshold it will spring back to the minimum.
+    You can adjust the <code>MIN_SIDEBAR_WIDTH</code> constant in <code>app.js</code>.
+  </p>
+
+  <!-- ─── RESPONSIVE ────────────────────────── -->
+  <h2 id="responsive-layout">Responsive Layout</h2>
+
+  <p>
+    DevDocs automatically collapses sidebars on narrow viewports to protect the center content area:
+  </p>
+
+  <ul>
+    <li>Below <strong>1200 px</strong> — the right sidebar collapses automatically.</li>
+    <li>Below <strong>800 px</strong> — the left sidebar also collapses.</li>
+  </ul>
+
+  <p>
+    On touch devices you can still expand either sidebar manually using the strip expand button.
+    The responsive collapse only triggers once on load; after that, user preference takes over.
+  </p>
+
+  <h4 id="customising-breakpoints">Customising breakpoints</h4>
+
+  <p>
+    Edit the <code>checkResponsiveCollapse()</code> function in <code>app.js</code> and the matching
+    media queries in <code>styles.css</code> to suit your content.
+  </p>
+
+</div>
