@@ -133,6 +133,11 @@ const STORAGE_KEY_LEFT_W = 'devdocs-left-w';
 const STORAGE_KEY_RIGHT_W= 'devdocs-right-w';
 const STORAGE_KEY_LEFT_C = 'devdocs-left-collapsed';
 const STORAGE_KEY_RIGHT_C= 'devdocs-right-collapsed';
+const STORAGE_KEY_LEFT_TAGS_EXPANDED = 'devdocs-left-tags-expanded';
+const STORAGE_KEY_LEFT_TAGS_HEIGHT = 'devdocs-left-tags-height';
+const DEFAULT_LEFT_TAGS_HEIGHT = 120;
+const MIN_LEFT_TAGS_HEIGHT = 72;
+const MAX_LEFT_TAGS_HEIGHT = 420;
 
 const state = {
   activeNavId:     null,
@@ -505,8 +510,31 @@ const tagState = {
   index: [],        // [{tag, pageTitle, pageUrl, navId, sectionTitle, sectionId, snippet, tagElIndex}]
   isViewOpen: false,
   currentTag: null,
-  previousScrollTop: 0  // scroll position saved when the tag view opens
+  previousScrollTop: 0,  // scroll position saved when the tag view opens
+  allTags: null,
+  allTagsRendered: false,
+  leftPanelExpanded: localStorage.getItem(STORAGE_KEY_LEFT_TAGS_EXPANDED) === '1',
+  leftPanelHeight: Number.parseInt(localStorage.getItem(STORAGE_KEY_LEFT_TAGS_HEIGHT), 10) || DEFAULT_LEFT_TAGS_HEIGHT
 };
+
+function clampLeftTagsHeight(height) {
+  const value = Number.isFinite(height) ? height : DEFAULT_LEFT_TAGS_HEIGHT;
+  return Math.max(MIN_LEFT_TAGS_HEIGHT, Math.min(MAX_LEFT_TAGS_HEIGHT, Math.round(value)));
+}
+
+function applyLeftAllTagsHeight() {
+  const panel = document.getElementById('left-all-tags-panel');
+  if (!panel) return;
+  panel.style.height = `${clampLeftTagsHeight(tagState.leftPanelHeight)}px`;
+}
+
+function setLeftAllTagsHeight(height, persist = true) {
+  tagState.leftPanelHeight = clampLeftTagsHeight(height);
+  applyLeftAllTagsHeight();
+  if (persist) {
+    localStorage.setItem(STORAGE_KEY_LEFT_TAGS_HEIGHT, String(tagState.leftPanelHeight));
+  }
+}
 
 /**
  * Build search index by loading and parsing all pages
@@ -514,6 +542,8 @@ const tagState = {
 async function buildSearchIndex() {
   searchState.index = [];
   tagState.index = [];
+  tagState.allTags = null;
+  tagState.allTagsRendered = false;
   
   try {
     // Get all unique pages from NAV_DATA
@@ -667,9 +697,147 @@ async function buildSearchIndex() {
     // Filter out failed pages and add to index
     searchState.index = results.filter(page => page !== null);
     tagState.index = results.filter(page => page !== null).flatMap(page => page.tagEntries || []);
+    cacheAllTags();
+    renderAllTagsInLeftNav();
   } catch (error) {
     console.error('Failed to build search index:', error);
   }
+}
+
+function cacheAllTags() {
+  if (tagState.allTags) return tagState.allTags;
+
+  const unique = new Set();
+  tagState.index.forEach(entry => {
+    const tag = (entry.tag || '').trim().toLowerCase();
+    if (tag) unique.add(tag);
+  });
+
+  tagState.allTags = Array.from(unique).sort((a, b) => a.localeCompare(b));
+  return tagState.allTags;
+}
+
+function setLeftAllTagsExpanded(expanded) {
+  const section = document.getElementById('left-all-tags');
+  const panel = document.getElementById('left-all-tags-panel');
+  const toggle = document.getElementById('left-all-tags-toggle');
+  const resize = document.getElementById('left-all-tags-resize');
+  if (!section || !panel || !toggle) return;
+
+  tagState.leftPanelExpanded = expanded;
+  section.classList.toggle('is-expanded', expanded);
+  panel.hidden = !expanded;
+  if (resize) resize.hidden = !expanded;
+  toggle.setAttribute('aria-expanded', expanded ? 'true' : 'false');
+  localStorage.setItem(STORAGE_KEY_LEFT_TAGS_EXPANDED, expanded ? '1' : '0');
+
+  if (expanded) {
+    applyLeftAllTagsHeight();
+  }
+}
+
+function initLeftAllTagsNav() {
+  if (!elLeftSidebar || document.getElementById('left-all-tags')) return;
+
+  const section = document.createElement('section');
+  section.id = 'left-all-tags';
+  section.className = 'left-all-tags';
+  section.hidden = true;
+
+  const toggle = document.createElement('button');
+  toggle.type = 'button';
+  toggle.id = 'left-all-tags-toggle';
+  toggle.className = 'tag-badge left-all-tags-toggle';
+  toggle.setAttribute('aria-controls', 'left-all-tags-panel');
+  toggle.setAttribute('aria-expanded', 'false');
+  toggle.setAttribute('aria-label', 'Toggle all tags list');
+  toggle.innerHTML = `${TAG_SVG}<span>All Tags</span><span class="left-all-tags-caret" aria-hidden="true">▾</span>`;
+
+  const panel = document.createElement('div');
+  panel.id = 'left-all-tags-panel';
+  panel.className = 'left-all-tags-panel';
+  panel.hidden = true;
+
+  const resize = document.createElement('div');
+  resize.id = 'left-all-tags-resize';
+  resize.className = 'left-all-tags-resize';
+  resize.hidden = true;
+  resize.setAttribute('role', 'separator');
+  resize.setAttribute('aria-orientation', 'horizontal');
+  resize.setAttribute('aria-label', 'Resize left tags panel');
+  resize.setAttribute('tabindex', '0');
+
+  toggle.addEventListener('click', () => {
+    setLeftAllTagsExpanded(!tagState.leftPanelExpanded);
+  });
+
+  resize.addEventListener('mousedown', (e) => {
+    e.preventDefault();
+    const startY = e.clientY;
+    const startHeight = clampLeftTagsHeight(tagState.leftPanelHeight);
+
+    const onMove = (ev) => {
+      const delta = ev.clientY - startY;
+      setLeftAllTagsHeight(startHeight + delta, false);
+    };
+
+    const onUp = () => {
+      setLeftAllTagsHeight(tagState.leftPanelHeight, true);
+      document.removeEventListener('mousemove', onMove);
+      document.removeEventListener('mouseup', onUp);
+    };
+
+    document.addEventListener('mousemove', onMove);
+    document.addEventListener('mouseup', onUp);
+  });
+
+  resize.addEventListener('keydown', (e) => {
+    const STEP = 16;
+    if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
+      e.preventDefault();
+      const direction = e.key === 'ArrowUp' ? -1 : 1;
+      setLeftAllTagsHeight(tagState.leftPanelHeight + direction * STEP, true);
+    }
+  });
+
+  section.appendChild(resize);
+  section.appendChild(toggle);
+  section.appendChild(panel);
+  elLeftSidebar.appendChild(section);
+}
+
+function renderAllTagsInLeftNav() {
+  const section = document.getElementById('left-all-tags');
+  const panel = document.getElementById('left-all-tags-panel');
+  if (!section || !panel) return;
+
+  const tags = cacheAllTags();
+
+  if (!tags.length) {
+    section.hidden = true;
+    return;
+  }
+
+  section.hidden = false;
+
+  if (!tagState.allTagsRendered) {
+    panel.innerHTML = '';
+    tags.forEach(tag => {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'tag-badge left-tag-badge';
+      btn.dataset.tag = tag;
+      btn.setAttribute('aria-label', `View all content tagged: ${tag}`);
+      btn.innerHTML = `${TAG_SVG}<span style="text-align: left;">${escapeHtml(tag)}</span>`;
+      btn.addEventListener('click', () => openTagView(tag));
+      panel.appendChild(btn);
+    });
+
+    tagState.allTagsRendered = true;
+  }
+
+  setLeftAllTagsHeight(tagState.leftPanelHeight, false);
+  setLeftAllTagsExpanded(tagState.leftPanelExpanded);
 }
 
 /**
@@ -2182,6 +2350,10 @@ function openTagView(tag) {
     closeMobilePanels();
   }
 
+  const wasOpen = tagState.isViewOpen;
+  const existingTagView = document.getElementById('tag-results-view');
+  if (existingTagView) existingTagView.remove();
+
   tagState.isViewOpen = true;
   tagState.currentTag = tag;
 
@@ -2190,10 +2362,12 @@ function openTagView(tag) {
   const rightTagsEl = document.getElementById('right-tags');
   if (rightTagsEl) rightTagsEl.style.display = 'none';
 
-  // Save current scroll position before hiding content and resetting scroll
-  tagState.previousScrollTop = elContentScroll.scrollTop;
+  // Save scroll position only when entering tag view from normal page content.
+  if (!wasOpen) {
+    tagState.previousScrollTop = elContentScroll.scrollTop;
+  }
 
-  // Hide the normal page content
+  // Hide the normal page content (if not already hidden).
   elContentBody.style.display = 'none';
 
   // Build and inject the results panel
@@ -3417,6 +3591,7 @@ function init() {
 
   /* Build left nav */
   elLeftNav.appendChild(buildNavTree(NAV_DATA));
+  initLeftAllTagsNav();
   collapseAllNavItems();
 
   /* Restore collapse state from localStorage */

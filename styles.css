@@ -2718,6 +2718,65 @@ a[data-nav]:focus-visible {
   color: var(--text-link);
 }
 
+/* Left nav all-tags control */
+.left-all-tags {
+  margin: 0;
+  padding: 6px 10px 12px;
+  background: var(--bg-sidebar);
+  flex-shrink: 0;
+}
+
+.left-all-tags-toggle {
+  width: 100%;
+  justify-content: flex-start;
+}
+
+.left-all-tags-caret {
+  margin-left: auto;
+  transition: transform 0.15s ease;
+}
+
+.left-all-tags.is-expanded .left-all-tags-caret {
+  transform: rotate(180deg);
+}
+
+.left-all-tags-panel {
+  display: flex;
+  flex-wrap: wrap;
+  align-content: flex-start;
+  align-items: flex-start;
+  gap: 6px;
+  margin-top: 6px;
+  min-height: 72px;
+  overflow-y: auto;
+}
+
+.left-all-tags-panel[hidden] {
+  display: none !important;
+}
+
+.left-all-tags-resize {
+  height: 10px;
+  margin: 0 -10px 6px;
+  border-top: 1px solid var(--border);
+  cursor: ns-resize;
+  opacity: 0.75;
+}
+
+.left-all-tags-resize:hover,
+.left-all-tags-resize:focus-visible {
+  opacity: 1;
+  border-top-color: var(--border-focus);
+}
+
+.left-all-tags-resize[hidden] {
+  display: none !important;
+}
+
+.left-tag-badge {
+  justify-content: flex-start;
+}
+
 /* Hide right-nav outline when tag results view is open */
 .right-nav.tag-view-hidden {
   display: none;
