@@ -25,34 +25,82 @@ const NAV_DATA = [
         page: 'pages/installation.html'
       },
       {
-        id: 'first-steps-group',
-        label: 'First Steps',
+        id: 'step1-group',
+        label: 'Nav step 1',
         children: [
           {
-            id: 'first-steps',
-            label: 'Overview',
-            page: 'pages/first-steps.html'
+            id: 'step1-page1',
+            label: 'Example Page 1',
+            page: 'pages/nav-example.html'
           },
           {
-            id: 'step1-group',
-            label: 'Step 1 - Configure',
+            id: 'step2-group',
+            label: 'Nav step 2',
             children: [
               {
-                id: 'step1-env',
-                label: 'Environment Setup',
-                page: 'pages/environment-setup.html'
+                id: 'step2-page1',
+                label: 'Example Page 2',
+                page: 'pages/nav-example.html'
               },
               {
-                id: 'deep-topic',
-                label: 'Deep Topic',
-                page: 'pages/deep-topic.html'
-              }
+                id: 'step2-page2',
+                label: 'Example Page 3',
+                page: 'pages/nav-example.html'
+              },
+              {
+                id: 'step3-group',
+                label: 'Nav step 3',
+                children: [
+                  {
+                    id: 'step3-page1',
+                    label: 'Example Page 4',
+                    page: 'pages/nav-example.html'
+                  },
+                  {
+                    id: 'step3-page2',
+                    label: 'Example Page 5',
+                    page: 'pages/nav-example.html'
+                  },
+                  {
+                    id: 'step4-group',
+                    label: 'Nav step 4',
+                    children: [
+                      {
+                        id: 'step4-page1',
+                        label: 'Example Page 6',
+                        page: 'pages/nav-example.html'
+                      },
+                      {
+                        id: 'step4-page2',
+                        label: 'Example Page 7',
+                        page: 'pages/nav-example.html'
+                      },
+                      {
+                        id: 'step5-group',
+                        label: 'Nav step 5',
+                        children: [
+                          {
+                            id: 'step5-page1',
+                            label: 'Example Page 8',
+                            page: 'pages/nav-example.html'
+                          },
+                          {
+                            id: 'step5-page2',
+                            label: 'Example Page 9',
+                            page: 'pages/nav-example.html'
+                          }
+                        ]
+                      },
+                    ]
+                  },
+                ]
+              },
             ]
           },
           {
-            id: 'step2',
-            label: 'Step 2 - Build & Run',
-            page: 'pages/step2-build-run.html'
+            id: 'step1-page2',
+            label: 'Example Page 10',
+            page: 'pages/nav-example.html'
           }
         ]
       }
