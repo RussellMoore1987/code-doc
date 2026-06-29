@@ -778,7 +778,7 @@ function initLeftAllTagsNav() {
 
     const onMove = (ev) => {
       const delta = ev.clientY - startY;
-      setLeftAllTagsHeight(startHeight + delta, false);
+      setLeftAllTagsHeight(startHeight - delta, false);
     };
 
     const onUp = () => {
@@ -795,7 +795,7 @@ function initLeftAllTagsNav() {
     const STEP = 16;
     if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
       e.preventDefault();
-      const direction = e.key === 'ArrowUp' ? -1 : 1;
+      const direction = e.key === 'ArrowUp' ? 1 : -1;
       setLeftAllTagsHeight(tagState.leftPanelHeight + direction * STEP, true);
     }
   });
