@@ -113,6 +113,7 @@ const NAV_DATA = [
     children: [
       { id: 'layout',  label: 'DevDocs Layouts',  page: 'pages/layout.html' },
       { id: 'utilities',  label: 'HTML Elements',  page: 'pages/utilities.html' },
+      { id: 'grid-system', label: 'Grid System', page: 'pages/grid-system.html' },
       { id: 'image-galleries', label: 'Image Galleries', page: 'pages/image-galleries.html' },
     ]
   },

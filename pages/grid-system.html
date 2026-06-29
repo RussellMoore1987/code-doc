@@ -1,0 +1,117 @@
+<div>
+  <h1 id="grid-system"><span data-tags="layout,grid">Grid System</span></h1>
+
+  <p>
+    This page documents the Bootstrap 5-style responsive grid utilities included in this project.
+    The system is 12 columns, mobile-first, and based on <code>.container</code>, <code>.row</code>,
+    and <code>.col-*</code> classes.
+  </p>
+
+  <div class="callout">
+    <div class="callout-title">Container Query Driven</div>
+    <p>
+      Responsive grid classes are driven by a container query on <code>#content-body</code>, not viewport
+      media queries. This means layouts respond to the content column width (including sidebar states)
+      rather than full browser width.
+    </p>
+  </div>
+
+  <h2 id="breakpoints">Breakpoints</h2>
+  <ul>
+    <li><code>xs</code> default: <code>#content-body</code> width &lt;576px</li>
+    <li><code>sm</code>: <code>#content-body</code> width &gt;=576px</li>
+    <li><code>md</code>: <code>#content-body</code> width &gt;=768px</li>
+    <li><code>lg</code>: <code>#content-body</code> width &gt;=992px</li>
+    <li><code>xl</code>: <code>#content-body</code> width &gt;=1200px</li>
+    <li><code>xxl</code>: <code>#content-body</code> width &gt;=1400px</li>
+  </ul>
+
+  <h2 id="containers">Containers</h2>
+  <p>Use fixed-width containers at breakpoints, or full-width with <code>.container-fluid</code>.</p>
+
+  <pre><code>&lt;div class="container"&gt;...&lt;/div&gt;
+&lt;div class="container-fluid"&gt;...&lt;/div&gt;</code></pre>
+
+  <h2 id="basic-grid">Basic Grid</h2>
+  <pre><code>&lt;div class="row g-3"&gt;
+  &lt;div class="col-12 col-md-8"&gt;Main&lt;/div&gt;
+  &lt;div class="col-12 col-md-4"&gt;Sidebar&lt;/div&gt;
+&lt;/div&gt;</code></pre>
+
+  <div class="grid-demo-outline">
+    <div class="row g-3">
+      <div class="col-12 col-md-8"><div class="grid-demo-box">.col-12 .col-md-8</div></div>
+      <div class="col-12 col-md-4"><div class="grid-demo-box">.col-12 .col-md-4</div></div>
+    </div>
+  </div>
+
+  <h2 id="equal-width">Equal Width Columns</h2>
+  <pre><code>&lt;div class="row g-2"&gt;
+  &lt;div class="col"&gt;1&lt;/div&gt;
+  &lt;div class="col"&gt;2&lt;/div&gt;
+  &lt;div class="col"&gt;3&lt;/div&gt;
+&lt;/div&gt;</code></pre>
+
+  <div class="grid-demo-outline">
+    <div class="row g-2">
+      <div class="col"><div class="grid-demo-box">.col</div></div>
+      <div class="col"><div class="grid-demo-box">.col</div></div>
+      <div class="col"><div class="grid-demo-box">.col</div></div>
+    </div>
+  </div>
+
+  <h2 id="row-cols">Row Columns Utility</h2>
+  <p>Set child column count quickly with <code>.row-cols-*</code> classes.</p>
+
+  <pre><code>&lt;div class="row row-cols-2 row-cols-md-4 g-3"&gt;
+  &lt;div class="col"&gt;A&lt;/div&gt;
+  &lt;div class="col"&gt;B&lt;/div&gt;
+  &lt;div class="col"&gt;C&lt;/div&gt;
+  &lt;div class="col"&gt;D&lt;/div&gt;
+&lt;/div&gt;</code></pre>
+
+  <div class="grid-demo-outline">
+    <div class="row row-cols-2 row-cols-md-4 g-3">
+      <div class="col"><div class="grid-demo-box">A</div></div>
+      <div class="col"><div class="grid-demo-box">B</div></div>
+      <div class="col"><div class="grid-demo-box">C</div></div>
+      <div class="col"><div class="grid-demo-box">D</div></div>
+    </div>
+  </div>
+
+  <h2 id="offsets">Offsets</h2>
+  <pre><code>&lt;div class="row g-3"&gt;
+  &lt;div class="col-4"&gt;4&lt;/div&gt;
+  &lt;div class="col-4 offset-4"&gt;4 + offset-4&lt;/div&gt;
+&lt;/div&gt;</code></pre>
+
+  <div class="grid-demo-outline">
+    <div class="row g-3">
+      <div class="col-4"><div class="grid-demo-box">.col-4</div></div>
+      <div class="col-4 offset-4"><div class="grid-demo-box">.col-4 .offset-4</div></div>
+    </div>
+  </div>
+
+  <h2 id="gutters">Gutters</h2>
+  <p>Control spacing between columns and rows with <code>.g-*</code>, <code>.gx-*</code>, and <code>.gy-*</code>.</p>
+
+  <div class="grid-demo-outline">
+    <p class="mb-10"><strong>Horizontal gutters: </strong><code>.gx-5</code></p>
+    <div class="row gx-5 gy-2">
+      <div class="col-6"><div class="grid-demo-box">Left</div></div>
+      <div class="col-6"><div class="grid-demo-box">Right</div></div>
+    </div>
+  </div>
+
+  <h2 id="common-patterns">Common Pattern</h2>
+  <pre><code>&lt;div class="container"&gt;
+  &lt;div class="row g-4"&gt;
+    &lt;div class="col-12 col-lg-3"&gt;Left nav&lt;/div&gt;
+    &lt;div class="col-12 col-lg-9"&gt;Main content&lt;/div&gt;
+  &lt;/div&gt;
+&lt;/div&gt;</code></pre>
+
+  <p class="text-muted">
+    Tip: compose these grid classes with spacing and flex utilities for fast page layouts.
+  </p>
+</div>
