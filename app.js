@@ -10,6 +10,7 @@
    ═══════════════════════════════════════════════════════════════ */
 
 const NAV_DATA = [
+  // keep this as a reference, comment it out to hide it -----------
   {
     id: 'getting-started',
     label: 'Getting Started',
@@ -110,10 +111,12 @@ const NAV_DATA = [
     id: 'reference',
     label: 'Reference',
     children: [
+      { id: 'layout',  label: 'DevDocs Layouts',  page: 'pages/layout.html' },
       { id: 'utilities',  label: 'HTML Elements',  page: 'pages/utilities.html' },
       { id: 'image-galleries', label: 'Image Galleries', page: 'pages/image-galleries.html' },
     ]
   },
+  // ---------------------------------------------------------------
 ];
 
 /* ═══════════════════════════════════════════════════════════════
