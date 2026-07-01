@@ -2853,7 +2853,6 @@ function setupTestimonialSliders() {
     const prevBtn = slider.querySelector('[data-testimonial-prev]');
     const nextBtn = slider.querySelector('[data-testimonial-next]');
     const dotsContainer = slider.querySelector('[data-testimonial-dots]');
-    const status = slider.querySelector('[data-testimonial-status]');
 
     if (!track || slides.length === 0) return;
 
@@ -2875,10 +2874,6 @@ function setupTestimonialSliders() {
         button.setAttribute('aria-current', isActive ? 'true' : 'false');
         button.tabIndex = isActive ? 0 : -1;
       });
-
-      if (status) {
-        status.textContent = `${currentIndex + 1} of ${slides.length}`;
-      }
     }
 
     if (dotsContainer) {
