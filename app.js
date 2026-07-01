@@ -2154,6 +2154,7 @@ async function loadPage(url) {
     clearPageHighlights(); // Clear any previous search highlights
     setupTestimonialSliders(); // Wire testimonial slider controls on the new page
     setupImageSliders(); // Wire image slider controls on the new page
+    setupLogoSliders(); // Wire continuous logo slider controls on the new page
     setupGallerySystems(); // Enhance gallery layouts before wiring modal triggers
     setupImageModal();     // Wire up .image-modal images on the new page
     setupContentSectionLinks(); // Wire smooth-scroll for in-content a[data-target] links
@@ -3073,6 +3074,148 @@ function setupImageSliders() {
   });
 }
 
+function setupLogoSliders() {
+  const sliders = elContentBody.querySelectorAll('[data-logo-slider]');
+
+  sliders.forEach((slider) => {
+    if (slider.dataset.logoSliderInit === 'true') return;
+
+    const viewport = slider.querySelector('.logo-slider-viewport');
+    const track = slider.querySelector('.logo-slider-track');
+    const slides = Array.from(slider.querySelectorAll('.logo-slide'));
+
+    if (!viewport || !track || slides.length === 0) return;
+
+    slider.dataset.logoSliderInit = 'true';
+
+    const dragEnabled = (slider.dataset.logoSliderDraggable || '').toLowerCase() === 'true';
+    const stopOnHover = (slider.dataset.logoSliderStopOnHover || '').toLowerCase() === 'true';
+    const configuredSpeed = Number.parseFloat(slider.dataset.logoSliderSpeed || '');
+    const speedPxPerSecond = Number.isFinite(configuredSpeed)
+      ? Math.max(20, configuredSpeed)
+      : 65;
+
+    const clones = slides.map((slide) => {
+      const clone = slide.cloneNode(true);
+      clone.dataset.logoClone = 'true';
+      clone.setAttribute('aria-hidden', 'true');
+      clone.querySelectorAll('a, button, input, select, textarea, [tabindex]').forEach((focusable) => {
+        focusable.tabIndex = -1;
+      });
+      return clone;
+    });
+
+    clones.forEach((clone) => track.appendChild(clone));
+
+    let singleSetWidth = 0;
+    let offsetX = 0;
+    let lastTimestamp = 0;
+    let isHovered = false;
+    let isPointerDown = false;
+    let pointerStartX = 0;
+    let dragStartOffset = 0;
+    let rafId = null;
+
+    function wrapOffset(value) {
+      if (singleSetWidth <= 0) return 0;
+      while (value <= -singleSetWidth) value += singleSetWidth;
+      while (value > 0) value -= singleSetWidth;
+      return value;
+    }
+
+    function render() {
+      track.style.transform = `translate3d(${offsetX}px, 0, 0)`;
+    }
+
+    function measure() {
+      singleSetWidth = track.scrollWidth / 2;
+      offsetX = wrapOffset(offsetX);
+      render();
+    }
+
+    function animationFrame(timestamp) {
+      if (!slider.isConnected) {
+        if (rafId !== null) {
+          cancelAnimationFrame(rafId);
+        }
+        rafId = null;
+        return;
+      }
+
+      const deltaMs = lastTimestamp === 0 ? 16 : timestamp - lastTimestamp;
+      lastTimestamp = timestamp;
+
+      const shouldPause = (stopOnHover && isHovered) || isPointerDown;
+      if (!shouldPause && singleSetWidth > 0) {
+        offsetX = wrapOffset(offsetX - speedPxPerSecond * (deltaMs / 1000));
+        render();
+      }
+
+      rafId = requestAnimationFrame(animationFrame);
+    }
+
+    if (stopOnHover) {
+      slider.classList.add('logo-slider-stop-on-hover');
+
+      viewport.addEventListener('mouseenter', () => {
+        isHovered = true;
+      });
+
+      viewport.addEventListener('mouseleave', () => {
+        isHovered = false;
+      });
+    }
+
+    if (dragEnabled) {
+      slider.classList.add('logo-slider-draggable');
+
+      const onPointerMove = (event) => {
+        if (!isPointerDown) return;
+        const delta = event.clientX - pointerStartX;
+        offsetX = wrapOffset(dragStartOffset + delta);
+        render();
+      };
+
+      const endPointerDrag = (event) => {
+        if (!isPointerDown) return;
+        isPointerDown = false;
+        slider.classList.remove('is-dragging');
+
+        if (event && typeof event.pointerId === 'number' && viewport.hasPointerCapture(event.pointerId)) {
+          viewport.releasePointerCapture(event.pointerId);
+        }
+      };
+
+      viewport.addEventListener('pointerdown', (event) => {
+        if (event.pointerType === 'mouse' && event.button !== 0) return;
+
+        isPointerDown = true;
+        pointerStartX = event.clientX;
+        dragStartOffset = offsetX;
+        slider.classList.add('is-dragging');
+        viewport.setPointerCapture(event.pointerId);
+      });
+
+      viewport.addEventListener('pointermove', onPointerMove);
+      viewport.addEventListener('pointerup', endPointerDrag);
+      viewport.addEventListener('pointercancel', endPointerDrag);
+      viewport.addEventListener('lostpointercapture', endPointerDrag);
+    }
+
+    measure();
+
+    if ('ResizeObserver' in globalThis) {
+      const ro = new ResizeObserver(() => {
+        measure();
+      });
+      ro.observe(viewport);
+      ro.observe(track);
+    }
+
+    rafId = requestAnimationFrame(animationFrame);
+  });
+}
+
 function syncImageSliderToElement(targetEl) {
   if (!(targetEl instanceof Element)) return null;
 
@@ -3898,6 +4041,9 @@ function init() {
 
   /* Initialize image slider controls for any pre-existing content */
   setupImageSliders();
+
+  /* Initialize continuous logo sliders for any pre-existing content */
+  setupLogoSliders();
 
   /* Initialize tooltip system (static chrome wired once; content re-scanned per load) */
   initTooltips();

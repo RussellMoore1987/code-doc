@@ -254,6 +254,42 @@
         </div>
     </section>
 
+    <h3 id="continuous-logo-slider"><span data-tags="images">Continuous Logo Slider</span></h3>
+    <p>
+        Use this slider for partner, client, or integration logos that should move continuously from right to left.
+        This component is marquee-style (always moving), with optional drag support and optional pause on hover.
+    </p>
+    <p>
+        Options:
+        <code>data-logo-slider-speed="65"</code> (pixels/second),
+        <code>data-logo-slider-draggable="true"</code>,
+        <code>data-logo-slider-stop-on-hover="true"</code>.
+    </p>
+    <pre><code>&lt;section class="logo-slider" data-logo-slider data-logo-slider-speed="65" data-logo-slider-draggable="true" data-logo-slider-stop-on-hover="true" aria-label="Partner logos"&gt;
+  &lt;div class="logo-slider-viewport"&gt;
+    &lt;div class="logo-slider-track"&gt;
+      &lt;div class="logo-slide"&gt;&lt;span class="logo-chip"&gt;Rollins&lt;/span&gt;&lt;/div&gt;
+      &lt;div class="logo-slide"&gt;&lt;span class="logo-chip"&gt;Atlas&lt;/span&gt;&lt;/div&gt;
+      &lt;div class="logo-slide"&gt;&lt;span class="logo-chip"&gt;Northstar&lt;/span&gt;&lt;/div&gt;
+    &lt;/div&gt;
+  &lt;/div&gt;
+&lt;/section&gt;</code></pre>
+
+    <section class="logo-slider" data-logo-slider data-logo-slider-speed="65" data-logo-slider-draggable="true" data-logo-slider-stop-on-hover="true" aria-label="Partner logos slider">
+        <div class="logo-slider-viewport">
+            <div class="logo-slider-track">
+                <div class="logo-slide"><span class="logo-chip">Rollins</span></div>
+                <div class="logo-slide"><span class="logo-chip">Atlas</span></div>
+                <div class="logo-slide"><span class="logo-chip">Northstar</span></div>
+                <div class="logo-slide"><span class="logo-chip">Pioneer</span></div>
+                <div class="logo-slide"><span class="logo-chip">Bluewave</span></div>
+                <div class="logo-slide"><span class="logo-chip">Aether</span></div>
+                <div class="logo-slide"><span class="logo-chip">Summit</span></div>
+                <div class="logo-slide"><span class="logo-chip">Beacon</span></div>
+            </div>
+        </div>
+    </section>
+
     <h3 id="single-images"><span data-tags="images">Single Images</span></h3>
     <p>
         To add a single image, use an <code>&lt;img&gt;</code> tag with the <code>.img-block</code> class. The image will

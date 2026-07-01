@@ -1577,6 +1577,77 @@ button {
   }
 }
 
+/* Continuous logo slider */
+.logo-slider {
+  margin: 24px 0 34px;
+  padding: 8px 0;
+}
+
+.logo-slider-viewport {
+  overflow: hidden;
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  background: color-mix(in srgb, var(--bg-content) 86%, var(--bg-hover) 14%);
+  touch-action: pan-y;
+}
+
+.logo-slider-track {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  width: max-content;
+  padding: 14px 16px;
+  will-change: transform;
+  user-select: none;
+}
+
+.logo-slide {
+  flex: 0 0 auto;
+}
+
+.logo-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 140px;
+  height: 54px;
+  border-radius: 12px;
+  padding: 0 20px;
+  border: 1px solid var(--border);
+  background: var(--bg-content);
+  color: var(--text-base);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.logo-slider.logo-slider-draggable .logo-slider-viewport {
+  cursor: grab;
+}
+
+.logo-slider.logo-slider-draggable.is-dragging .logo-slider-viewport {
+  cursor: grabbing;
+}
+
+.logo-slider.logo-slider-stop-on-hover .logo-slider-viewport:hover {
+  border-color: var(--border-focus);
+}
+
+@media (max-width: 600px) {
+  .logo-slider-track {
+    gap: 12px;
+    padding: 12px;
+  }
+
+  .logo-chip {
+    min-width: 120px;
+    height: 48px;
+    padding: 0 16px;
+    font-size: 12px;
+  }
+}
+
 .content-body strong { font-weight: 700; }
 .content-body em     { font-style: italic; }
 
