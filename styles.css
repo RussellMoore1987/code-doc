@@ -1630,7 +1630,7 @@ button {
   cursor: grabbing;
 }
 
-.logo-slider.logo-slider-stop-on-hover .logo-slider-viewport:hover {
+.logo-slider.is-dragging .logo-slider-viewport {
   border-color: var(--border-focus);
 }
 

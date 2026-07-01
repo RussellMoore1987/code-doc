@@ -3118,9 +3118,9 @@ function setupLogoSliders() {
 
     function wrapOffset(value) {
       if (singleSetWidth <= 0) return 0;
-      while (value <= -singleSetWidth) value += singleSetWidth;
-      while (value > 0) value -= singleSetWidth;
-      return value;
+
+      const normalized = ((value % singleSetWidth) + singleSetWidth) % singleSetWidth;
+      return normalized === 0 ? 0 : normalized - singleSetWidth;
     }
 
     function render() {
@@ -3128,7 +3128,15 @@ function setupLogoSliders() {
     }
 
     function measure() {
-      singleSetWidth = track.scrollWidth / 2;
+      const firstOriginal = slides[0];
+      const firstClone = clones[0];
+
+      if (firstOriginal && firstClone) {
+        singleSetWidth = firstClone.offsetLeft - firstOriginal.offsetLeft;
+      } else {
+        singleSetWidth = track.scrollWidth / 2;
+      }
+
       offsetX = wrapOffset(offsetX);
       render();
     }
