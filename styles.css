@@ -1260,6 +1260,26 @@ button {
   margin-bottom: 14px;
   color: var(--text-base);
 }
+.content-body blockquote {
+  margin: 20px 0;
+  padding: 14px 18px;
+  font-size: 20px;
+  font-weight: bold;
+  border-left: 4px solid var(--border-focus);
+  color: var(--text-base);
+}
+.content-body blockquote p {
+  margin-bottom: 10px;
+}
+.content-body blockquote cite {
+  display: block;
+  font-size: 13px;
+  font-style: normal;
+  color: var(--text-muted);
+}
+.content-body blockquote cite::before {
+  content: "— ";
+}
 .content-body ul,
 .content-body ol {
   margin: 0 0 14px 24px;
