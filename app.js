@@ -117,6 +117,7 @@ const NAV_DATA = [
       { id: 'utilities',  label: 'HTML Elements',  page: 'pages/utilities.html' },
       { id: 'grid-system', label: 'Grid System', page: 'pages/grid-system.html' },
       { id: 'image-galleries', label: 'Image Galleries', page: 'pages/image-galleries.html' },
+      { id: 'custom', label: 'Custom', page: 'pages/custom.html' },
     ]
   },
   /* -------------------------------------------------------------------
