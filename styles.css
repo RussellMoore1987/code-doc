@@ -1291,7 +1291,7 @@ button {
 /* Testimonial slider */
 .testimonial-slider {
   margin: 24px 0 34px;
-  padding: 18px;
+  padding: 18px 0;
 }
 
 .testimonial-slider-shell {
@@ -1410,7 +1410,7 @@ button {
 
 @media (max-width: 600px) {
   .testimonial-slider {
-    padding: 14px;
+    padding: 14px 0;
   }
 
   .testimonial-slider-shell {
