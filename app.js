@@ -2153,6 +2153,7 @@ async function loadPage(url) {
     setupCopyButtons();
     clearPageHighlights(); // Clear any previous search highlights
     setupTestimonialSliders(); // Wire testimonial slider controls on the new page
+    setupImageSliders(); // Wire image slider controls on the new page
     setupGallerySystems(); // Enhance gallery layouts before wiring modal triggers
     setupImageModal();     // Wire up .image-modal images on the new page
     setupContentSectionLinks(); // Wire smooth-scroll for in-content a[data-target] links
@@ -2842,88 +2843,185 @@ function setupContentSectionLinks() {
   });
 }
 
+function initializeSliderComponent(slider, options) {
+  if (!slider || !options) return;
+  if (slider.dataset[options.initFlag] === 'true') return;
+  slider.dataset[options.initFlag] = 'true';
+
+  const track = slider.querySelector(options.trackSelector);
+  const slides = Array.from(slider.querySelectorAll(options.slideSelector));
+  const prevBtn = slider.querySelector(options.prevSelector);
+  const nextBtn = slider.querySelector(options.nextSelector);
+  const dotsContainer = slider.querySelector(options.dotsSelector);
+
+  if (!track || slides.length === 0) return;
+
+  let currentIndex = 0;
+  const dotButtons = [];
+
+  function normalizeIndex(index) {
+    const total = slides.length;
+    if (!total) return 0;
+    return (index % total + total) % total;
+  }
+
+  function updateSlider() {
+    track.style.transform = `translateX(-${currentIndex * 100}%)`;
+
+    slides.forEach((slide, index) => {
+      const isActive = index === currentIndex;
+      slide.classList.toggle(options.activeSlideClass, isActive);
+      slide.setAttribute('aria-hidden', isActive ? 'false' : 'true');
+
+      if (typeof options.onSlideUpdate === 'function') {
+        options.onSlideUpdate({ slider, slide, index, isActive, currentIndex });
+      }
+    });
+
+    dotButtons.forEach((button, index) => {
+      const isActive = index === currentIndex;
+      button.classList.toggle(options.activeDotClass, isActive);
+      button.setAttribute('aria-current', isActive ? 'true' : 'false');
+      button.tabIndex = isActive ? 0 : -1;
+    });
+  }
+
+  function goTo(index) {
+    currentIndex = normalizeIndex(index);
+    updateSlider();
+  }
+
+  if (dotsContainer) {
+    dotsContainer.innerHTML = '';
+
+    slides.forEach((_slide, index) => {
+      const dot = document.createElement('button');
+      dot.type = 'button';
+      dot.className = options.dotClass;
+      dot.setAttribute('aria-label', options.dotLabel(index));
+      dot.addEventListener('click', () => goTo(index));
+      dotButtons.push(dot);
+      dotsContainer.appendChild(dot);
+    });
+  }
+
+  if (prevBtn) {
+    prevBtn.addEventListener('click', () => goTo(currentIndex - 1));
+  }
+
+  if (nextBtn) {
+    nextBtn.addEventListener('click', () => goTo(currentIndex + 1));
+  }
+
+  slider.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowLeft') {
+      e.preventDefault();
+      goTo(currentIndex - 1);
+    }
+
+    if (e.key === 'ArrowRight') {
+      e.preventDefault();
+      goTo(currentIndex + 1);
+    }
+  });
+
+  if (typeof options.onReady === 'function') {
+    options.onReady({ slider, slides, goTo });
+  }
+
+  goTo(0);
+}
+
 function setupTestimonialSliders() {
   const sliders = elContentBody.querySelectorAll('[data-testimonial-slider]');
 
   sliders.forEach((slider) => {
-    if (slider.dataset.testimonialSliderInit === 'true') return;
-    slider.dataset.testimonialSliderInit = 'true';
+    initializeSliderComponent(slider, {
+      initFlag: 'testimonialSliderInit',
+      trackSelector: '.testimonial-slider-track',
+      slideSelector: '.testimonial-slide',
+      prevSelector: '[data-testimonial-prev]',
+      nextSelector: '[data-testimonial-next]',
+      dotsSelector: '[data-testimonial-dots]',
+      activeSlideClass: 'is-active',
+      activeDotClass: 'is-active',
+      dotClass: 'testimonial-slider-dot',
+      dotLabel: (index) => `Show testimonial ${index + 1}`
+    });
+  });
+}
 
-    const track = slider.querySelector('.testimonial-slider-track');
-    const slides = Array.from(slider.querySelectorAll('.testimonial-slide'));
-    const prevBtn = slider.querySelector('[data-testimonial-prev]');
-    const nextBtn = slider.querySelector('[data-testimonial-next]');
-    const dotsContainer = slider.querySelector('[data-testimonial-dots]');
+function setupImageSliders() {
+  const sliders = elContentBody.querySelectorAll('[data-image-slider]');
 
-    if (!track || slides.length === 0) return;
+  sliders.forEach((slider, sliderIndex) => {
+    initializeSliderComponent(slider, {
+      initFlag: 'imageSliderInit',
+      trackSelector: '.image-slider-track',
+      slideSelector: '.image-slide',
+      prevSelector: '[data-image-slider-prev]',
+      nextSelector: '[data-image-slider-next]',
+      dotsSelector: '[data-image-slider-dots]',
+      activeSlideClass: 'is-active',
+      activeDotClass: 'is-active',
+      dotClass: 'image-slider-dot',
+      dotLabel: (index) => `Show image ${index + 1}`,
+      onReady: ({ slider: currentSlider, slides, goTo }) => {
+        const sliderId = currentSlider.id || `image-slider-${sliderIndex + 1}`;
+        currentSlider.dataset.imageSliderId = sliderId;
+        currentSlider.__setImageSliderIndex = goTo;
 
-    let currentIndex = 0;
-    const dotButtons = [];
+        slides.forEach((slide, index) => {
+          const value = String(index);
+          slide.dataset.imageSliderId = sliderId;
+          slide.dataset.imageSliderIndex = value;
 
-    function updateSlider() {
-      track.style.transform = `translateX(-${currentIndex * 100}%)`;
-
-      slides.forEach((slide, index) => {
-        const isActive = index === currentIndex;
-        slide.classList.toggle('is-active', isActive);
-        slide.setAttribute('aria-hidden', isActive ? 'false' : 'true');
-      });
-
-      dotButtons.forEach((button, index) => {
-        const isActive = index === currentIndex;
-        button.classList.toggle('is-active', isActive);
-        button.setAttribute('aria-current', isActive ? 'true' : 'false');
-        button.tabIndex = isActive ? 0 : -1;
-      });
-    }
-
-    if (dotsContainer) {
-      dotsContainer.innerHTML = '';
-
-      slides.forEach((slide, index) => {
-        const dot = document.createElement('button');
-        dot.type = 'button';
-        dot.className = 'testimonial-slider-dot';
-        dot.setAttribute('aria-label', `Show testimonial ${index + 1}`);
-        dot.addEventListener('click', () => {
-          currentIndex = index;
-          updateSlider();
+          const relatedElements = slide.querySelectorAll('img, figure, .image-modal-trigger');
+          relatedElements.forEach((el) => {
+            el.dataset.imageSliderId = sliderId;
+            el.dataset.imageSliderIndex = value;
+          });
         });
-        dotButtons.push(dot);
-        dotsContainer.appendChild(dot);
-      });
-    }
-
-    if (prevBtn) {
-      prevBtn.addEventListener('click', () => {
-        currentIndex = (currentIndex - 1 + slides.length) % slides.length;
-        updateSlider();
-      });
-    }
-
-    if (nextBtn) {
-      nextBtn.addEventListener('click', () => {
-        currentIndex = (currentIndex + 1) % slides.length;
-        updateSlider();
-      });
-    }
-
-    slider.addEventListener('keydown', (e) => {
-      if (e.key === 'ArrowLeft') {
-        e.preventDefault();
-        currentIndex = (currentIndex - 1 + slides.length) % slides.length;
-        updateSlider();
-      }
-
-      if (e.key === 'ArrowRight') {
-        e.preventDefault();
-        currentIndex = (currentIndex + 1) % slides.length;
-        updateSlider();
+      },
+      onSlideUpdate: ({ slider: currentSlider, index, isActive }) => {
+        if (isActive) {
+          currentSlider.dataset.imageSliderActiveIndex = String(index);
+        }
       }
     });
-
-    updateSlider();
   });
+}
+
+function syncImageSliderToElement(targetEl) {
+  if (!(targetEl instanceof Element)) return null;
+
+  const host = targetEl.closest('[data-image-slider-index]') || targetEl;
+  const sliderId = host.dataset.imageSliderId;
+  const indexText = host.dataset.imageSliderIndex;
+  const index = Number.parseInt(indexText, 10);
+
+  if (!sliderId || Number.isNaN(index)) return null;
+
+  const slider = Array.from(elContentBody.querySelectorAll('[data-image-slider]')).find(
+    (candidate) => candidate.dataset.imageSliderId === sliderId
+  );
+  if (!slider || typeof slider.__setImageSliderIndex !== 'function') return null;
+
+  slider.__setImageSliderIndex(index);
+
+  const activeSlide = slider.querySelector(`.image-slide[data-image-slider-index="${index}"]`);
+  if (!activeSlide) {
+    return slider.querySelector('.image-slider-viewport') || slider;
+  }
+
+  activeSlide.classList.remove('image-slide-locate-highlight');
+  void activeSlide.offsetWidth;
+  activeSlide.classList.add('image-slide-locate-highlight');
+  activeSlide.addEventListener('animationend', () => {
+    activeSlide.classList.remove('image-slide-locate-highlight');
+  }, { once: true });
+
+  return slider.querySelector('.image-slider-viewport') || slider;
 }
 
 function setupGallerySystems() {
@@ -3403,7 +3501,8 @@ function initImageModal() {
       const idx = Number.parseInt(elImageModalViewLink.dataset.imageIndex, 10);
       const entry = imageModalState.images[idx];
       if (entry) {
-        const targetEl = entry.highlightEl || entry.figureEl || entry.el;
+        const syncedSlider = syncImageSliderToElement(entry.imageEl || entry.figureEl || entry.el);
+        const targetEl = syncedSlider || entry.highlightEl || entry.figureEl || entry.el;
         if (targetEl) scrollToImageElement(targetEl);
       }
     });
@@ -3715,6 +3814,9 @@ function init() {
 
   /* Initialize testimonial slider controls for any pre-existing content */
   setupTestimonialSliders();
+
+  /* Initialize image slider controls for any pre-existing content */
+  setupImageSliders();
 
   /* Initialize tooltip system (static chrome wired once; content re-scanned per load) */
   initTooltips();

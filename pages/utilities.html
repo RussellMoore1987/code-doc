@@ -189,6 +189,72 @@
         DevDocs includes a few simple ways to display images. Images are supported
         both as single images and <a href="#image-galleries" data-nav="image-galleries" data-tags="image gallery">galleries</a>, and includes a built-in lightbox for viewing larger versions of the images.
     </p>
+    <h3 id="image-slider"><span data-tags="images">Image Slider</span></h3>
+    <p>
+        Use the image slider for step-by-step screenshots, product tours, or before/after visuals.
+        The slider itself does not force lightbox behavior. If you want lightbox support, add
+        <code>.image-modal</code> to each slide image (or slide figure).
+    </p>
+    <p>
+        When a lightbox image came from a slider, using the modal "View in page" action will also
+        move the slider to that image and flash-highlight the active slide.
+    </p>
+    <pre><code>&lt;section class="image-slider" data-image-slider aria-label="Product screenshots"&gt;
+  &lt;div class="image-slider-shell"&gt;
+    &lt;button type="button" class="image-slider-control" data-image-slider-prev aria-label="Previous image"&gt;...&lt;/button&gt;
+    &lt;div class="image-slider-viewport"&gt;
+      &lt;div class="image-slider-track"&gt;
+        &lt;article class="image-slide"&gt;
+          &lt;figure class="image-slider-figure"&gt;
+            &lt;img src="images/pic1.jpg" class="image-slider-img image-modal" alt="Screenshot one"&gt;
+            &lt;figcaption&gt;Caption text&lt;/figcaption&gt;
+          &lt;/figure&gt;
+        &lt;/article&gt;
+      &lt;/div&gt;
+    &lt;/div&gt;
+    &lt;button type="button" class="image-slider-control" data-image-slider-next aria-label="Next image"&gt;...&lt;/button&gt;
+  &lt;/div&gt;
+  &lt;div class="image-slider-footer"&gt;
+    &lt;div class="image-slider-dots" data-image-slider-dots&gt;&lt;/div&gt;
+  &lt;/div&gt;
+&lt;/section&gt;</code></pre>
+
+    <section class="image-slider" data-image-slider aria-label="Feature screenshots slider">
+        <div class="image-slider-shell">
+            <button type="button" class="image-slider-control" data-image-slider-prev aria-label="Previous image">
+                <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+                    <polyline points="15 18 9 12 15 6" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </button>
+
+            <div class="image-slider-viewport">
+                <div class="image-slider-track">
+                    <article class="image-slide">
+                        <img src="images/pic1.jpg" alt="Dashboard overview screenshot" class="image-slider-img image-modal">
+                    </article>
+
+                    <article class="image-slide">
+                        <img src="images/pic3.jpg" alt="Filter panel screenshot" class="image-slider-img image-modal">
+                    </article>
+
+                    <article class="image-slide">
+                        <img src="images/pic1.jpg" alt="Detail view screenshot" class="image-slider-img image-modal">
+                    </article>
+                </div>
+            </div>
+
+            <button type="button" class="image-slider-control" data-image-slider-next aria-label="Next image">
+                <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+                    <polyline points="9 18 15 12 9 6" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </button>
+        </div>
+
+        <div class="image-slider-footer">
+            <div class="image-slider-dots" data-image-slider-dots></div>
+        </div>
+    </section>
+
     <h3 id="single-images"><span data-tags="images">Single Images</span></h3>
     <p>
         To add a single image, use an <code>&lt;img&gt;</code> tag with the <code>.img-block</code> class. The image will
