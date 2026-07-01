@@ -2151,6 +2151,7 @@ async function loadPage(url) {
     setupScrollSpy();
     setupCopyButtons();
     clearPageHighlights(); // Clear any previous search highlights
+    setupTestimonialSliders(); // Wire testimonial slider controls on the new page
     setupGallerySystems(); // Enhance gallery layouts before wiring modal triggers
     setupImageModal();     // Wire up .image-modal images on the new page
     setupContentSectionLinks(); // Wire smooth-scroll for in-content a[data-target] links
@@ -2837,6 +2838,95 @@ function setupContentSectionLinks() {
       const sectionId = a.dataset.section || null;
       navigateTo(navId, sectionId, true, true);
     });
+  });
+}
+
+function setupTestimonialSliders() {
+  const sliders = elContentBody.querySelectorAll('[data-testimonial-slider]');
+
+  sliders.forEach((slider) => {
+    if (slider.dataset.testimonialSliderInit === 'true') return;
+    slider.dataset.testimonialSliderInit = 'true';
+
+    const track = slider.querySelector('.testimonial-slider-track');
+    const slides = Array.from(slider.querySelectorAll('.testimonial-slide'));
+    const prevBtn = slider.querySelector('[data-testimonial-prev]');
+    const nextBtn = slider.querySelector('[data-testimonial-next]');
+    const dotsContainer = slider.querySelector('[data-testimonial-dots]');
+    const status = slider.querySelector('[data-testimonial-status]');
+
+    if (!track || slides.length === 0) return;
+
+    let currentIndex = 0;
+    const dotButtons = [];
+
+    function updateSlider() {
+      track.style.transform = `translateX(-${currentIndex * 100}%)`;
+
+      slides.forEach((slide, index) => {
+        const isActive = index === currentIndex;
+        slide.classList.toggle('is-active', isActive);
+        slide.setAttribute('aria-hidden', isActive ? 'false' : 'true');
+      });
+
+      dotButtons.forEach((button, index) => {
+        const isActive = index === currentIndex;
+        button.classList.toggle('is-active', isActive);
+        button.setAttribute('aria-current', isActive ? 'true' : 'false');
+        button.tabIndex = isActive ? 0 : -1;
+      });
+
+      if (status) {
+        status.textContent = `${currentIndex + 1} of ${slides.length}`;
+      }
+    }
+
+    if (dotsContainer) {
+      dotsContainer.innerHTML = '';
+
+      slides.forEach((slide, index) => {
+        const dot = document.createElement('button');
+        dot.type = 'button';
+        dot.className = 'testimonial-slider-dot';
+        dot.setAttribute('aria-label', `Show testimonial ${index + 1}`);
+        dot.addEventListener('click', () => {
+          currentIndex = index;
+          updateSlider();
+        });
+        dotButtons.push(dot);
+        dotsContainer.appendChild(dot);
+      });
+    }
+
+    if (prevBtn) {
+      prevBtn.addEventListener('click', () => {
+        currentIndex = (currentIndex - 1 + slides.length) % slides.length;
+        updateSlider();
+      });
+    }
+
+    if (nextBtn) {
+      nextBtn.addEventListener('click', () => {
+        currentIndex = (currentIndex + 1) % slides.length;
+        updateSlider();
+      });
+    }
+
+    slider.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowLeft') {
+        e.preventDefault();
+        currentIndex = (currentIndex - 1 + slides.length) % slides.length;
+        updateSlider();
+      }
+
+      if (e.key === 'ArrowRight') {
+        e.preventDefault();
+        currentIndex = (currentIndex + 1) % slides.length;
+        updateSlider();
+      }
+    });
+
+    updateSlider();
   });
 }
 
@@ -3626,6 +3716,9 @@ function init() {
 
   /* Initialize image modal controls (wired once; content scanned per page load) */
   initImageModal();
+
+  /* Initialize testimonial slider controls for any pre-existing content */
+  setupTestimonialSliders();
 
   /* Initialize tooltip system (static chrome wired once; content re-scanned per load) */
   initTooltips();

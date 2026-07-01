@@ -65,6 +65,63 @@
         <p>"Good documentation should be easy to scan, easy to trust, and easy to revisit later."</p>
         <cite>Adilas Docs</cite>
     </blockquote>
+
+    <h3 id="testimonials"><span data-tags="typography">Testimonials</span></h3>
+    <p>Use a testimonial slider for rotating quotes, feedback, or short text blurbs. This version is intentionally lightweight and uses plain HTML, CSS, and JavaScript.</p>
+    <section class="testimonial-slider" data-testimonial-slider aria-label="Testimonial slider">
+        <div class="testimonial-slider-shell">
+            <button type="button" class="testimonial-slider-control testimonial-slider-prev" data-testimonial-prev aria-label="Previous testimonial">
+                <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+                    <polyline points="15 18 9 12 15 6" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </button>
+
+            <div class="testimonial-slider-viewport">
+                <div class="testimonial-slider-track">
+                    <article class="testimonial-slide">
+                        <blockquote>
+                            <p>“The layout feels calm and focused, which makes it much easier to explain the product without distracting the reader.”</p>
+                            <footer>
+                                <strong>Jordan Lee</strong>
+                                <span>Documentation Lead</span>
+                            </footer>
+                        </blockquote>
+                    </article>
+
+                    <article class="testimonial-slide">
+                        <blockquote>
+                            <p>“I like that the content reads like a real product manual instead of a generic landing page.”</p>
+                            <footer>
+                                <strong>Priya Morgan</strong>
+                                <span>Product Manager</span>
+                            </footer>
+                        </blockquote>
+                    </article>
+
+                    <article class="testimonial-slide">
+                        <blockquote>
+                            <p>“The visual hierarchy is strong enough that people can skim it quickly, but it still works when they need the details.”</p>
+                            <footer>
+                                <strong>Sam Rivera</strong>
+                                <span>Front-end Engineer</span>
+                            </footer>
+                        </blockquote>
+                    </article>
+                </div>
+            </div>
+
+            <button type="button" class="testimonial-slider-control testimonial-slider-next" data-testimonial-next aria-label="Next testimonial">
+                <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+                    <polyline points="9 18 15 12 9 6" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </button>
+        </div>
+
+        <div class="testimonial-slider-footer">
+            <div class="testimonial-slider-dots" data-testimonial-dots></div>
+            <p class="testimonial-slider-status text-muted" data-testimonial-status aria-live="polite"></p>
+        </div>
+    </section>
     
     <h2 id="code-blocks"><span data-tags="code blocks">Code Blocks</span></h2>
     
