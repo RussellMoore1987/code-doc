@@ -1552,12 +1552,13 @@ button {
 }
 
 @keyframes image-slide-locate-flash {
-  0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--primary-color) 45%, transparent); }
-  100% { box-shadow: 0 0 0 10px transparent; }
+  0%   { box-shadow: 0 0 0 4px var(--primary-color); }
+  50%  { box-shadow: 0 0 0 4px var(--primary-color); }
+  100% { box-shadow: 0 0 0 0 transparent; }
 }
 
 .image-slide-locate-highlight {
-  animation: image-slide-locate-flash 0.9s ease;
+  animation: image-slide-locate-flash 2s ease-out forwards;
 }
 
 @media (max-width: 600px) {
