@@ -68,7 +68,7 @@
 
     <h3 id="testimonials"><span data-tags="typography">Testimonials</span></h3>
     <p>Use a testimonial slider for rotating quotes, feedback, or short text blurbs. This version is intentionally lightweight and uses plain HTML, CSS, and JavaScript.</p>
-    <section class="testimonial-slider" data-testimonial-slider aria-label="Testimonial slider">
+    <section class="testimonial-slider" data-testimonial-slider data-testimonial-autoplay="true" data-testimonial-speed="4500" aria-label="Testimonial slider">
         <div class="testimonial-slider-shell">
             <button type="button" class="testimonial-slider-control testimonial-slider-prev" data-testimonial-prev aria-label="Previous testimonial">
                 <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
@@ -121,6 +121,7 @@
             <div class="testimonial-slider-dots" data-testimonial-dots></div>
         </div>
     </section>
+    <p>Optional autoplay for testimonials: <code>data-testimonial-autoplay="true"</code> and <code>data-testimonial-speed="4500"</code> (milliseconds).</p>
     
     <h2 id="code-blocks"><span data-tags="code blocks">Code Blocks</span></h2>
     
@@ -199,16 +200,14 @@
         When a lightbox image came from a slider, using the modal "View in page" action will also
         move the slider to that image and flash-highlight the active slide.
     </p>
-    <pre><code>&lt;section class="image-slider" data-image-slider aria-label="Product screenshots"&gt;
-  &lt;div class="image-slider-shell"&gt;
+    <p>Optional autoplay for image sliders: <code>data-image-slider-autoplay="true"</code> and <code>data-image-slider-speed="4000"</code> (milliseconds).</p>
+    <pre><code>&lt;section class="image-slider" data-image-slider data-image-slider-autoplay="true" data-image-slider-speed="4000" aria-label="Product screenshots"&gt;
+    &lt;div class="image-slider-shell"&gt;
     &lt;button type="button" class="image-slider-control" data-image-slider-prev aria-label="Previous image"&gt;...&lt;/button&gt;
     &lt;div class="image-slider-viewport"&gt;
       &lt;div class="image-slider-track"&gt;
         &lt;article class="image-slide"&gt;
-          &lt;figure class="image-slider-figure"&gt;
             &lt;img src="images/pic1.jpg" class="image-slider-img image-modal" alt="Screenshot one"&gt;
-            &lt;figcaption&gt;Caption text&lt;/figcaption&gt;
-          &lt;/figure&gt;
         &lt;/article&gt;
       &lt;/div&gt;
     &lt;/div&gt;
@@ -219,7 +218,7 @@
   &lt;/div&gt;
 &lt;/section&gt;</code></pre>
 
-    <section class="image-slider" data-image-slider aria-label="Feature screenshots slider">
+        <section class="image-slider" data-image-slider data-image-slider-autoplay="true" data-image-slider-speed="4000" aria-label="Feature screenshots slider">
         <div class="image-slider-shell">
             <button type="button" class="image-slider-control" data-image-slider-prev aria-label="Previous image">
                 <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">

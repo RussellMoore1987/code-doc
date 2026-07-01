@@ -2858,6 +2858,24 @@ function initializeSliderComponent(slider, options) {
 
   let currentIndex = 0;
   const dotButtons = [];
+  let autoSlideTimer = null;
+  let isAutoPaused = false;
+
+  const defaultSpeed = Number.isFinite(options.defaultAutoSlideSpeed)
+    ? options.defaultAutoSlideSpeed
+    : 5000;
+
+  const autoSlideEnabled =
+    (slider.dataset[options.autoSlideAttr] || '').toLowerCase() === 'true' ||
+    (slider.dataset.sliderAutoplay || '').toLowerCase() === 'true';
+
+  const configuredSpeed = Number.parseInt(
+    slider.dataset[options.autoSlideSpeedAttr] || slider.dataset.sliderSpeed || '',
+    10
+  );
+  const autoSlideSpeed = Number.isFinite(configuredSpeed)
+    ? Math.max(600, configuredSpeed)
+    : defaultSpeed;
 
   function normalizeIndex(index) {
     const total = slides.length;
@@ -2886,9 +2904,34 @@ function initializeSliderComponent(slider, options) {
     });
   }
 
-  function goTo(index) {
+  function clearAutoSlideTimer() {
+    if (autoSlideTimer !== null) {
+      clearTimeout(autoSlideTimer);
+      autoSlideTimer = null;
+    }
+  }
+
+  function scheduleAutoSlide() {
+    clearAutoSlideTimer();
+    if (!autoSlideEnabled || isAutoPaused || slides.length < 2) return;
+
+    autoSlideTimer = setTimeout(() => {
+      if (!slider.isConnected) {
+        clearAutoSlideTimer();
+        return;
+      }
+      goTo(currentIndex + 1, false);
+      scheduleAutoSlide();
+    }, autoSlideSpeed);
+  }
+
+  function goTo(index, restartAuto = true) {
     currentIndex = normalizeIndex(index);
     updateSlider();
+
+    if (restartAuto && autoSlideEnabled && !isAutoPaused) {
+      scheduleAutoSlide();
+    }
   }
 
   if (dotsContainer) {
@@ -2925,11 +2968,35 @@ function initializeSliderComponent(slider, options) {
     }
   });
 
+  if (autoSlideEnabled && slides.length > 1) {
+    slider.addEventListener('mouseenter', () => {
+      isAutoPaused = true;
+      clearAutoSlideTimer();
+    });
+
+    slider.addEventListener('mouseleave', () => {
+      isAutoPaused = false;
+      scheduleAutoSlide();
+    });
+
+    slider.addEventListener('focusin', () => {
+      isAutoPaused = true;
+      clearAutoSlideTimer();
+    });
+
+    slider.addEventListener('focusout', (e) => {
+      if (slider.contains(e.relatedTarget)) return;
+      isAutoPaused = false;
+      scheduleAutoSlide();
+    });
+  }
+
   if (typeof options.onReady === 'function') {
     options.onReady({ slider, slides, goTo });
   }
 
   goTo(0);
+  scheduleAutoSlide();
 }
 
 function setupTestimonialSliders() {
@@ -2946,7 +3013,10 @@ function setupTestimonialSliders() {
       activeSlideClass: 'is-active',
       activeDotClass: 'is-active',
       dotClass: 'testimonial-slider-dot',
-      dotLabel: (index) => `Show testimonial ${index + 1}`
+      dotLabel: (index) => `Show testimonial ${index + 1}`,
+      autoSlideAttr: 'testimonialAutoplay',
+      autoSlideSpeedAttr: 'testimonialSpeed',
+      defaultAutoSlideSpeed: 5000
     });
   });
 }
@@ -2966,6 +3036,9 @@ function setupImageSliders() {
       activeDotClass: 'is-active',
       dotClass: 'image-slider-dot',
       dotLabel: (index) => `Show image ${index + 1}`,
+      autoSlideAttr: 'imageSliderAutoplay',
+      autoSlideSpeedAttr: 'imageSliderSpeed',
+      defaultAutoSlideSpeed: 5000,
       onReady: ({ slider: currentSlider, slides, goTo }) => {
         const sliderId = currentSlider.id || `image-slider-${sliderIndex + 1}`;
         currentSlider.dataset.imageSliderId = sliderId;
