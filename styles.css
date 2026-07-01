@@ -1611,8 +1611,14 @@ code,
 }
 
 /* Copy to clipboard button */
-.content-body pre {
+.code-block-wrap {
   position: relative;
+}
+
+.code-block-wrap > .copy-btn {
+  position: absolute;
+  top: 8px;
+  right: 8px;
 }
 
 .display-span {
@@ -1627,9 +1633,6 @@ code,
 }
 
 .copy-btn {
-  position: absolute;
-  top: 8px;
-  right: 8px;
   background: var(--bg-sidebar);
   border: 1px solid var(--border);
   border-radius: 4px;

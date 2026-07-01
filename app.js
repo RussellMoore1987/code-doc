@@ -2604,9 +2604,17 @@ function setupCopyButtons() {
   
   codeBlocks.forEach(codeElement => {
     const preElement = codeElement.parentElement;
+    let wrapper = preElement.parentElement;
+
+    if (!wrapper || !wrapper.classList.contains('code-block-wrap')) {
+      wrapper = document.createElement('div');
+      wrapper.className = 'code-block-wrap';
+      preElement.before(wrapper);
+      wrapper.appendChild(preElement);
+    }
     
     /* Skip if button already exists */
-    if (preElement.querySelector('.copy-btn')) {
+    if (wrapper.querySelector('.copy-btn')) {
       return;
     }
     
@@ -2620,8 +2628,8 @@ function setupCopyButtons() {
     /* Add click handler */
     copyBtn.addEventListener('click', () => copyCodeToClipboard(codeElement, copyBtn));
     
-    /* Insert button into pre element */
-    preElement.appendChild(copyBtn);
+    /* Insert button into wrapper so it is not affected by pre horizontal scroll */
+    wrapper.appendChild(copyBtn);
   });
 }
 
