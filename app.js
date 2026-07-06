@@ -1688,9 +1688,11 @@ async function navigateTo(navId, sectionId = null, pushHistory = true, smooth = 
           if (target) {
             const containerTop  = elContentScroll.getBoundingClientRect().top;
             const targetTop     = target.getBoundingClientRect().top;
-            const scrollOffset  = targetTop - containerTop + elContentScroll.scrollTop;
+            // In mobile view, leave space so the section isn't covered by the mobile nav buttons.
+            const mobileOffset  = isMobileLayout() ? 64 : 10;
+            const scrollOffset  = targetTop - containerTop + elContentScroll.scrollTop - mobileOffset;
             elContentScroll.scrollTo({
-              top: scrollOffset,
+              top: Math.max(0, scrollOffset),
               behavior: smooth ? 'smooth' : 'auto'
             });
 
@@ -2245,7 +2247,7 @@ function buildRightNav() {
     a.addEventListener('click', (e) => {
       e.preventDefault();
       if (level === 1) {
-        // Page title — scroll to the very top of the content area
+        // Page title - scroll to the very top of the content area
         elContentScroll.scrollTo({ top: 0, behavior: 'smooth' });
         const newUrl = generateRoute(state.activeNavId, null);
         if (newUrl !== globalThis.location.hash) {
