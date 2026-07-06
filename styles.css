@@ -3296,3 +3296,113 @@ a[data-nav]:focus-visible {
   animation: tag-element-flash 2s ease-out forwards;
   border-radius: 4px;
 }
+
+/* ═══════════════════════════════════════════════════════════════
+   CITATION SYSTEM
+   Superscript markers ([1], [2] …) and the auto-generated
+   References section at the bottom of a page.
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ── Inline superscript marker ───────────────────────────────── */
+
+.citation-ref {
+  font-size: 0.7em;
+  line-height: 0;
+  vertical-align: super;
+  margin-left: 2px;
+  white-space: nowrap;
+}
+
+.citation-ref-link {
+  color: var(--text-link);
+  text-decoration: none;
+  font-weight: 600;
+  padding: 0 1px;
+  border-radius: 3px;
+  transition: background 0.15s, color 0.15s;
+}
+
+.citation-ref-link:hover,
+.citation-ref-link:focus-visible {
+  background: var(--bg-active);
+  color: var(--text-nav-active);
+  text-decoration: none;
+  outline: none;
+}
+
+.citation-ref-link:focus-visible {
+  outline: 2px solid var(--border-focus);
+  outline-offset: 1px;
+}
+
+/* ── References section ──────────────────────────────────────── */
+
+.references-section {
+  margin-top: 40px;
+}
+
+.references-divider {
+  border: 0;
+  border-top: 1px solid var(--border);
+  margin: 32px 0 8px;
+}
+
+.references-heading {
+  /* Inherits .content-body h2 sizing; keep the top margin tight after the hr */
+  margin-top: 16px;
+}
+
+.references-list {
+  margin: 0 0 14px 24px;
+  padding: 0;
+}
+
+.reference-item {
+  margin-bottom: 12px;
+  color: var(--text-base);
+  scroll-margin-top: 68px;
+}
+
+.reference-text {
+  color: var(--text-base);
+}
+
+.reference-link {
+  display: inline-block;
+  margin-top: 2px;
+  font-size: 13px;
+  color: var(--text-link);
+  word-break: break-all;
+}
+
+.reference-link:hover {
+  color: var(--accent);
+}
+
+.reference-back {
+  margin-left: 8px;
+  font-size: 12px;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.reference-back:hover,
+.reference-back:focus-visible {
+  color: var(--text-base);
+  text-decoration: none;
+  outline: none;
+}
+
+/* ── Flash highlight when jumping to a citation / reference ───── */
+
+@keyframes citation-flash {
+  0%   { background-color: var(--accent-light); }
+  55%  { background-color: var(--accent-light); }
+  100% { background-color: transparent; }
+}
+
+.citation-flash {
+  animation: citation-flash 2s ease-out forwards;
+  border-radius: 4px;
+}
+

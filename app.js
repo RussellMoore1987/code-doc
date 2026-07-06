@@ -115,6 +115,7 @@ const NAV_DATA = [
     children: [
       { id: 'layout',  label: 'DevDocs Layouts',  page: 'pages/layout.html' },
       { id: 'utilities',  label: 'HTML Elements',  page: 'pages/utilities.html' },
+      { id: 'utilities2',  label: 'HTML Elements test',  page: 'pages/example.html' },
       { id: 'grid-system', label: 'Grid System', page: 'pages/grid-system.html' },
       { id: 'image-galleries', label: 'Image Galleries', page: 'pages/image-galleries.html' },
       { id: 'custom', label: 'Custom', page: 'pages/custom.html' },
@@ -2154,6 +2155,7 @@ async function loadPage(url) {
     elContentScroll.scrollTop = 0;
 
     /* Post-load setup */
+    setupCitations();  // Generate citation superscripts + auto References section
     ensureHeadingIds();
     buildRightNav();
     setupScrollSpy();
@@ -2537,6 +2539,213 @@ async function navigateToTaggedElement(navId, tagElIndex) {
       target.addEventListener('animationend', () => target.classList.remove('tag-highlight'), { once: true });
     }, 300);
   }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   CITATION SYSTEM
+   Wrap text in <span class="citation" data-citation="…" data-link="…">
+   to get an automatic numbered superscript marker and a generated
+   "References" section at the bottom of the page.
+   ═══════════════════════════════════════════════════════════════ */
+
+const CITATION_SCROLL_OFFSET = 20; // px breathing room above the scroll target
+
+/**
+ * Remove any previously generated citation markers and References section.
+ * Keeps the authored .citation source elements untouched.
+ */
+function clearCitations() {
+  const existingSection = elContentBody.querySelector('.references-section');
+  if (existingSection) existingSection.remove();
+
+  elContentBody.querySelectorAll('.citation-ref').forEach(marker => marker.remove());
+}
+
+/**
+ * Scan the page for citation elements, assign sequential numbers, and
+ * de-duplicate identical citations (same text + same link share a number).
+ * Returns { references, items } where references drive the bibliography and
+ * items map each source element to its reference + unique marker id.
+ */
+function collectCitations() {
+  const els = Array.from(elContentBody.querySelectorAll('.citation[data-citation]'));
+  const references = [];
+  const keyToRef = new Map();
+  const items = [];
+
+  els.forEach(el => {
+    const text = (el.dataset.citation || '').trim();
+    if (!text) return; // nothing to cite
+
+    const link = (el.dataset.link || '').trim();
+    const key = `${text}\u0000${link}`; // identical text + link => same reference
+
+    let ref = keyToRef.get(key);
+    if (!ref) {
+      const number = references.length + 1;
+      ref = { number, text, link, id: `reference-${number}`, markerIds: [] };
+      keyToRef.set(key, ref);
+      references.push(ref);
+    }
+
+    const markerId = `citation-${ref.number}-${ref.markerIds.length + 1}`;
+    ref.markerIds.push(markerId);
+    items.push({ el, ref, markerId });
+  });
+
+  return { references, items };
+}
+
+/**
+ * Append a superscript "[n]" marker immediately after each cited element.
+ */
+function renderCitationMarkers(items) {
+  items.forEach(({ el, ref, markerId }) => {
+    const sup = document.createElement('sup');
+    sup.className = 'citation-ref';
+    sup.id = markerId;
+
+    const link = document.createElement('a');
+    link.className = 'citation-ref-link';
+    link.href = `#${ref.id}`;
+    link.textContent = `[${ref.number}]`;
+    link.dataset.referenceId = ref.id;
+    link.dataset.markerId = markerId;
+    link.setAttribute('aria-label', `View reference ${ref.number}`);
+
+    sup.appendChild(link);
+    el.after(sup);
+  });
+}
+
+/**
+ * Build the References section (hr + heading + ordered list) and append it
+ * to the content body. Each entry gets an anchor id plus an optional link
+ * and a "Back" control that returns to the citation that was clicked.
+ */
+function renderReferencesSection(references) {
+  const section = document.createElement('section');
+  section.className = 'references-section';
+  section.setAttribute('aria-label', 'References');
+
+  const divider = document.createElement('hr');
+  divider.className = 'references-divider';
+  section.appendChild(divider);
+
+  const heading = document.createElement('h2');
+  heading.id = 'references';
+  heading.className = 'references-heading';
+  heading.textContent = 'References';
+  section.appendChild(heading);
+
+  const list = document.createElement('ol');
+  list.className = 'references-list';
+
+  references.forEach(ref => {
+    const li = document.createElement('li');
+    li.className = 'reference-item';
+    li.id = ref.id;
+
+    const text = document.createElement('span');
+    text.className = 'reference-text';
+    text.textContent = ref.text;
+    li.appendChild(text);
+
+    if (ref.link) {
+      li.appendChild(document.createElement('br'));
+      const anchor = document.createElement('a');
+      anchor.className = 'reference-link';
+      anchor.href = ref.link;
+      anchor.target = '_blank';
+      anchor.rel = 'noopener noreferrer';
+      anchor.textContent = ref.link;
+      li.appendChild(anchor);
+    }
+
+    const back = document.createElement('a');
+    back.className = 'reference-back';
+    back.href = `#${ref.markerIds[0]}`;
+    back.dataset.defaultMarker = ref.markerIds[0];
+    back.setAttribute('aria-label', `Back to citation ${ref.number}`);
+    back.textContent = '↩ Back';
+    li.appendChild(document.createTextNode(' '));
+    li.appendChild(back);
+
+    list.appendChild(li);
+  });
+
+  section.appendChild(list);
+  elContentBody.appendChild(section);
+}
+
+/**
+ * Smooth-scroll the content container to a target element, accounting for the
+ * mobile nav buttons that overlay the top of the content area.
+ */
+function scrollContentToElement(target, offset = CITATION_SCROLL_OFFSET) {
+  if (!target) return;
+
+  const extra = isMobileLayout() ? 64 : offset;
+  const containerTop = elContentScroll.getBoundingClientRect().top;
+  const targetTop = target.getBoundingClientRect().top;
+  const scrollOffset = targetTop - containerTop + elContentScroll.scrollTop - extra;
+
+  elContentScroll.scrollTo({ top: Math.max(0, scrollOffset), behavior: 'smooth' });
+}
+
+/**
+ * Flash-highlight an element to draw the eye after a citation jump.
+ */
+function flashCitationTarget(el) {
+  if (!el) return;
+  el.classList.remove('citation-flash');
+  void el.offsetWidth; // restart the animation
+  el.classList.add('citation-flash');
+  el.addEventListener('animationend', () => el.classList.remove('citation-flash'), { once: true });
+}
+
+/**
+ * Wire click navigation: superscript -> reference, and Back -> the citation
+ * that was clicked (falling back to the first marker for that reference).
+ */
+function wireCitationNavigation() {
+  elContentBody.querySelectorAll('.citation-ref-link').forEach(link => {
+    link.addEventListener('click', (e) => {
+      e.preventDefault();
+      const ref = document.getElementById(link.dataset.referenceId);
+      if (!ref) return;
+      ref.dataset.lastMarker = link.dataset.markerId; // remember where we came from
+      scrollContentToElement(ref);
+      flashCitationTarget(ref);
+    });
+  });
+
+  elContentBody.querySelectorAll('.reference-back').forEach(back => {
+    back.addEventListener('click', (e) => {
+      e.preventDefault();
+      const li = back.closest('.reference-item');
+      const markerId = li?.dataset.lastMarker || back.dataset.defaultMarker;
+      const marker = markerId ? document.getElementById(markerId) : null;
+      if (!marker) return;
+      scrollContentToElement(marker);
+      flashCitationTarget(marker);
+    });
+  });
+}
+
+/**
+ * Entry point - run on every page load. Rebuilds markers and the References
+ * section from scratch so it always reflects the current page content.
+ */
+function setupCitations() {
+  clearCitations();
+
+  const { references, items } = collectCitations();
+  if (!references.length) return;
+
+  renderCitationMarkers(items);
+  renderReferencesSection(references);
+  wireCitationNavigation();
 }
 
 /* ═══════════════════════════════════════════════════════════════
