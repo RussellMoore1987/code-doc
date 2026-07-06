@@ -2244,7 +2244,16 @@ function buildRightNav() {
 
     a.addEventListener('click', (e) => {
       e.preventDefault();
-      navigateTo(null, h.id, true, true);
+      if (level === 1) {
+        // Page title — scroll to the very top of the content area
+        elContentScroll.scrollTo({ top: 0, behavior: 'smooth' });
+        const newUrl = generateRoute(state.activeNavId, null);
+        if (newUrl !== globalThis.location.hash) {
+          history.pushState({ navId: state.activeNavId, sectionId: null }, '', newUrl || '#');
+        }
+      } else {
+        navigateTo(null, h.id, true, true);
+      }
     });
 
     li.appendChild(a);
