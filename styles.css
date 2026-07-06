@@ -1630,10 +1630,6 @@ button {
   cursor: grabbing;
 }
 
-.logo-slider.is-dragging .logo-slider-viewport {
-  border-color: var(--border-focus);
-}
-
 @media (max-width: 600px) {
   .logo-slider-track {
     gap: 12px;

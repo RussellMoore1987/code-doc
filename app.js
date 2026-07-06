@@ -811,6 +811,10 @@ function initLeftAllTagsNav() {
   elLeftSidebar.appendChild(section);
 }
 
+function capitalizeWords(str) {
+  return str.replace(/\b\w/g, char => char.toUpperCase());
+}
+
 function renderAllTagsInLeftNav() {
   const section = document.getElementById('left-all-tags');
   const panel = document.getElementById('left-all-tags-panel');
@@ -833,7 +837,8 @@ function renderAllTagsInLeftNav() {
       btn.className = 'tag-badge left-tag-badge';
       btn.dataset.tag = tag;
       btn.setAttribute('aria-label', `View all content tagged: ${tag}`);
-      btn.innerHTML = `${TAG_SVG}<span style="text-align: left;">${escapeHtml(tag)}</span>`;
+      const showTag = capitalizeWords(escapeHtml(tag));
+      btn.innerHTML = `${TAG_SVG}<span style="text-align: left;">${showTag}</span>`;
       btn.addEventListener('click', () => openTagView(tag));
       panel.appendChild(btn);
     });
@@ -2295,7 +2300,8 @@ function renderTagBadgesInSidebar() {
     btn.className = 'tag-badge';
     btn.dataset.tag = tag;
     btn.setAttribute("aria-label", `View all content tagged: ${tag}`);
-    btn.innerHTML = `${TAG_SVG}<span style="text-align: left;">${escapeHtml(tag)}</span>`;
+    const showTag = capitalizeWords(escapeHtml(tag));
+    btn.innerHTML = `${TAG_SVG}<span style="text-align: left;">${showTag}</span>`;
     btn.addEventListener('click', () => openTagView(tag));
     list.appendChild(btn);
   });
@@ -2429,10 +2435,12 @@ function buildTagResultsHTML(tag, results) {
           <div class="result-section">${escapeHtml(r.sectionTitle || '')}</div>
           <div class="result-snippet">${escapeHtml(r.snippet)}</div>
         </div>`).join('');
-
+  
+  const showTag = capitalizeWords(escapeHtml(tag));
+  
   return `
     <div class="tag-results-header">
-      <div class="tag-results-title">${TAG_SVG_LG}<span>Tag: <strong>${escapeHtml(tag)}</strong></span></div>
+      <div class="tag-results-title">${TAG_SVG_LG}<span>Tag: <strong>${showTag}</strong></span></div>
       <span class="tag-results-count">${escapeHtml(countText)}</span>
       <button type="button" id="tag-results-close" class="btn-icon" aria-label="Close tag results" title="Close tag results">
         <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">
