@@ -1,0 +1,126 @@
+<div>
+    <h1 id="text-elements">Text Elements</h1>
+    
+    <p>These sections cover the various text elements available in the DevDocs.</p>
+    
+    <!-- Introduction to text elements -->
+    <h2 id="typography"><span data-tags="typography">Typography</span></h2>
+    <p>This section covers the various typography elements available in DevDocs.</p>
+    
+    <!-- Headings section -->
+    <h3 id="headings"><span data-tags="typography">Headings</span></h3>
+    <p>Headings are defined with <code>&lt;h1&gt;</code> through <code>&lt;h4&gt;</code> tags. The default font size and weight is set in <code>styles.css</code>. Headings can be used to create a table of contents for a page, and can be linked to directly with the <code>#id</code> in the URL.</p>
+    
+    <p>Use <code>h1</code> once per page as the page title. Use <code>h2</code>–<code>h4</code> for
+    sections and sub-sections. Headings are automatically picked up by the right-hand outline and
+    scroll-spy system:</p>
+    
+    <ul>
+        <li><code>h1</code> - Page title (one per page)</li>
+        <li><code>h2</code> - Major section</li>
+        <li><code>h3</code> - Sub-section</li>
+        <li><code>h4</code> - Minor sub-section (displayed in uppercase with letter-spacing in the default style)</li>
+    </ul>
+    
+    <div class="callout">
+    <div class="callout-title">ℹ Best Practice</div>
+    <p>Always give headings unique, descriptive <code>id</code> attributes. This ensures stable deep-link
+    URLs and predictable scroll-spy behaviour.</p>
+    </div>
+    
+    <div style="border: 1px solid var(--border); padding: 10px; margin-bottom: 20px;">
+        <h1>Heading 1</h1>
+        <h2>Heading 2</h2>
+        <h3>Heading 3</h3>
+        <h4>Heading 4</h4>
+        <h5>Heading 5</h5>
+        <h6>Heading 6</h6>
+    </div>
+    
+    <p>Note: Headings beyond <code>&lt;h4&gt;</code> are available but not commonly used in DevDocs, and are not supported for the right side menu.</p>
+    
+    <p>Note: Also notice that the headers above have affected the right side menu.</p>
+    
+    <!-- Text Styles section -->
+    <h3 id="text-styles"><span data-tags="typography">Text Styles</span></h3>
+    <p>DevDocs supports a few text styles for emphasis and clarity. These include:</p>
+    <ul>
+        <li><code>&lt;strong&gt;</code> - <strong>for strong emphasis</strong> (bold)</li>
+        <li><code>&lt;em&gt;</code> - <em>for emphasis</em> (italic)</li>
+        <li><code>&lt;code&gt;</code> - <code data-tags="code blocks">for inline code snippets</code></li>
+        <li><code>&lt;mark&gt;</code> - <mark>for highlighting text</mark></li>
+        <li><code>&lt;del&gt;</code> - <del>for strikethrough text</del></li>
+        <li><code>&lt;ins&gt;</code> - <ins>for inserted text</ins> (underline)</li>
+        <li><code>&lt;span class="text-muted"&gt;</code> - <span class="text-muted">muted text</span></li>
+    </ul>
+    <small class="text-muted">Note: These text styles can be combined for additional emphasis.</small>
+    
+    <p class="mt-20">DevDocs also supports lists for organizing content:</p>
+    <ol>
+        <li><code>&lt;ol&gt;</code> - for ordered lists</li>
+        <li><code>&lt;ul&gt;</code> - for unordered lists</li>
+        <li><code>&lt;li&gt;</code> - for list items</li>
+    </ol>
+
+    <!-- Quotes section -->
+    <h3 id="quotes"><span data-tags="typography">Quotes</span></h3>
+    <p>Use <code>&lt;blockquote&gt;</code> for longer quotations or highlighted callout-style text that should remain semantically distinct from the surrounding content.</p>
+    <blockquote>
+        <p>"Good documentation should be easy to scan, easy to trust, and easy to revisit later."</p>
+        <cite>Adilas Docs</cite>
+    </blockquote>
+    
+    <!-- Code Blocks section -->
+    <h2 id="code-blocks"><span data-tags="code blocks">Code Blocks</span></h2>
+    
+    <p>DevDocs supports code blocks for displaying preformatted code snippets. These can be used to show examples, configurations, or any other code-related content. Code blocks are defined using the <code>&lt;pre&gt;</code> and <code>&lt;code&gt;</code> tags.</p>
+    <pre><code>// Leaf node (has a page)
+    {
+      id: 'installation',
+      label: 'Installation',
+      page: 'pages/installation.html'
+    }
+    
+    // Group node (has children, no page)
+    {
+      id: 'getting-started',
+      label: 'Getting Started',
+      children: [
+        { id: 'intro', label: 'Introduction', page: 'pages/intro.html' }
+      ]
+    }</code></pre>
+    <p>Note: Each code block should be properly formatted to ensure readability and consistency.</p>
+    <p>Note: Each code block has a copy button for easy copying.</p>
+    
+    <!-- Callouts section -->
+    <h2 id="callouts">Callouts</h2>
+    <div class="callout">
+        <div class="callout-title">ℹ Note</div>
+        <p>
+            This documentation site is served as a static project. No server-side rendering or framework is
+            required. All you need is a basic local HTTP server or your IDE's Live Server extension.
+        </p>
+    </div>
+    <div class="callout warning">
+        <div class="callout-title">⚠ Never Expose API Keys Client-Side</div>
+        <p>
+            Any secret embedded in JavaScript that runs in the browser is publicly visible to anyone
+            who opens DevTools. Route all privileged API calls through a backend proxy or serverless
+            function.
+        </p>
+    </div>
+    <div class="callout danger">
+        <div class="callout-title">✖ Trailing-slash paths</div>
+        <p>
+            On GitHub Pages, make sure all <code>page</code> paths in <code>NAV_DATA</code> use a relative
+            path from the repository root (e.g., <code>pages/intro.html</code>), not an absolute
+            path starting with <code>/</code>, or your fetches will fail.
+        </p>
+    </div>
+    <pre><code>&lt;div class="callout"&gt;
+  &lt;div class="callout-title"&gt;ℹ Info&lt;/div&gt;
+  &lt;p&gt;Your note here.&lt;/p&gt;
+&lt;/div&gt;</code></pre>
+
+</div>
+ 

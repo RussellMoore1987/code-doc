@@ -1,0 +1,209 @@
+<div>
+    <h1 id="tools">DevDocs Tools</h1>
+    
+    <p>These sections cover the various tools/elements available in the DevDocs.</p>
+
+    <!-- Citations section -->
+    <h2 id="citations"><span data-tags="citations">Citations</span></h2>
+    <p>
+        Wrap any text in a <code>&lt;span class="citation"&gt;</code> element with a
+        <code>data-citation</code> attribute to turn it into an academic-style citation. On page load
+        the system scans the page, appends a numbered superscript marker (e.g. <code>[1]</code>) right
+        after the wrapped text, and automatically builds a <strong>References</strong> section at the
+        bottom of the page. No manual numbering or list-keeping required.
+    </p>
+    <div class="callout">
+        <div class="callout-title">Syntax</div>
+        <p><strong>With a link:</strong></p>
+        <pre><code>&lt;span
+    class="citation"
+    data-citation="This feature was introduced in Laravel 11."
+    data-link="https://laravel.com/docs/11.x"&gt;
+    Laravel documentation
+&lt;/span&gt;</code></pre>
+        <p><strong>Text only (no link):</strong></p>
+        <pre><code>&lt;span class="citation" data-citation="Internal design note, 2026."&gt;design note&lt;/span&gt;</code></pre>
+        <p>
+            <code>data-citation</code> is the reference text shown in the References section.
+            <code>data-link</code> is optional; when present it is rendered as a hyperlink that opens in
+            a new tab (<code>target="_blank"</code> with <code>rel="noopener noreferrer"</code>).
+        </p>
+    </div>
+    <div class="callout">
+        <div class="callout-title">ℹ Behaviour</div>
+        <ul>
+            <li>Citations are numbered sequentially in the order they appear.</li>
+            <li>Identical citations (same text and link) reuse the same number.</li>
+            <li>Clicking a superscript scrolls to its matching reference; each reference has a
+                <strong>↩ Back</strong> link that returns to the citation you clicked.</li>
+            <li>The References section is rebuilt on every page load, so it always matches the page.</li>
+        </ul>
+    </div>
+    <p><strong>Live examples - click the superscripts and the "Back" links:</strong></p>
+    <p>
+        DevDocs is served as a fully static project with no build step<span class="citation" data-citation="DevDocs runs entirely client-side using vanilla JavaScript; no server-side rendering is required." data-link="https://developer.mozilla.org/en-US/docs/Web/JavaScript">MDN JavaScript reference</span>.
+        The navigation tree, search index, and this citation system are all generated at runtime<span class="citation" data-citation="Content pages are fetched and parsed on demand via the Fetch API and DOMParser." data-link="https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API">MDN Fetch API</span>.
+    </p>
+    <p>
+        Because everything is client-side, secrets must never be embedded in the page<span class="citation" data-citation="Any secret embedded in client-side JavaScript is publicly visible in the browser." data-link="https://owasp.org/www-project-top-ten/">OWASP Top 10</span>.
+        This same guidance applies to the search and tag systems as well<span class="citation" data-citation="Any secret embedded in client-side JavaScript is publicly visible in the browser." data-link="https://owasp.org/www-project-top-ten/">OWASP Top 10</span>.
+    </p>
+    <p>
+        Citations also work without a link, for internal notes<span class="citation" data-citation="Internal DevDocs style note: keep reference text concise and self-contained.">DevDocs style note</span>.
+    </p>
+    
+    <!-- Doc Link Usage section -->
+    <h2 id="doc-link-usage"><span data-tags="test">Doc Link Usage</span></h2>
+    <p>
+        Use <code>a[data-nav]</code> links anywhere in page content to navigate to another page - or a specific section
+        of another page - without a full page reload. The left sidebar will open the correct menu automatically.
+    </p>
+    <div class="callout">
+        <div class="callout-title">Syntax</div>
+        <p><strong>Page only:</strong></p>
+        <pre><code>&lt;a href="#navId" data-nav="navId"&gt;Link text&lt;/a&gt;</code></pre>
+        <p><strong>Page + section:</strong></p>
+        <pre><code>&lt;a href="#navId#sectionId" data-nav="navId" data-section="sectionId"&gt;Link text&lt;/a&gt;</code></pre>
+        <p><strong>In-page navigation only:</strong></p>
+        <pre><code>&lt;a href="#sectionId" data-target="sectionId"&gt;Link text&lt;/a&gt;</code></pre>
+        <p>
+        <code>navId</code> is the <code>data-id</code> data attribute of the nav item in the left hand menu, or page name in URL, e.g. <code>image-processing</code> in <code>.../index.html#image-processing</code>.
+        </p>
+        <p>
+        <code>sectionId</code> is the <code>data-target</code> data attribute of any heading on the target page, right hand menu, or in the URL as e.g. <code>filters-effects</code> in <code>.../index.html#image-processing#filters-effects</code>.
+        </p>
+    </div>
+    <p><strong>Live examples - click to navigate:</strong></p>
+    <ul>
+        <li>
+        Go to the
+        <a href="#image-processing" data-nav="image-processing">Image Processing page</a>
+        </li>
+        <li>
+        Go directly to the
+        <a href="#image-processing#caching-optimization" data-nav="image-processing" data-section="caching-optimization">Image Caching Optimization section</a>
+        of Image Processing
+        </li>
+        <li>
+        Go to deeply nested content like the
+        <a href="#step1-env#testing-environment" data-nav="step1-env" data-section="testing-environment">Environment Setup -> testing-environment</a> section. 
+        </li>
+        <li>
+        Go to a section on this page
+        <a href="#theming" data-target="theming">theming section</a>
+        </li>
+    </ul>
+    
+    <!-- Images section -->
+    <h2 id="images"><span data-tags="images">Images</span></h2>
+    <p>
+        DevDocs includes a few simple ways to display images. Images are supported
+        both as single images and <a href="#image-galleries" data-nav="image-galleries" data-tags="image gallery">galleries</a>, and includes a built-in lightbox for viewing larger versions of the images.
+    </p>
+
+    <!-- Single Images section -->
+    <h3 id="single-images"><span data-tags="images">Single Images</span></h3>
+    <p>
+        To add a single image, use an <code>&lt;img&gt;</code> tag with the <code>.img-block</code> class. The image will
+        be sized to fit the content area while maintaining its aspect ratio. If the image is smaller than the content width, it will be displayed at its natural size.
+    </p>
+    <!-- TODO: switch out with a better pic -->
+    <div class="image-wrapper" data-caption="Shorter picture then content full length">
+        <img src="images/pic1.jpg" alt="Architecture diagram placeholder" class="img-block">
+    </div>
+    <div class="image-wrapper" data-caption="Longer picture then content full width">
+        <img src="images/pic3.jpg" alt="Architecture diagram placeholder" class="img-block">
+    </div>
+    <figure class="img-block">
+        <img src="/images/pic1.jpg" alt="" class="img-block">
+        <figcaption>With caption in a footer bar.</figcaption>
+    </figure>
+
+    <!-- Single Images With Lightbox section -->
+    <h3 id="single-images_with_lightbox"><span data-tags="images">Single Image With Lightbox</span></h3>
+    <p>
+        To add a single image with a lightbox, use an <code>&lt;img&gt;</code> tag with the <code>.img-block</code> and <code>.image-modal</code> classes. Clicking on it will open a larger version in a lightbox. The following images show how the alt text and caption are used in the lightbox:
+    </p>
+    <ul>
+        <li>First image: has no alt text, so no text will be used in the lightbox.</li>
+        <li>Second image: has alt text, so the alt text will be used in the lightbox.</li>
+        <li>Third image: is wrapped in a figure with a caption, but has no alt text, so the caption text will be used in the lightbox.</li>
+        <li>Fourth image: is wrapped in a figure with a caption and has alt text, so the alt text will be used in the lightbox and the caption will be ignored in the lightbox.</li>
+    </ul>
+    <img src="images/pic1.jpg" class="img-block image-modal">
+    <img src="images/pic3.jpg" class="img-block image-modal" alt="Image alt text shows up in the image lightbox.">
+    <figure class="img-block image-modal">
+        <img src="/images/pic1.jpg" class="img-block image-modal">
+        <figcaption>If the image doesn't have alt text, this caption text will be used in the lightbox.</figcaption>
+    </figure>
+    <figure class="img-block image-modal">
+        <img src="/images/pic3.jpg" class="img-block image-modal" alt="This is the alt text for the image, which will show up in the lightbox instead of the caption.">
+        <figcaption>If the image does have an alt, this caption text will not be used in the lightbox.</figcaption>
+    </figure>
+    
+    <!-- Tooltip Usage section -->
+    <h2 id="tooltip-usage">Tooltip Usage</h2>
+    <p>
+        Add <code>data-tooltip="…"</code> to any element to give it a tooltip. Use the optional
+        <code>data-tooltip-position</code> attribute to set a preferred direction. If the tooltip would
+        overflow the screen, it flips to a better position automatically.
+    </p>
+    <div class="callout">
+        <div class="callout-title">Syntax</div>
+        <pre><code>&lt;!-- Plain-text tooltip (default position: top) --&gt;
+        &lt;button data-tooltip="Tooltip text here"&gt;Hover me&lt;/button&gt;
+    
+        &lt;!-- With preferred position --&gt;
+        &lt;button data-tooltip="Opens settings" data-tooltip-position="right"&gt;⚙&lt;/button&gt;
+    
+        &lt;!-- HTML tooltip - write real HTML inside a &lt;template&gt; element --&gt;
+        &lt;template id="my-tip"&gt;&lt;strong&gt;Bold&lt;/strong&gt; and &lt;em&gt;italic&lt;/em&gt;&lt;br&gt;Line two&lt;/template&gt;
+        &lt;button data-tooltip-template="my-tip"&gt;Hover me&lt;/button&gt;
+    
+        &lt;!-- Available positions --&gt;
+        top | top-left | top-right
+        bottom | bottom-left | bottom-right
+        left | right</code></pre>
+    </div>
+    
+    <p><strong>Live examples - hover or focus each button:</strong></p>
+    
+    <div style="display:flex; flex-wrap:wrap; gap:10px; align-items:center; margin-bottom:20px;">
+        <span class="display-span" data-tooltip="This is the default top position">top (default)</span>
+        <span class="display-span" data-tooltip="Anchored to the top-left corner" data-tooltip-position="top-left">top-left</span>
+        <span class="display-span" data-tooltip="Anchored to the top-right corner" data-tooltip-position="top-right">top-right</span>
+        <span class="display-span" data-tooltip="Appears below the element" data-tooltip-position="bottom">bottom</span>
+        <span class="display-span" data-tooltip="Below, aligned to the left" data-tooltip-position="bottom-left">bottom-left</span>
+        <span class="display-span" data-tooltip="Below, aligned to the right" data-tooltip-position="bottom-right">bottom-right</span>
+        <span class="display-span" data-tooltip="Appears to the left of the element" data-tooltip-position="left">left</span>
+        <span class="display-span" data-tooltip="Appears to the right of the element" data-tooltip-position="right">right</span>
+    </div>
+    
+    <p>Tooltips also work on non-button elements and support rich HTML content via <code>data-tooltip-template</code>:</p>
+    
+    <div style="display:flex; flex-wrap:wrap; gap:14px; align-items:center; margin-bottom:20px;">
+        <code data-tooltip="Inline code elements work too" style="cursor:default;">data-tooltip</code>
+        <span
+          style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:var(--accent);color:#fff;font-size:12px;font-weight:700;cursor:default;flex-shrink:0;"
+          data-tooltip="Any element works - spans, icons, images, links…"
+          data-tooltip-position="right">ℹ</span>
+        <a href="#" onclick="return false;"
+          data-tags="test,test2"
+          data-tooltip="Links get tooltips too"
+          data-tooltip-position="bottom">Hover this link</a>
+        <span style="cursor:default;"
+          data-tooltip="Tooltips support longer descriptions that wrap across multiple lines when needed."
+          data-tooltip-position="top">Long tooltip text ↑</span>
+        <template id="tt-html-example">
+            <strong>Bold</strong> and <em>italic</em><br>Plus a <code style="background:rgba(255,255,255,0.15);padding:1px 4px;border-radius:3px;">code</code> snippet <a href="#theming" data-target="theming">theming section</a>
+        </template>
+        <button class="copy-btn" style="position:static;"
+            data-tooltip-template="tt-html-example"
+            data-tooltip-position="top">HTML tooltip ↑</button>
+        <template id="tt-multiline">Line one<br>Line two<br>Line three</template>
+        <button class="copy-btn" style="position:static;"
+            data-tooltip-template="tt-multiline"
+            data-tooltip-position="bottom">Multi-line HTML ↓</button>
+    </div>
+    
+</div>
