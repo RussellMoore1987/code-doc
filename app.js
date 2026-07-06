@@ -2397,6 +2397,9 @@ function openTagView(tag) {
   tagView.innerHTML = buildTagResultsHTML(tag, results);
   elContentScroll.appendChild(tagView);
 
+  // Always start the tag view at the top regardless of prior scroll position.
+  elContentScroll.scrollTop = 0;
+
   // Wire close button
   const closeBtn = tagView.querySelector('#tag-results-close');
   if (closeBtn) closeBtn.addEventListener('click', closeTagView);
