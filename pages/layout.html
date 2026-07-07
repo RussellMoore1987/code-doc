@@ -1,23 +1,47 @@
 <div>
-  <h1 id="devdocs-layout">DevDocs Layout</h1>
+  <h1 id="devdocs-layout">DevDocs GUI Features</h1>
+
+  <p>
+    This page documents the built-in UI behaviors available in the DevDocs shell:
+    sidebar layout and resizing, responsive breakpoints, the search system, the light/dark
+    theme toggle, and header navigation.
+  </p>
+
+  <!-- ─── SIDEBAR ───────────────────────────── -->
   <h2 id="sidebar-layout">Sidebar Layout &amp; Resizing</h2>
 
   <p>Both sidebars can be collapsed and resized interactively at any time:</p>
 
   <ul>
-    <li><strong>Collapse</strong> — click the arrow icon (‹ / ›) in the sidebar header.</li>
-    <li><strong>Expand</strong> — click the arrow icon in the narrow strip that appears when collapsed.</li>
-    <li><strong>Resize</strong> — drag the 5 px divider between the sidebar and the center content area.
+    <li><strong>Collapse</strong> - click the arrow icon (‹&nbsp;/&nbsp;›) in the sidebar header.</li>
+    <li><strong>Expand</strong> - click the arrow icon in the narrow strip that appears when a sidebar is collapsed.</li>
+    <li><strong>Resize</strong> - drag the 5&nbsp;px divider between the sidebar and the center content area.
         Widths are persisted to <code>localStorage</code> so your preference is remembered across page loads.</li>
   </ul>
 
   <h3 id="minimum-widths">Minimum Widths</h3>
 
   <p>
-    The left and right sidebars each enforce a minimum width of <strong>220 px</strong>.
+    The left and right sidebars each enforce a minimum width of <strong>220&nbsp;px</strong>.
     If you drag a sidebar below that threshold it will spring back to the minimum.
     You can adjust the <code>MIN_SIDEBAR_WIDTH</code> constant in <code>app.js</code>.
+    The default widths on first load are <strong>280&nbsp;px</strong> (left) and
+    <strong>250&nbsp;px</strong> (right); change <code>DEFAULT_LEFT_WIDTH</code> and
+    <code>DEFAULT_RIGHT_WIDTH</code> to suit your content.
   </p>
+
+  <h3 id="sidebar-persistence">Persistence</h3>
+
+  <p>
+    Sidebar widths and collapse state are stored in <code>localStorage</code> under these keys:
+  </p>
+
+  <ul>
+    <li><code>devdocs-left-w</code> / <code>devdocs-right-w</code> - pixel widths.</li>
+    <li><code>devdocs-left-collapsed</code> / <code>devdocs-right-collapsed</code> - collapse state.</li>
+  </ul>
+
+  <p>Clear these keys (e.g. via DevTools → Application → Local Storage) to reset to defaults.</p>
 
   <!-- ─── RESPONSIVE ────────────────────────── -->
   <h2 id="responsive-layout">Responsive Layout</h2>
@@ -27,8 +51,8 @@
   </p>
 
   <ul>
-    <li>Below <strong>1200 px</strong> — the right sidebar collapses automatically.</li>
-    <li>Below <strong>800 px</strong> — the left sidebar also collapses.</li>
+    <li>Below <strong>1200&nbsp;px</strong> - the right sidebar collapses automatically.</li>
+    <li>Below <strong>800&nbsp;px</strong> - the left sidebar also collapses.</li>
   </ul>
 
   <p>
@@ -36,11 +60,161 @@
     The responsive collapse only triggers once on load; after that, user preference takes over.
   </p>
 
-  <h4 id="customising-breakpoints">Customising breakpoints</h4>
+  <h4 id="customising-breakpoints">Customising Breakpoints</h4>
 
   <p>
     Edit the <code>checkResponsiveCollapse()</code> function in <code>app.js</code> and the matching
     media queries in <code>styles.css</code> to suit your content.
+  </p>
+
+  <!-- ─── SEARCH ────────────────────────────── -->
+  <h2 id="search">Search</h2>
+
+  <p>
+    The search system indexes every page listed in <code>NAV_DATA</code> at startup and lets
+    you jump directly to any section, then highlights all matches on the target page.
+  </p>
+
+  <h3 id="search-opening">Opening &amp; Closing Search</h3>
+
+  <ul>
+    <li><strong>Click the search icon</strong> in the header actions area.</li>
+    <li><strong>Keyboard shortcut</strong> - <kbd>Ctrl</kbd>+<kbd>K</kbd> (Windows/Linux) or
+        <kbd>⌘</kbd>+<kbd>K</kbd> (Mac) opens search from anywhere on the page.</li>
+    <li><strong>Close</strong> - press <kbd>Escape</kbd> or click the × button, or click anywhere
+        outside the search panel.</li>
+  </ul>
+
+  <h3 id="search-index">How the Index Is Built</h3>
+
+  <p>
+    On page load, <code>buildSearchIndex()</code> fetches every unique page URL found in
+    <code>NAV_DATA</code> (in parallel). Each fetched document is parsed with
+    <code>DOMParser</code> and broken into sections using headings
+    (<code>&lt;h1&gt;</code>-<code>&lt;h6&gt;</code>). For each section the index stores:
+  </p>
+
+  <ul>
+    <li>The heading text (used as the result title).</li>
+    <li>The text content of all sibling elements that follow the heading, up to the next heading of
+        equal or higher level (used for snippet generation and match counting).</li>
+    <li>The heading's <code>id</code> attribute, so a result click can scroll directly to that
+        section.</li>
+  </ul>
+
+  <p>
+    Pages that cannot be fetched (e.g. 404) are skipped with a console warning and do not
+    appear in results.
+  </p>
+
+  <h3 id="search-querying">Querying</h3>
+
+  <p>
+    As you type, search is debounced by <strong>300&nbsp;ms</strong> to avoid
+    excessive work. The query is validated before any search runs:
+  </p>
+
+  <ul>
+    <li>Maximum length is <strong>25 characters</strong>.</li>
+    <li>Patterns that could indicate script injection (e.g. <code>&lt;script</code>,
+        <code>javascript:</code>, <code>onload=</code>, <code>eval(</code>) are rejected and an
+        error message is shown.</li>
+  </ul>
+
+  <p>
+    Matching is case-insensitive substring search across both the section title and its body text.
+    Results are capped at <strong>250</strong> — if more are found the user is prompted to refine
+    the query.  To raise the cap, change the limit check in <code>renderSearchResults()</code>
+    inside <code>app.js</code>.
+  </p>
+
+  <h3 id="search-results">Result List</h3>
+
+  <p>
+    Each result card shows the page name, section heading, and a text snippet with the matched
+    term wrapped in a <code>&lt;mark&gt;</code> element. A badge appears when a section contains
+    more than one match, showing the total count.
+  </p>
+
+  <h4 id="search-keyboard-nav">Keyboard Navigation in the Result List</h4>
+
+  <ul>
+    <li><kbd>↓</kbd> / <kbd>↑</kbd> - move highlight through results.</li>
+    <li><kbd>Enter</kbd> - navigate to the highlighted result (defaults to the first result if none
+        is highlighted).</li>
+    <li><kbd>Escape</kbd> - close search.</li>
+  </ul>
+
+  <h3 id="search-page-highlights">In-Page Highlights &amp; Navigation</h3>
+
+  <p>
+    After you select a result, the target page loads and every occurrence of your search term is
+    wrapped in a <code>.search-highlight</code> span. A floating navigation bar appears with:
+  </p>
+
+  <ul>
+    <li><strong>Match counter</strong> - shows the current position, e.g. <em>3 of 11 matches</em>.</li>
+    <li><strong>Previous / Next buttons</strong> - step through all highlights one by one.
+        Keyboard shortcuts <kbd>F3</kbd> / <kbd>Shift</kbd>+<kbd>F3</kbd> also work while the
+        search panel is closed.</li>
+    <li><strong>Clear button</strong> - removes all highlights and hides the navigation bar.</li>
+  </ul>
+
+  <p>
+    Highlights are cleared automatically whenever a new page is loaded or a new search is
+    performed. The navigation bar's position adjusts when the right sidebar is collapsed so it
+    stays visible.
+  </p>
+
+  <h3 id="search-tags">Tag-Based Navigation</h3>
+
+  <p>
+    Any element on a content page can be tagged by adding a <code>data-tags</code> attribute
+    with a comma-separated list of lowercase tag names:
+  </p>
+
+  <pre><code>&lt;section data-tags="api,reference"&gt;…&lt;/section&gt;</code></pre>
+
+  <p>
+    At index time these tags are collected alongside the section title and a short snippet.
+    An <strong>All Tags</strong> panel then appears at the bottom of the left sidebar, listing
+    every unique tag found across all pages. Clicking a tag opens a filtered view of every
+    section that carries that tag.  The panel is collapsible and its height is resizable (drag
+    the handle) and persisted in <code>localStorage</code> under
+    <code>devdocs-left-tags-expanded</code> and <code>devdocs-left-tags-height</code>.
+  </p>
+
+  <!-- ─── THEME ─────────────────────────────── -->
+  <h2 id="theme-toggle">Light / Dark Theme</h2>
+
+  <p>
+    Click the theme toggle button (sun/moon icon) in the header to switch between light and dark
+    modes. The chosen theme is saved to <code>localStorage</code> under the key
+    <code>devdocs-theme</code> and restored on the next page load. The
+    <code>data-theme</code> attribute on <code>&lt;html&gt;</code> drives all color variables
+    defined in <code>styles.css</code>.
+  </p>
+
+  <!-- ─── HEADER NAV ───────────────────────── -->
+  <h2 id="header-nav">Header Navigation</h2>
+
+  <p>
+    The top header contains a responsive navigation bar. When the viewport narrows and there is
+    not enough room for all nav links, items are moved into an overflow dropdown triggered by a
+    <strong>≡</strong> menu button. Below <strong>550&nbsp;px</strong> all nav items move to
+    the overflow menu automatically. The overflow menu closes when:
+  </p>
+
+  <ul>
+    <li>A link inside it is clicked.</li>
+    <li>The user clicks outside the menu.</li>
+    <li><kbd>Escape</kbd> is pressed (focus returns to the toggle button).</li>
+  </ul>
+
+  <p>
+    The redistribution of items is managed by <code>updateHeaderNavigationOverflow()</code> in
+    <code>app.js</code>, which uses a <code>ResizeObserver</code> on the header inner element so
+    it reacts instantly to any size change without polling.
   </p>
 
 </div>

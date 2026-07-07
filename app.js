@@ -113,7 +113,7 @@ const NAV_DATA = [
     id: 'reference',
     label: 'Reference',
     children: [
-      { id: 'layout',  label: 'DevDocs Layouts',  page: 'pages/layout.html' },
+      { id: 'layout',  label: 'DevDocs GUI Features',  page: 'pages/layout.html' },
       { id: 'utilities',  label: 'Text Elements',  page: 'pages/text_elements.html' },
       { id: 'utilities2',  label: 'Tools',  page: 'pages/tools.html' },
       { id: 'sliders',  label: 'Sliders',  page: 'pages/sliders.html' },
