@@ -19,6 +19,7 @@
         Widths are persisted to <code>localStorage</code> so your preference is remembered across page loads.</li>
   </ul>
 
+  <!-- sidebar minimum widths section -->
   <h3 id="minimum-widths">Minimum Widths</h3>
 
   <p>
@@ -30,6 +31,7 @@
     <code>DEFAULT_RIGHT_WIDTH</code> to suit your content.
   </p>
 
+  <!-- sidebar persistence section -->
   <h3 id="sidebar-persistence">Persistence</h3>
 
   <p>
@@ -60,20 +62,22 @@
     The responsive collapse only triggers once on load; after that, user preference takes over.
   </p>
 
-  <h4 id="customising-breakpoints">Customising Breakpoints</h4>
+  <!-- customizing breakpoints section -->
+  <h3 id="customizing-breakpoints">Customizing Breakpoints</h3>
 
   <p>
     Edit the <code>checkResponsiveCollapse()</code> function in <code>app.js</code> and the matching
     media queries in <code>styles.css</code> to suit your content.
   </p>
 
-  <!-- ─── SEARCH ────────────────────────────── -->
+  <!-- search section -->
   <h2 id="search">Search</h2>
 
   <p>
     The search system indexes every page listed in <code>NAV_DATA</code> from the <code>app.js</code> at startup. It will use these pages to search from. After typing into the search bar, it lets you select a result to jump directly to any section, then highlights all matches on the target page.
   </p>
 
+  <!-- search opening section -->
   <h3 id="search-opening">Opening &amp; Closing Search</h3>
 
   <ul>
@@ -84,6 +88,7 @@
         outside the search panel.</li>
   </ul>
 
+  <!-- search index section -->
   <h3 id="search-index">How the Index Is Built</h3>
 
   <p>
@@ -106,6 +111,7 @@
     appear in results.
   </p>
 
+  <!-- search querying section -->
   <h3 id="search-querying">Querying</h3>
 
   <p>
@@ -127,6 +133,7 @@
     inside <code>app.js</code>.
   </p>
 
+  <!-- search results section -->
   <h3 id="search-results">Result List</h3>
 
   <p>
@@ -135,6 +142,7 @@
     more than one match, showing the total count.
   </p>
 
+  <!-- search keyboard navigation section -->
   <h4 id="search-keyboard-nav">Keyboard Navigation in the Result List</h4>
 
   <ul>
@@ -144,6 +152,7 @@
     <li><kbd>Escape</kbd> - close search.</li>
   </ul>
 
+  <!-- search page highlights section -->
   <h3 id="search-page-highlights">In-Page Highlights &amp; Navigation</h3>
 
   <p>
@@ -165,25 +174,41 @@
     stays visible.
   </p>
 
-  <h3 id="search-tags">Tag-Based Navigation</h3>
+  <!-- search tags section -->
+  <h2 id="search-tags"><span data-tags="tag navigation, tags">Tag-Based Navigation</span></h2>
 
   <p>
     Any element on a content page can be tagged by adding a <code>data-tags</code> attribute
     with a comma-separated list of lowercase tag names:
   </p>
 
-  <pre><code>&lt;section data-tags="api,reference"&gt;…&lt;/section&gt;</code></pre>
+  <div data-tags="tag navigation"><pre><code>&lt;section data-tags="api,reference"&gt;…&lt;/section&gt;</code></pre></div>
 
   <p>
     At index time these tags are collected alongside the section title and a short snippet.
-    An <strong>All Tags</strong> panel then appears at the bottom of the left sidebar, listing
-    every unique tag found across all pages. Clicking a tag opens a filtered view of every
-    section that carries that tag.  The panel is collapsible and its height is resizable (drag
-    the handle) and persisted in <code>localStorage</code> under
+    An <strong data-tags="tags"><u>All Tags</u></strong> panel then appears at the bottom of the left sidebar, listing
+    every unique tag found across all pages in the <code>NAV_DATA</code> from the <code>app.js</code>. Clicking a tag opens a filtered view of every section that carries that tag. The left sidebar tag panel is collapsible and its height is resizable (drag the handle) and persisted in <code>localStorage</code> under
     <code>devdocs-left-tags-expanded</code> and <code>devdocs-left-tags-height</code>.
   </p>
 
-  <!-- ─── THEME ─────────────────────────────── -->
+  <!-- left sidebar tags section -->
+  <h3 id="left-sidebar-tags">Left Sidebar Tags</h3>
+  <p>
+    Clicking a tag in the left sidebar filters the content to show only sections that have that tag, making it easier to navigate related content across the documentation. You can click on another tag from the left hand panel to view that tag's related sections.
+  </p>
+
+  <p>
+    This tag-based navigation system allows for quick access to related content, improving the overall discoverability of documentation sections.
+  </p>
+
+  <!-- right sidebar tags section -->
+  <h3 id="right-sidebar-tags">Right Sidebar Tags</h3>
+
+  <p>
+    The right-hand sidebar also includes page-level tag navigation, allowing you to quickly see every tag used on the current page. Selecting a tag filters the page content to display only the sections associated with that tag, similar to the behavior of the left-hand sidebar. While a tag filter is active, the right-hand sidebar's "On This Page" navigation and tag list are hidden to maximize visual space for the filtered content. To return to the normal page view, simply close the tag filter. The full page content, along with the "On This Page" navigation and page-level tags in the right-hand sidebar, will be restored.
+  </p>
+
+  <!-- theme section -->
   <h2 id="theme-toggle">Light / Dark Theme</h2>
 
   <p>
@@ -194,7 +219,7 @@
     defined in <code>styles.css</code>.
   </p>
 
-  <!-- ─── HEADER NAV ───────────────────────── -->
+  <!-- header navigation section -->
   <h2 id="header-nav">Header Navigation</h2>
 
   <p>
