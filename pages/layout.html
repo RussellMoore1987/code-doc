@@ -7,7 +7,7 @@
     theme toggle, and header navigation.
   </p>
 
-  <!-- ─── SIDEBAR ───────────────────────────── -->
+  <!-- sidebar section -->
   <h2 id="sidebar-layout">Sidebar Layout &amp; Resizing</h2>
 
   <p>Both sidebars can be collapsed and resized interactively at any time:</p>
@@ -15,7 +15,7 @@
   <ul>
     <li><strong>Collapse</strong> - click the arrow icon (‹&nbsp;/&nbsp;›) in the sidebar header.</li>
     <li><strong>Expand</strong> - click the arrow icon in the narrow strip that appears when a sidebar is collapsed.</li>
-    <li><strong>Resize</strong> - drag the 5&nbsp;px divider between the sidebar and the center content area.
+    <li><strong>Resize</strong> - drag the divider between the sidebar and the center content area.
         Widths are persisted to <code>localStorage</code> so your preference is remembered across page loads.</li>
   </ul>
 
@@ -43,7 +43,7 @@
 
   <p>Clear these keys (e.g. via DevTools → Application → Local Storage) to reset to defaults.</p>
 
-  <!-- ─── RESPONSIVE ────────────────────────── -->
+  <!-- responsive section -->
   <h2 id="responsive-layout">Responsive Layout</h2>
 
   <p>
@@ -56,7 +56,7 @@
   </ul>
 
   <p>
-    On touch devices you can still expand either sidebar manually using the strip expand button.
+    On touch devices you can still expand either sidebar manually using the menu expand buttons (hamburger menus in the content area).
     The responsive collapse only triggers once on load; after that, user preference takes over.
   </p>
 
@@ -71,8 +71,7 @@
   <h2 id="search">Search</h2>
 
   <p>
-    The search system indexes every page listed in <code>NAV_DATA</code> at startup and lets
-    you jump directly to any section, then highlights all matches on the target page.
+    The search system indexes every page listed in <code>NAV_DATA</code> from the <code>app.js</code> at startup. It will use these pages to search from. After typing into the search bar, it lets you select a result to jump directly to any section, then highlights all matches on the target page.
   </p>
 
   <h3 id="search-opening">Opening &amp; Closing Search</h3>
@@ -155,8 +154,8 @@
   <ul>
     <li><strong>Match counter</strong> - shows the current position, e.g. <em>3 of 11 matches</em>.</li>
     <li><strong>Previous / Next buttons</strong> - step through all highlights one by one.
-        Keyboard shortcuts <kbd>F3</kbd> / <kbd>Shift</kbd>+<kbd>F3</kbd> also work while the
-        search panel is closed.</li>
+        Keyboard shortcuts <kbd>←</kbd> / <kbd>→</kbd> also work while the
+        floating navigation panel is open.</li>
     <li><strong>Clear button</strong> - removes all highlights and hides the navigation bar.</li>
   </ul>
 

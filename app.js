@@ -1533,13 +1533,14 @@ function initSearch() {
     
     // Additional keyboard shortcuts for page navigation
     if (searchState.currentHighlights.length > 0 && !searchState.isOpen) {
-      if (e.key === 'F3' || (e.key === 'g' && e.ctrlKey)) {
+      if (e.key === 'ArrowRight') {
         e.preventDefault();
-        if (e.shiftKey) {
-          navigateToPreviousHighlight();
-        } else {
-          navigateToNextHighlight();
-        }
+        navigateToNextHighlight();
+      }
+
+      if (e.key === 'ArrowLeft') {
+        e.preventDefault();
+        navigateToPreviousHighlight();
       }
     }
   }, {
