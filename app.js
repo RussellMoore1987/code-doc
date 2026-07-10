@@ -3729,6 +3729,33 @@ function setupImageModal() {
       seenImages.add(component.image);
     }
 
+    // If the image carries data-nav or data-target, wire it as a navigation link
+    // instead of a modal trigger. Works in flex, cover, and thumbnail galleries.
+    const sourceImg = isTrigger ? el.querySelector('img') : (component ? component.image : null);
+    const linkNavId     = sourceImg?.dataset?.nav    ?? null;
+    const linkSectionId = sourceImg?.dataset?.section ?? null;
+    const linkTargetId  = sourceImg?.dataset?.target  ?? null;
+
+    if (linkNavId || linkTargetId) {
+      if (triggerEl.tagName !== 'A') {
+        triggerEl.setAttribute('tabindex', '0');
+        triggerEl.setAttribute('role', 'link');
+      }
+      const navLabel = sourceImg?.alt || triggerEl.getAttribute('aria-label') || 'Navigate';
+      triggerEl.setAttribute('aria-label', navLabel);
+
+      triggerEl.addEventListener('click', () => {
+        navigateTo(linkNavId, linkSectionId || linkTargetId || null, true, true);
+      });
+      triggerEl.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          navigateTo(linkNavId, linkSectionId || linkTargetId || null, true, true);
+        }
+      });
+      return;
+    }
+
     const section = findNearestSection(triggerEl);
     const sectionId = section ? section.id : null;
     const sectionTitle = section ? section.textContent.trim() : null;
