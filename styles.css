@@ -1826,12 +1826,25 @@ figure.image-modal figcaption {
 }
 
 .image-wrapper::after {
-    content: attr(data-caption);
-    position: absolute;
-    bottom: -22px;
-    left: 0;
-    font-size: 0.75rem;
-    color: var(--text-muted);
+  content: attr(data-caption);
+  position: absolute;
+  bottom: -22px;
+  left: 0;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+a.image-link,
+a[data-nav].image-link {
+  display: inline-block;
+  transition: none;
+}
+
+a.image-link:hover,
+a[data-nav].image-link:hover {
+  text-decoration: none;
+  border-color: transparent;
+  transition: none;
 }
 
 /* ═══════════════════════════════════════════════════════════════

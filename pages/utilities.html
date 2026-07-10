@@ -1,0 +1,632 @@
+<div>
+  <h1 id="utility-classes">Utility Classes</h1>
+
+  <p>
+    A reference for all single-purpose utility classes defined in <code>styles.css</code>.
+    These classes can be mixed and matched on any element to handle display, flexbox,
+    spacing, sizing, and text styling without writing custom CSS.
+  </p>
+
+  <!-- ══════════════════════════════════════════════════
+       DISPLAY
+  ══════════════════════════════════════════════════ -->
+  <h2 id="display">Display</h2>
+
+  <p>Control the CSS <code>display</code> property of any element.</p>
+
+  <table style="width:100%; border-collapse:collapse; font-size:14px; margin-bottom:24px;">
+    <thead>
+      <tr style="background:var(--bg-code); border-bottom:2px solid var(--border);">
+        <th style="padding:10px 14px; text-align:left;">Class</th>
+        <th style="padding:10px 14px; text-align:left;">CSS Output</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr style="border-bottom:1px solid var(--border);"><td style="padding:9px 14px;"><code>.d-none</code></td><td style="padding:9px 14px;"><code>display: none</code></td></tr>
+      <tr style="border-bottom:1px solid var(--border); background:var(--bg-hover);"><td style="padding:9px 14px;"><code>.d-inline</code></td><td style="padding:9px 14px;"><code>display: inline</code></td></tr>
+      <tr style="border-bottom:1px solid var(--border);"><td style="padding:9px 14px;"><code>.d-inline-block</code></td><td style="padding:9px 14px;"><code>display: inline-block</code></td></tr>
+      <tr style="border-bottom:1px solid var(--border); background:var(--bg-hover);"><td style="padding:9px 14px;"><code>.d-block</code></td><td style="padding:9px 14px;"><code>display: block</code></td></tr>
+      <tr style="border-bottom:1px solid var(--border);"><td style="padding:9px 14px;"><code>.d-flex</code></td><td style="padding:9px 14px;"><code>display: flex</code></td></tr>
+      <tr style="border-bottom:1px solid var(--border); background:var(--bg-hover);"><td style="padding:9px 14px;"><code>.d-inline-flex</code></td><td style="padding:9px 14px;"><code>display: inline-flex</code></td></tr>
+      <tr style="border-bottom:1px solid var(--border);"><td style="padding:9px 14px;"><code>.d-grid</code></td><td style="padding:9px 14px;"><code>display: grid</code></td></tr>
+    </tbody>
+  </table>
+
+  <h3 id="display-example">Example</h3>
+  <pre><code>&lt;!-- Hide an element --&gt;
+&lt;div class="d-none"&gt;Hidden&lt;/div&gt;
+
+&lt;!-- Flex container --&gt;
+&lt;div class="d-flex"&gt;
+  &lt;span&gt;Item 1&lt;/span&gt;
+  &lt;span&gt;Item 2&lt;/span&gt;
+&lt;/div&gt;</code></pre>
+
+  <!-- ══════════════════════════════════════════════════
+       FLEXBOX
+  ══════════════════════════════════════════════════ -->
+  <h2 id="flexbox">Flexbox</h2>
+
+  <p>Use <code>.d-flex</code> or <code>.d-inline-flex</code> to create a flex container, then apply any combination of the classes below.</p>
+
+  <!-- Direction -->
+  <h3 id="flex-direction">Direction &amp; Wrap</h3>
+
+  <table style="width:100%; border-collapse:collapse; font-size:14px; margin-bottom:24px;">
+    <thead>
+      <tr style="background:var(--bg-code); border-bottom:2px solid var(--border);">
+        <th style="padding:10px 14px; text-align:left;">Class</th>
+        <th style="padding:10px 14px; text-align:left;">CSS Output</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr style="border-bottom:1px solid var(--border);"><td style="padding:9px 14px;"><code>.flex-row</code></td><td style="padding:9px 14px;"><code>flex-direction: row</code></td></tr>
+      <tr style="border-bottom:1px solid var(--border); background:var(--bg-hover);"><td style="padding:9px 14px;"><code>.flex-row-reverse</code></td><td style="padding:9px 14px;"><code>flex-direction: row-reverse</code></td></tr>
+      <tr style="border-bottom:1px solid var(--border);"><td style="padding:9px 14px;"><code>.flex-column</code></td><td style="padding:9px 14px;"><code>flex-direction: column</code></td></tr>
+      <tr style="border-bottom:1px solid var(--border); background:var(--bg-hover);"><td style="padding:9px 14px;"><code>.flex-column-reverse</code></td><td style="padding:9px 14px;"><code>flex-direction: column-reverse</code></td></tr>
+      <tr style="border-bottom:1px solid var(--border);"><td style="padding:9px 14px;"><code>.flex-wrap</code></td><td style="padding:9px 14px;"><code>flex-wrap: wrap</code></td></tr>
+      <tr style="border-bottom:1px solid var(--border); background:var(--bg-hover);"><td style="padding:9px 14px;"><code>.flex-nowrap</code></td><td style="padding:9px 14px;"><code>flex-wrap: nowrap</code></td></tr>
+      <tr style="border-bottom:1px solid var(--border);"><td style="padding:9px 14px;"><code>.flex-wrap-reverse</code></td><td style="padding:9px 14px;"><code>flex-wrap: wrap-reverse</code></td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout" style="margin-top:0;">
+    <div class="callout-title">Live Demo — Direction</div>
+    <p style="font-size:13px; margin-bottom:8px;"><code>.d-flex .flex-row</code> (default)</p>
+    <div class="d-flex flex-row gap-2" style="background:var(--bg-code); border:1px solid var(--border); border-radius:8px; padding:12px; margin-bottom:12px;">
+      <div style="background:var(--accent-light); border:1px solid var(--border-focus); border-radius:6px; padding:8px 14px; font-size:13px; font-weight:600;">1</div>
+      <div style="background:var(--accent-light); border:1px solid var(--border-focus); border-radius:6px; padding:8px 14px; font-size:13px; font-weight:600;">2</div>
+      <div style="background:var(--accent-light); border:1px solid var(--border-focus); border-radius:6px; padding:8px 14px; font-size:13px; font-weight:600;">3</div>
+    </div>
+    <p style="font-size:13px; margin-bottom:8px;"><code>.d-flex .flex-row-reverse</code></p>
+    <div class="d-flex flex-row-reverse gap-2" style="background:var(--bg-code); border:1px solid var(--border); border-radius:8px; padding:12px; margin-bottom:12px;">
+      <div style="background:var(--accent-light); border:1px solid var(--border-focus); border-radius:6px; padding:8px 14px; font-size:13px; font-weight:600;">1</div>
+      <div style="background:var(--accent-light); border:1px solid var(--border-focus); border-radius:6px; padding:8px 14px; font-size:13px; font-weight:600;">2</div>
+      <div style="background:var(--accent-light); border:1px solid var(--border-focus); border-radius:6px; padding:8px 14px; font-size:13px; font-weight:600;">3</div>
+    </div>
+    <p style="font-size:13px; margin-bottom:8px;"><code>.d-flex .flex-column</code></p>
+    <div class="d-flex flex-column gap-2" style="background:var(--bg-code); border:1px solid var(--border); border-radius:8px; padding:12px; margin-bottom:12px;">
+      <div style="background:var(--accent-light); border:1px solid var(--border-focus); border-radius:6px; padding:8px 14px; font-size:13px; font-weight:600;">1</div>
+      <div style="background:var(--accent-light); border:1px solid var(--border-focus); border-radius:6px; padding:8px 14px; font-size:13px; font-weight:600;">2</div>
+      <div style="background:var(--accent-light); border:1px solid var(--border-focus); border-radius:6px; padding:8px 14px; font-size:13px; font-weight:600;">3</div>
+    </div>
+    <p style="font-size:13px; margin-bottom:8px;"><code>.d-flex .flex-wrap</code> — items wrap onto the next line when there isn't enough space</p>
+    <div class="d-flex flex-wrap gap-2" style="background:var(--bg-code); border:1px solid var(--border); border-radius:8px; padding:12px; max-width:280px;">
+      <div style="background:var(--accent-light); border:1px solid var(--border-focus); border-radius:6px; padding:8px 20px; font-size:13px; font-weight:600;">Item 1</div>
+      <div style="background:var(--accent-light); border:1px solid var(--border-focus); border-radius:6px; padding:8px 20px; font-size:13px; font-weight:600;">Item 2</div>
+      <div style="background:var(--accent-light); border:1px solid var(--border-focus); border-radius:6px; padding:8px 20px; font-size:13px; font-weight:600;">Item 3</div>
+      <div style="background:var(--accent-light); border:1px solid var(--border-focus); border-radius:6px; padding:8px 20px; font-size:13px; font-weight:600;">Item 4</div>
+      <div style="background:var(--accent-light); border:1px solid var(--border-focus); border-radius:6px; padding:8px 20px; font-size:13px; font-weight:600;">Item 5</div>
+    </div>
+  </div>
+
+  <!-- justify-content -->
+  <h3 id="justify-content">Justify Content</h3>
+
+  <table style="width:100%; border-collapse:collapse; font-size:14px; margin-bottom:16px;">
+    <thead>
+      <tr style="background:var(--bg-code); border-bottom:2px solid var(--border);">
+        <th style="padding:10px 14px; text-align:left;">Class</th>
+        <th style="padding:10px 14px; text-align:left;">CSS Output</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr style="border-bottom:1px solid var(--border);"><td style="padding:9px 14px;"><code>.justify-content-start</code></td><td style="padding:9px 14px;"><code>justify-content: flex-start</code></td></tr>
+      <tr style="border-bottom:1px solid var(--border); background:var(--bg-hover);"><td style="padding:9px 14px;"><code>.justify-content-center</code></td><td style="padding:9px 14px;"><code>justify-content: center</code></td></tr>
+      <tr style="border-bottom:1px solid var(--border);"><td style="padding:9px 14px;"><code>.justify-content-end</code></td><td style="padding:9px 14px;"><code>justify-content: flex-end</code></td></tr>
+      <tr style="border-bottom:1px solid var(--border); background:var(--bg-hover);"><td style="padding:9px 14px;"><code>.justify-content-between</code></td><td style="padding:9px 14px;"><code>justify-content: space-between</code></td></tr>
+      <tr style="border-bottom:1px solid var(--border);"><td style="padding:9px 14px;"><code>.justify-content-around</code></td><td style="padding:9px 14px;"><code>justify-content: space-around</code></td></tr>
+      <tr style="border-bottom:1px solid var(--border); background:var(--bg-hover);"><td style="padding:9px 14px;"><code>.justify-content-evenly</code></td><td style="padding:9px 14px;"><code>justify-content: space-evenly</code></td></tr>
+    </tbody>
+  </table>
+
+  <!-- Live justify-content demo -->
+  <div class="callout" style="margin-top:0;">
+    <div class="callout-title">Live Demo</div>
+    <p style="font-size:13px; margin-bottom:8px;"><code>.d-flex .justify-content-between</code></p>
+    <div class="d-flex justify-content-between" style="background:var(--bg-code); border:1px solid var(--border); border-radius:8px; padding:12px;">
+      <div style="background:var(--accent-light); border:1px solid var(--border-focus); border-radius:6px; padding:8px 16px; font-size:13px; font-weight:600;">Item A</div>
+      <div style="background:var(--accent-light); border:1px solid var(--border-focus); border-radius:6px; padding:8px 16px; font-size:13px; font-weight:600;">Item B</div>
+      <div style="background:var(--accent-light); border:1px solid var(--border-focus); border-radius:6px; padding:8px 16px; font-size:13px; font-weight:600;">Item C</div>
+    </div>
+    <p style="font-size:13px; margin-top:12px; margin-bottom:8px;"><code>.d-flex .justify-content-center .gap-3</code></p>
+    <div class="d-flex justify-content-center gap-3" style="background:var(--bg-code); border:1px solid var(--border); border-radius:8px; padding:12px;">
+      <div style="background:var(--accent-light); border:1px solid var(--border-focus); border-radius:6px; padding:8px 16px; font-size:13px; font-weight:600;">Item A</div>
+      <div style="background:var(--accent-light); border:1px solid var(--border-focus); border-radius:6px; padding:8px 16px; font-size:13px; font-weight:600;">Item B</div>
+      <div style="background:var(--accent-light); border:1px solid var(--border-focus); border-radius:6px; padding:8px 16px; font-size:13px; font-weight:600;">Item C</div>
+    </div>
+  </div>
+
+  <!-- align-items -->
+  <h3 id="align-items">Align Items</h3>
+
+  <table style="width:100%; border-collapse:collapse; font-size:14px; margin-bottom:24px;">
+    <thead>
+      <tr style="background:var(--bg-code); border-bottom:2px solid var(--border);">
+        <th style="padding:10px 14px; text-align:left;">Class</th>
+        <th style="padding:10px 14px; text-align:left;">CSS Output</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr style="border-bottom:1px solid var(--border);"><td style="padding:9px 14px;"><code>.align-items-start</code></td><td style="padding:9px 14px;"><code>align-items: flex-start</code></td></tr>
+      <tr style="border-bottom:1px solid var(--border); background:var(--bg-hover);"><td style="padding:9px 14px;"><code>.align-items-center</code></td><td style="padding:9px 14px;"><code>align-items: center</code></td></tr>
+      <tr style="border-bottom:1px solid var(--border);"><td style="padding:9px 14px;"><code>.align-items-end</code></td><td style="padding:9px 14px;"><code>align-items: flex-end</code></td></tr>
+      <tr style="border-bottom:1px solid var(--border); background:var(--bg-hover);"><td style="padding:9px 14px;"><code>.align-items-baseline</code></td><td style="padding:9px 14px;"><code>align-items: baseline</code></td></tr>
+      <tr style="border-bottom:1px solid var(--border);"><td style="padding:9px 14px;"><code>.align-items-stretch</code></td><td style="padding:9px 14px;"><code>align-items: stretch</code></td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout" style="margin-top:0;">
+    <div class="callout-title">Live Demo — Align Items</div>
+    <p style="font-size:13px; margin-bottom:8px;">Items have different heights to show the effect. Container height is fixed at 80px.</p>
+    <p style="font-size:13px; margin-bottom:6px;"><code>.d-flex .align-items-start</code></p>
+    <div class="d-flex align-items-start gap-2" style="background:var(--bg-code); border:1px solid var(--border); border-radius:8px; padding:10px; height:80px; margin-bottom:10px;">
+      <div style="background:var(--accent-light); border:1px solid var(--border-focus); border-radius:6px; padding:6px 14px; font-size:12px; font-weight:600;">Short</div>
+      <div style="background:var(--accent-light); border:1px solid var(--border-focus); border-radius:6px; padding:14px 14px; font-size:12px; font-weight:600;">Taller</div>
+      <div style="background:var(--accent-light); border:1px solid var(--border-focus); border-radius:6px; padding:6px 14px; font-size:12px; font-weight:600;">Short</div>
+    </div>
+    <p style="font-size:13px; margin-bottom:6px;"><code>.d-flex .align-items-center</code></p>
+    <div class="d-flex align-items-center gap-2" style="background:var(--bg-code); border:1px solid var(--border); border-radius:8px; padding:10px; height:80px; margin-bottom:10px;">
+      <div style="background:var(--accent-light); border:1px solid var(--border-focus); border-radius:6px; padding:6px 14px; font-size:12px; font-weight:600;">Short</div>
+      <div style="background:var(--accent-light); border:1px solid var(--border-focus); border-radius:6px; padding:14px 14px; font-size:12px; font-weight:600;">Taller</div>
+      <div style="background:var(--accent-light); border:1px solid var(--border-focus); border-radius:6px; padding:6px 14px; font-size:12px; font-weight:600;">Short</div>
+    </div>
+    <p style="font-size:13px; margin-bottom:6px;"><code>.d-flex .align-items-end</code></p>
+    <div class="d-flex align-items-end gap-2" style="background:var(--bg-code); border:1px solid var(--border); border-radius:8px; padding:10px; height:80px; margin-bottom:10px;">
+      <div style="background:var(--accent-light); border:1px solid var(--border-focus); border-radius:6px; padding:6px 14px; font-size:12px; font-weight:600;">Short</div>
+      <div style="background:var(--accent-light); border:1px solid var(--border-focus); border-radius:6px; padding:14px 14px; font-size:12px; font-weight:600;">Taller</div>
+      <div style="background:var(--accent-light); border:1px solid var(--border-focus); border-radius:6px; padding:6px 14px; font-size:12px; font-weight:600;">Short</div>
+    </div>
+    <p style="font-size:13px; margin-bottom:6px;"><code>.d-flex .align-items-stretch</code> — items stretch to fill the container height</p>
+    <div class="d-flex align-items-stretch gap-2" style="background:var(--bg-code); border:1px solid var(--border); border-radius:8px; padding:10px; height:80px;">
+      <div style="background:var(--accent-light); border:1px solid var(--border-focus); border-radius:6px; padding:0 14px; font-size:12px; font-weight:600; display:flex; align-items:center;">A</div>
+      <div style="background:var(--accent-light); border:1px solid var(--border-focus); border-radius:6px; padding:0 14px; font-size:12px; font-weight:600; display:flex; align-items:center;">B</div>
+      <div style="background:var(--accent-light); border:1px solid var(--border-focus); border-radius:6px; padding:0 14px; font-size:12px; font-weight:600; display:flex; align-items:center;">C</div>
+    </div>
+  </div>
+
+  <!-- align-self -->
+  <h3 id="align-self">Align Self</h3>
+
+  <table style="width:100%; border-collapse:collapse; font-size:14px; margin-bottom:24px;">
+    <thead>
+      <tr style="background:var(--bg-code); border-bottom:2px solid var(--border);">
+        <th style="padding:10px 14px; text-align:left;">Class</th>
+        <th style="padding:10px 14px; text-align:left;">CSS Output</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr style="border-bottom:1px solid var(--border);"><td style="padding:9px 14px;"><code>.align-self-auto</code></td><td style="padding:9px 14px;"><code>align-self: auto</code></td></tr>
+      <tr style="border-bottom:1px solid var(--border); background:var(--bg-hover);"><td style="padding:9px 14px;"><code>.align-self-start</code></td><td style="padding:9px 14px;"><code>align-self: flex-start</code></td></tr>
+      <tr style="border-bottom:1px solid var(--border);"><td style="padding:9px 14px;"><code>.align-self-center</code></td><td style="padding:9px 14px;"><code>align-self: center</code></td></tr>
+      <tr style="border-bottom:1px solid var(--border); background:var(--bg-hover);"><td style="padding:9px 14px;"><code>.align-self-end</code></td><td style="padding:9px 14px;"><code>align-self: flex-end</code></td></tr>
+      <tr style="border-bottom:1px solid var(--border);"><td style="padding:9px 14px;"><code>.align-self-baseline</code></td><td style="padding:9px 14px;"><code>align-self: baseline</code></td></tr>
+      <tr style="border-bottom:1px solid var(--border); background:var(--bg-hover);"><td style="padding:9px 14px;"><code>.align-self-stretch</code></td><td style="padding:9px 14px;"><code>align-self: stretch</code></td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout" style="margin-top:0;">
+    <div class="callout-title">Live Demo — Align Self</div>
+    <p style="font-size:13px; margin-bottom:8px;">The container uses <code>.align-items-start</code> as a baseline. Each item individually overrides with its own <code>.align-self-*</code> class. Container height is 90px.</p>
+    <div class="d-flex align-items-start gap-2" style="background:var(--bg-code); border:1px solid var(--border); border-radius:8px; padding:10px; height:90px;">
+      <div style="background:var(--bg-callout-warn); border:1px dashed var(--callout-warn-border); border-radius:6px; padding:8px 12px; font-size:11px; font-weight:600; white-space:nowrap;">start (default)</div>
+      <div class="align-self-center" style="background:var(--accent-light); border:1px solid var(--border-focus); border-radius:6px; padding:8px 12px; font-size:11px; font-weight:600; white-space:nowrap;">.align-self-center</div>
+      <div class="align-self-end" style="background:var(--accent-light); border:1px solid var(--border-focus); border-radius:6px; padding:8px 12px; font-size:11px; font-weight:600; white-space:nowrap;">.align-self-end</div>
+      <div class="align-self-stretch" style="background:var(--accent-light); border:1px solid var(--border-focus); border-radius:6px; padding:0 12px; font-size:11px; font-weight:600; display:flex; align-items:center; white-space:nowrap;">.align-self-stretch</div>
+    </div>
+  </div>
+
+  <!-- align-content -->
+  <h3 id="align-content">Align Content</h3>
+
+  <table style="width:100%; border-collapse:collapse; font-size:14px; margin-bottom:24px;">
+    <thead>
+      <tr style="background:var(--bg-code); border-bottom:2px solid var(--border);">
+        <th style="padding:10px 14px; text-align:left;">Class</th>
+        <th style="padding:10px 14px; text-align:left;">CSS Output</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr style="border-bottom:1px solid var(--border);"><td style="padding:9px 14px;"><code>.align-content-start</code></td><td style="padding:9px 14px;"><code>align-content: flex-start</code></td></tr>
+      <tr style="border-bottom:1px solid var(--border); background:var(--bg-hover);"><td style="padding:9px 14px;"><code>.align-content-center</code></td><td style="padding:9px 14px;"><code>align-content: center</code></td></tr>
+      <tr style="border-bottom:1px solid var(--border);"><td style="padding:9px 14px;"><code>.align-content-end</code></td><td style="padding:9px 14px;"><code>align-content: flex-end</code></td></tr>
+      <tr style="border-bottom:1px solid var(--border); background:var(--bg-hover);"><td style="padding:9px 14px;"><code>.align-content-between</code></td><td style="padding:9px 14px;"><code>align-content: space-between</code></td></tr>
+      <tr style="border-bottom:1px solid var(--border);"><td style="padding:9px 14px;"><code>.align-content-around</code></td><td style="padding:9px 14px;"><code>align-content: space-around</code></td></tr>
+      <tr style="border-bottom:1px solid var(--border); background:var(--bg-hover);"><td style="padding:9px 14px;"><code>.align-content-evenly</code></td><td style="padding:9px 14px;"><code>align-content: space-evenly</code></td></tr>
+      <tr style="border-bottom:1px solid var(--border);"><td style="padding:9px 14px;"><code>.align-content-stretch</code></td><td style="padding:9px 14px;"><code>align-content: stretch</code></td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout" style="margin-top:0;">
+    <div class="callout-title">Live Demo — Align Content</div>
+    <p style="font-size:13px; margin-bottom:4px;">Requires a <strong>multi-line</strong> flex container (<code>.flex-wrap</code>) with a fixed height taller than the content. The items below wrap into two rows inside a 160px-tall box.</p>
+    <p style="font-size:13px; margin-bottom:8px;"><code>.d-flex .flex-wrap .align-content-start</code></p>
+    <div class="d-flex flex-wrap align-content-start gap-2" style="background:var(--bg-code); border:1px solid var(--border); border-radius:8px; padding:10px; height:160px; max-width:300px; margin-bottom:10px;">
+      <div style="background:var(--accent-light); border:1px solid var(--border-focus); border-radius:6px; padding:8px 16px; font-size:12px; font-weight:600;">A</div>
+      <div style="background:var(--accent-light); border:1px solid var(--border-focus); border-radius:6px; padding:8px 16px; font-size:12px; font-weight:600;">B</div>
+      <div style="background:var(--accent-light); border:1px solid var(--border-focus); border-radius:6px; padding:8px 16px; font-size:12px; font-weight:600;">C</div>
+      <div style="background:var(--accent-light); border:1px solid var(--border-focus); border-radius:6px; padding:8px 16px; font-size:12px; font-weight:600;">D</div>
+      <div style="background:var(--accent-light); border:1px solid var(--border-focus); border-radius:6px; padding:8px 16px; font-size:12px; font-weight:600;">E</div>
+      <div style="background:var(--accent-light); border:1px solid var(--border-focus); border-radius:6px; padding:8px 16px; font-size:12px; font-weight:600;">F</div>
+    </div>
+    <p style="font-size:13px; margin-bottom:8px;"><code>.d-flex .flex-wrap .align-content-center</code></p>
+    <div class="d-flex flex-wrap align-content-center gap-2" style="background:var(--bg-code); border:1px solid var(--border); border-radius:8px; padding:10px; height:160px; max-width:300px; margin-bottom:10px;">
+      <div style="background:var(--accent-light); border:1px solid var(--border-focus); border-radius:6px; padding:8px 16px; font-size:12px; font-weight:600;">A</div>
+      <div style="background:var(--accent-light); border:1px solid var(--border-focus); border-radius:6px; padding:8px 16px; font-size:12px; font-weight:600;">B</div>
+      <div style="background:var(--accent-light); border:1px solid var(--border-focus); border-radius:6px; padding:8px 16px; font-size:12px; font-weight:600;">C</div>
+      <div style="background:var(--accent-light); border:1px solid var(--border-focus); border-radius:6px; padding:8px 16px; font-size:12px; font-weight:600;">D</div>
+      <div style="background:var(--accent-light); border:1px solid var(--border-focus); border-radius:6px; padding:8px 16px; font-size:12px; font-weight:600;">E</div>
+      <div style="background:var(--accent-light); border:1px solid var(--border-focus); border-radius:6px; padding:8px 16px; font-size:12px; font-weight:600;">F</div>
+    </div>
+    <p style="font-size:13px; margin-bottom:8px;"><code>.d-flex .flex-wrap .align-content-between</code></p>
+    <div class="d-flex flex-wrap align-content-between gap-2" style="background:var(--bg-code); border:1px solid var(--border); border-radius:8px; padding:10px; height:160px; max-width:300px; margin-bottom:10px;">
+      <div style="background:var(--accent-light); border:1px solid var(--border-focus); border-radius:6px; padding:8px 16px; font-size:12px; font-weight:600;">A</div>
+      <div style="background:var(--accent-light); border:1px solid var(--border-focus); border-radius:6px; padding:8px 16px; font-size:12px; font-weight:600;">B</div>
+      <div style="background:var(--accent-light); border:1px solid var(--border-focus); border-radius:6px; padding:8px 16px; font-size:12px; font-weight:600;">C</div>
+      <div style="background:var(--accent-light); border:1px solid var(--border-focus); border-radius:6px; padding:8px 16px; font-size:12px; font-weight:600;">D</div>
+      <div style="background:var(--accent-light); border:1px solid var(--border-focus); border-radius:6px; padding:8px 16px; font-size:12px; font-weight:600;">E</div>
+      <div style="background:var(--accent-light); border:1px solid var(--border-focus); border-radius:6px; padding:8px 16px; font-size:12px; font-weight:600;">F</div>
+    </div>
+    <p style="font-size:13px; margin-bottom:8px;"><code>.d-flex .flex-wrap .align-content-end</code></p>
+    <div class="d-flex flex-wrap align-content-end gap-2" style="background:var(--bg-code); border:1px solid var(--border); border-radius:8px; padding:10px; height:160px; max-width:300px;">
+      <div style="background:var(--accent-light); border:1px solid var(--border-focus); border-radius:6px; padding:8px 16px; font-size:12px; font-weight:600;">A</div>
+      <div style="background:var(--accent-light); border:1px solid var(--border-focus); border-radius:6px; padding:8px 16px; font-size:12px; font-weight:600;">B</div>
+      <div style="background:var(--accent-light); border:1px solid var(--border-focus); border-radius:6px; padding:8px 16px; font-size:12px; font-weight:600;">C</div>
+      <div style="background:var(--accent-light); border:1px solid var(--border-focus); border-radius:6px; padding:8px 16px; font-size:12px; font-weight:600;">D</div>
+      <div style="background:var(--accent-light); border:1px solid var(--border-focus); border-radius:6px; padding:8px 16px; font-size:12px; font-weight:600;">E</div>
+      <div style="background:var(--accent-light); border:1px solid var(--border-focus); border-radius:6px; padding:8px 16px; font-size:12px; font-weight:600;">F</div>
+    </div>
+  </div>
+
+  <!-- flex grow/shrink/fill -->
+  <h3 id="flex-grow-shrink">Grow, Shrink &amp; Fill</h3>
+
+  <table style="width:100%; border-collapse:collapse; font-size:14px; margin-bottom:24px;">
+    <thead>
+      <tr style="background:var(--bg-code); border-bottom:2px solid var(--border);">
+        <th style="padding:10px 14px; text-align:left;">Class</th>
+        <th style="padding:10px 14px; text-align:left;">CSS Output</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr style="border-bottom:1px solid var(--border);"><td style="padding:9px 14px;"><code>.flex-fill</code></td><td style="padding:9px 14px;"><code>flex: 1 1 auto</code></td></tr>
+      <tr style="border-bottom:1px solid var(--border); background:var(--bg-hover);"><td style="padding:9px 14px;"><code>.flex-grow-0</code></td><td style="padding:9px 14px;"><code>flex-grow: 0</code></td></tr>
+      <tr style="border-bottom:1px solid var(--border);"><td style="padding:9px 14px;"><code>.flex-grow-1</code></td><td style="padding:9px 14px;"><code>flex-grow: 1</code></td></tr>
+      <tr style="border-bottom:1px solid var(--border); background:var(--bg-hover);"><td style="padding:9px 14px;"><code>.flex-shrink-0</code></td><td style="padding:9px 14px;"><code>flex-shrink: 0</code></td></tr>
+      <tr style="border-bottom:1px solid var(--border);"><td style="padding:9px 14px;"><code>.flex-shrink-1</code></td><td style="padding:9px 14px;"><code>flex-shrink: 1</code></td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout" style="margin-top:0;">
+    <div class="callout-title">Live Demo — flex-grow</div>
+    <p style="font-size:13px; margin-bottom:8px;">The middle item uses <code>.flex-grow-1</code> and fills the available space.</p>
+    <div class="d-flex gap-2" style="background:var(--bg-code); border:1px solid var(--border); border-radius:8px; padding:12px;">
+      <div style="background:var(--accent-light); border:1px solid var(--border-focus); border-radius:6px; padding:8px 16px; font-size:13px; font-weight:600; white-space:nowrap;">Fixed</div>
+      <div class="flex-grow-1" style="background:var(--bg-callout-warn); border:1px dashed var(--callout-warn-border); border-radius:6px; padding:8px 16px; font-size:13px; font-weight:600; text-align:center;">.flex-grow-1</div>
+      <div style="background:var(--accent-light); border:1px solid var(--border-focus); border-radius:6px; padding:8px 16px; font-size:13px; font-weight:600; white-space:nowrap;">Fixed</div>
+    </div>
+  </div>
+
+  <!-- gap -->
+  <h3 id="gap">Gap</h3>
+
+  <table style="width:100%; border-collapse:collapse; font-size:14px; margin-bottom:24px;">
+    <thead>
+      <tr style="background:var(--bg-code); border-bottom:2px solid var(--border);">
+        <th style="padding:10px 14px; text-align:left;">Class</th>
+        <th style="padding:10px 14px; text-align:left;">CSS Output</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr style="border-bottom:1px solid var(--border);"><td style="padding:9px 14px;"><code>.gap-0</code></td><td style="padding:9px 14px;"><code>gap: 0</code></td></tr>
+      <tr style="border-bottom:1px solid var(--border); background:var(--bg-hover);"><td style="padding:9px 14px;"><code>.gap-1</code></td><td style="padding:9px 14px;"><code>gap: 4px</code></td></tr>
+      <tr style="border-bottom:1px solid var(--border);"><td style="padding:9px 14px;"><code>.gap-2</code></td><td style="padding:9px 14px;"><code>gap: 8px</code></td></tr>
+      <tr style="border-bottom:1px solid var(--border); background:var(--bg-hover);"><td style="padding:9px 14px;"><code>.gap-3</code></td><td style="padding:9px 14px;"><code>gap: 12px</code></td></tr>
+      <tr style="border-bottom:1px solid var(--border);"><td style="padding:9px 14px;"><code>.gap-4</code></td><td style="padding:9px 14px;"><code>gap: 16px</code></td></tr>
+      <tr style="border-bottom:1px solid var(--border); background:var(--bg-hover);"><td style="padding:9px 14px;"><code>.gap-5</code></td><td style="padding:9px 14px;"><code>gap: 24px</code></td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout" style="margin-top:0;">
+    <div class="callout-title">Live Demo — gap scale</div>
+    <div style="display:flex; flex-direction:column; gap:10px;">
+      <div class="d-flex gap-1" style="background:var(--bg-code); border:1px solid var(--border); border-radius:8px; padding:10px;">
+        <span style="font-size:12px; color:var(--text-muted); min-width:60px;">.gap-1</span>
+        <div style="background:var(--accent-light); border:1px solid var(--border-focus); border-radius:4px; padding:6px 12px; font-size:12px;">A</div>
+        <div style="background:var(--accent-light); border:1px solid var(--border-focus); border-radius:4px; padding:6px 12px; font-size:12px;">B</div>
+        <div style="background:var(--accent-light); border:1px solid var(--border-focus); border-radius:4px; padding:6px 12px; font-size:12px;">C</div>
+      </div>
+      <div class="d-flex gap-3" style="background:var(--bg-code); border:1px solid var(--border); border-radius:8px; padding:10px;">
+        <span style="font-size:12px; color:var(--text-muted); min-width:60px;">.gap-3</span>
+        <div style="background:var(--accent-light); border:1px solid var(--border-focus); border-radius:4px; padding:6px 12px; font-size:12px;">A</div>
+        <div style="background:var(--accent-light); border:1px solid var(--border-focus); border-radius:4px; padding:6px 12px; font-size:12px;">B</div>
+        <div style="background:var(--accent-light); border:1px solid var(--border-focus); border-radius:4px; padding:6px 12px; font-size:12px;">C</div>
+      </div>
+      <div class="d-flex gap-5" style="background:var(--bg-code); border:1px solid var(--border); border-radius:8px; padding:10px;">
+        <span style="font-size:12px; color:var(--text-muted); min-width:60px;">.gap-5</span>
+        <div style="background:var(--accent-light); border:1px solid var(--border-focus); border-radius:4px; padding:6px 12px; font-size:12px;">A</div>
+        <div style="background:var(--accent-light); border:1px solid var(--border-focus); border-radius:4px; padding:6px 12px; font-size:12px;">B</div>
+        <div style="background:var(--accent-light); border:1px solid var(--border-focus); border-radius:4px; padding:6px 12px; font-size:12px;">C</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════
+       SIZING
+  ══════════════════════════════════════════════════ -->
+  <h2 id="sizing">Sizing</h2>
+
+  <table style="width:100%; border-collapse:collapse; font-size:14px; margin-bottom:24px;">
+    <thead>
+      <tr style="background:var(--bg-code); border-bottom:2px solid var(--border);">
+        <th style="padding:10px 14px; text-align:left;">Class</th>
+        <th style="padding:10px 14px; text-align:left;">CSS Output</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr style="border-bottom:1px solid var(--border);"><td style="padding:9px 14px;"><code>.w-100</code></td><td style="padding:9px 14px;"><code>width: 100%</code></td></tr>
+      <tr style="border-bottom:1px solid var(--border); background:var(--bg-hover);"><td style="padding:9px 14px;"><code>.w-auto</code></td><td style="padding:9px 14px;"><code>width: auto</code></td></tr>
+      <tr style="border-bottom:1px solid var(--border);"><td style="padding:9px 14px;"><code>.h-100</code></td><td style="padding:9px 14px;"><code>height: 100%</code></td></tr>
+      <tr style="border-bottom:1px solid var(--border); background:var(--bg-hover);"><td style="padding:9px 14px;"><code>.h-auto</code></td><td style="padding:9px 14px;"><code>height: auto</code></td></tr>
+      <tr style="border-bottom:1px solid var(--border);"><td style="padding:9px 14px;"><code>.mw-100</code></td><td style="padding:9px 14px;"><code>max-width: 100%</code></td></tr>
+      <tr style="border-bottom:1px solid var(--border); background:var(--bg-hover);"><td style="padding:9px 14px;"><code>.mh-100</code></td><td style="padding:9px 14px;"><code>max-height: 100%</code></td></tr>
+      <tr style="border-bottom:1px solid var(--border);"><td style="padding:9px 14px;"><code>.min-vh-100</code></td><td style="padding:9px 14px;"><code>min-height: 100vh</code></td></tr>
+    </tbody>
+  </table>
+
+  <!-- ══════════════════════════════════════════════════
+       AUTO-MARGIN
+  ══════════════════════════════════════════════════ -->
+  <h2 id="auto-margins">Auto Margins</h2>
+
+  <p>Push flex items apart or center them without manually computing spacing.</p>
+
+  <table style="width:100%; border-collapse:collapse; font-size:14px; margin-bottom:24px;">
+    <thead>
+      <tr style="background:var(--bg-code); border-bottom:2px solid var(--border);">
+        <th style="padding:10px 14px; text-align:left;">Class</th>
+        <th style="padding:10px 14px; text-align:left;">CSS Output</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr style="border-bottom:1px solid var(--border);"><td style="padding:9px 14px;"><code>.m-auto</code></td><td style="padding:9px 14px;"><code>margin: auto</code></td></tr>
+      <tr style="border-bottom:1px solid var(--border); background:var(--bg-hover);"><td style="padding:9px 14px;"><code>.mx-auto</code></td><td style="padding:9px 14px;"><code>margin-left: auto; margin-right: auto</code></td></tr>
+      <tr style="border-bottom:1px solid var(--border);"><td style="padding:9px 14px;"><code>.my-auto</code></td><td style="padding:9px 14px;"><code>margin-top: auto; margin-bottom: auto</code></td></tr>
+      <tr style="border-bottom:1px solid var(--border); background:var(--bg-hover);"><td style="padding:9px 14px;"><code>.mt-auto</code></td><td style="padding:9px 14px;"><code>margin-top: auto</code></td></tr>
+      <tr style="border-bottom:1px solid var(--border);"><td style="padding:9px 14px;"><code>.me-auto</code></td><td style="padding:9px 14px;"><code>margin-right: auto</code></td></tr>
+      <tr style="border-bottom:1px solid var(--border); background:var(--bg-hover);"><td style="padding:9px 14px;"><code>.mb-auto</code></td><td style="padding:9px 14px;"><code>margin-bottom: auto</code></td></tr>
+      <tr style="border-bottom:1px solid var(--border);"><td style="padding:9px 14px;"><code>.ms-auto</code></td><td style="padding:9px 14px;"><code>margin-left: auto</code></td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout" style="margin-top:0;">
+    <div class="callout-title">Live Demo — mx-auto (centering a block)</div>
+    <div style="background:var(--bg-code); border:1px solid var(--border); border-radius:8px; padding:12px;">
+      <div class="mx-auto" style="background:var(--accent-light); border:1px solid var(--border-focus); border-radius:6px; padding:10px 20px; font-size:13px; font-weight:600; width:200px; text-align:center;">.mx-auto</div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════
+       TEXT
+  ══════════════════════════════════════════════════ -->
+  <h2 id="text-utilities">Text</h2>
+
+  <h3 id="text-alignment">Alignment</h3>
+
+  <table style="width:100%; border-collapse:collapse; font-size:14px; margin-bottom:24px;">
+    <thead>
+      <tr style="background:var(--bg-code); border-bottom:2px solid var(--border);">
+        <th style="padding:10px 14px; text-align:left;">Class</th>
+        <th style="padding:10px 14px; text-align:left;">CSS Output</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr style="border-bottom:1px solid var(--border);"><td style="padding:9px 14px;"><code>.text-start</code></td><td style="padding:9px 14px;"><code>text-align: left</code></td></tr>
+      <tr style="border-bottom:1px solid var(--border); background:var(--bg-hover);"><td style="padding:9px 14px;"><code>.text-center</code></td><td style="padding:9px 14px;"><code>text-align: center</code></td></tr>
+      <tr style="border-bottom:1px solid var(--border);"><td style="padding:9px 14px;"><code>.text-end</code></td><td style="padding:9px 14px;"><code>text-align: right</code></td></tr>
+      <tr style="border-bottom:1px solid var(--border); background:var(--bg-hover);"><td style="padding:9px 14px;"><code>.text-nowrap</code></td><td style="padding:9px 14px;"><code>white-space: nowrap</code></td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout" style="margin-top:0;">
+    <div class="callout-title">Live Demo</div>
+    <div style="background:var(--bg-code); border:1px solid var(--border); border-radius:8px; padding:16px; display:flex; flex-direction:column; gap:8px;">
+      <p class="text-start" style="margin:0; background:var(--accent-light); padding:8px 12px; border-radius:6px; font-size:13px;"><code>.text-start</code> — left aligned</p>
+      <p class="text-center" style="margin:0; background:var(--accent-light); padding:8px 12px; border-radius:6px; font-size:13px;"><code>.text-center</code> — centered</p>
+      <p class="text-end" style="margin:0; background:var(--accent-light); padding:8px 12px; border-radius:6px; font-size:13px;"><code>.text-end</code> — right aligned</p>
+    </div>
+  </div>
+
+  <h3 id="text-transform">Transform</h3>
+
+  <table style="width:100%; border-collapse:collapse; font-size:14px; margin-bottom:24px;">
+    <thead>
+      <tr style="background:var(--bg-code); border-bottom:2px solid var(--border);">
+        <th style="padding:10px 14px; text-align:left;">Class</th>
+        <th style="padding:10px 14px; text-align:left;">CSS Output</th>
+        <th style="padding:10px 14px; text-align:left;">Example</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr style="border-bottom:1px solid var(--border);"><td style="padding:9px 14px;"><code>.text-lowercase</code></td><td style="padding:9px 14px;"><code>text-transform: lowercase</code></td><td style="padding:9px 14px; text-transform:lowercase;">Hello World</td></tr>
+      <tr style="border-bottom:1px solid var(--border); background:var(--bg-hover);"><td style="padding:9px 14px;"><code>.text-uppercase</code></td><td style="padding:9px 14px;"><code>text-transform: uppercase</code></td><td style="padding:9px 14px; text-transform:uppercase;">Hello World</td></tr>
+      <tr style="border-bottom:1px solid var(--border);"><td style="padding:9px 14px;"><code>.text-capitalize</code></td><td style="padding:9px 14px;"><code>text-transform: capitalize</code></td><td style="padding:9px 14px; text-transform:capitalize;">hello world</td></tr>
+    </tbody>
+  </table>
+
+  <h3 id="font-weight-style">Font Weight &amp; Style</h3>
+
+  <table style="width:100%; border-collapse:collapse; font-size:14px; margin-bottom:24px;">
+    <thead>
+      <tr style="background:var(--bg-code); border-bottom:2px solid var(--border);">
+        <th style="padding:10px 14px; text-align:left;">Class</th>
+        <th style="padding:10px 14px; text-align:left;">CSS Output</th>
+        <th style="padding:10px 14px; text-align:left;">Example</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr style="border-bottom:1px solid var(--border);"><td style="padding:9px 14px;"><code>.fw-normal</code></td><td style="padding:9px 14px;"><code>font-weight: 400</code></td><td style="padding:9px 14px; font-weight:400;">Sample text</td></tr>
+      <tr style="border-bottom:1px solid var(--border); background:var(--bg-hover);"><td style="padding:9px 14px;"><code>.fw-medium</code></td><td style="padding:9px 14px;"><code>font-weight: 500</code></td><td style="padding:9px 14px; font-weight:500;">Sample text</td></tr>
+      <tr style="border-bottom:1px solid var(--border);"><td style="padding:9px 14px;"><code>.fw-semibold</code></td><td style="padding:9px 14px;"><code>font-weight: 600</code></td><td style="padding:9px 14px; font-weight:600;">Sample text</td></tr>
+      <tr style="border-bottom:1px solid var(--border); background:var(--bg-hover);"><td style="padding:9px 14px;"><code>.fw-bold</code></td><td style="padding:9px 14px;"><code>font-weight: 700</code></td><td style="padding:9px 14px; font-weight:700;">Sample text</td></tr>
+      <tr style="border-bottom:1px solid var(--border);"><td style="padding:9px 14px;"><code>.fst-normal</code></td><td style="padding:9px 14px;"><code>font-style: normal</code></td><td style="padding:9px 14px; font-style:normal;">Sample text</td></tr>
+      <tr style="border-bottom:1px solid var(--border); background:var(--bg-hover);"><td style="padding:9px 14px;"><code>.fst-italic</code></td><td style="padding:9px 14px;"><code>font-style: italic</code></td><td style="padding:9px 14px; font-style:italic;">Sample text</td></tr>
+    </tbody>
+  </table>
+
+  <h3 id="text-color">Color</h3>
+
+  <table style="width:100%; border-collapse:collapse; font-size:14px; margin-bottom:24px;">
+    <thead>
+      <tr style="background:var(--bg-code); border-bottom:2px solid var(--border);">
+        <th style="padding:10px 14px; text-align:left;">Class</th>
+        <th style="padding:10px 14px; text-align:left;">CSS Output</th>
+        <th style="padding:10px 14px; text-align:left;">Example</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr style="border-bottom:1px solid var(--border);"><td style="padding:9px 14px;"><code>.text-muted</code></td><td style="padding:9px 14px;"><code>color: var(--text-muted)</code></td><td style="padding:9px 14px; color:var(--text-muted);">Muted text</td></tr>
+    </tbody>
+  </table>
+
+  <!-- ══════════════════════════════════════════════════
+       SPACING — PADDING
+  ══════════════════════════════════════════════════ -->
+  <h2 id="spacing">Spacing</h2>
+
+  <p>
+    Padding and margin utilities follow a consistent scale. The available step values are
+    <strong>0, 5, 10, 15, 20, 24, 30, 40</strong> (px). Each step is available in all directions.
+  </p>
+
+  <div class="callout warning">
+    <div class="callout-title">⚠ Tip</div>
+    <p>Prefer the semantic spacing utilities over inline <code>style</code> attributes to keep markup clean and consistent with the rest of the design.</p>
+  </div>
+
+  <h3 id="padding-classes">Padding</h3>
+
+  <p>Format: <code>.p{direction}-{size}</code></p>
+
+  <table style="width:100%; border-collapse:collapse; font-size:14px; margin-bottom:24px;">
+    <thead>
+      <tr style="background:var(--bg-code); border-bottom:2px solid var(--border);">
+        <th style="padding:10px 14px; text-align:left;">Prefix</th>
+        <th style="padding:10px 14px; text-align:left;">Direction</th>
+        <th style="padding:10px 14px; text-align:left;">Example classes</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr style="border-bottom:1px solid var(--border);"><td style="padding:9px 14px;"><code>p</code></td><td style="padding:9px 14px;">All sides</td><td style="padding:9px 14px;"><code>.p-0 .p-10 .p-20 .p-40</code></td></tr>
+      <tr style="border-bottom:1px solid var(--border); background:var(--bg-hover);"><td style="padding:9px 14px;"><code>px</code></td><td style="padding:9px 14px;">Left &amp; Right</td><td style="padding:9px 14px;"><code>.px-0 .px-10 .px-24 .px-40</code></td></tr>
+      <tr style="border-bottom:1px solid var(--border);"><td style="padding:9px 14px;"><code>py</code></td><td style="padding:9px 14px;">Top &amp; Bottom</td><td style="padding:9px 14px;"><code>.py-0 .py-10 .py-24 .py-40</code></td></tr>
+      <tr style="border-bottom:1px solid var(--border); background:var(--bg-hover);"><td style="padding:9px 14px;"><code>pt</code></td><td style="padding:9px 14px;">Top only</td><td style="padding:9px 14px;"><code>.pt-0 .pt-10 .pt-20 .pt-30</code></td></tr>
+      <tr style="border-bottom:1px solid var(--border);"><td style="padding:9px 14px;"><code>pr</code></td><td style="padding:9px 14px;">Right only</td><td style="padding:9px 14px;"><code>.pr-0 .pr-10 .pr-20 .pr-30</code></td></tr>
+      <tr style="border-bottom:1px solid var(--border); background:var(--bg-hover);"><td style="padding:9px 14px;"><code>pb</code></td><td style="padding:9px 14px;">Bottom only</td><td style="padding:9px 14px;"><code>.pb-0 .pb-10 .pb-20 .pb-30</code></td></tr>
+      <tr style="border-bottom:1px solid var(--border);"><td style="padding:9px 14px;"><code>pl</code></td><td style="padding:9px 14px;">Left only</td><td style="padding:9px 14px;"><code>.pl-0 .pl-10 .pl-20 .pl-30</code></td></tr>
+    </tbody>
+  </table>
+
+  <!-- Padding visual scale -->
+  <div class="callout" style="margin-top:0;">
+    <div class="callout-title">Live Demo — padding scale (all sides)</div>
+    <div class="d-flex flex-wrap gap-3" style="background:var(--bg-code); border:1px solid var(--border); border-radius:8px; padding:16px;">
+      <div class="p-5"  style="background:var(--accent-light); border:1px solid var(--border-focus); border-radius:6px; font-size:12px; font-weight:600;">.p-5</div>
+      <div class="p-10" style="background:var(--accent-light); border:1px solid var(--border-focus); border-radius:6px; font-size:12px; font-weight:600;">.p-10</div>
+      <div class="p-15" style="background:var(--accent-light); border:1px solid var(--border-focus); border-radius:6px; font-size:12px; font-weight:600;">.p-15</div>
+      <div class="p-20" style="background:var(--accent-light); border:1px solid var(--border-focus); border-radius:6px; font-size:12px; font-weight:600;">.p-20</div>
+      <div class="p-30" style="background:var(--accent-light); border:1px solid var(--border-focus); border-radius:6px; font-size:12px; font-weight:600;">.p-30</div>
+      <div class="p-40" style="background:var(--accent-light); border:1px solid var(--border-focus); border-radius:6px; font-size:12px; font-weight:600;">.p-40</div>
+    </div>
+  </div>
+
+  <h3 id="margin-classes">Margin</h3>
+
+  <p>Format: <code>.m{direction}-{size}</code> — same scale and direction prefixes as padding.</p>
+
+  <table style="width:100%; border-collapse:collapse; font-size:14px; margin-bottom:24px;">
+    <thead>
+      <tr style="background:var(--bg-code); border-bottom:2px solid var(--border);">
+        <th style="padding:10px 14px; text-align:left;">Prefix</th>
+        <th style="padding:10px 14px; text-align:left;">Direction</th>
+        <th style="padding:10px 14px; text-align:left;">Example classes</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr style="border-bottom:1px solid var(--border);"><td style="padding:9px 14px;"><code>m</code></td><td style="padding:9px 14px;">All sides</td><td style="padding:9px 14px;"><code>.m-0 .m-10 .m-20 .m-40</code></td></tr>
+      <tr style="border-bottom:1px solid var(--border); background:var(--bg-hover);"><td style="padding:9px 14px;"><code>mx</code></td><td style="padding:9px 14px;">Left &amp; Right</td><td style="padding:9px 14px;"><code>.mx-0 .mx-10 .mx-24 .mx-40</code></td></tr>
+      <tr style="border-bottom:1px solid var(--border);"><td style="padding:9px 14px;"><code>my</code></td><td style="padding:9px 14px;">Top &amp; Bottom</td><td style="padding:9px 14px;"><code>.my-0 .my-10 .my-24 .my-40</code></td></tr>
+      <tr style="border-bottom:1px solid var(--border); background:var(--bg-hover);"><td style="padding:9px 14px;"><code>mt</code></td><td style="padding:9px 14px;">Top only</td><td style="padding:9px 14px;"><code>.mt-0 .mt-10 .mt-20 .mt-30</code></td></tr>
+      <tr style="border-bottom:1px solid var(--border);"><td style="padding:9px 14px;"><code>mr</code></td><td style="padding:9px 14px;">Right only</td><td style="padding:9px 14px;"><code>.mr-0 .mr-10 .mr-20 .mr-30</code></td></tr>
+      <tr style="border-bottom:1px solid var(--border); background:var(--bg-hover);"><td style="padding:9px 14px;"><code>mb</code></td><td style="padding:9px 14px;">Bottom only</td><td style="padding:9px 14px;"><code>.mb-0 .mb-10 .mb-20 .mb-30</code></td></tr>
+      <tr style="border-bottom:1px solid var(--border);"><td style="padding:9px 14px;"><code>ml</code></td><td style="padding:9px 14px;">Left only</td><td style="padding:9px 14px;"><code>.ml-0 .ml-10 .ml-20 .ml-30</code></td></tr>
+    </tbody>
+  </table>
+
+  <!-- Full spacing value tables -->
+  <h4 id="spacing-scale-reference">Full Spacing Scale</h4>
+  <p>All spacing values available across padding and margin utilities:</p>
+
+  <div class="d-flex flex-wrap gap-3 mb-20">
+    <div style="background:var(--bg-code); border:1px solid var(--border); border-radius:8px; padding:14px; min-width:130px;">
+      <div style="font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.06em; color:var(--text-muted); margin-bottom:8px;">Value</div>
+      <div style="display:flex; flex-direction:column; gap:4px; font-size:13px;">
+        <code>-0</code><code>-5</code><code>-10</code><code>-15</code><code>-20</code><code>-24</code><code>-30</code><code>-40</code>
+      </div>
+    </div>
+    <div style="background:var(--bg-code); border:1px solid var(--border); border-radius:8px; padding:14px; min-width:130px;">
+      <div style="font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.06em; color:var(--text-muted); margin-bottom:8px;">px</div>
+      <div style="display:flex; flex-direction:column; gap:4px; font-size:13px;">
+        <span>0</span><span>5px</span><span>10px</span><span>15px</span><span>20px</span><span>24px</span><span>30px</span><span>40px</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════
+       MISC
+  ══════════════════════════════════════════════════ -->
+  <h2 id="misc-utilities">Miscellaneous</h2>
+
+  <table style="width:100%; border-collapse:collapse; font-size:14px; margin-bottom:24px;">
+    <thead>
+      <tr style="background:var(--bg-code); border-bottom:2px solid var(--border);">
+        <th style="padding:10px 14px; text-align:left;">Class</th>
+        <th style="padding:10px 14px; text-align:left;">CSS Output</th>
+        <th style="padding:10px 14px; text-align:left;">Notes</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr style="border-bottom:1px solid var(--border);"><td style="padding:9px 14px;"><code>.flex-sb</code></td><td style="padding:9px 14px;"><code>display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap</code></td><td style="padding:9px 14px;">Quick "space-between" row</td></tr>
+      <tr style="border-bottom:1px solid var(--border); background:var(--bg-hover);"><td style="padding:9px 14px;"><code>.w-100</code></td><td style="padding:9px 14px;"><code>width: 100%</code></td><td style="padding:9px 14px;">Full-width element</td></tr>
+    </tbody>
+  </table>
+
+  <!-- ══════════════════════════════════════════════════
+       CHEAT SHEET
+  ══════════════════════════════════════════════════ -->
+  <h2 id="cheat-sheet">Quick Cheat Sheet</h2>
+
+  <p>Common combinations you'll reach for most often:</p>
+
+  <pre><code>&lt;!-- Centered flex row with gap --&gt;
+&lt;div class="d-flex justify-content-center align-items-center gap-3"&gt;…&lt;/div&gt;
+
+&lt;!-- Space-between header row --&gt;
+&lt;div class="flex-sb"&gt;
+  &lt;span&gt;Left&lt;/span&gt;
+  &lt;span&gt;Right&lt;/span&gt;
+&lt;/div&gt;
+
+&lt;!-- Horizontally centered block --&gt;
+&lt;div class="mx-auto" style="max-width:600px;"&gt;…&lt;/div&gt;
+
+&lt;!-- Padding shorthand --&gt;
+&lt;div class="px-24 py-20"&gt;…&lt;/div&gt;
+
+&lt;!-- Hide on small screens (toggled via JS) --&gt;
+&lt;div class="d-none"&gt;Hidden&lt;/div&gt;
+
+&lt;!-- Bold muted label --&gt;
+&lt;span class="fw-semibold text-muted text-uppercase"&gt;Status&lt;/span&gt;</code></pre>
+
+</div>
