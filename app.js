@@ -5,6 +5,9 @@
  * light/dark theme toggle, copy-to-clipboard for code blocks.
  */
 
+// @versioning
+// * update JS with versioning to prevent caching issues. look for '?v=' in index.html
+
 /* ═══════════════════════════════════════════════════════════════
    NAVIGATION DATA  -  4 levels deep
    ═══════════════════════════════════════════════════════════════ */
