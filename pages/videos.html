@@ -10,7 +10,12 @@
 
 <p>All three patterns accept the same column modifier classes used by image galleries:</p>
 <ul>
-  <li><code>img-col-2</code> through <code>img-col-8</code> - control how many columns the gallery renders.</li>
+  <li><strong>2 Columns</strong> <code>img-col-2</code> for larger tiles and fewer items per row.</li>
+  <li><strong>3 Columns</strong> <code>img-col-3</code> for a balanced layout.</li>
+  <li><strong>4 Columns</strong> <code>img-col-4</code> for smaller tiles and more items per row.</li>
+  <li><strong>6 Columns</strong> <code>img-col-6</code> for compact layouts.</li>
+  <li><strong>8 Columns</strong> <code>img-col-8</code> for very compact layouts.</li>
+  <li><strong>12 Columns</strong> <code>img-col-12</code> for extremely compact thumbnail strips.</li>
 </ul>
 
 <div class="callout">
@@ -83,6 +88,50 @@
   <div data-video-id="WhWc3b3KhnY" data-title="Video 4"></div>
 </div>
 
+<h3 id="gallery-6-col">6 Columns</h3>
+<div class="youtube-gallery img-col-6">
+  <div data-video-id="WhWc3b3KhnY" data-title="Video 1"></div>
+  <div data-video-id="WhWc3b3KhnY" data-title="Video 2"></div>
+  <div data-video-id="WhWc3b3KhnY" data-title="Video 3"></div>
+  <div data-video-id="WhWc3b3KhnY" data-title="Video 4"></div>
+  <div data-video-id="WhWc3b3KhnY" data-title="Video 5"></div>
+  <div data-video-id="WhWc3b3KhnY" data-title="Video 6"></div>
+  <div data-video-id="WhWc3b3KhnY" data-title="Video 7"></div>
+  <div data-video-id="WhWc3b3KhnY" data-title="Video 8"></div>
+  <div data-video-id="WhWc3b3KhnY" data-title="Video 9"></div>
+  <div data-video-id="WhWc3b3KhnY" data-title="Video 10"></div>
+  <div data-video-id="WhWc3b3KhnY" data-title="Video 11"></div>
+  <div data-video-id="WhWc3b3KhnY" data-title="Video 12"></div>
+</div>
+
+<h3 id="gallery-8-col">8 Columns</h3>
+<div class="youtube-gallery img-col-8">
+  <div data-video-id="WhWc3b3KhnY" data-title="Video 1"></div>
+  <div data-video-id="WhWc3b3KhnY" data-title="Video 2"></div>
+  <div data-video-id="WhWc3b3KhnY" data-title="Video 3"></div>
+  <div data-video-id="WhWc3b3KhnY" data-title="Video 4"></div>
+  <div data-video-id="WhWc3b3KhnY" data-title="Video 5"></div>
+  <div data-video-id="WhWc3b3KhnY" data-title="Video 6"></div>
+  <div data-video-id="WhWc3b3KhnY" data-title="Video 7"></div>
+  <div data-video-id="WhWc3b3KhnY" data-title="Video 8"></div>
+</div>
+
+<h3 id="gallery-12-col">12 Columns</h3>
+<div class="youtube-gallery img-col-12">
+  <div data-video-id="WhWc3b3KhnY" data-title="Video 1"></div>
+  <div data-video-id="WhWc3b3KhnY" data-title="Video 2"></div>
+  <div data-video-id="WhWc3b3KhnY" data-title="Video 3"></div>
+  <div data-video-id="WhWc3b3KhnY" data-title="Video 4"></div>
+  <div data-video-id="WhWc3b3KhnY" data-title="Video 5"></div>
+  <div data-video-id="WhWc3b3KhnY" data-title="Video 6"></div>
+  <div data-video-id="WhWc3b3KhnY" data-title="Video 7"></div>
+  <div data-video-id="WhWc3b3KhnY" data-title="Video 8"></div>
+  <div data-video-id="WhWc3b3KhnY" data-title="Video 9"></div>
+  <div data-video-id="WhWc3b3KhnY" data-title="Video 10"></div>
+  <div data-video-id="WhWc3b3KhnY" data-title="Video 11"></div>
+  <div data-video-id="WhWc3b3KhnY" data-title="Video 12"></div>
+</div>
+
 <!-- ═══════════════════════ MIXED PAGE ═══════════════════════ -->
 <h2 id="modal-navigation"><span data-tags="Video">Modal Navigation</span></h2>
 <p>All lightbox triggers (<code>.youtube-modal</code>) and gallery tiles (<code>.youtube-gallery-item</code>) on the current page share the same modal state. The counter and prev/next arrows let the viewer step through every video on the page in document order, regardless of which component type they came from.</p>
@@ -121,9 +170,9 @@
       <td>Optional. Caption shown beneath the thumbnail and inside the modal. Overridden by <code>data-title</code> for the modal caption.</td>
     </tr>
     <tr>
-      <td><code>img-col-2</code> … <code>img-col-8</code></td>
+      <td><code>img-col-2</code> … <code>img-col-12</code></td>
       <td><code>.youtube-gallery</code></td>
-      <td>Column count modifier, identical to image gallery classes.</td>
+      <td>Column count modifier, identical to image gallery classes. Responsive breakpoints reduce columns at narrower widths following the same steps as image galleries.</td>
     </tr>
   </tbody>
 </table>
