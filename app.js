@@ -226,13 +226,15 @@ const elImageModalNext        = document.getElementById('image-modal-next');
 const elImageModalCounter     = document.getElementById('image-modal-counter');
 
 /* Video Modal DOM refs */
-const elVideoModal       = document.getElementById('video-modal');
-const elVideoModalIframe = document.getElementById('video-modal-iframe');
-const elVideoModalCaption= document.getElementById('video-modal-caption');
-const elVideoModalClose  = document.getElementById('video-modal-close');
-const elVideoModalPrev   = document.getElementById('video-modal-prev');
-const elVideoModalNext   = document.getElementById('video-modal-next');
-const elVideoModalCounter= document.getElementById('video-modal-counter');
+const elVideoModal            = document.getElementById('video-modal');
+const elVideoModalIframe      = document.getElementById('video-modal-iframe');
+const elVideoModalCaption     = document.getElementById('video-modal-caption');
+const elVideoModalSectionLink = document.getElementById('video-modal-section-link');
+const elVideoModalViewLink    = document.getElementById('video-modal-view-link');
+const elVideoModalClose       = document.getElementById('video-modal-close');
+const elVideoModalPrev        = document.getElementById('video-modal-prev');
+const elVideoModalNext        = document.getElementById('video-modal-next');
+const elVideoModalCounter     = document.getElementById('video-modal-counter');
 
 /* Mobile Navigation DOM refs */
 const elMobileNavLeft     = document.getElementById('mobile-nav-left');
@@ -4103,6 +4105,21 @@ function showVideoAt(index) {
   elVideoModalIframe.title = entry.title || 'YouTube video';
   elVideoModalCaption.textContent = entry.captionText || entry.title || '';
 
+  if (elVideoModalSectionLink) {
+    if (entry.sectionId && entry.sectionTitle) {
+      elVideoModalSectionLink.dataset.sectionId = entry.sectionId;
+      elVideoModalSectionLink.textContent = `\u2191 ${entry.sectionTitle}`;
+      elVideoModalSectionLink.hidden = false;
+    } else {
+      elVideoModalSectionLink.hidden = true;
+    }
+  }
+
+  if (elVideoModalViewLink) {
+    elVideoModalViewLink.dataset.videoIndex = index;
+    elVideoModalViewLink.hidden = !(entry.triggerEl && entry.triggerEl.isConnected);
+  }
+
   elVideoModalCounter.textContent = total > 1 ? `${index + 1} / ${total}` : '';
   elVideoModalPrev.disabled = index <= 0;
   elVideoModalNext.disabled = index >= total - 1;
@@ -4160,6 +4177,43 @@ function initVideoModal() {
   elVideoModal.addEventListener('click', (e) => {
     if (e.target === elVideoModal) closeVideoModal();
   });
+
+  /* Section link - close modal then scroll to the nearest heading */
+  if (elVideoModalSectionLink) {
+    elVideoModalSectionLink.addEventListener('click', (e) => {
+      e.preventDefault();
+      const sectionId = elVideoModalSectionLink.dataset.sectionId;
+      if (sectionId) {
+        closeVideoModal();
+        navigateTo(state.activeNavId, sectionId, true, true);
+      }
+    });
+  }
+
+  /* View-in-page link - close modal, scroll to trigger, flash-highlight it */
+  if (elVideoModalViewLink) {
+    elVideoModalViewLink.addEventListener('click', (e) => {
+      e.preventDefault();
+      const idx = Number.parseInt(elVideoModalViewLink.dataset.videoIndex, 10);
+      const entry = videoModalState.videos[idx];
+      if (entry && entry.triggerEl) scrollToVideoTrigger(entry.triggerEl);
+    });
+  }
+}
+
+/**
+ * Close the video modal, scroll the trigger thumbnail into view, and flash-highlight it.
+ */
+function scrollToVideoTrigger(el) {
+  closeVideoModal();
+  el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  elContentBody.querySelectorAll('.image-locate-highlight').forEach((e) => {
+    e.classList.remove('image-locate-highlight');
+  });
+  setTimeout(() => {
+    el.classList.add('image-locate-highlight');
+    el.addEventListener('animationend', () => el.classList.remove('image-locate-highlight'), { once: true });
+  }, 200);
 }
 
 /**
@@ -4309,7 +4363,12 @@ function setupVideoModal() {
     const title = el.dataset.title || captionText || '';
 
     const idx = videoIndex;
-    videoModalState.videos.push({ videoId, title, captionText, triggerEl: el });
+    const nearestSection = findNearestSection(el);
+    videoModalState.videos.push({
+      videoId, title, captionText, triggerEl: el,
+      sectionId:    nearestSection ? nearestSection.id          : null,
+      sectionTitle: nearestSection ? nearestSection.textContent.trim() : null,
+    });
     videoIndex++;
 
     el.setAttribute('role', 'button');
