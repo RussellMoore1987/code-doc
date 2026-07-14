@@ -3611,14 +3611,26 @@ a[data-nav]:focus-visible {
 }
 
 @container content-body (max-width: 600px) {
-  .youtube-gallery {
+  .youtube-gallery,
+  .youtube-gallery.img-col-2,
+  .youtube-gallery.img-col-3,
+  .youtube-gallery.img-col-4,
+  .youtube-gallery.img-col-6,
+  .youtube-gallery.img-col-8,
+  .youtube-gallery.img-col-12 {
     --gallery-cols: 2;
     --gallery-gap: 12px;
   }
 }
 
 @container content-body (max-width: 480px) {
-  .youtube-gallery { --gallery-cols: 1; }
+  .youtube-gallery,
+  .youtube-gallery.img-col-2,
+  .youtube-gallery.img-col-3,
+  .youtube-gallery.img-col-4,
+  .youtube-gallery.img-col-6,
+  .youtube-gallery.img-col-8,
+  .youtube-gallery.img-col-12 { --gallery-cols: 1; }
 }
 
 /* ── Video modal iframe frame ─────────────────────────────────── */
