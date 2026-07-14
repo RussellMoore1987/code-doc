@@ -123,6 +123,7 @@ const NAV_DATA = [
       { id: 'tools',  label: 'Tools',  page: 'pages/tools.html' },
       { id: 'sliders',  label: 'Sliders',  page: 'pages/sliders.html' },
       { id: 'image-galleries', label: 'Image Galleries', page: 'pages/image-galleries.html' },
+      { id: 'videos', label: 'Videos', page: 'pages/videos.html' },
       { id: 'custom', label: 'Custom', page: 'pages/custom.html' },
     ]
   },
@@ -223,6 +224,15 @@ const elImageModalClose       = document.getElementById('image-modal-close');
 const elImageModalPrev        = document.getElementById('image-modal-prev');
 const elImageModalNext        = document.getElementById('image-modal-next');
 const elImageModalCounter     = document.getElementById('image-modal-counter');
+
+/* Video Modal DOM refs */
+const elVideoModal       = document.getElementById('video-modal');
+const elVideoModalIframe = document.getElementById('video-modal-iframe');
+const elVideoModalCaption= document.getElementById('video-modal-caption');
+const elVideoModalClose  = document.getElementById('video-modal-close');
+const elVideoModalPrev   = document.getElementById('video-modal-prev');
+const elVideoModalNext   = document.getElementById('video-modal-next');
+const elVideoModalCounter= document.getElementById('video-modal-counter');
 
 /* Mobile Navigation DOM refs */
 const elMobileNavLeft     = document.getElementById('mobile-nav-left');
@@ -2114,8 +2124,9 @@ function expandActiveNavPath(activeId) {
    ═══════════════════════════════════════════════════════════════ */
 
 async function loadPage(url) {
-  /* Close image modal if open when navigating to a new page */
+  /* Close modals if open when navigating to a new page */
   closeImageModal();
+  closeVideoModal();
 
   /* Close tag results view if open when navigating to a new page */
   if (tagState.isViewOpen) closeTagView();
@@ -2172,6 +2183,9 @@ async function loadPage(url) {
     setupLogoSliders(); // Wire continuous logo slider controls on the new page
     setupGallerySystems(); // Enhance gallery layouts before wiring modal triggers
     setupImageModal();     // Wire up .image-modal images on the new page
+    setupYoutubeGalleries(); // Enhance YouTube gallery layouts (before modal wiring)
+    setupYoutubeEmbeds();    // Convert .youtube-embed divs to responsive iframes
+    setupVideoModal();       // Wire YouTube lightbox triggers and gallery items
     setupContentSectionLinks(); // Wire smooth-scroll for in-content a[data-target] links
     setupTagIndicators();             // Wire tag indicator icons on [data-tags] elements (before tooltip scan)
     setupTooltipsIn(elContentBody); // Wire any tooltips in the newly loaded content
@@ -4006,6 +4020,313 @@ function initImageModal() {
 }
 
 /* ═══════════════════════════════════════════════════════════════
+   YOUTUBE VIDEO SYSTEM
+   Supports three usage patterns:
+     1. Inline embed:    <div class="youtube-embed" data-video-id="ID"></div>
+     2. Lightbox:        <div class="youtube-modal" data-video-id="ID" data-title="…"></div>
+                         <figure class="youtube-modal" data-video-id="ID"><figcaption>…</figcaption></figure>
+     3. Gallery:         <div class="youtube-gallery img-col-3">
+                           <div data-video-id="ID" data-title="…"></div>
+                           <figure data-video-id="ID"><figcaption>…</figcaption></figure>
+                         </div>
+   ═══════════════════════════════════════════════════════════════ */
+
+const YT_ID_PATTERN = /^[A-Za-z0-9_-]{11}$/;
+const YT_EMBED_BASE = 'https://www.youtube-nocookie.com/embed/';
+const YT_THUMB_BASE = 'https://img.youtube.com/vi/';
+
+/**
+ * Validate a YouTube video ID (exactly 11 URL-safe characters).
+ * Prevents injection of arbitrary URLs into iframe src.
+ */
+function validateYouTubeId(id) {
+  return typeof id === 'string' && YT_ID_PATTERN.test(id);
+}
+
+function getYoutubeEmbedUrl(videoId, autoplay = false) {
+  const params = new URLSearchParams({ rel: '0', modestbranding: '1' });
+  if (autoplay) params.set('autoplay', '1');
+  return `${YT_EMBED_BASE}${videoId}?${params.toString()}`;
+}
+
+/* ─── Video Modal State ─── */
+const videoModalState = {
+  videos: [],       // [{ videoId, title, captionText, triggerEl }]
+  currentIndex: -1,
+  lastFocused: null,
+  isOpen: false,
+};
+
+function openVideoModal(index) {
+  if (!elVideoModal || !videoModalState.videos.length) return;
+
+  videoModalState.lastFocused = document.activeElement;
+  videoModalState.isOpen = true;
+
+  elVideoModal.removeAttribute('hidden');
+  document.body.style.overflow = 'hidden';
+
+  showVideoAt(index);
+  elVideoModalClose.focus();
+
+  elVideoModal.addEventListener('keydown', trapVideoModalFocus);
+  document.addEventListener('keydown', handleVideoModalKeydown);
+}
+
+function closeVideoModal() {
+  if (!elVideoModal || !videoModalState.isOpen) return;
+
+  videoModalState.isOpen = false;
+  elVideoModal.setAttribute('hidden', '');
+  document.body.style.overflow = '';
+
+  /* Stop playback by blanking the src */
+  if (elVideoModalIframe) elVideoModalIframe.src = '';
+
+  elVideoModal.removeEventListener('keydown', trapVideoModalFocus);
+  document.removeEventListener('keydown', handleVideoModalKeydown);
+
+  if (videoModalState.lastFocused && typeof videoModalState.lastFocused.focus === 'function') {
+    videoModalState.lastFocused.focus();
+  }
+  videoModalState.lastFocused = null;
+}
+
+function showVideoAt(index) {
+  const total = videoModalState.videos.length;
+  if (index < 0 || index >= total) return;
+
+  videoModalState.currentIndex = index;
+  const entry = videoModalState.videos[index];
+
+  elVideoModalIframe.src = getYoutubeEmbedUrl(entry.videoId, true);
+  elVideoModalIframe.title = entry.title || 'YouTube video';
+  elVideoModalCaption.textContent = entry.captionText || entry.title || '';
+
+  elVideoModalCounter.textContent = total > 1 ? `${index + 1} / ${total}` : '';
+  elVideoModalPrev.disabled = index <= 0;
+  elVideoModalNext.disabled = index >= total - 1;
+}
+
+function trapVideoModalFocus(e) {
+  if (e.key !== 'Tab') return;
+  const focusable = Array.from(elVideoModal.querySelectorAll('button:not([disabled])'));
+  if (!focusable.length) return;
+  const first = focusable[0];
+  const last  = focusable.at(-1);
+  if (e.shiftKey && document.activeElement === first) {
+    e.preventDefault();
+    last.focus();
+  } else if (!e.shiftKey && document.activeElement === last) {
+    e.preventDefault();
+    first.focus();
+  }
+}
+
+function handleVideoModalKeydown(e) {
+  if (!videoModalState.isOpen) return;
+  switch (e.key) {
+    case 'Escape':
+      closeVideoModal();
+      break;
+    case 'ArrowLeft':
+      if (videoModalState.currentIndex > 0) showVideoAt(videoModalState.currentIndex - 1);
+      break;
+    case 'ArrowRight':
+      if (videoModalState.currentIndex < videoModalState.videos.length - 1)
+        showVideoAt(videoModalState.currentIndex + 1);
+      break;
+  }
+}
+
+/**
+ * Wire the static video modal controls once at startup.
+ */
+function initVideoModal() {
+  if (!elVideoModal) return;
+
+  elVideoModalClose.addEventListener('click', closeVideoModal);
+
+  elVideoModalPrev.addEventListener('click', () => {
+    if (videoModalState.currentIndex > 0) showVideoAt(videoModalState.currentIndex - 1);
+  });
+
+  elVideoModalNext.addEventListener('click', () => {
+    if (videoModalState.currentIndex < videoModalState.videos.length - 1)
+      showVideoAt(videoModalState.currentIndex + 1);
+  });
+
+  /* Backdrop click closes modal */
+  elVideoModal.addEventListener('click', (e) => {
+    if (e.target === elVideoModal) closeVideoModal();
+  });
+}
+
+/**
+ * Build a thumbnail wrapper with a centered play-button overlay.
+ */
+function buildVideoThumbnail(videoId, altText) {
+  const wrap = document.createElement('div');
+  wrap.className = 'youtube-thumb-wrap';
+
+  const img = document.createElement('img');
+  img.src = `${YT_THUMB_BASE}${videoId}/hqdefault.jpg`;
+  img.alt = altText || 'YouTube video thumbnail';
+  img.loading = 'lazy';
+  img.decoding = 'async';
+  /* Fall back to medium quality if high-quality thumbnail is unavailable */
+  img.addEventListener('error', () => {
+    img.src = `${YT_THUMB_BASE}${videoId}/mqdefault.jpg`;
+  }, { once: true });
+  wrap.appendChild(img);
+
+  const playBtn = document.createElement('div');
+  playBtn.className = 'youtube-play-btn';
+  playBtn.setAttribute('aria-hidden', 'true');
+  playBtn.innerHTML = `<svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><polygon points="5,3 19,12 5,21" fill="currentColor"/></svg>`;
+  wrap.appendChild(playBtn);
+
+  return wrap;
+}
+
+/**
+ * Convert .youtube-embed[data-video-id] elements into responsive iframes.
+ * Called after every page load.
+ */
+function setupYoutubeEmbeds() {
+  elContentBody.querySelectorAll('.youtube-embed[data-video-id]').forEach((el) => {
+    if (el.dataset.ytSetup === 'true') return;
+    el.dataset.ytSetup = 'true';
+
+    const videoId = el.dataset.videoId;
+    if (!validateYouTubeId(videoId)) return;
+
+    const title = el.dataset.title || 'YouTube video';
+    const captionText = el.querySelector('figcaption')?.textContent?.trim() || '';
+
+    const wrapper = document.createElement('div');
+    wrapper.className = 'youtube-embed-wrapper';
+
+    const iframe = document.createElement('iframe');
+    iframe.src = getYoutubeEmbedUrl(videoId);
+    iframe.title = title;
+    iframe.setAttribute('allow', 'autoplay; encrypted-media; picture-in-picture');
+    iframe.setAttribute('allowfullscreen', '');
+    iframe.setAttribute('loading', 'lazy');
+    iframe.setAttribute('referrerpolicy', 'strict-origin-when-cross-origin');
+
+    wrapper.appendChild(iframe);
+    el.innerHTML = '';
+    el.appendChild(wrapper);
+
+    if (captionText) {
+      const cap = document.createElement('p');
+      cap.className = 'youtube-embed-caption';
+      cap.textContent = captionText;
+      el.appendChild(cap);
+    }
+  });
+}
+
+/**
+ * Enhance .youtube-gallery items: replace raw [data-video-id] children with
+ * thumbnail tiles. Must run before setupVideoModal().
+ */
+function setupYoutubeGalleries() {
+  elContentBody.querySelectorAll('.youtube-gallery').forEach((gallery) => {
+    if (gallery.dataset.ytGallerySetup === 'true') return;
+    gallery.dataset.ytGallerySetup = 'true';
+
+    Array.from(gallery.children).forEach((item) => {
+      const videoId = item.dataset.videoId;
+      if (!validateYouTubeId(videoId)) return;
+      if (item.classList.contains('youtube-gallery-item')) return; /* already enhanced */
+
+      const captionText = item.querySelector('figcaption')?.textContent?.trim() || '';
+      const title = item.dataset.title || captionText || '';
+
+      const galleryItem = document.createElement('div');
+      galleryItem.className = 'youtube-gallery-item';
+      galleryItem.dataset.videoId = videoId;
+      if (title) galleryItem.dataset.title = title;
+
+      galleryItem.appendChild(buildVideoThumbnail(videoId, title || 'YouTube video thumbnail'));
+
+      if (captionText) {
+        const cap = document.createElement('div');
+        cap.className = 'youtube-gallery-caption';
+        cap.textContent = captionText;
+        galleryItem.appendChild(cap);
+      }
+
+      item.replaceWith(galleryItem);
+    });
+  });
+}
+
+/**
+ * Wire lightbox behavior for standalone .youtube-modal triggers and
+ * .youtube-gallery-item tiles. Resets videoModalState per page load so
+ * prev/next navigation is scoped to the current page.
+ */
+function setupVideoModal() {
+  videoModalState.videos = [];
+  videoModalState.currentIndex = -1;
+
+  /* Inject thumbnails into standalone .youtube-modal triggers */
+  elContentBody.querySelectorAll('.youtube-modal[data-video-id]').forEach((el) => {
+    if (el.dataset.ytSetup === 'true') return;
+    el.dataset.ytSetup = 'true';
+
+    const videoId = el.dataset.videoId;
+    if (!validateYouTubeId(videoId)) return;
+
+    const captionEl = el.tagName === 'FIGURE' ? el.querySelector('figcaption') : null;
+    const captionText = captionEl ? captionEl.textContent.trim() : '';
+    const title = el.dataset.title || captionText || '';
+    const thumb = buildVideoThumbnail(videoId, title || 'YouTube video thumbnail');
+
+    if (captionEl) {
+      el.insertBefore(thumb, captionEl);
+    } else {
+      el.innerHTML = '';
+      el.appendChild(thumb);
+    }
+  });
+
+  /* Collect all clickable video elements in document order */
+  const allTriggers = Array.from(
+    elContentBody.querySelectorAll('.youtube-modal[data-video-id], .youtube-gallery-item[data-video-id]')
+  );
+
+  let videoIndex = 0;
+  allTriggers.forEach((el) => {
+    const videoId = el.dataset.videoId;
+    if (!validateYouTubeId(videoId)) return;
+
+    const captionEl = el.querySelector('figcaption, .youtube-gallery-caption');
+    const captionText = captionEl ? captionEl.textContent.trim() : '';
+    const title = el.dataset.title || captionText || '';
+
+    const idx = videoIndex;
+    videoModalState.videos.push({ videoId, title, captionText, triggerEl: el });
+    videoIndex++;
+
+    el.setAttribute('role', 'button');
+    el.setAttribute('tabindex', '0');
+    el.setAttribute('aria-label', `Play video${title ? ': ' + title : ''}`);
+
+    el.addEventListener('click', () => openVideoModal(idx));
+    el.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        openVideoModal(idx);
+      }
+    });
+  });
+}
+
+/* ═══════════════════════════════════════════════════════════════
    TOOLTIP SYSTEM
    Attach data-tooltip="…" (and optionally data-tooltip-position)
    to any element to get a smart, accessible tooltip.
@@ -4307,6 +4628,9 @@ function init() {
 
   /* Initialize image modal controls (wired once; content scanned per page load) */
   initImageModal();
+
+  /* Initialize video modal controls (wired once; content scanned per page load) */
+  initVideoModal();
 
   /* Initialize testimonial slider controls for any pre-existing content */
   setupTestimonialSliders();

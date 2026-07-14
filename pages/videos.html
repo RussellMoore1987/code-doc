@@ -1,0 +1,129 @@
+<h1><span data-tags="Video">YouTube Video Systems</span></h1>
+<p>Use these components to embed YouTube videos inline, open them in a lightbox, or display a grid of video thumbnails that open in a lightbox gallery with prev/next navigation.</p>
+
+<p>Three usage patterns are available:</p>
+<ul>
+  <li><strong>Inline Embed</strong> <code>youtube-embed</code> - a responsive 16:9 iframe that plays directly on the page.</li>
+  <li><strong>Lightbox Trigger</strong> <code>youtube-modal</code> - a thumbnail that opens a fullscreen modal player on click.</li>
+  <li><strong>Video Gallery</strong> <code>youtube-gallery</code> - a grid of thumbnails sharing a single modal with prev/next navigation.</li>
+</ul>
+
+<p>All three patterns accept the same column modifier classes used by image galleries:</p>
+<ul>
+  <li><code>img-col-2</code> through <code>img-col-8</code> - control how many columns the gallery renders.</li>
+</ul>
+
+<div class="callout">
+  <div class="callout-title">ℹ YouTube Video IDs</div>
+  <p>Supply the 11-character YouTube video ID via <code>data-video-id</code>. The system validates this value and rejects anything that doesn't match the expected format, so arbitrary URLs cannot be injected. Videos are embedded using YouTube's privacy-enhanced domain (<code>youtube-nocookie.com</code>).</p>
+</div>
+
+<!-- ═══════════════════════ INLINE EMBED ═══════════════════════ -->
+<h2 id="inline-embed"><span data-tags="Video">Inline Embed</span></h2>
+<p>Drop a <code>div.youtube-embed</code> with a <code>data-video-id</code> attribute anywhere in the page. The system replaces it with a responsive 16:9 iframe. An optional <code>data-title</code> attribute sets the iframe's accessible title.</p>
+
+<pre><code>&lt;div class="youtube-embed" data-video-id="WhWc3b3KhnY" data-title="Spring - Blender Open Movie"&gt;&lt;/div&gt;</code></pre>
+
+<div class="youtube-embed" data-video-id="WhWc3b3KhnY" data-title="Spring - Blender Open Movie"></div>
+
+<!-- ═══════════════════════ LIGHTBOX TRIGGER ═══════════════════ -->
+<h2 id="lightbox"><span data-tags="Video">Lightbox Trigger</span></h2>
+<p>A <code>div.youtube-modal</code> or <code>figure.youtube-modal</code> renders as a thumbnail with a play button. Clicking it opens the video in a fullscreen modal overlay. Use <code>data-title</code> for a caption below the player and as the accessible label.</p>
+
+<pre><code>&lt;!-- Plain div trigger --&gt;
+&lt;div class="youtube-modal" data-video-id="WhWc3b3KhnY" data-title="Spring - Blender Open Movie"&gt;&lt;/div&gt;
+
+&lt;!-- Figure trigger with caption --&gt;
+&lt;figure class="youtube-modal" data-video-id="WhWc3b3KhnY"&gt;
+  &lt;figcaption&gt;Caption shown in the modal and beneath the thumbnail.&lt;/figcaption&gt;
+&lt;/figure&gt;</code></pre>
+
+<h3 id="lightbox-div">Plain div trigger</h3>
+<div class="youtube-modal" data-video-id="WhWc3b3KhnY" data-title="Spring - Blender Open Movie"></div>
+
+<h3 id="lightbox-figure">Figure trigger with caption</h3>
+<figure class="youtube-modal" data-video-id="WhWc3b3KhnY">
+  <figcaption>Spring - Blender Open Movie - Blender Open Movie project released in 2019.</figcaption>
+</figure>
+
+<!-- ═══════════════════════ VIDEO GALLERY ═══════════════════════ -->
+<h2 id="video-gallery"><span data-tags="Video">Video Gallery</span></h2>
+<p>Wrap multiple <code>[data-video-id]</code> items inside a <code>div.youtube-gallery</code> to get a thumbnail grid. Each tile opens the same shared modal, and the modal's prev/next arrows let the viewer step through all videos in the gallery. Optionally include <code>figure</code> elements with <code>figcaption</code> for per-video captions.</p>
+
+<pre><code>&lt;div class="youtube-gallery img-col-3"&gt;
+  &lt;div data-video-id="VIDEO_ID_1" data-title="Title 1"&gt;&lt;/div&gt;
+  &lt;div data-video-id="VIDEO_ID_2" data-title="Title 2"&gt;&lt;/div&gt;
+  &lt;figure data-video-id="VIDEO_ID_3"&gt;
+    &lt;figcaption&gt;Caption for video 3&lt;/figcaption&gt;
+  &lt;/figure&gt;
+&lt;/div&gt;</code></pre>
+
+<h3 id="gallery-2-col">2 Columns</h3>
+<div class="youtube-gallery img-col-2">
+  <div data-video-id="WhWc3b3KhnY" data-title="Spring - Blender Open Movie"></div>
+  <figure data-video-id="WhWc3b3KhnY">
+    <figcaption>YouTube's very first video, uploaded April 23, 2005.</figcaption>
+  </figure>
+</div>
+
+<h3 id="gallery-3-col">3 Columns</h3>
+<div class="youtube-gallery img-col-3">
+  <div data-video-id="WhWc3b3KhnY" data-title="Video One"></div>
+  <div data-video-id="WhWc3b3KhnY" data-title="Video Two"></div>
+  <figure data-video-id="WhWc3b3KhnY">
+    <figcaption>Video Three - with a caption</figcaption>
+  </figure>
+</div>
+
+<h3 id="gallery-4-col">4 Columns</h3>
+<div class="youtube-gallery img-col-4">
+  <div data-video-id="WhWc3b3KhnY" data-title="Video 1"></div>
+  <div data-video-id="WhWc3b3KhnY" data-title="Video 2"></div>
+  <div data-video-id="WhWc3b3KhnY" data-title="Video 3"></div>
+  <div data-video-id="WhWc3b3KhnY" data-title="Video 4"></div>
+</div>
+
+<!-- ═══════════════════════ MIXED PAGE ═══════════════════════ -->
+<h2 id="modal-navigation"><span data-tags="Video">Modal Navigation</span></h2>
+<p>All lightbox triggers (<code>.youtube-modal</code>) and gallery tiles (<code>.youtube-gallery-item</code>) on the current page share the same modal state. The counter and prev/next arrows let the viewer step through every video on the page in document order, regardless of which component type they came from.</p>
+
+<p>The keyboard shortcuts also work inside the modal:</p>
+<ul>
+  <li><kbd>Escape</kbd> - close the modal</li>
+  <li><kbd>←</kbd> / <kbd>→</kbd> - navigate to the previous/next video</li>
+</ul>
+
+<!-- ═══════════════════════ REFERENCE ═══════════════════════ -->
+<h2 id="reference"><span data-tags="Video">Attribute Reference</span></h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>Attribute</th>
+      <th>Applies to</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>data-video-id</code></td>
+      <td>All</td>
+      <td>Required. The 11-character YouTube video ID.</td>
+    </tr>
+    <tr>
+      <td><code>data-title</code></td>
+      <td>Inline embed, lightbox, gallery items</td>
+      <td>Optional. Sets the iframe accessible title and the modal caption. For galleries, falls back to the <code>figcaption</code> text.</td>
+    </tr>
+    <tr>
+      <td><code>figcaption</code> (child)</td>
+      <td>Figure lightbox, gallery figure items</td>
+      <td>Optional. Caption shown beneath the thumbnail and inside the modal. Overridden by <code>data-title</code> for the modal caption.</td>
+    </tr>
+    <tr>
+      <td><code>img-col-2</code> … <code>img-col-8</code></td>
+      <td><code>.youtube-gallery</code></td>
+      <td>Column count modifier, identical to image gallery classes.</td>
+    </tr>
+  </tbody>
+</table>

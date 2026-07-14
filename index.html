@@ -218,6 +218,37 @@
     </div>
   </dialog>
 
+  <!-- ═══════════════════════════════════════════ VIDEO MODAL -->
+  <dialog id="video-modal" class="image-modal-overlay" aria-label="Video viewer" hidden>
+    <button class="image-modal-close" id="video-modal-close" aria-label="Close video viewer">
+      <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+        <line x1="18" y1="6" x2="6" y2="18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        <line x1="6" y1="6" x2="18" y2="18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+      </svg>
+    </button>
+    <span class="image-modal-counter" id="video-modal-counter" aria-live="polite" aria-atomic="true"></span>
+    <div class="image-modal-container">
+      <button class="image-modal-prev" id="video-modal-prev" aria-label="Previous video">
+        <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+          <polyline points="15 18 9 12 15 6" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
+      <div class="image-modal-content video-modal-content">
+        <div class="video-modal-frame">
+          <iframe id="video-modal-iframe" src="" title="" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe>
+        </div>
+        <div class="img-info">
+          <p id="video-modal-caption" class="image-modal-caption"></p>
+        </div>
+      </div>
+      <button class="image-modal-next" id="video-modal-next" aria-label="Next video">
+        <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+          <polyline points="9 18 15 12 9 6" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
+    </div>
+  </dialog>
+
   <!-- Mobile overlay backdrop -->
   <div class="mobile-nav-backdrop" id="mobile-nav-backdrop"></div>
 
