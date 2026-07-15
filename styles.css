@@ -690,6 +690,62 @@ button {
   .g-xxl-5, .gy-xxl-5 { --grid-gutter-y: 3rem; }
 }
 
+/* ═══════════════════════════════════════════════════════════════
+   DEMO HELPERS  -  live example components in documentation pages
+   ═══════════════════════════════════════════════════════════════ */
+
+/* Container shown in Live Demo callouts */
+.demo-box {
+  background: var(--bg-code);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 12px;
+}
+
+/* Standard accent-colored demo item */
+.demo-chip {
+  background: var(--accent-light);
+  border: 1px solid var(--border-focus);
+  border-radius: 6px;
+  padding: 8px 16px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+/* Small accent-colored demo item (gap scale, etc.) */
+.demo-chip-sm {
+  background: var(--accent-light);
+  border: 1px solid var(--border-focus);
+  border-radius: 4px;
+  padding: 6px 12px;
+  font-size: 12px;
+}
+
+/* Warning-colored demo item */
+.demo-chip-warn {
+  background: var(--bg-callout-warn);
+  border: 1px dashed var(--callout-warn-border);
+  border-radius: 6px;
+  padding: 8px 16px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+/* Text swatch used in alignment demos (no border, no font-weight) */
+.demo-swatch {
+  margin: 0;
+  background: var(--accent-light);
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 13px;
+}
+
+/* Short description label inside a Live Demo callout */
+.demo-label {
+  font-size: 13px;
+  margin-bottom: 8px;
+}
+
 /* Grid demo helpers */
 .grid-demo-outline {
   border: 1px solid var(--border);
