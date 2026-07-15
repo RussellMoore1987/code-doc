@@ -278,6 +278,31 @@ button {
 .fst-normal  { font-style: normal; }
 .fst-italic  { font-style: italic; }
 
+/* Table utilities */
+.table-striped {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+  margin-bottom: 24px;
+}
+.table-striped thead tr {
+  background: var(--bg-code);
+  border-bottom: 2px solid var(--border);
+}
+.table-striped th {
+  padding: 10px 14px;
+  text-align: left;
+}
+.table-striped td {
+  padding: 9px 14px;
+}
+.table-striped tbody tr {
+  border-bottom: 1px solid var(--border);
+}
+.table-striped tbody tr:nth-child(even) {
+  background: var(--bg-hover);
+}
+
 /* Grid system utilities (Bootstrap-like, container-query driven) */
 :root {
   --grid-gutter-x: 1.5rem;
