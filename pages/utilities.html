@@ -1,42 +1,60 @@
 <div>
-  <h1 id="utility-classes">Utility Classes</h1>
+    <h1 id="utility-classes">Utility Classes</h1>
 
-  <p>
-    A reference for all single-purpose utility classes defined in <code>styles.css</code>.
-    These classes can be mixed and matched on any element to handle display, flexbox,
-    spacing, sizing, and text styling without writing custom CSS.
-  </p>
+    <p>
+        A reference for all single-purpose utility classes defined in <code>styles.css</code>.
+        These classes can be mixed and matched on any element to handle display, flexbox,
+        spacing, sizing, and text styling without writing custom CSS.
+    </p>
 
-  <!-- ══════════════════════════════════════════════════
+    <!-- ══════════════════════════════════════════════════
        DISPLAY
-  ══════════════════════════════════════════════════ -->
-  <h2 id="display">Display</h2>
+    ══════════════════════════════════════════════════ -->
+    <h2 id="display">Display</h2>
 
-  <p>Control the CSS <code>display</code> property of any element.</p>
+    <p>Control the CSS <code>display</code> property of any element.</p>
 
-  <table class="table-striped">
-    <thead>
-      <tr>
-        <th>Class</th>
-        <th>CSS Output</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr>
-        <td><code>.d-none</code></td>
-        <td><code>display: none</code></td>
-      </tr>
-      <tr><td><code>.d-inline</code></td><td><code>display: inline</code></td></tr>
-      <tr><td><code>.d-inline-block</code></td><td><code>display: inline-block</code></td></tr>
-      <tr><td><code>.d-block</code></td><td><code>display: block</code></td></tr>
-      <tr><td><code>.d-flex</code></td><td><code>display: flex</code></td></tr>
-      <tr><td><code>.d-inline-flex</code></td><td><code>display: inline-flex</code></td></tr>
-      <tr><td><code>.d-grid</code></td><td><code>display: grid</code></td></tr>
-    </tbody>
-  </table>
+    <table class="table-striped">
+        <thead>
+            <tr>
+                <th>Class</th>
+                <th>CSS Output</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><code>.d-none</code></td>
+                <td><code>display: none</code></td>
+            </tr>
+            <tr>
+                <td><code>.d-inline</code></td>
+                <td><code>display: inline</code></td>
+            </tr>
+            <tr>
+                <td><code>.d-inline-block</code></td>
+                <td><code>display: inline-block</code></td>
+            </tr>
+            <tr>
+                <td><code>.d-block</code></td>
+                <td><code>display: block</code></td>
+            </tr>
+            <tr>
+                <td><code>.d-flex</code></td>
+                <td><code>display: flex</code></td>
+            </tr>
+            <tr>
+                <td><code>.d-inline-flex</code></td>
+                <td><code>display: inline-flex</code></td>
+            </tr>
+            <tr>
+                <td><code>.d-grid</code></td>
+                <td><code>display: grid</code></td>
+            </tr>
+        </tbody>
+    </table>
 
-  <h3 id="display-example">Example</h3>
-  <pre><code>&lt;!-- Hide an element --&gt;
+    <h3 id="display-example">Example</h3>
+    <pre><code>&lt;!-- Hide an element --&gt;
 &lt;div class="d-none"&gt;Hidden&lt;/div&gt;
 
 &lt;!-- Flex container --&gt;
@@ -45,573 +63,1059 @@
   &lt;span&gt;Item 2&lt;/span&gt;
 &lt;/div&gt;</code></pre>
 
-  <!-- ══════════════════════════════════════════════════
+    <!-- ══════════════════════════════════════════════════
        FLEXBOX
-  ══════════════════════════════════════════════════ -->
-  <h2 id="flexbox">Flexbox</h2>
+    ══════════════════════════════════════════════════ -->
+    <h2 id="flexbox">Flexbox</h2>
 
-  <p>Use <code>.d-flex</code> or <code>.d-inline-flex</code> to create a flex container, then apply any combination of the classes below.</p>
+    <p>Use <code>.d-flex</code> or <code>.d-inline-flex</code> to create a flex container, then apply any combination of
+        the classes below.</p>
 
-  <!-- Direction -->
-  <h3 id="flex-direction">Direction &amp; Wrap</h3>
+    <!-- Direction -->
+    <h3 id="flex-direction">Direction &amp; Wrap</h3>
 
-  <table class="table-striped">
-    <thead>
-      <tr>
-        <th>Class</th>
-        <th>CSS Output</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr><td><code>.flex-row</code></td><td><code>flex-direction: row</code></td></tr>
-      <tr><td><code>.flex-row-reverse</code></td><td><code>flex-direction: row-reverse</code></td></tr>
-      <tr><td><code>.flex-column</code></td><td><code>flex-direction: column</code></td></tr>
-      <tr><td><code>.flex-column-reverse</code></td><td><code>flex-direction: column-reverse</code></td></tr>
-      <tr><td><code>.flex-wrap</code></td><td><code>flex-wrap: wrap</code></td></tr>
-      <tr><td><code>.flex-nowrap</code></td><td><code>flex-wrap: nowrap</code></td></tr>
-      <tr><td><code>.flex-wrap-reverse</code></td><td><code>flex-wrap: wrap-reverse</code></td></tr>
-    </tbody>
-  </table>
+    <table class="table-striped">
+        <thead>
+            <tr>
+                <th>Class</th>
+                <th>CSS Output</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><code>.flex-row</code></td>
+                <td><code>flex-direction: row</code></td>
+            </tr>
+            <tr>
+                <td><code>.flex-row-reverse</code></td>
+                <td><code>flex-direction: row-reverse</code></td>
+            </tr>
+            <tr>
+                <td><code>.flex-column</code></td>
+                <td><code>flex-direction: column</code></td>
+            </tr>
+            <tr>
+                <td><code>.flex-column-reverse</code></td>
+                <td><code>flex-direction: column-reverse</code></td>
+            </tr>
+            <tr>
+                <td><code>.flex-wrap</code></td>
+                <td><code>flex-wrap: wrap</code></td>
+            </tr>
+            <tr>
+                <td><code>.flex-nowrap</code></td>
+                <td><code>flex-wrap: nowrap</code></td>
+            </tr>
+            <tr>
+                <td><code>.flex-wrap-reverse</code></td>
+                <td><code>flex-wrap: wrap-reverse</code></td>
+            </tr>
+        </tbody>
+    </table>
 
-  <div class="callout" style="margin-top:0;">
-    <div class="callout-title">Live Demo — Direction</div>
-    <p style="font-size:13px; margin-bottom:8px;"><code>.d-flex .flex-row</code> (default)</p>
-    <div class="d-flex flex-row gap-2" style="background:var(--bg-code); border:1px solid var(--border); border-radius:8px; padding:12px; margin-bottom:12px;">
-      <div style="background:var(--accent-light); border:1px solid var(--border-focus); border-radius:6px; padding:8px 14px; font-size:13px; font-weight:600;">1</div>
-      <div style="background:var(--accent-light); border:1px solid var(--border-focus); border-radius:6px; padding:8px 14px; font-size:13px; font-weight:600;">2</div>
-      <div style="background:var(--accent-light); border:1px solid var(--border-focus); border-radius:6px; padding:8px 14px; font-size:13px; font-weight:600;">3</div>
+    <div class="callout" style="margin-top:0;">
+        <div class="callout-title">Live Demo - Direction</div>
+        <p style="font-size:13px; margin-bottom:8px;"><code>.d-flex .flex-row</code> (default)</p>
+        <div class="d-flex flex-row gap-2"
+            style="background:var(--bg-code); border:1px solid var(--border); border-radius:8px; padding:12px; margin-bottom:12px;">
+            <div
+                style="background:var(--accent-light); border:1px solid var(--border-focus); border-radius:6px; padding:8px 14px; font-size:13px; font-weight:600;">
+                1</div>
+            <div
+                style="background:var(--accent-light); border:1px solid var(--border-focus); border-radius:6px; padding:8px 14px; font-size:13px; font-weight:600;">
+                2</div>
+            <div
+                style="background:var(--accent-light); border:1px solid var(--border-focus); border-radius:6px; padding:8px 14px; font-size:13px; font-weight:600;">
+                3</div>
+        </div>
+        <p style="font-size:13px; margin-bottom:8px;"><code>.d-flex .flex-row-reverse</code></p>
+        <div class="d-flex flex-row-reverse gap-2"
+            style="background:var(--bg-code); border:1px solid var(--border); border-radius:8px; padding:12px; margin-bottom:12px;">
+            <div
+                style="background:var(--accent-light); border:1px solid var(--border-focus); border-radius:6px; padding:8px 14px; font-size:13px; font-weight:600;">
+                1</div>
+            <div
+                style="background:var(--accent-light); border:1px solid var(--border-focus); border-radius:6px; padding:8px 14px; font-size:13px; font-weight:600;">
+                2</div>
+            <div
+                style="background:var(--accent-light); border:1px solid var(--border-focus); border-radius:6px; padding:8px 14px; font-size:13px; font-weight:600;">
+                3</div>
+        </div>
+        <p style="font-size:13px; margin-bottom:8px;"><code>.d-flex .flex-column</code></p>
+        <div class="d-flex flex-column gap-2"
+            style="background:var(--bg-code); border:1px solid var(--border); border-radius:8px; padding:12px; margin-bottom:12px;">
+            <div
+                style="background:var(--accent-light); border:1px solid var(--border-focus); border-radius:6px; padding:8px 14px; font-size:13px; font-weight:600;">
+                1</div>
+            <div
+                style="background:var(--accent-light); border:1px solid var(--border-focus); border-radius:6px; padding:8px 14px; font-size:13px; font-weight:600;">
+                2</div>
+            <div
+                style="background:var(--accent-light); border:1px solid var(--border-focus); border-radius:6px; padding:8px 14px; font-size:13px; font-weight:600;">
+                3</div>
+        </div>
+        <p style="font-size:13px; margin-bottom:8px;"><code>.d-flex .flex-wrap</code> - items wrap onto the next line
+            when there isn't enough space</p>
+        <div class="d-flex flex-wrap gap-2"
+            style="background:var(--bg-code); border:1px solid var(--border); border-radius:8px; padding:12px; max-width:280px;">
+            <div
+                style="background:var(--accent-light); border:1px solid var(--border-focus); border-radius:6px; padding:8px 20px; font-size:13px; font-weight:600;">
+                Item 1</div>
+            <div
+                style="background:var(--accent-light); border:1px solid var(--border-focus); border-radius:6px; padding:8px 20px; font-size:13px; font-weight:600;">
+                Item 2</div>
+            <div
+                style="background:var(--accent-light); border:1px solid var(--border-focus); border-radius:6px; padding:8px 20px; font-size:13px; font-weight:600;">
+                Item 3</div>
+            <div
+                style="background:var(--accent-light); border:1px solid var(--border-focus); border-radius:6px; padding:8px 20px; font-size:13px; font-weight:600;">
+                Item 4</div>
+            <div
+                style="background:var(--accent-light); border:1px solid var(--border-focus); border-radius:6px; padding:8px 20px; font-size:13px; font-weight:600;">
+                Item 5</div>
+        </div>
     </div>
-    <p style="font-size:13px; margin-bottom:8px;"><code>.d-flex .flex-row-reverse</code></p>
-    <div class="d-flex flex-row-reverse gap-2" style="background:var(--bg-code); border:1px solid var(--border); border-radius:8px; padding:12px; margin-bottom:12px;">
-      <div style="background:var(--accent-light); border:1px solid var(--border-focus); border-radius:6px; padding:8px 14px; font-size:13px; font-weight:600;">1</div>
-      <div style="background:var(--accent-light); border:1px solid var(--border-focus); border-radius:6px; padding:8px 14px; font-size:13px; font-weight:600;">2</div>
-      <div style="background:var(--accent-light); border:1px solid var(--border-focus); border-radius:6px; padding:8px 14px; font-size:13px; font-weight:600;">3</div>
+
+    <!-- justify-content -->
+    <h3 id="justify-content">Justify Content</h3>
+
+    <table class="table-striped">
+        <thead>
+            <tr>
+                <th>Class</th>
+                <th>CSS Output</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><code>.justify-content-start</code></td>
+                <td><code>justify-content: flex-start</code></td>
+            </tr>
+            <tr>
+                <td><code>.justify-content-center</code></td>
+                <td><code>justify-content: center</code></td>
+            </tr>
+            <tr>
+                <td><code>.justify-content-end</code></td>
+                <td><code>justify-content: flex-end</code></td>
+            </tr>
+            <tr>
+                <td><code>.justify-content-between</code></td>
+                <td><code>justify-content: space-between</code></td>
+            </tr>
+            <tr>
+                <td><code>.justify-content-around</code></td>
+                <td><code>justify-content: space-around</code></td>
+            </tr>
+            <tr>
+                <td><code>.justify-content-evenly</code></td>
+                <td><code>justify-content: space-evenly</code></td>
+            </tr>
+        </tbody>
+    </table>
+
+    <!-- Live justify-content demo -->
+    <div class="callout" style="margin-top:0;">
+        <div class="callout-title">Live Demo</div>
+        <p style="font-size:13px; margin-bottom:8px;"><code>.d-flex .justify-content-between</code></p>
+        <div class="d-flex justify-content-between"
+            style="background:var(--bg-code); border:1px solid var(--border); border-radius:8px; padding:12px;">
+            <div
+                style="background:var(--accent-light); border:1px solid var(--border-focus); border-radius:6px; padding:8px 16px; font-size:13px; font-weight:600;">
+                Item A</div>
+            <div
+                style="background:var(--accent-light); border:1px solid var(--border-focus); border-radius:6px; padding:8px 16px; font-size:13px; font-weight:600;">
+                Item B</div>
+            <div
+                style="background:var(--accent-light); border:1px solid var(--border-focus); border-radius:6px; padding:8px 16px; font-size:13px; font-weight:600;">
+                Item C</div>
+        </div>
+        <p style="font-size:13px; margin-top:12px; margin-bottom:8px;">
+            <code>.d-flex .justify-content-center .gap-3</code></p>
+        <div class="d-flex justify-content-center gap-3"
+            style="background:var(--bg-code); border:1px solid var(--border); border-radius:8px; padding:12px;">
+            <div
+                style="background:var(--accent-light); border:1px solid var(--border-focus); border-radius:6px; padding:8px 16px; font-size:13px; font-weight:600;">
+                Item A</div>
+            <div
+                style="background:var(--accent-light); border:1px solid var(--border-focus); border-radius:6px; padding:8px 16px; font-size:13px; font-weight:600;">
+                Item B</div>
+            <div
+                style="background:var(--accent-light); border:1px solid var(--border-focus); border-radius:6px; padding:8px 16px; font-size:13px; font-weight:600;">
+                Item C</div>
+        </div>
     </div>
-    <p style="font-size:13px; margin-bottom:8px;"><code>.d-flex .flex-column</code></p>
-    <div class="d-flex flex-column gap-2" style="background:var(--bg-code); border:1px solid var(--border); border-radius:8px; padding:12px; margin-bottom:12px;">
-      <div style="background:var(--accent-light); border:1px solid var(--border-focus); border-radius:6px; padding:8px 14px; font-size:13px; font-weight:600;">1</div>
-      <div style="background:var(--accent-light); border:1px solid var(--border-focus); border-radius:6px; padding:8px 14px; font-size:13px; font-weight:600;">2</div>
-      <div style="background:var(--accent-light); border:1px solid var(--border-focus); border-radius:6px; padding:8px 14px; font-size:13px; font-weight:600;">3</div>
+
+    <!-- align-items -->
+    <h3 id="align-items">Align Items</h3>
+
+    <table class="table-striped">
+        <thead>
+            <tr>
+                <th>Class</th>
+                <th>CSS Output</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><code>.align-items-start</code></td>
+                <td><code>align-items: flex-start</code></td>
+            </tr>
+            <tr>
+                <td><code>.align-items-center</code></td>
+                <td><code>align-items: center</code></td>
+            </tr>
+            <tr>
+                <td><code>.align-items-end</code></td>
+                <td><code>align-items: flex-end</code></td>
+            </tr>
+            <tr>
+                <td><code>.align-items-baseline</code></td>
+                <td><code>align-items: baseline</code></td>
+            </tr>
+            <tr>
+                <td><code>.align-items-stretch</code></td>
+                <td><code>align-items: stretch</code></td>
+            </tr>
+        </tbody>
+    </table>
+
+    <div class="callout" style="margin-top:0;">
+        <div class="callout-title">Live Demo - Align Items</div>
+        <p style="font-size:13px; margin-bottom:8px;">Items have different heights to show the effect. Container height
+            is fixed at 80px.</p>
+        <p style="font-size:13px; margin-bottom:6px;"><code>.d-flex .align-items-start</code></p>
+        <div class="d-flex align-items-start gap-2"
+            style="background:var(--bg-code); border:1px solid var(--border); border-radius:8px; padding:10px; height:80px; margin-bottom:10px;">
+            <div
+                style="background:var(--accent-light); border:1px solid var(--border-focus); border-radius:6px; padding:6px 14px; font-size:12px; font-weight:600;">
+                Short</div>
+            <div
+                style="background:var(--accent-light); border:1px solid var(--border-focus); border-radius:6px; padding:14px 14px; font-size:12px; font-weight:600;">
+                Taller</div>
+            <div
+                style="background:var(--accent-light); border:1px solid var(--border-focus); border-radius:6px; padding:6px 14px; font-size:12px; font-weight:600;">
+                Short</div>
+        </div>
+        <p style="font-size:13px; margin-bottom:6px;"><code>.d-flex .align-items-center</code></p>
+        <div class="d-flex align-items-center gap-2"
+            style="background:var(--bg-code); border:1px solid var(--border); border-radius:8px; padding:10px; height:80px; margin-bottom:10px;">
+            <div
+                style="background:var(--accent-light); border:1px solid var(--border-focus); border-radius:6px; padding:6px 14px; font-size:12px; font-weight:600;">
+                Short</div>
+            <div
+                style="background:var(--accent-light); border:1px solid var(--border-focus); border-radius:6px; padding:14px 14px; font-size:12px; font-weight:600;">
+                Taller</div>
+            <div
+                style="background:var(--accent-light); border:1px solid var(--border-focus); border-radius:6px; padding:6px 14px; font-size:12px; font-weight:600;">
+                Short</div>
+        </div>
+        <p style="font-size:13px; margin-bottom:6px;"><code>.d-flex .align-items-end</code></p>
+        <div class="d-flex align-items-end gap-2"
+            style="background:var(--bg-code); border:1px solid var(--border); border-radius:8px; padding:10px; height:80px; margin-bottom:10px;">
+            <div
+                style="background:var(--accent-light); border:1px solid var(--border-focus); border-radius:6px; padding:6px 14px; font-size:12px; font-weight:600;">
+                Short</div>
+            <div
+                style="background:var(--accent-light); border:1px solid var(--border-focus); border-radius:6px; padding:14px 14px; font-size:12px; font-weight:600;">
+                Taller</div>
+            <div
+                style="background:var(--accent-light); border:1px solid var(--border-focus); border-radius:6px; padding:6px 14px; font-size:12px; font-weight:600;">
+                Short</div>
+        </div>
+        <p style="font-size:13px; margin-bottom:6px;"><code>.d-flex .align-items-stretch</code> - items stretch to fill
+            the container height</p>
+        <div class="d-flex align-items-stretch gap-2"
+            style="background:var(--bg-code); border:1px solid var(--border); border-radius:8px; padding:10px; height:80px;">
+            <div
+                style="background:var(--accent-light); border:1px solid var(--border-focus); border-radius:6px; padding:0 14px; font-size:12px; font-weight:600; display:flex; align-items:center;">
+                A</div>
+            <div
+                style="background:var(--accent-light); border:1px solid var(--border-focus); border-radius:6px; padding:0 14px; font-size:12px; font-weight:600; display:flex; align-items:center;">
+                B</div>
+            <div
+                style="background:var(--accent-light); border:1px solid var(--border-focus); border-radius:6px; padding:0 14px; font-size:12px; font-weight:600; display:flex; align-items:center;">
+                C</div>
+        </div>
     </div>
-    <p style="font-size:13px; margin-bottom:8px;"><code>.d-flex .flex-wrap</code> — items wrap onto the next line when there isn't enough space</p>
-    <div class="d-flex flex-wrap gap-2" style="background:var(--bg-code); border:1px solid var(--border); border-radius:8px; padding:12px; max-width:280px;">
-      <div style="background:var(--accent-light); border:1px solid var(--border-focus); border-radius:6px; padding:8px 20px; font-size:13px; font-weight:600;">Item 1</div>
-      <div style="background:var(--accent-light); border:1px solid var(--border-focus); border-radius:6px; padding:8px 20px; font-size:13px; font-weight:600;">Item 2</div>
-      <div style="background:var(--accent-light); border:1px solid var(--border-focus); border-radius:6px; padding:8px 20px; font-size:13px; font-weight:600;">Item 3</div>
-      <div style="background:var(--accent-light); border:1px solid var(--border-focus); border-radius:6px; padding:8px 20px; font-size:13px; font-weight:600;">Item 4</div>
-      <div style="background:var(--accent-light); border:1px solid var(--border-focus); border-radius:6px; padding:8px 20px; font-size:13px; font-weight:600;">Item 5</div>
+
+    <!-- align-self -->
+    <h3 id="align-self">Align Self</h3>
+
+    <table class="table-striped">
+        <thead>
+            <tr>
+                <th>Class</th>
+                <th>CSS Output</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><code>.align-self-auto</code></td>
+                <td><code>align-self: auto</code></td>
+            </tr>
+            <tr>
+                <td><code>.align-self-start</code></td>
+                <td><code>align-self: flex-start</code></td>
+            </tr>
+            <tr>
+                <td><code>.align-self-center</code></td>
+                <td><code>align-self: center</code></td>
+            </tr>
+            <tr>
+                <td><code>.align-self-end</code></td>
+                <td><code>align-self: flex-end</code></td>
+            </tr>
+            <tr>
+                <td><code>.align-self-baseline</code></td>
+                <td><code>align-self: baseline</code></td>
+            </tr>
+            <tr>
+                <td><code>.align-self-stretch</code></td>
+                <td><code>align-self: stretch</code></td>
+            </tr>
+        </tbody>
+    </table>
+
+    <div class="callout" style="margin-top:0;">
+        <div class="callout-title">Live Demo - Align Self</div>
+        <p style="font-size:13px; margin-bottom:8px;">The container uses <code>.align-items-start</code> as a baseline.
+            Each item individually overrides with its own <code>.align-self-*</code> class. Container height is 90px.
+        </p>
+        <div class="d-flex align-items-start gap-2"
+            style="background:var(--bg-code); border:1px solid var(--border); border-radius:8px; padding:10px; height:90px;">
+            <div
+                style="background:var(--bg-callout-warn); border:1px dashed var(--callout-warn-border); border-radius:6px; padding:8px 12px; font-size:11px; font-weight:600; white-space:nowrap;">
+                start (default)</div>
+            <div class="align-self-center"
+                style="background:var(--accent-light); border:1px solid var(--border-focus); border-radius:6px; padding:8px 12px; font-size:11px; font-weight:600; white-space:nowrap;">
+                .align-self-center</div>
+            <div class="align-self-end"
+                style="background:var(--accent-light); border:1px solid var(--border-focus); border-radius:6px; padding:8px 12px; font-size:11px; font-weight:600; white-space:nowrap;">
+                .align-self-end</div>
+            <div class="align-self-stretch"
+                style="background:var(--accent-light); border:1px solid var(--border-focus); border-radius:6px; padding:0 12px; font-size:11px; font-weight:600; display:flex; align-items:center; white-space:nowrap;">
+                .align-self-stretch</div>
+        </div>
     </div>
-  </div>
 
-  <!-- justify-content -->
-  <h3 id="justify-content">Justify Content</h3>
+    <!-- align-content -->
+    <h3 id="align-content">Align Content</h3>
 
-  <table class="table-striped">
-    <thead>
-      <tr>
-        <th>Class</th>
-        <th>CSS Output</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr><td><code>.justify-content-start</code></td><td><code>justify-content: flex-start</code></td></tr>
-      <tr><td><code>.justify-content-center</code></td><td><code>justify-content: center</code></td></tr>
-      <tr><td><code>.justify-content-end</code></td><td><code>justify-content: flex-end</code></td></tr>
-      <tr><td><code>.justify-content-between</code></td><td><code>justify-content: space-between</code></td></tr>
-      <tr><td><code>.justify-content-around</code></td><td><code>justify-content: space-around</code></td></tr>
-      <tr><td><code>.justify-content-evenly</code></td><td><code>justify-content: space-evenly</code></td></tr>
-    </tbody>
-  </table>
+    <table class="table-striped">
+        <thead>
+            <tr>
+                <th>Class</th>
+                <th>CSS Output</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><code>.align-content-start</code></td>
+                <td><code>align-content: flex-start</code></td>
+            </tr>
+            <tr>
+                <td><code>.align-content-center</code></td>
+                <td><code>align-content: center</code></td>
+            </tr>
+            <tr>
+                <td><code>.align-content-end</code></td>
+                <td><code>align-content: flex-end</code></td>
+            </tr>
+            <tr>
+                <td><code>.align-content-between</code></td>
+                <td><code>align-content: space-between</code></td>
+            </tr>
+            <tr>
+                <td><code>.align-content-around</code></td>
+                <td><code>align-content: space-around</code></td>
+            </tr>
+            <tr>
+                <td><code>.align-content-evenly</code></td>
+                <td><code>align-content: space-evenly</code></td>
+            </tr>
+            <tr>
+                <td><code>.align-content-stretch</code></td>
+                <td><code>align-content: stretch</code></td>
+            </tr>
+        </tbody>
+    </table>
 
-  <!-- Live justify-content demo -->
-  <div class="callout" style="margin-top:0;">
-    <div class="callout-title">Live Demo</div>
-    <p style="font-size:13px; margin-bottom:8px;"><code>.d-flex .justify-content-between</code></p>
-    <div class="d-flex justify-content-between" style="background:var(--bg-code); border:1px solid var(--border); border-radius:8px; padding:12px;">
-      <div style="background:var(--accent-light); border:1px solid var(--border-focus); border-radius:6px; padding:8px 16px; font-size:13px; font-weight:600;">Item A</div>
-      <div style="background:var(--accent-light); border:1px solid var(--border-focus); border-radius:6px; padding:8px 16px; font-size:13px; font-weight:600;">Item B</div>
-      <div style="background:var(--accent-light); border:1px solid var(--border-focus); border-radius:6px; padding:8px 16px; font-size:13px; font-weight:600;">Item C</div>
+    <div class="callout" style="margin-top:0;">
+        <div class="callout-title">Live Demo - Align Content</div>
+        <p style="font-size:13px; margin-bottom:4px;">Requires a <strong>multi-line</strong> flex container
+            (<code>.flex-wrap</code>) with a fixed height taller than the content. The items below wrap into two rows
+            inside a 160px-tall box.</p>
+        <p style="font-size:13px; margin-bottom:8px;"><code>.d-flex .flex-wrap .align-content-start</code></p>
+        <div class="d-flex flex-wrap align-content-start gap-2"
+            style="background:var(--bg-code); border:1px solid var(--border); border-radius:8px; padding:10px; height:160px; max-width:300px; margin-bottom:10px;">
+            <div
+                style="background:var(--accent-light); border:1px solid var(--border-focus); border-radius:6px; padding:8px 16px; font-size:12px; font-weight:600;">
+                A</div>
+            <div
+                style="background:var(--accent-light); border:1px solid var(--border-focus); border-radius:6px; padding:8px 16px; font-size:12px; font-weight:600;">
+                B</div>
+            <div
+                style="background:var(--accent-light); border:1px solid var(--border-focus); border-radius:6px; padding:8px 16px; font-size:12px; font-weight:600;">
+                C</div>
+            <div
+                style="background:var(--accent-light); border:1px solid var(--border-focus); border-radius:6px; padding:8px 16px; font-size:12px; font-weight:600;">
+                D</div>
+            <div
+                style="background:var(--accent-light); border:1px solid var(--border-focus); border-radius:6px; padding:8px 16px; font-size:12px; font-weight:600;">
+                E</div>
+            <div
+                style="background:var(--accent-light); border:1px solid var(--border-focus); border-radius:6px; padding:8px 16px; font-size:12px; font-weight:600;">
+                F</div>
+        </div>
+        <p style="font-size:13px; margin-bottom:8px;"><code>.d-flex .flex-wrap .align-content-center</code></p>
+        <div class="d-flex flex-wrap align-content-center gap-2"
+            style="background:var(--bg-code); border:1px solid var(--border); border-radius:8px; padding:10px; height:160px; max-width:300px; margin-bottom:10px;">
+            <div
+                style="background:var(--accent-light); border:1px solid var(--border-focus); border-radius:6px; padding:8px 16px; font-size:12px; font-weight:600;">
+                A</div>
+            <div
+                style="background:var(--accent-light); border:1px solid var(--border-focus); border-radius:6px; padding:8px 16px; font-size:12px; font-weight:600;">
+                B</div>
+            <div
+                style="background:var(--accent-light); border:1px solid var(--border-focus); border-radius:6px; padding:8px 16px; font-size:12px; font-weight:600;">
+                C</div>
+            <div
+                style="background:var(--accent-light); border:1px solid var(--border-focus); border-radius:6px; padding:8px 16px; font-size:12px; font-weight:600;">
+                D</div>
+            <div
+                style="background:var(--accent-light); border:1px solid var(--border-focus); border-radius:6px; padding:8px 16px; font-size:12px; font-weight:600;">
+                E</div>
+            <div
+                style="background:var(--accent-light); border:1px solid var(--border-focus); border-radius:6px; padding:8px 16px; font-size:12px; font-weight:600;">
+                F</div>
+        </div>
+        <p style="font-size:13px; margin-bottom:8px;"><code>.d-flex .flex-wrap .align-content-between</code></p>
+        <div class="d-flex flex-wrap align-content-between gap-2"
+            style="background:var(--bg-code); border:1px solid var(--border); border-radius:8px; padding:10px; height:160px; max-width:300px; margin-bottom:10px;">
+            <div
+                style="background:var(--accent-light); border:1px solid var(--border-focus); border-radius:6px; padding:8px 16px; font-size:12px; font-weight:600;">
+                A</div>
+            <div
+                style="background:var(--accent-light); border:1px solid var(--border-focus); border-radius:6px; padding:8px 16px; font-size:12px; font-weight:600;">
+                B</div>
+            <div
+                style="background:var(--accent-light); border:1px solid var(--border-focus); border-radius:6px; padding:8px 16px; font-size:12px; font-weight:600;">
+                C</div>
+            <div
+                style="background:var(--accent-light); border:1px solid var(--border-focus); border-radius:6px; padding:8px 16px; font-size:12px; font-weight:600;">
+                D</div>
+            <div
+                style="background:var(--accent-light); border:1px solid var(--border-focus); border-radius:6px; padding:8px 16px; font-size:12px; font-weight:600;">
+                E</div>
+            <div
+                style="background:var(--accent-light); border:1px solid var(--border-focus); border-radius:6px; padding:8px 16px; font-size:12px; font-weight:600;">
+                F</div>
+        </div>
+        <p style="font-size:13px; margin-bottom:8px;"><code>.d-flex .flex-wrap .align-content-end</code></p>
+        <div class="d-flex flex-wrap align-content-end gap-2"
+            style="background:var(--bg-code); border:1px solid var(--border); border-radius:8px; padding:10px; height:160px; max-width:300px;">
+            <div
+                style="background:var(--accent-light); border:1px solid var(--border-focus); border-radius:6px; padding:8px 16px; font-size:12px; font-weight:600;">
+                A</div>
+            <div
+                style="background:var(--accent-light); border:1px solid var(--border-focus); border-radius:6px; padding:8px 16px; font-size:12px; font-weight:600;">
+                B</div>
+            <div
+                style="background:var(--accent-light); border:1px solid var(--border-focus); border-radius:6px; padding:8px 16px; font-size:12px; font-weight:600;">
+                C</div>
+            <div
+                style="background:var(--accent-light); border:1px solid var(--border-focus); border-radius:6px; padding:8px 16px; font-size:12px; font-weight:600;">
+                D</div>
+            <div
+                style="background:var(--accent-light); border:1px solid var(--border-focus); border-radius:6px; padding:8px 16px; font-size:12px; font-weight:600;">
+                E</div>
+            <div
+                style="background:var(--accent-light); border:1px solid var(--border-focus); border-radius:6px; padding:8px 16px; font-size:12px; font-weight:600;">
+                F</div>
+        </div>
     </div>
-    <p style="font-size:13px; margin-top:12px; margin-bottom:8px;"><code>.d-flex .justify-content-center .gap-3</code></p>
-    <div class="d-flex justify-content-center gap-3" style="background:var(--bg-code); border:1px solid var(--border); border-radius:8px; padding:12px;">
-      <div style="background:var(--accent-light); border:1px solid var(--border-focus); border-radius:6px; padding:8px 16px; font-size:13px; font-weight:600;">Item A</div>
-      <div style="background:var(--accent-light); border:1px solid var(--border-focus); border-radius:6px; padding:8px 16px; font-size:13px; font-weight:600;">Item B</div>
-      <div style="background:var(--accent-light); border:1px solid var(--border-focus); border-radius:6px; padding:8px 16px; font-size:13px; font-weight:600;">Item C</div>
+
+    <!-- flex grow/shrink/fill -->
+    <h3 id="flex-grow-shrink">Grow, Shrink &amp; Fill</h3>
+
+    <table class="table-striped">
+        <thead>
+            <tr>
+                <th>Class</th>
+                <th>CSS Output</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><code>.flex-fill</code></td>
+                <td><code>flex: 1 1 auto</code></td>
+            </tr>
+            <tr>
+                <td><code>.flex-grow-0</code></td>
+                <td><code>flex-grow: 0</code></td>
+            </tr>
+            <tr>
+                <td><code>.flex-grow-1</code></td>
+                <td><code>flex-grow: 1</code></td>
+            </tr>
+            <tr>
+                <td><code>.flex-shrink-0</code></td>
+                <td><code>flex-shrink: 0</code></td>
+            </tr>
+            <tr>
+                <td><code>.flex-shrink-1</code></td>
+                <td><code>flex-shrink: 1</code></td>
+            </tr>
+        </tbody>
+    </table>
+
+    <div class="callout" style="margin-top:0;">
+        <div class="callout-title">Live Demo - flex-grow</div>
+        <p style="font-size:13px; margin-bottom:8px;">The middle item uses <code>.flex-grow-1</code> and fills the
+            available space.</p>
+        <div class="d-flex gap-2"
+            style="background:var(--bg-code); border:1px solid var(--border); border-radius:8px; padding:12px;">
+            <div
+                style="background:var(--accent-light); border:1px solid var(--border-focus); border-radius:6px; padding:8px 16px; font-size:13px; font-weight:600; white-space:nowrap;">
+                Fixed</div>
+            <div class="flex-grow-1"
+                style="background:var(--bg-callout-warn); border:1px dashed var(--callout-warn-border); border-radius:6px; padding:8px 16px; font-size:13px; font-weight:600; text-align:center;">
+                .flex-grow-1</div>
+            <div
+                style="background:var(--accent-light); border:1px solid var(--border-focus); border-radius:6px; padding:8px 16px; font-size:13px; font-weight:600; white-space:nowrap;">
+                Fixed</div>
+        </div>
     </div>
-  </div>
 
-  <!-- align-items -->
-  <h3 id="align-items">Align Items</h3>
+    <!-- gap -->
+    <h3 id="gap">Gap</h3>
 
-  <table class="table-striped">
-    <thead>
-      <tr>
-        <th>Class</th>
-        <th>CSS Output</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr><td><code>.align-items-start</code></td><td><code>align-items: flex-start</code></td></tr>
-      <tr><td><code>.align-items-center</code></td><td><code>align-items: center</code></td></tr>
-      <tr><td><code>.align-items-end</code></td><td><code>align-items: flex-end</code></td></tr>
-      <tr><td><code>.align-items-baseline</code></td><td><code>align-items: baseline</code></td></tr>
-      <tr><td><code>.align-items-stretch</code></td><td><code>align-items: stretch</code></td></tr>
-    </tbody>
-  </table>
+    <table class="table-striped">
+        <thead>
+            <tr>
+                <th>Class</th>
+                <th>CSS Output</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><code>.gap-0</code></td>
+                <td><code>gap: 0</code></td>
+            </tr>
+            <tr>
+                <td><code>.gap-1</code></td>
+                <td><code>gap: 4px</code></td>
+            </tr>
+            <tr>
+                <td><code>.gap-2</code></td>
+                <td><code>gap: 8px</code></td>
+            </tr>
+            <tr>
+                <td><code>.gap-3</code></td>
+                <td><code>gap: 12px</code></td>
+            </tr>
+            <tr>
+                <td><code>.gap-4</code></td>
+                <td><code>gap: 16px</code></td>
+            </tr>
+            <tr>
+                <td><code>.gap-5</code></td>
+                <td><code>gap: 24px</code></td>
+            </tr>
+        </tbody>
+    </table>
 
-  <div class="callout" style="margin-top:0;">
-    <div class="callout-title">Live Demo — Align Items</div>
-    <p style="font-size:13px; margin-bottom:8px;">Items have different heights to show the effect. Container height is fixed at 80px.</p>
-    <p style="font-size:13px; margin-bottom:6px;"><code>.d-flex .align-items-start</code></p>
-    <div class="d-flex align-items-start gap-2" style="background:var(--bg-code); border:1px solid var(--border); border-radius:8px; padding:10px; height:80px; margin-bottom:10px;">
-      <div style="background:var(--accent-light); border:1px solid var(--border-focus); border-radius:6px; padding:6px 14px; font-size:12px; font-weight:600;">Short</div>
-      <div style="background:var(--accent-light); border:1px solid var(--border-focus); border-radius:6px; padding:14px 14px; font-size:12px; font-weight:600;">Taller</div>
-      <div style="background:var(--accent-light); border:1px solid var(--border-focus); border-radius:6px; padding:6px 14px; font-size:12px; font-weight:600;">Short</div>
+    <div class="callout" style="margin-top:0;">
+        <div class="callout-title">Live Demo - gap scale</div>
+        <div style="display:flex; flex-direction:column; gap:10px;">
+            <div class="d-flex gap-1"
+                style="background:var(--bg-code); border:1px solid var(--border); border-radius:8px; padding:10px;">
+                <span style="font-size:12px; color:var(--text-muted); min-width:60px;">.gap-1</span>
+                <div
+                    style="background:var(--accent-light); border:1px solid var(--border-focus); border-radius:4px; padding:6px 12px; font-size:12px;">
+                    A</div>
+                <div
+                    style="background:var(--accent-light); border:1px solid var(--border-focus); border-radius:4px; padding:6px 12px; font-size:12px;">
+                    B</div>
+                <div
+                    style="background:var(--accent-light); border:1px solid var(--border-focus); border-radius:4px; padding:6px 12px; font-size:12px;">
+                    C</div>
+            </div>
+            <div class="d-flex gap-3"
+                style="background:var(--bg-code); border:1px solid var(--border); border-radius:8px; padding:10px;">
+                <span style="font-size:12px; color:var(--text-muted); min-width:60px;">.gap-3</span>
+                <div
+                    style="background:var(--accent-light); border:1px solid var(--border-focus); border-radius:4px; padding:6px 12px; font-size:12px;">
+                    A</div>
+                <div
+                    style="background:var(--accent-light); border:1px solid var(--border-focus); border-radius:4px; padding:6px 12px; font-size:12px;">
+                    B</div>
+                <div
+                    style="background:var(--accent-light); border:1px solid var(--border-focus); border-radius:4px; padding:6px 12px; font-size:12px;">
+                    C</div>
+            </div>
+            <div class="d-flex gap-5"
+                style="background:var(--bg-code); border:1px solid var(--border); border-radius:8px; padding:10px;">
+                <span style="font-size:12px; color:var(--text-muted); min-width:60px;">.gap-5</span>
+                <div
+                    style="background:var(--accent-light); border:1px solid var(--border-focus); border-radius:4px; padding:6px 12px; font-size:12px;">
+                    A</div>
+                <div
+                    style="background:var(--accent-light); border:1px solid var(--border-focus); border-radius:4px; padding:6px 12px; font-size:12px;">
+                    B</div>
+                <div
+                    style="background:var(--accent-light); border:1px solid var(--border-focus); border-radius:4px; padding:6px 12px; font-size:12px;">
+                    C</div>
+            </div>
+        </div>
     </div>
-    <p style="font-size:13px; margin-bottom:6px;"><code>.d-flex .align-items-center</code></p>
-    <div class="d-flex align-items-center gap-2" style="background:var(--bg-code); border:1px solid var(--border); border-radius:8px; padding:10px; height:80px; margin-bottom:10px;">
-      <div style="background:var(--accent-light); border:1px solid var(--border-focus); border-radius:6px; padding:6px 14px; font-size:12px; font-weight:600;">Short</div>
-      <div style="background:var(--accent-light); border:1px solid var(--border-focus); border-radius:6px; padding:14px 14px; font-size:12px; font-weight:600;">Taller</div>
-      <div style="background:var(--accent-light); border:1px solid var(--border-focus); border-radius:6px; padding:6px 14px; font-size:12px; font-weight:600;">Short</div>
-    </div>
-    <p style="font-size:13px; margin-bottom:6px;"><code>.d-flex .align-items-end</code></p>
-    <div class="d-flex align-items-end gap-2" style="background:var(--bg-code); border:1px solid var(--border); border-radius:8px; padding:10px; height:80px; margin-bottom:10px;">
-      <div style="background:var(--accent-light); border:1px solid var(--border-focus); border-radius:6px; padding:6px 14px; font-size:12px; font-weight:600;">Short</div>
-      <div style="background:var(--accent-light); border:1px solid var(--border-focus); border-radius:6px; padding:14px 14px; font-size:12px; font-weight:600;">Taller</div>
-      <div style="background:var(--accent-light); border:1px solid var(--border-focus); border-radius:6px; padding:6px 14px; font-size:12px; font-weight:600;">Short</div>
-    </div>
-    <p style="font-size:13px; margin-bottom:6px;"><code>.d-flex .align-items-stretch</code> — items stretch to fill the container height</p>
-    <div class="d-flex align-items-stretch gap-2" style="background:var(--bg-code); border:1px solid var(--border); border-radius:8px; padding:10px; height:80px;">
-      <div style="background:var(--accent-light); border:1px solid var(--border-focus); border-radius:6px; padding:0 14px; font-size:12px; font-weight:600; display:flex; align-items:center;">A</div>
-      <div style="background:var(--accent-light); border:1px solid var(--border-focus); border-radius:6px; padding:0 14px; font-size:12px; font-weight:600; display:flex; align-items:center;">B</div>
-      <div style="background:var(--accent-light); border:1px solid var(--border-focus); border-radius:6px; padding:0 14px; font-size:12px; font-weight:600; display:flex; align-items:center;">C</div>
-    </div>
-  </div>
 
-  <!-- align-self -->
-  <h3 id="align-self">Align Self</h3>
-
-  <table class="table-striped">
-    <thead>
-      <tr>
-        <th>Class</th>
-        <th>CSS Output</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr><td><code>.align-self-auto</code></td><td><code>align-self: auto</code></td></tr>
-      <tr><td><code>.align-self-start</code></td><td><code>align-self: flex-start</code></td></tr>
-      <tr><td><code>.align-self-center</code></td><td><code>align-self: center</code></td></tr>
-      <tr><td><code>.align-self-end</code></td><td><code>align-self: flex-end</code></td></tr>
-      <tr><td><code>.align-self-baseline</code></td><td><code>align-self: baseline</code></td></tr>
-      <tr><td><code>.align-self-stretch</code></td><td><code>align-self: stretch</code></td></tr>
-    </tbody>
-  </table>
-
-  <div class="callout" style="margin-top:0;">
-    <div class="callout-title">Live Demo — Align Self</div>
-    <p style="font-size:13px; margin-bottom:8px;">The container uses <code>.align-items-start</code> as a baseline. Each item individually overrides with its own <code>.align-self-*</code> class. Container height is 90px.</p>
-    <div class="d-flex align-items-start gap-2" style="background:var(--bg-code); border:1px solid var(--border); border-radius:8px; padding:10px; height:90px;">
-      <div style="background:var(--bg-callout-warn); border:1px dashed var(--callout-warn-border); border-radius:6px; padding:8px 12px; font-size:11px; font-weight:600; white-space:nowrap;">start (default)</div>
-      <div class="align-self-center" style="background:var(--accent-light); border:1px solid var(--border-focus); border-radius:6px; padding:8px 12px; font-size:11px; font-weight:600; white-space:nowrap;">.align-self-center</div>
-      <div class="align-self-end" style="background:var(--accent-light); border:1px solid var(--border-focus); border-radius:6px; padding:8px 12px; font-size:11px; font-weight:600; white-space:nowrap;">.align-self-end</div>
-      <div class="align-self-stretch" style="background:var(--accent-light); border:1px solid var(--border-focus); border-radius:6px; padding:0 12px; font-size:11px; font-weight:600; display:flex; align-items:center; white-space:nowrap;">.align-self-stretch</div>
-    </div>
-  </div>
-
-  <!-- align-content -->
-  <h3 id="align-content">Align Content</h3>
-
-  <table class="table-striped">
-    <thead>
-      <tr>
-        <th>Class</th>
-        <th>CSS Output</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr><td><code>.align-content-start</code></td><td><code>align-content: flex-start</code></td></tr>
-      <tr><td><code>.align-content-center</code></td><td><code>align-content: center</code></td></tr>
-      <tr><td><code>.align-content-end</code></td><td><code>align-content: flex-end</code></td></tr>
-      <tr><td><code>.align-content-between</code></td><td><code>align-content: space-between</code></td></tr>
-      <tr><td><code>.align-content-around</code></td><td><code>align-content: space-around</code></td></tr>
-      <tr><td><code>.align-content-evenly</code></td><td><code>align-content: space-evenly</code></td></tr>
-      <tr><td><code>.align-content-stretch</code></td><td><code>align-content: stretch</code></td></tr>
-    </tbody>
-  </table>
-
-  <div class="callout" style="margin-top:0;">
-    <div class="callout-title">Live Demo — Align Content</div>
-    <p style="font-size:13px; margin-bottom:4px;">Requires a <strong>multi-line</strong> flex container (<code>.flex-wrap</code>) with a fixed height taller than the content. The items below wrap into two rows inside a 160px-tall box.</p>
-    <p style="font-size:13px; margin-bottom:8px;"><code>.d-flex .flex-wrap .align-content-start</code></p>
-    <div class="d-flex flex-wrap align-content-start gap-2" style="background:var(--bg-code); border:1px solid var(--border); border-radius:8px; padding:10px; height:160px; max-width:300px; margin-bottom:10px;">
-      <div style="background:var(--accent-light); border:1px solid var(--border-focus); border-radius:6px; padding:8px 16px; font-size:12px; font-weight:600;">A</div>
-      <div style="background:var(--accent-light); border:1px solid var(--border-focus); border-radius:6px; padding:8px 16px; font-size:12px; font-weight:600;">B</div>
-      <div style="background:var(--accent-light); border:1px solid var(--border-focus); border-radius:6px; padding:8px 16px; font-size:12px; font-weight:600;">C</div>
-      <div style="background:var(--accent-light); border:1px solid var(--border-focus); border-radius:6px; padding:8px 16px; font-size:12px; font-weight:600;">D</div>
-      <div style="background:var(--accent-light); border:1px solid var(--border-focus); border-radius:6px; padding:8px 16px; font-size:12px; font-weight:600;">E</div>
-      <div style="background:var(--accent-light); border:1px solid var(--border-focus); border-radius:6px; padding:8px 16px; font-size:12px; font-weight:600;">F</div>
-    </div>
-    <p style="font-size:13px; margin-bottom:8px;"><code>.d-flex .flex-wrap .align-content-center</code></p>
-    <div class="d-flex flex-wrap align-content-center gap-2" style="background:var(--bg-code); border:1px solid var(--border); border-radius:8px; padding:10px; height:160px; max-width:300px; margin-bottom:10px;">
-      <div style="background:var(--accent-light); border:1px solid var(--border-focus); border-radius:6px; padding:8px 16px; font-size:12px; font-weight:600;">A</div>
-      <div style="background:var(--accent-light); border:1px solid var(--border-focus); border-radius:6px; padding:8px 16px; font-size:12px; font-weight:600;">B</div>
-      <div style="background:var(--accent-light); border:1px solid var(--border-focus); border-radius:6px; padding:8px 16px; font-size:12px; font-weight:600;">C</div>
-      <div style="background:var(--accent-light); border:1px solid var(--border-focus); border-radius:6px; padding:8px 16px; font-size:12px; font-weight:600;">D</div>
-      <div style="background:var(--accent-light); border:1px solid var(--border-focus); border-radius:6px; padding:8px 16px; font-size:12px; font-weight:600;">E</div>
-      <div style="background:var(--accent-light); border:1px solid var(--border-focus); border-radius:6px; padding:8px 16px; font-size:12px; font-weight:600;">F</div>
-    </div>
-    <p style="font-size:13px; margin-bottom:8px;"><code>.d-flex .flex-wrap .align-content-between</code></p>
-    <div class="d-flex flex-wrap align-content-between gap-2" style="background:var(--bg-code); border:1px solid var(--border); border-radius:8px; padding:10px; height:160px; max-width:300px; margin-bottom:10px;">
-      <div style="background:var(--accent-light); border:1px solid var(--border-focus); border-radius:6px; padding:8px 16px; font-size:12px; font-weight:600;">A</div>
-      <div style="background:var(--accent-light); border:1px solid var(--border-focus); border-radius:6px; padding:8px 16px; font-size:12px; font-weight:600;">B</div>
-      <div style="background:var(--accent-light); border:1px solid var(--border-focus); border-radius:6px; padding:8px 16px; font-size:12px; font-weight:600;">C</div>
-      <div style="background:var(--accent-light); border:1px solid var(--border-focus); border-radius:6px; padding:8px 16px; font-size:12px; font-weight:600;">D</div>
-      <div style="background:var(--accent-light); border:1px solid var(--border-focus); border-radius:6px; padding:8px 16px; font-size:12px; font-weight:600;">E</div>
-      <div style="background:var(--accent-light); border:1px solid var(--border-focus); border-radius:6px; padding:8px 16px; font-size:12px; font-weight:600;">F</div>
-    </div>
-    <p style="font-size:13px; margin-bottom:8px;"><code>.d-flex .flex-wrap .align-content-end</code></p>
-    <div class="d-flex flex-wrap align-content-end gap-2" style="background:var(--bg-code); border:1px solid var(--border); border-radius:8px; padding:10px; height:160px; max-width:300px;">
-      <div style="background:var(--accent-light); border:1px solid var(--border-focus); border-radius:6px; padding:8px 16px; font-size:12px; font-weight:600;">A</div>
-      <div style="background:var(--accent-light); border:1px solid var(--border-focus); border-radius:6px; padding:8px 16px; font-size:12px; font-weight:600;">B</div>
-      <div style="background:var(--accent-light); border:1px solid var(--border-focus); border-radius:6px; padding:8px 16px; font-size:12px; font-weight:600;">C</div>
-      <div style="background:var(--accent-light); border:1px solid var(--border-focus); border-radius:6px; padding:8px 16px; font-size:12px; font-weight:600;">D</div>
-      <div style="background:var(--accent-light); border:1px solid var(--border-focus); border-radius:6px; padding:8px 16px; font-size:12px; font-weight:600;">E</div>
-      <div style="background:var(--accent-light); border:1px solid var(--border-focus); border-radius:6px; padding:8px 16px; font-size:12px; font-weight:600;">F</div>
-    </div>
-  </div>
-
-  <!-- flex grow/shrink/fill -->
-  <h3 id="flex-grow-shrink">Grow, Shrink &amp; Fill</h3>
-
-  <table class="table-striped">
-    <thead>
-      <tr>
-        <th>Class</th>
-        <th>CSS Output</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr><td><code>.flex-fill</code></td><td><code>flex: 1 1 auto</code></td></tr>
-      <tr><td><code>.flex-grow-0</code></td><td><code>flex-grow: 0</code></td></tr>
-      <tr><td><code>.flex-grow-1</code></td><td><code>flex-grow: 1</code></td></tr>
-      <tr><td><code>.flex-shrink-0</code></td><td><code>flex-shrink: 0</code></td></tr>
-      <tr><td><code>.flex-shrink-1</code></td><td><code>flex-shrink: 1</code></td></tr>
-    </tbody>
-  </table>
-
-  <div class="callout" style="margin-top:0;">
-    <div class="callout-title">Live Demo — flex-grow</div>
-    <p style="font-size:13px; margin-bottom:8px;">The middle item uses <code>.flex-grow-1</code> and fills the available space.</p>
-    <div class="d-flex gap-2" style="background:var(--bg-code); border:1px solid var(--border); border-radius:8px; padding:12px;">
-      <div style="background:var(--accent-light); border:1px solid var(--border-focus); border-radius:6px; padding:8px 16px; font-size:13px; font-weight:600; white-space:nowrap;">Fixed</div>
-      <div class="flex-grow-1" style="background:var(--bg-callout-warn); border:1px dashed var(--callout-warn-border); border-radius:6px; padding:8px 16px; font-size:13px; font-weight:600; text-align:center;">.flex-grow-1</div>
-      <div style="background:var(--accent-light); border:1px solid var(--border-focus); border-radius:6px; padding:8px 16px; font-size:13px; font-weight:600; white-space:nowrap;">Fixed</div>
-    </div>
-  </div>
-
-  <!-- gap -->
-  <h3 id="gap">Gap</h3>
-
-  <table class="table-striped">
-    <thead>
-      <tr>
-        <th>Class</th>
-        <th>CSS Output</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr><td><code>.gap-0</code></td><td><code>gap: 0</code></td></tr>
-      <tr><td><code>.gap-1</code></td><td><code>gap: 4px</code></td></tr>
-      <tr><td><code>.gap-2</code></td><td><code>gap: 8px</code></td></tr>
-      <tr><td><code>.gap-3</code></td><td><code>gap: 12px</code></td></tr>
-      <tr><td><code>.gap-4</code></td><td><code>gap: 16px</code></td></tr>
-      <tr><td><code>.gap-5</code></td><td><code>gap: 24px</code></td></tr>
-    </tbody>
-  </table>
-
-  <div class="callout" style="margin-top:0;">
-    <div class="callout-title">Live Demo — gap scale</div>
-    <div style="display:flex; flex-direction:column; gap:10px;">
-      <div class="d-flex gap-1" style="background:var(--bg-code); border:1px solid var(--border); border-radius:8px; padding:10px;">
-        <span style="font-size:12px; color:var(--text-muted); min-width:60px;">.gap-1</span>
-        <div style="background:var(--accent-light); border:1px solid var(--border-focus); border-radius:4px; padding:6px 12px; font-size:12px;">A</div>
-        <div style="background:var(--accent-light); border:1px solid var(--border-focus); border-radius:4px; padding:6px 12px; font-size:12px;">B</div>
-        <div style="background:var(--accent-light); border:1px solid var(--border-focus); border-radius:4px; padding:6px 12px; font-size:12px;">C</div>
-      </div>
-      <div class="d-flex gap-3" style="background:var(--bg-code); border:1px solid var(--border); border-radius:8px; padding:10px;">
-        <span style="font-size:12px; color:var(--text-muted); min-width:60px;">.gap-3</span>
-        <div style="background:var(--accent-light); border:1px solid var(--border-focus); border-radius:4px; padding:6px 12px; font-size:12px;">A</div>
-        <div style="background:var(--accent-light); border:1px solid var(--border-focus); border-radius:4px; padding:6px 12px; font-size:12px;">B</div>
-        <div style="background:var(--accent-light); border:1px solid var(--border-focus); border-radius:4px; padding:6px 12px; font-size:12px;">C</div>
-      </div>
-      <div class="d-flex gap-5" style="background:var(--bg-code); border:1px solid var(--border); border-radius:8px; padding:10px;">
-        <span style="font-size:12px; color:var(--text-muted); min-width:60px;">.gap-5</span>
-        <div style="background:var(--accent-light); border:1px solid var(--border-focus); border-radius:4px; padding:6px 12px; font-size:12px;">A</div>
-        <div style="background:var(--accent-light); border:1px solid var(--border-focus); border-radius:4px; padding:6px 12px; font-size:12px;">B</div>
-        <div style="background:var(--accent-light); border:1px solid var(--border-focus); border-radius:4px; padding:6px 12px; font-size:12px;">C</div>
-      </div>
-    </div>
-  </div>
-
-  <!-- ══════════════════════════════════════════════════
+    <!-- ══════════════════════════════════════════════════
        SIZING
   ══════════════════════════════════════════════════ -->
-  <h2 id="sizing">Sizing</h2>
+    <h2 id="sizing">Sizing</h2>
 
-  <table class="table-striped">
-    <thead>
-      <tr>
-        <th>Class</th>
-        <th>CSS Output</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr><td><code>.w-100</code></td><td><code>width: 100%</code></td></tr>
-      <tr><td><code>.w-auto</code></td><td><code>width: auto</code></td></tr>
-      <tr><td><code>.h-100</code></td><td><code>height: 100%</code></td></tr>
-      <tr><td><code>.h-auto</code></td><td><code>height: auto</code></td></tr>
-      <tr><td><code>.mw-100</code></td><td><code>max-width: 100%</code></td></tr>
-      <tr><td><code>.mh-100</code></td><td><code>max-height: 100%</code></td></tr>
-      <tr><td><code>.min-vh-100</code></td><td><code>min-height: 100vh</code></td></tr>
-    </tbody>
-  </table>
+    <table class="table-striped">
+        <thead>
+            <tr>
+                <th>Class</th>
+                <th>CSS Output</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><code>.w-100</code></td>
+                <td><code>width: 100%</code></td>
+            </tr>
+            <tr>
+                <td><code>.w-auto</code></td>
+                <td><code>width: auto</code></td>
+            </tr>
+            <tr>
+                <td><code>.h-100</code></td>
+                <td><code>height: 100%</code></td>
+            </tr>
+            <tr>
+                <td><code>.h-auto</code></td>
+                <td><code>height: auto</code></td>
+            </tr>
+            <tr>
+                <td><code>.mw-100</code></td>
+                <td><code>max-width: 100%</code></td>
+            </tr>
+            <tr>
+                <td><code>.mh-100</code></td>
+                <td><code>max-height: 100%</code></td>
+            </tr>
+            <tr>
+                <td><code>.min-vh-100</code></td>
+                <td><code>min-height: 100vh</code></td>
+            </tr>
+        </tbody>
+    </table>
 
-  <!-- ══════════════════════════════════════════════════
+    <!-- ══════════════════════════════════════════════════
        AUTO-MARGIN
   ══════════════════════════════════════════════════ -->
-  <h2 id="auto-margins">Auto Margins</h2>
+    <h2 id="auto-margins">Auto Margins</h2>
 
-  <p>Push flex items apart or center them without manually computing spacing.</p>
+    <p>Push flex items apart or center them without manually computing spacing.</p>
 
-  <table class="table-striped">
-    <thead>
-      <tr>
-        <th>Class</th>
-        <th>CSS Output</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr><td><code>.m-auto</code></td><td><code>margin: auto</code></td></tr>
-      <tr><td><code>.mx-auto</code></td><td><code>margin-left: auto; margin-right: auto</code></td></tr>
-      <tr><td><code>.my-auto</code></td><td><code>margin-top: auto; margin-bottom: auto</code></td></tr>
-      <tr><td><code>.mt-auto</code></td><td><code>margin-top: auto</code></td></tr>
-      <tr><td><code>.me-auto</code></td><td><code>margin-right: auto</code></td></tr>
-      <tr><td><code>.mb-auto</code></td><td><code>margin-bottom: auto</code></td></tr>
-      <tr><td><code>.ms-auto</code></td><td><code>margin-left: auto</code></td></tr>
-    </tbody>
-  </table>
+    <table class="table-striped">
+        <thead>
+            <tr>
+                <th>Class</th>
+                <th>CSS Output</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><code>.m-auto</code></td>
+                <td><code>margin: auto</code></td>
+            </tr>
+            <tr>
+                <td><code>.mx-auto</code></td>
+                <td><code>margin-left: auto; margin-right: auto</code></td>
+            </tr>
+            <tr>
+                <td><code>.my-auto</code></td>
+                <td><code>margin-top: auto; margin-bottom: auto</code></td>
+            </tr>
+            <tr>
+                <td><code>.mt-auto</code></td>
+                <td><code>margin-top: auto</code></td>
+            </tr>
+            <tr>
+                <td><code>.me-auto</code></td>
+                <td><code>margin-right: auto</code></td>
+            </tr>
+            <tr>
+                <td><code>.mb-auto</code></td>
+                <td><code>margin-bottom: auto</code></td>
+            </tr>
+            <tr>
+                <td><code>.ms-auto</code></td>
+                <td><code>margin-left: auto</code></td>
+            </tr>
+        </tbody>
+    </table>
 
-  <div class="callout" style="margin-top:0;">
-    <div class="callout-title">Live Demo — mx-auto (centering a block)</div>
-    <div style="background:var(--bg-code); border:1px solid var(--border); border-radius:8px; padding:12px;">
-      <div class="mx-auto" style="background:var(--accent-light); border:1px solid var(--border-focus); border-radius:6px; padding:10px 20px; font-size:13px; font-weight:600; width:200px; text-align:center;">.mx-auto</div>
+    <div class="callout" style="margin-top:0;">
+        <div class="callout-title">Live Demo - mx-auto (centering a block)</div>
+        <div style="background:var(--bg-code); border:1px solid var(--border); border-radius:8px; padding:12px;">
+            <div class="mx-auto"
+                style="background:var(--accent-light); border:1px solid var(--border-focus); border-radius:6px; padding:10px 20px; font-size:13px; font-weight:600; width:200px; text-align:center;">
+                .mx-auto</div>
+        </div>
     </div>
-  </div>
 
-  <!-- ══════════════════════════════════════════════════
+    <!-- ══════════════════════════════════════════════════
        TEXT
   ══════════════════════════════════════════════════ -->
-  <h2 id="text-utilities">Text</h2>
+    <h2 id="text-utilities">Text</h2>
 
-  <h3 id="text-alignment">Alignment</h3>
+    <h3 id="text-alignment">Alignment</h3>
 
-  <table class="table-striped">
-    <thead>
-      <tr>
-        <th>Class</th>
-        <th>CSS Output</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr><td><code>.text-start</code></td><td><code>text-align: left</code></td></tr>
-      <tr><td><code>.text-center</code></td><td><code>text-align: center</code></td></tr>
-      <tr><td><code>.text-end</code></td><td><code>text-align: right</code></td></tr>
-      <tr><td><code>.text-nowrap</code></td><td><code>white-space: nowrap</code></td></tr>
-    </tbody>
-  </table>
+    <table class="table-striped">
+        <thead>
+            <tr>
+                <th>Class</th>
+                <th>CSS Output</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><code>.text-start</code></td>
+                <td><code>text-align: left</code></td>
+            </tr>
+            <tr>
+                <td><code>.text-center</code></td>
+                <td><code>text-align: center</code></td>
+            </tr>
+            <tr>
+                <td><code>.text-end</code></td>
+                <td><code>text-align: right</code></td>
+            </tr>
+            <tr>
+                <td><code>.text-nowrap</code></td>
+                <td><code>white-space: nowrap</code></td>
+            </tr>
+        </tbody>
+    </table>
 
-  <div class="callout" style="margin-top:0;">
-    <div class="callout-title">Live Demo</div>
-    <div style="background:var(--bg-code); border:1px solid var(--border); border-radius:8px; padding:16px; display:flex; flex-direction:column; gap:8px;">
-      <p class="text-start" style="margin:0; background:var(--accent-light); padding:8px 12px; border-radius:6px; font-size:13px;"><code>.text-start</code> — left aligned</p>
-      <p class="text-center" style="margin:0; background:var(--accent-light); padding:8px 12px; border-radius:6px; font-size:13px;"><code>.text-center</code> — centered</p>
-      <p class="text-end" style="margin:0; background:var(--accent-light); padding:8px 12px; border-radius:6px; font-size:13px;"><code>.text-end</code> — right aligned</p>
+    <div class="callout" style="margin-top:0;">
+        <div class="callout-title">Live Demo</div>
+        <div
+            style="background:var(--bg-code); border:1px solid var(--border); border-radius:8px; padding:16px; display:flex; flex-direction:column; gap:8px;">
+            <p class="text-start"
+                style="margin:0; background:var(--accent-light); padding:8px 12px; border-radius:6px; font-size:13px;">
+                <code>.text-start</code> - left aligned</p>
+            <p class="text-center"
+                style="margin:0; background:var(--accent-light); padding:8px 12px; border-radius:6px; font-size:13px;">
+                <code>.text-center</code> - centered</p>
+            <p class="text-end"
+                style="margin:0; background:var(--accent-light); padding:8px 12px; border-radius:6px; font-size:13px;">
+                <code>.text-end</code> - right aligned</p>
+        </div>
     </div>
-  </div>
 
-  <h3 id="text-transform">Transform</h3>
+    <h3 id="text-transform">Transform</h3>
 
-  <table class="table-striped">
-    <thead>
-      <tr>
-        <th>Class</th>
-        <th>CSS Output</th>
-        <th>Example</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr><td><code>.text-lowercase</code></td><td><code>text-transform: lowercase</code></td><td style="text-transform:lowercase;">Hello World</td></tr>
-      <tr><td><code>.text-uppercase</code></td><td><code>text-transform: uppercase</code></td><td style="text-transform:uppercase;">Hello World</td></tr>
-      <tr><td><code>.text-capitalize</code></td><td><code>text-transform: capitalize</code></td><td style="text-transform:capitalize;">hello world</td></tr>
-    </tbody>
-  </table>
+    <table class="table-striped">
+        <thead>
+            <tr>
+                <th>Class</th>
+                <th>CSS Output</th>
+                <th>Example</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><code>.text-lowercase</code></td>
+                <td><code>text-transform: lowercase</code></td>
+                <td style="text-transform:lowercase;">Hello World</td>
+            </tr>
+            <tr>
+                <td><code>.text-uppercase</code></td>
+                <td><code>text-transform: uppercase</code></td>
+                <td style="text-transform:uppercase;">Hello World</td>
+            </tr>
+            <tr>
+                <td><code>.text-capitalize</code></td>
+                <td><code>text-transform: capitalize</code></td>
+                <td style="text-transform:capitalize;">hello world</td>
+            </tr>
+        </tbody>
+    </table>
 
-  <h3 id="font-weight-style">Font Weight &amp; Style</h3>
+    <h3 id="font-weight-style">Font Weight &amp; Style</h3>
 
-  <table class="table-striped">
-    <thead>
-      <tr>
-        <th>Class</th>
-        <th>CSS Output</th>
-        <th>Example</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr><td><code>.fw-normal</code></td><td><code>font-weight: 400</code></td><td style="font-weight:400;">Sample text</td></tr>
-      <tr><td><code>.fw-medium</code></td><td><code>font-weight: 500</code></td><td style="font-weight:500;">Sample text</td></tr>
-      <tr><td><code>.fw-semibold</code></td><td><code>font-weight: 600</code></td><td style="font-weight:600;">Sample text</td></tr>
-      <tr><td><code>.fw-bold</code></td><td><code>font-weight: 700</code></td><td style="font-weight:700;">Sample text</td></tr>
-      <tr><td><code>.fst-normal</code></td><td><code>font-style: normal</code></td><td style="font-style:normal;">Sample text</td></tr>
-      <tr><td><code>.fst-italic</code></td><td><code>font-style: italic</code></td><td style="font-style:italic;">Sample text</td></tr>
-    </tbody>
-  </table>
+    <table class="table-striped">
+        <thead>
+            <tr>
+                <th>Class</th>
+                <th>CSS Output</th>
+                <th>Example</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><code>.fw-normal</code></td>
+                <td><code>font-weight: 400</code></td>
+                <td style="font-weight:400;">Sample text</td>
+            </tr>
+            <tr>
+                <td><code>.fw-medium</code></td>
+                <td><code>font-weight: 500</code></td>
+                <td style="font-weight:500;">Sample text</td>
+            </tr>
+            <tr>
+                <td><code>.fw-semibold</code></td>
+                <td><code>font-weight: 600</code></td>
+                <td style="font-weight:600;">Sample text</td>
+            </tr>
+            <tr>
+                <td><code>.fw-bold</code></td>
+                <td><code>font-weight: 700</code></td>
+                <td style="font-weight:700;">Sample text</td>
+            </tr>
+            <tr>
+                <td><code>.fst-normal</code></td>
+                <td><code>font-style: normal</code></td>
+                <td style="font-style:normal;">Sample text</td>
+            </tr>
+            <tr>
+                <td><code>.fst-italic</code></td>
+                <td><code>font-style: italic</code></td>
+                <td style="font-style:italic;">Sample text</td>
+            </tr>
+        </tbody>
+    </table>
 
-  <h3 id="text-color">Color</h3>
+    <h3 id="text-color">Color</h3>
 
-  <table class="table-striped">
-    <thead>
-      <tr>
-        <th>Class</th>
-        <th>CSS Output</th>
-        <th>Example</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr><td><code>.text-muted</code></td><td><code>color: var(--text-muted)</code></td><td style="color:var(--text-muted);">Muted text</td></tr>
-    </tbody>
-  </table>
+    <table class="table-striped">
+        <thead>
+            <tr>
+                <th>Class</th>
+                <th>CSS Output</th>
+                <th>Example</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><code>.text-muted</code></td>
+                <td><code>color: var(--text-muted)</code></td>
+                <td style="color:var(--text-muted);">Muted text</td>
+            </tr>
+        </tbody>
+    </table>
 
-  <!-- ══════════════════════════════════════════════════
-       SPACING — PADDING
+    <!-- ══════════════════════════════════════════════════
+       SPACING - PADDING
   ══════════════════════════════════════════════════ -->
-  <h2 id="spacing">Spacing</h2>
+    <h2 id="spacing">Spacing</h2>
 
-  <p>
-    Padding and margin utilities follow a consistent scale. The available step values are
-    <strong>0, 5, 10, 15, 20, 24, 30, 40</strong> (px). Each step is available in all directions.
-  </p>
+    <p>
+        Padding and margin utilities follow a consistent scale. The available step values are
+        <strong>0, 5, 10, 15, 20, 24, 30, 40</strong> (px). Each step is available in all directions.
+    </p>
 
-  <div class="callout warning">
-    <div class="callout-title">⚠ Tip</div>
-    <p>Prefer the semantic spacing utilities over inline <code>style</code> attributes to keep markup clean and consistent with the rest of the design.</p>
-  </div>
-
-  <h3 id="padding-classes">Padding</h3>
-
-  <p>Format: <code>.p{direction}-{size}</code></p>
-
-  <table class="table-striped">
-    <thead>
-      <tr>
-        <th>Prefix</th>
-        <th>Direction</th>
-        <th>Example classes</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr><td><code>p</code></td><td>All sides</td><td><code>.p-0 .p-10 .p-20 .p-40</code></td></tr>
-      <tr><td><code>px</code></td><td>Left &amp; Right</td><td><code>.px-0 .px-10 .px-24 .px-40</code></td></tr>
-      <tr><td><code>py</code></td><td>Top &amp; Bottom</td><td><code>.py-0 .py-10 .py-24 .py-40</code></td></tr>
-      <tr><td><code>pt</code></td><td>Top only</td><td><code>.pt-0 .pt-10 .pt-20 .pt-30</code></td></tr>
-      <tr><td><code>pr</code></td><td>Right only</td><td><code>.pr-0 .pr-10 .pr-20 .pr-30</code></td></tr>
-      <tr><td><code>pb</code></td><td>Bottom only</td><td><code>.pb-0 .pb-10 .pb-20 .pb-30</code></td></tr>
-      <tr><td><code>pl</code></td><td>Left only</td><td><code>.pl-0 .pl-10 .pl-20 .pl-30</code></td></tr>
-    </tbody>
-  </table>
-
-  <!-- Padding visual scale -->
-  <div class="callout" style="margin-top:0;">
-    <div class="callout-title">Live Demo — padding scale (all sides)</div>
-    <div class="d-flex flex-wrap gap-3" style="background:var(--bg-code); border:1px solid var(--border); border-radius:8px; padding:16px;">
-      <div class="p-5"  style="background:var(--accent-light); border:1px solid var(--border-focus); border-radius:6px; font-size:12px; font-weight:600;">.p-5</div>
-      <div class="p-10" style="background:var(--accent-light); border:1px solid var(--border-focus); border-radius:6px; font-size:12px; font-weight:600;">.p-10</div>
-      <div class="p-15" style="background:var(--accent-light); border:1px solid var(--border-focus); border-radius:6px; font-size:12px; font-weight:600;">.p-15</div>
-      <div class="p-20" style="background:var(--accent-light); border:1px solid var(--border-focus); border-radius:6px; font-size:12px; font-weight:600;">.p-20</div>
-      <div class="p-30" style="background:var(--accent-light); border:1px solid var(--border-focus); border-radius:6px; font-size:12px; font-weight:600;">.p-30</div>
-      <div class="p-40" style="background:var(--accent-light); border:1px solid var(--border-focus); border-radius:6px; font-size:12px; font-weight:600;">.p-40</div>
+    <div class="callout warning">
+        <div class="callout-title">⚠ Tip</div>
+        <p>Prefer the semantic spacing utilities over inline <code>style</code> attributes to keep markup clean and
+            consistent with the rest of the design.</p>
     </div>
-  </div>
 
-  <h3 id="margin-classes">Margin</h3>
+    <h3 id="padding-classes">Padding</h3>
 
-  <p>Format: <code>.m{direction}-{size}</code> — same scale and direction prefixes as padding.</p>
+    <p>Format: <code>.p{direction}-{size}</code></p>
 
-  <table class="table-striped">
-    <thead>
-      <tr>
-        <th>Prefix</th>
-        <th>Direction</th>
-        <th>Example classes</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr><td><code>m</code></td><td>All sides</td><td><code>.m-0 .m-10 .m-20 .m-40</code></td></tr>
-      <tr><td><code>mx</code></td><td>Left &amp; Right</td><td><code>.mx-0 .mx-10 .mx-24 .mx-40</code></td></tr>
-      <tr><td><code>my</code></td><td>Top &amp; Bottom</td><td><code>.my-0 .my-10 .my-24 .my-40</code></td></tr>
-      <tr><td><code>mt</code></td><td>Top only</td><td><code>.mt-0 .mt-10 .mt-20 .mt-30</code></td></tr>
-      <tr><td><code>mr</code></td><td>Right only</td><td><code>.mr-0 .mr-10 .mr-20 .mr-30</code></td></tr>
-      <tr><td><code>mb</code></td><td>Bottom only</td><td><code>.mb-0 .mb-10 .mb-20 .mb-30</code></td></tr>
-      <tr><td><code>ml</code></td><td>Left only</td><td><code>.ml-0 .ml-10 .ml-20 .ml-30</code></td></tr>
-    </tbody>
-  </table>
+    <table class="table-striped">
+        <thead>
+            <tr>
+                <th>Prefix</th>
+                <th>Direction</th>
+                <th>Example classes</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><code>p</code></td>
+                <td>All sides</td>
+                <td><code>.p-0 .p-10 .p-20 .p-40</code></td>
+            </tr>
+            <tr>
+                <td><code>px</code></td>
+                <td>Left &amp; Right</td>
+                <td><code>.px-0 .px-10 .px-24 .px-40</code></td>
+            </tr>
+            <tr>
+                <td><code>py</code></td>
+                <td>Top &amp; Bottom</td>
+                <td><code>.py-0 .py-10 .py-24 .py-40</code></td>
+            </tr>
+            <tr>
+                <td><code>pt</code></td>
+                <td>Top only</td>
+                <td><code>.pt-0 .pt-10 .pt-20 .pt-30</code></td>
+            </tr>
+            <tr>
+                <td><code>pr</code></td>
+                <td>Right only</td>
+                <td><code>.pr-0 .pr-10 .pr-20 .pr-30</code></td>
+            </tr>
+            <tr>
+                <td><code>pb</code></td>
+                <td>Bottom only</td>
+                <td><code>.pb-0 .pb-10 .pb-20 .pb-30</code></td>
+            </tr>
+            <tr>
+                <td><code>pl</code></td>
+                <td>Left only</td>
+                <td><code>.pl-0 .pl-10 .pl-20 .pl-30</code></td>
+            </tr>
+        </tbody>
+    </table>
 
-  <!-- Full spacing value tables -->
-  <h4 id="spacing-scale-reference">Full Spacing Scale</h4>
-  <p>All spacing values available across padding and margin utilities:</p>
-
-  <div class="d-flex flex-wrap gap-3 mb-20">
-    <div style="background:var(--bg-code); border:1px solid var(--border); border-radius:8px; padding:14px; min-width:130px;">
-      <div style="font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.06em; color:var(--text-muted); margin-bottom:8px;">Value</div>
-      <div style="display:flex; flex-direction:column; gap:4px; font-size:13px;">
-        <code>-0</code><code>-5</code><code>-10</code><code>-15</code><code>-20</code><code>-24</code><code>-30</code><code>-40</code>
-      </div>
+    <!-- Padding visual scale -->
+    <div class="callout" style="margin-top:0;">
+        <div class="callout-title">Live Demo - padding scale (all sides)</div>
+        <div class="d-flex flex-wrap gap-3"
+            style="background:var(--bg-code); border:1px solid var(--border); border-radius:8px; padding:16px;">
+            <div class="p-5"
+                style="background:var(--accent-light); border:1px solid var(--border-focus); border-radius:6px; font-size:12px; font-weight:600;">
+                .p-5</div>
+            <div class="p-10"
+                style="background:var(--accent-light); border:1px solid var(--border-focus); border-radius:6px; font-size:12px; font-weight:600;">
+                .p-10</div>
+            <div class="p-15"
+                style="background:var(--accent-light); border:1px solid var(--border-focus); border-radius:6px; font-size:12px; font-weight:600;">
+                .p-15</div>
+            <div class="p-20"
+                style="background:var(--accent-light); border:1px solid var(--border-focus); border-radius:6px; font-size:12px; font-weight:600;">
+                .p-20</div>
+            <div class="p-30"
+                style="background:var(--accent-light); border:1px solid var(--border-focus); border-radius:6px; font-size:12px; font-weight:600;">
+                .p-30</div>
+            <div class="p-40"
+                style="background:var(--accent-light); border:1px solid var(--border-focus); border-radius:6px; font-size:12px; font-weight:600;">
+                .p-40</div>
+        </div>
     </div>
-    <div style="background:var(--bg-code); border:1px solid var(--border); border-radius:8px; padding:14px; min-width:130px;">
-      <div style="font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.06em; color:var(--text-muted); margin-bottom:8px;">px</div>
-      <div style="display:flex; flex-direction:column; gap:4px; font-size:13px;">
-        <span>0</span><span>5px</span><span>10px</span><span>15px</span><span>20px</span><span>24px</span><span>30px</span><span>40px</span>
-      </div>
-    </div>
-  </div>
 
-  <!-- ══════════════════════════════════════════════════
+    <h3 id="margin-classes">Margin</h3>
+
+    <p>Format: <code>.m{direction}-{size}</code> - same scale and direction prefixes as padding.</p>
+
+    <table class="table-striped">
+        <thead>
+            <tr>
+                <th>Prefix</th>
+                <th>Direction</th>
+                <th>Example classes</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><code>m</code></td>
+                <td>All sides</td>
+                <td><code>.m-0 .m-10 .m-20 .m-40</code></td>
+            </tr>
+            <tr>
+                <td><code>mx</code></td>
+                <td>Left &amp; Right</td>
+                <td><code>.mx-0 .mx-10 .mx-24 .mx-40</code></td>
+            </tr>
+            <tr>
+                <td><code>my</code></td>
+                <td>Top &amp; Bottom</td>
+                <td><code>.my-0 .my-10 .my-24 .my-40</code></td>
+            </tr>
+            <tr>
+                <td><code>mt</code></td>
+                <td>Top only</td>
+                <td><code>.mt-0 .mt-10 .mt-20 .mt-30</code></td>
+            </tr>
+            <tr>
+                <td><code>mr</code></td>
+                <td>Right only</td>
+                <td><code>.mr-0 .mr-10 .mr-20 .mr-30</code></td>
+            </tr>
+            <tr>
+                <td><code>mb</code></td>
+                <td>Bottom only</td>
+                <td><code>.mb-0 .mb-10 .mb-20 .mb-30</code></td>
+            </tr>
+            <tr>
+                <td><code>ml</code></td>
+                <td>Left only</td>
+                <td><code>.ml-0 .ml-10 .ml-20 .ml-30</code></td>
+            </tr>
+        </tbody>
+    </table>
+
+    <!-- Full spacing value tables -->
+    <h4 id="spacing-scale-reference">Full Spacing Scale</h4>
+    <p>All spacing values available across padding and margin utilities:</p>
+
+    <div class="d-flex flex-wrap gap-3 mb-20">
+        <div
+            style="background:var(--bg-code); border:1px solid var(--border); border-radius:8px; padding:14px; min-width:130px;">
+            <div
+                style="font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.06em; color:var(--text-muted); margin-bottom:8px;">
+                Value</div>
+            <div style="display:flex; flex-direction:column; gap:4px; font-size:13px;">
+                <code>-0</code><code>-5</code><code>-10</code><code>-15</code><code>-20</code><code>-24</code><code>-30</code><code>-40</code>
+            </div>
+        </div>
+        <div
+            style="background:var(--bg-code); border:1px solid var(--border); border-radius:8px; padding:14px; min-width:130px;">
+            <div
+                style="font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.06em; color:var(--text-muted); margin-bottom:8px;">
+                px</div>
+            <div style="display:flex; flex-direction:column; gap:4px; font-size:13px;">
+                <span>0</span><span>5px</span><span>10px</span><span>15px</span><span>20px</span><span>24px</span><span>30px</span><span>40px</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════════════
        MISC
   ══════════════════════════════════════════════════ -->
-  <h2 id="misc-utilities">Miscellaneous</h2>
+    <h2 id="misc-utilities">Miscellaneous</h2>
 
-  <table class="table-striped">
-    <thead>
-      <tr>
-        <th>Class</th>
-        <th>CSS Output</th>
-        <th>Notes</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr><td><code>.flex-sb</code></td><td><code>display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap</code></td><td>Quick "space-between" row</td></tr>
-      <tr><td><code>.w-100</code></td><td><code>width: 100%</code></td><td>Full-width element</td></tr>
-    </tbody>
-  </table>
+    <table class="table-striped">
+        <thead>
+            <tr>
+                <th>Class</th>
+                <th>CSS Output</th>
+                <th>Notes</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><code>.flex-sb</code></td>
+                <td><code>display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap</code></td>
+                <td>Quick "space-between" row</td>
+            </tr>
+            <tr>
+                <td><code>.w-100</code></td>
+                <td><code>width: 100%</code></td>
+                <td>Full-width element</td>
+            </tr>
+        </tbody>
+    </table>
 
-  <!-- ══════════════════════════════════════════════════
+    <!-- ══════════════════════════════════════════════════
        CHEAT SHEET
   ══════════════════════════════════════════════════ -->
-  <h2 id="cheat-sheet">Quick Cheat Sheet</h2>
+    <h2 id="cheat-sheet">Quick Cheat Sheet</h2>
 
-  <p>Common combinations you'll reach for most often:</p>
+    <p>Common combinations you'll reach for most often:</p>
 
-  <pre><code>&lt;!-- Centered flex row with gap --&gt;
+    <pre><code>&lt;!-- Centered flex row with gap --&gt;
 &lt;div class="d-flex justify-content-center align-items-center gap-3"&gt;…&lt;/div&gt;
 
 &lt;!-- Space-between header row --&gt;
