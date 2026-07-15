@@ -1340,7 +1340,7 @@ button {
   display: block;
   height: 0;
 }
-.content-body p {
+p {
   margin-bottom: 14px;
   color: var(--text-base);
 }
