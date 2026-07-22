@@ -117,7 +117,7 @@ const NAV_DATA = [
     label: 'Reference',
     children: [
       { id: 'layout',  label: 'DevDocs GUI Features',  page: 'pages/layout.html' },
-      { id: 'text-elements',  label: 'Text Elements',  page: 'pages/text_elements.html' },
+      { id: 'text-elements',  label: 'Text Elements',  page: 'pages/text-elements.html' },
       { id: 'utility-classes', label: 'Utility Classes', page: 'pages/utilities.html' },
       { id: 'grid-system', label: 'Grid System', page: 'pages/grid-system.html' },
       { id: 'tools',  label: 'Tools',  page: 'pages/tools.html' },
