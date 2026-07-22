@@ -29,7 +29,12 @@
 
 <!-- Flex Image Gallery section -->
 <h2 id="flex-image-gallery" ><span data-tags="Image Gallery">Flex Image Gallery</span></h2>
-<p>Flexible, natural-size images laid out with a grid. Add a column modifier to control how many items appear per row.</p>
+<p>Flexible, natural-size images laid out with a grid. Add a column modifier to control how many items appear per row. Make sure to use consistent or complementary image sizes for the best visual results.</p>
+
+<div class="callout warning">
+  <div class="callout-title">⚠ Note</div>
+  <p>Flex Image Gallery items preserve each image's natural aspect ratio and automatically adjust the layout accordingly. The examples below demonstrate how the gallery adapts to different image dimensions-sometimes creating beautifully balanced layouts, and other times more unconventional ones. 😊</p>
+</div>
 
 <pre><code>&lt;div class="flex-img-gallery img-col-3"&gt;
   &lt;img src="images/pic1.jpg" alt="Sample diagram"&gt;
@@ -40,21 +45,21 @@
 <!-- 2 Columns example -->
 <h3 id="flex-2-columns">2 Columns</h3>
 <div class="flex-img-gallery img-col-2">
-  <img src="images/my_home.webp" data-full="images/my_home2.webp" alt="Flex Gallery, sample 1">
-  <img src="images/my_home5.webp" alt="Flex Gallery, sample 2">
+  <img src="images/my_home.webp" alt="Flex Gallery, 2 Columns sample 1">
+  <img src="images/my_home5.webp" alt="Flex Gallery, 2 Columns sample 2">
   <figure class="img-block">
-      <img src="images/my_home9.webp">
-      <figcaption>Image with caption in a footer bar. Gallery sample 3</figcaption>
+      <img src="images/my_home9_big.webp" data-full="images/my_home8_big.webp">
+      <figcaption>Image with caption in a footer bar. Flex Gallery, 2 Columns sample 3. This uses the data-full attribute to specify a different image for the modal view.</figcaption>
   </figure>
   <figure class="img-block">
-      <img src="images/my_home2.webp" alt="Flex Gallery, sample 4">
+      <img src="images/my_home2.webp" alt="Flex Gallery, 2 Columns sample 4">
       <figcaption>Image with caption in a footer bar.</figcaption>
   </figure>
   <figure class="img-block" data-tags="doc link">
-      <img src="images/my_home3.webp" alt="Flex Gallery, sample 5" data-nav="layout" data-section="search">
+      <img src="images/my_home3.webp" alt="Flex Gallery, 2 Columns sample 5" data-nav="layout" data-section="search">
       <figcaption>Gallery Image links, this one and the next image.</figcaption>
   </figure>
-  <img src="images/my_home4.webp" data-tags="doc link" alt="Flex Gallery, sample 6" data-target="uniform-cover-gallery">
+  <img src="images/my_home4.webp" data-tags="doc link" alt="Flex Gallery, 2 Columns sample 6" data-target="uniform-cover-gallery">
 </div>
 
 <!-- 3 Columns example -->
@@ -76,9 +81,9 @@
   <img src="images/my_home3.webp" alt="Flex Gallery, 4 Columns sample 3">
   <img src="images/my_home4.webp" alt="Flex Gallery, 4 Columns sample 4">
   <img src="images/my_home5.webp" alt="Flex Gallery, 4 Columns sample 5">
-  <img src="images/my_home6.webp" alt="Flex Gallery, 4 Columns sample 6">
+  <img src="images/my_home6_big.webp" alt="Flex Gallery, 4 Columns sample 6">
   <img src="images/my_home7.webp" alt="Flex Gallery, 4 Columns sample 7">
-  <img src="images/my_home8.webp" alt="Flex Gallery, 4 Columns sample 8">
+  <img src="images/my_home8_big.webp" alt="Flex Gallery, 4 Columns sample 8">
 </div>
 
 <!-- 6 Columns example -->
@@ -89,10 +94,10 @@
   <img src="images/my_home3.webp" alt="Flex Gallery, 6 Columns sample 3">
   <img src="images/my_home4.webp" alt="Flex Gallery, 6 Columns sample 4">
   <img src="images/my_home5.webp" alt="Flex Gallery, 6 Columns sample 5">
-  <img src="images/my_home6.webp" alt="Flex Gallery, 6 Columns sample 6">
+  <img src="images/my_home6_big.webp" alt="Flex Gallery, 6 Columns sample 6">
   <img src="images/my_home7.webp" alt="Flex Gallery, 6 Columns sample 7">
-  <img src="images/my_home8.webp" alt="Flex Gallery, 6 Columns sample 8">
-  <img src="images/my_home9.webp" alt="Flex Gallery, 6 Columns sample 9">
+  <img src="images/my_home8_big.webp" alt="Flex Gallery, 6 Columns sample 8">
+  <img src="images/my_home9_big.webp" alt="Flex Gallery, 6 Columns sample 9">
   <img src="images/my_home.webp" alt="Flex Gallery, 6 Columns sample 10">
   <img src="images/my_home2.webp" alt="Flex Gallery, 6 Columns sample 11">
   <img src="images/my_home3.webp" alt="Flex Gallery, 6 Columns sample 12">
@@ -106,9 +111,9 @@
   <img src="images/my_home3.webp" alt="Flex Gallery, 8 Columns sample 3">
   <img src="images/my_home4.webp" alt="Flex Gallery, 8 Columns sample 4">
   <img src="images/my_home5.webp" alt="Flex Gallery, 8 Columns sample 5">
-  <img src="images/my_home6.webp" alt="Flex Gallery, 8 Columns sample 6">
+  <img src="images/my_home6_big.webp" alt="Flex Gallery, 8 Columns sample 6">
   <img src="images/my_home7.webp" alt="Flex Gallery, 8 Columns sample 7">
-  <img src="images/my_home8.webp" alt="Flex Gallery, 8 Columns sample 8">
+  <img src="images/my_home8_big.webp" alt="Flex Gallery, 8 Columns sample 8">
 </div>
 
 <!-- 12 Columns example -->
@@ -119,10 +124,10 @@
   <img src="images/my_home3.webp" alt="Flex Gallery, 12 Columns sample 3">
   <img src="images/my_home4.webp" alt="Flex Gallery, 12 Columns sample 4">
   <img src="images/my_home5.webp" alt="Flex Gallery, 12 Columns sample 5">
-  <img src="images/my_home6.webp" alt="Flex Gallery, 12 Columns sample 6">
+  <img src="images/my_home6_big.webp" alt="Flex Gallery, 12 Columns sample 6">
   <img src="images/my_home7.webp" alt="Flex Gallery, 12 Columns sample 7">
-  <img src="images/my_home8.webp" alt="Flex Gallery, 12 Columns sample 8">
-  <img src="images/my_home9.webp" alt="Flex Gallery, 12 Columns sample 9">
+  <img src="images/my_home8_big.webp" alt="Flex Gallery, 12 Columns sample 8">
+  <img src="images/my_home9_big.webp" alt="Flex Gallery, 12 Columns sample 9">
   <img src="images/my_home.webp" alt="Flex Gallery, 12 Columns sample 10">
   <img src="images/my_home2.webp" alt="Flex Gallery, 12 Columns sample 11">
   <img src="images/my_home3.webp" alt="Flex Gallery, 12 Columns sample 12">
@@ -141,92 +146,92 @@
 <!-- 2 Columns example -->
 <h3 id="cover-2-columns">2 Columns</h3>
 <div class="cover-img-gallery img-col-2">
-  <img src="images/pic1.jpg" data-full="images/pic3.jpg" alt="Cover tile sample 1">
-  <img src="images/pic2.png" alt="Cover tile sample 2">
+  <img src="images/my_home.webp" alt="Uniform Cover Gallery, 2 Columns sample 1">
+  <img src="images/my_home5.webp" alt="Uniform Cover Gallery, 2 Columns sample 2">
   <figure class="img-block">
-      <img src="images/pic3.jpg">
-      <figcaption>Image with caption in a footer bar. Cover tile sample 3</figcaption>
+      <img src="images/my_home9_big.webp" data-full="images/my_home8_big.webp">
+      <figcaption>Image with caption in a footer bar. Uniform Cover Gallery, 2 Columns sample 3. This uses the data-full attribute to specify a different image for the modal view.</figcaption>
   </figure>
   <figure class="img-block">
-      <img src="images/pic3.jpg" alt="Cover tile sample 4">
+      <img src="images/my_home2.webp" alt="Uniform Cover Gallery, 2 Columns sample 4">
       <figcaption>Image with caption in a footer bar.</figcaption>
   </figure>
   <figure class="img-block" data-tags="doc link">
-      <img src="images/pic2.png" alt="Gallery sample 5" data-nav="layout" data-section="search">
+      <img src="images/my_home3.webp" alt="Uniform Cover Gallery, 2 Columns sample 5" data-nav="layout" data-section="search">
       <figcaption>Gallery Image links, this one and the next image.</figcaption>
   </figure>
-  <img src="images/pic1.jpg" data-tags="doc link" data-full="images/pic3.jpg" alt="Gallery sample 6" data-target="uniform-cover-gallery">
+  <img src="images/my_home4.webp" data-tags="doc link" alt="Uniform Cover Gallery, 2 Columns sample 6" data-target="uniform-cover-gallery">
 </div>
 
 <!-- 3 Columns example -->
 <h3 id="cover-3-columns">3 Columns</h3>
 <div class="cover-img-gallery img-col-3">
-  <img src="images/pic1.jpg" alt="Cover tile sample 1">
-  <img src="images/pic2.png" alt="Cover tile sample 2">
-  <img src="images/pic3.jpg" alt="Cover tile sample 3">
-  <img src="images/pic3.jpg" alt="Cover tile sample 4">
-  <img src="images/pic5.jpg" alt="Cover tile sample 5">
-  <img src="images/temp.gif" alt="Cover tile sample 6">
+  <img src="images/my_home.webp" alt="Uniform Cover Gallery, 3 Columns sample 1">
+  <img src="images/my_home2.webp" alt="Uniform Cover Gallery, 3 Columns sample 2">
+  <img src="images/my_home3.webp" alt="Uniform Cover Gallery, 3 Columns sample 3">
+  <img src="images/my_home3.webp" alt="Uniform Cover Gallery, 3 Columns sample 4">
+  <img src="images/my_home2.webp" alt="Uniform Cover Gallery, 3 Columns sample 5">
+  <img src="images/my_home.webp" alt="Uniform Cover Gallery, 3 Columns sample 6">
 </div>
 
 <!-- 4 Columns example -->
 <h3 id="cover-4-columns">4 Columns</h3>
 <div class="cover-img-gallery img-col-4">
-  <img src="images/pic1.jpg" alt="Cover tile sample 1">
-  <img src="images/pic2.png" alt="Cover tile sample 2">
-  <img src="images/pic3.jpg" alt="Cover tile sample 3">
-  <img src="images/pic3.jpg" alt="Cover tile sample 4">
-  <img src="images/pic5.jpg" alt="Cover tile sample 5">
-  <img src="images/temp.gif" alt="Cover tile sample 6">
-  <img src="images/pic1.jpg" alt="Cover tile sample 7">
-  <img src="images/pic2.png" alt="Cover tile sample 8">
+  <img src="images/my_home.webp" alt="Uniform Cover Gallery, 4 Columns sample 1">
+  <img src="images/my_home2.webp" alt="Uniform Cover Gallery, 4 Columns sample 2">
+  <img src="images/my_home3.webp" alt="Uniform Cover Gallery, 4 Columns sample 3">
+  <img src="images/my_home4.webp" alt="Uniform Cover Gallery, 4 Columns sample 4">
+  <img src="images/my_home5.webp" alt="Uniform Cover Gallery, 4 Columns sample 5">
+  <img src="images/my_home6_big.webp" alt="Uniform Cover Gallery, 4 Columns sample 6">
+  <img src="images/my_home7.webp" alt="Uniform Cover Gallery, 4 Columns sample 7">
+  <img src="images/my_home8_big.webp" alt="Uniform Cover Gallery, 4 Columns sample 8">
 </div>
 
 <!-- 6 Columns example -->
 <h3 id="cover-6-columns">6 Columns</h3>
 <div class="cover-img-gallery img-col-6">
-  <img src="images/pic1.jpg" alt="Cover tile sample 1">
-  <img src="images/pic2.png" alt="Cover tile sample 2">
-  <img src="images/pic3.jpg" alt="Cover tile sample 3">
-  <img src="images/pic3.jpg" alt="Cover tile sample 4">
-  <img src="images/pic5.jpg" alt="Cover tile sample 5">
-  <img src="images/temp.gif" alt="Cover tile sample 6">
-  <img src="images/pic1.jpg" alt="Cover tile sample 7">
-  <img src="images/pic2.png" alt="Cover tile sample 8">
-  <img src="images/pic3.jpg" alt="Cover tile sample 9">
-  <img src="images/pic3.jpg" alt="Cover tile sample 10">
-  <img src="images/pic5.jpg" alt="Cover tile sample 11">
-  <img src="images/temp.gif" alt="Cover tile sample 12">
+  <img src="images/my_home.webp" alt="Uniform Cover Gallery, 6 Columns sample 1">
+  <img src="images/my_home2.webp" alt="Uniform Cover Gallery, 6 Columns sample 2">
+  <img src="images/my_home3.webp" alt="Uniform Cover Gallery, 6 Columns sample 3">
+  <img src="images/my_home4.webp" alt="Uniform Cover Gallery, 6 Columns sample 4">
+  <img src="images/my_home5.webp" alt="Uniform Cover Gallery, 6 Columns sample 5">
+  <img src="images/my_home6_big.webp" alt="Uniform Cover Gallery, 6 Columns sample 6">
+  <img src="images/my_home7.webp" alt="Uniform Cover Gallery, 6 Columns sample 7">
+  <img src="images/my_home8_big.webp" alt="Uniform Cover Gallery, 6 Columns sample 8">
+  <img src="images/my_home9_big.webp" alt="Uniform Cover Gallery, 6 Columns sample 9">
+  <img src="images/my_home.webp" alt="Uniform Cover Gallery, 6 Columns sample 10">
+  <img src="images/my_home2.webp" alt="Uniform Cover Gallery, 6 Columns sample 11">
+  <img src="images/my_home3.webp" alt="Uniform Cover Gallery, 6 Columns sample 12">
 </div>
 
 <!-- 8 Columns example -->
 <h3 id="cover-8-columns">8 Columns</h3>
 <div class="cover-img-gallery img-col-8">
-  <img src="images/pic1.jpg" alt="Cover tile sample 1">
-  <img src="images/pic2.png" alt="Cover tile sample 2">
-  <img src="images/pic3.jpg" alt="Cover tile sample 3">
-  <img src="images/pic3.jpg" alt="Cover tile sample 4">
-  <img src="images/pic5.jpg" alt="Cover tile sample 5">
-  <img src="images/temp.gif" alt="Cover tile sample 6">
-  <img src="images/pic1.jpg" alt="Cover tile sample 7">
-  <img src="images/pic2.png" alt="Cover tile sample 8">
+  <img src="images/my_home.webp" alt="Uniform Cover Gallery, 8 Columns sample 1">
+  <img src="images/my_home2.webp" alt="Uniform Cover Gallery, 8 Columns sample 2">
+  <img src="images/my_home3.webp" alt="Uniform Cover Gallery, 8 Columns sample 3">
+  <img src="images/my_home4.webp" alt="Uniform Cover Gallery, 8 Columns sample 4">
+  <img src="images/my_home5.webp" alt="Uniform Cover Gallery, 8 Columns sample 5">
+  <img src="images/my_home6_big.webp" alt="Uniform Cover Gallery, 8 Columns sample 6">
+  <img src="images/my_home7.webp" alt="Uniform Cover Gallery, 8 Columns sample 7">
+  <img src="images/my_home8_big.webp" alt="Uniform Cover Gallery, 8 Columns sample 8">
 </div>
 
 <!-- 12 Columns example -->
 <h3 id="cover-12-columns">12 Columns</h3>
 <div class="cover-img-gallery img-col-12">
-  <img src="images/pic3.jpg" alt="Cover tile sample 1">
-  <img src="images/pic3.jpg" alt="Cover tile sample 2">
-  <img src="images/pic3.jpg" alt="Cover tile sample 3">
-  <img src="images/pic3.jpg" alt="Cover tile sample 4">
-  <img src="images/pic3.jpg" alt="Cover tile sample 5">
-  <img src="images/pic3.jpg" alt="Cover tile sample 6">
-  <img src="images/pic3.jpg" alt="Cover tile sample 7">
-  <img src="images/pic3.jpg" alt="Cover tile sample 8">
-  <img src="images/pic3.jpg" alt="Cover tile sample 9">
-  <img src="images/pic3.jpg" alt="Cover tile sample 10">
-  <img src="images/pic3.jpg" alt="Cover tile sample 11">
-  <img src="images/pic3.jpg" alt="Cover tile sample 12">
+  <img src="images/my_home.webp" alt="Uniform Cover Gallery, 12 Columns sample 1">
+  <img src="images/my_home2.webp" alt="Uniform Cover Gallery, 12 Columns sample 2">
+  <img src="images/my_home3.webp" alt="Uniform Cover Gallery, 12 Columns sample 3">
+  <img src="images/my_home4.webp" alt="Uniform Cover Gallery, 12 Columns sample 4">
+  <img src="images/my_home5.webp" alt="Uniform Cover Gallery, 12 Columns sample 5">
+  <img src="images/my_home6_big.webp" alt="Uniform Cover Gallery, 12 Columns sample 6">
+  <img src="images/my_home7.webp" alt="Uniform Cover Gallery, 12 Columns sample 7">
+  <img src="images/my_home8_big.webp" alt="Uniform Cover Gallery, 12 Columns sample 8">
+  <img src="images/my_home9_big.webp" alt="Uniform Cover Gallery, 12 Columns sample 9">
+  <img src="images/my_home.webp" alt="Uniform Cover Gallery, 12 Columns sample 10">
+  <img src="images/my_home2.webp" alt="Uniform Cover Gallery, 12 Columns sample 11">
+  <img src="images/my_home3.webp" alt="Uniform Cover Gallery, 12 Columns sample 12">
 </div>
 
 <!-- Thumbnail Gallery section -->
@@ -242,23 +247,23 @@
 <!-- Thumbnail Grid example -->
 <h3 id="thumbnail-grid">Thumbnail Grid</h3>
 <div class="thumbnail-img-gallery img-col-12">
-  <img src="images/pic1.jpg" data-full="images/pic3.jpg" alt="Thumbnail sample 1">
-  <img src="images/pic2.png" data-full="images/pic4.jpg" alt="Thumbnail sample 2">
+  <img src="images/my_home6.webp" alt="Thumbnail sample 1">
   <figure class="img-block">
-    <img src="images/pic3.jpg" data-full="images/pic4.jpg">
-      <figcaption>Caption 2</figcaption>
+    <img src="images/my_home8.webp">
+    <figcaption>Caption 2</figcaption>
   </figure>
   <figure class="img-block">
-    <img src="images/pic3.jpg" data-full="images/pic5.jpg" alt="Thumbnail sample 4">
-      <figcaption>Caption 3, moore words</figcaption>
+    <img src="images/my_home9.webp" alt="Thumbnail sample 3">
+    <figcaption>Caption 3, more words</figcaption>
   </figure>
-  <img src="images/pic1.jpg" alt="Thumbnail sample 5">
-  <img src="images/pic1.jpg" alt="Thumbnail sample 6">
+  <img src="images/my_home10.webp" alt="Thumbnail sample 4">
+  <img src="images/my_home.webp" data-full="images/my_home2.webp"  alt="Thumbnail sample 5">
+  <img src="images/my_home3.webp"  alt="Thumbnail sample 6">
   <figure class="img-block" data-tags="doc link">
-      <img src="images/pic2.png" alt="Gallery sample 5" data-nav="layout" data-section="search">
-      <figcaption>link, and next</figcaption>
+      <img src="images/my_home4.webp" alt="Gallery sample 7" data-nav="layout" data-section="search">
+      <figcaption>link, and next one</figcaption>
   </figure>
-  <img src="images/pic1.jpg" data-tags="doc link" data-full="images/pic3.jpg" alt="Gallery sample 6" data-target="uniform-cover-gallery">
+  <img src="images/my_home5.webp" data-tags="doc link" alt="Thumbnail sample 8" data-target="uniform-cover-gallery">
 </div>
 
 <p>Tip: Use <code>data-full</code> whenever the large image filename does not follow the <code>_big</code> convention.</p>
