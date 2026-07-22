@@ -1791,8 +1791,7 @@ function applyTheme(theme) {
 
 function initTheme() {
   const saved = localStorage.getItem(STORAGE_KEY_THEME);
-  const prefersDark = globalThis.matchMedia('(prefers-color-scheme: dark)').matches;
-  applyTheme(saved || (prefersDark ? 'dark' : 'light'));
+  applyTheme(saved || 'dark');
 }
 
 elThemeToggle.addEventListener('click', () => {

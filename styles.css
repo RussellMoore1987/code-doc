@@ -5,7 +5,6 @@
    CSS CUSTOM PROPERTIES  -  THEME TOKENS
    ═══════════════════════════════════════════════════════════════ */
 
-:root,
 [data-theme="light"] {
   --primary-color: #309eff;
   --off-primary-color: #2a8ee6;
@@ -63,6 +62,7 @@
   --tooltip-arrow:    #1e2025;
 }
 
+:root,
 [data-theme="dark"] {
   --primary-color: #0088E6;
   --off-primary-color: #008ef3;
