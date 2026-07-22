@@ -27,7 +27,8 @@
     </p>
   </div>
 
-  <!-- ─── DOWNLOAD ──────────────────────────── -->
+  <!-- ! start here ************************************************* -->
+  <!-- download the project -->
   <h2 id="download-the-project">Download the Project</h2>
 
   <p>Clone this repository or download the ZIP and extract it to a local folder:</p>
@@ -54,28 +55,29 @@ cd devdocs</code></pre>
     ├── videos.html
     └── ...</code></pre>
 
-  <!-- ─── STARTING THE SERVER ──────────────── -->
+  <!-- starting the server -->
   <h2 id="starting-the-server">Starting a Local Server</h2>
 
+  <!-- live server options -->
   <h3 id="vscode-live-server">Option A - VS Code Live Server</h3>
 
   <ol>
     <li>Open the <code>devdocs</code> folder in VS Code.</li>
-    <li>Install the <strong>Live Server</strong> extension (ms-vscode.live-server) if you haven't already.</li>
+    <li>Install the <strong>Live Server</strong> extension (Ritwick Dey) if you haven't already.</li>
     <li>Right-click <code>index.html</code> in the Explorer panel and choose <em>Open with Live Server</em>.</li>
     <li>Your browser will open automatically at <code>http://127.0.0.1:5500</code>.</li>
   </ol>
 
-  <figure class="img-block">
-    <div class="img-placeholder" aria-label="VS Code Live Server menu screenshot placeholder">
-      <svg viewBox="0 0 48 48" width="48" height="48" aria-hidden="true"><rect x="4" y="8" width="40" height="32" rx="3" stroke="currentColor" stroke-width="2" fill="none"/><circle cx="24" cy="24" r="8" stroke="currentColor" stroke-width="2" fill="none"/><line x1="24" y1="16" x2="24" y2="10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-      <span>Screenshot - Right-click context menu in VS Code Explorer</span>
-    </div>
+  <figure class="img-block image-modal">
+    <img src="/images/livserver.jpg" alt="">
+    <figcaption>VS Code Live Server extension in the Extensions panel.</figcaption>
+  </figure>
+  <figure class="img-block image-modal">
+    <img src="/images/starting-live-server.jpg" alt="">
     <figcaption>Right-click <code>index.html</code> and select "Open with Live Server".</figcaption>
   </figure>
 
-  <img src="images/pic2.png" alt="Screenshot of DevDocs..." class="img-block image-modal">
-
+  <!-- python server option -->
   <h3 id="python-server">Option B - Python HTTP Server</h3>
 
   <p>From inside the project folder, run:</p>
@@ -86,12 +88,13 @@ python -m http.server 8080
 # Then open in your browser:
 # http://localhost:8080</code></pre>
 
+  <!-- node serve option -->
   <h3 id="node-serve">Option C - Node.js <code>serve</code></h3>
 
   <pre><code>npx serve .
 # Opens at http://localhost:3000 (or the next available port)</code></pre>
 
-  <!-- ─── CONFIGURATION ─────────────────────── -->
+  <!-- initial configuration -->
   <h2 id="configuration">Initial Configuration</h2>
 
   <p>
@@ -103,11 +106,8 @@ python -m http.server 8080
 
   <p>
     Open <code>index.html</code> and change the <code>&lt;title&gt;</code> tag and the
-    <code>.brand-title</code> span text to match your project name:
+    <code>.brand-title, .logo</code> elements to match your project:
   </p>
-
-  <img src="images/pic3.jpg" alt="Screenshot of DevDocs..." class="img-block image-modal">
-
 
   <pre><code>&lt;title&gt;My Project Docs&lt;/title&gt;
 ...
