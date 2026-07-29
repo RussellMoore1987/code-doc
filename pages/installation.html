@@ -199,7 +199,22 @@ python -m http.server 8080
   <div class="callout">
       <div class="callout-title">ℹ Note/Tip</div>
       <p>
-        You may need to include a closing <code>&lt;/body&gt;</code> tag at the end of your HTML fragment. There is an error with vs code live server if it is missing. It will cut off portions of your content unexpectedly. See <code>sliders.html</code> for an example of this. But this only happens under certain circumstances.
+        You may need to add a bare <code>&lt;/body&gt;</code> tag at the very end of your HTML fragment
+        when <strong>all three</strong> of the following are true:
+      </p>
+      <ul>
+        <li>You are serving the project with <strong>VS Code Live Server</strong>.</li>
+        <li>Your fragment <strong>ends with a complex, multi-line element</strong> - such as a slider, a
+            deeply nested component, or a large table.</li>
+        <li>The fragment contains <strong>no <code>&lt;/body&gt;</code> tag</strong>.</li>
+      </ul>
+      <p>
+        VS Code Live Server injects its live-reload <code>&lt;script&gt;</code> by searching each served
+        file for <code>&lt;/body&gt;</code> and inserting just before it. When that tag is absent, Live
+        Server falls back to appending its script inside the last open element, which truncates the rendered
+        content. Adding a lone <code>&lt;/body&gt;</code> at the end of the fragment gives Live Server a
+        safe injection point without affecting how <code>app.js</code> fetches and renders the page.
+        See <code>sliders.html</code> for a working example.
       </p>
   </div>
 
