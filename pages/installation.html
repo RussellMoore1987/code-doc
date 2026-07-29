@@ -7,7 +7,7 @@
     no package manager, and no framework - just a few files and a local HTTP server.
   </p>
 
-  <!-- ─── PREREQUISITES ────────────────────── -->
+  <!-- prerequisites -->
   <h2 id="prerequisites">Prerequisites</h2>
 
   <p>Before you begin, make sure you have one of the following available:</p>
@@ -108,10 +108,13 @@ python -m http.server 8080
     <code>.brand-title, .logo</code> elements to match your project:
   </p>
 
+  <p>You should also replace the <code>favicon.png</code> file with your own favicon. Make sure to change the <code>apple-touch-icon.png</code> as well.</p>
+
   <pre><code>&lt;title&gt;My Project Docs&lt;/title&gt;
 ...
 &lt;span class="brand-title"&gt;My Project&lt;/span&gt;</code></pre>
 
+  <!-- navigation structure -->
   <h3 id="nav-structure">Navigation Structure</h3>
 
   <p>
@@ -119,6 +122,13 @@ python -m http.server 8080
     Each section group has a <code>label</code> and a <code>children</code> array.
     Each leaf item needs an <code>id</code>, a <code>label</code>, and a <code>page</code> path.
   </p>
+
+  <div class="callout">
+      <div class="callout-title">ℹ Tip</div>
+      <p>
+        When you're finished editing the navigation structure, comment out the DevDocs-specific navigation entries instead of deleting them. This keeps them available for future reference while ensuring they don't interfere with your custom navigation structure.
+      </p>
+  </div>
 
   <pre><code>const NAV_DATA = [
   {
@@ -131,6 +141,41 @@ python -m http.server 8080
   }
 ];</code></pre>
 
+  <h4 id="nav-data-properties">NAV_DATA Property Reference</h4>
+
+  <table class="table-striped">
+    <thead>
+      <tr>
+        <th>Property</th>
+        <th>Required</th>
+        <th>Description</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><code>id</code></td>
+        <td>Yes</td>
+        <td>A unique string identifier for the item. Used in the URL hash (e.g. <code>#my-section</code>), deep-linking, scroll-spy, and programmatic navigation. Must be unique across the entire <code>NAV_DATA</code> tree — duplicates will cause routing conflicts.</td>
+      </tr>
+      <tr>
+        <td><code>label</code></td>
+        <td>Yes</td>
+        <td>The human-readable text displayed in the left sidebar navigation tree. Can include spaces and mixed case.</td>
+      </tr>
+      <tr>
+        <td><code>page</code></td>
+        <td>Leaf items only</td>
+        <td>Relative path to the HTML fragment file that gets loaded into the content area when this item is clicked (e.g. <code>'pages/my-page.html'</code>). Omit this on group items that only serve as collapsible containers.</td>
+      </tr>
+      <tr>
+        <td><code>children</code></td>
+        <td>Groups only</td>
+        <td>An array of nested nav items. Items with <code>children</code> render as collapsible groups in the sidebar. A single item cannot have both <code>page</code> and <code>children</code> — use one or the other.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- note on nesting depth -->
   <h4 id="nav-depth-note">Note on nesting depth</h4>
 
   <p>
@@ -138,7 +183,7 @@ python -m http.server 8080
     but may become visually tight at narrower sidebar widths. Three levels is recommended for most projects.
   </p>
 
-  <!-- ─── ADDING PAGES ──────────────────────── -->
+  <!-- adding pages -->
   <h2 id="adding-pages">Adding Pages</h2>
 
   <p>Each documentation page is a plain HTML file inside the <code>pages/</code> directory. Pages must:</p>
@@ -168,7 +213,7 @@ python -m http.server 8080
     </p>
   </div>
 
-  <!-- ─── NEXT STEPS ─────────────────────────── -->
+  <!-- next steps -->
   <h2 id="what-next">What Next?</h2>
 
   <p>Now that your server is running, move on to the <strong>First Steps</strong> guide to learn how to
