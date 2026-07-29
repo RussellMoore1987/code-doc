@@ -626,7 +626,6 @@ async function buildSearchIndex() {
             }
 
             if (nextEl?.textContent?.trim()) {
-              // Use textContent to safely extract text content
               content += nextEl.textContent.trim() + ' ';
             }
             nextEl = nextEl.nextElementSibling;
@@ -640,7 +639,7 @@ async function buildSearchIndex() {
           });
         });
         
-        // Extract tag data from [data-tags] elements — reuse this same fetch
+        // Extract tag data from [data-tags] elements - reuse this same fetch
         const tagEntries = [];
         const tagEls = Array.from(doc.querySelectorAll('[data-tags]'));
         const headingsWithIds = Array.from(doc.querySelectorAll('h1[id], h2[id], h3[id], h4[id]'));
@@ -933,7 +932,7 @@ function performSearch(query) {
   for (const pattern of dangerousPatterns) {
     if (pattern.test(query)) {
       console.log('query***', query);
-      hasError('Search query contains invalid characters');
+      hasError('Search query contains invalid words');
       return;
     }
   }
@@ -982,24 +981,16 @@ function performSearch(query) {
  */
 function stripHtml(text) {
   if (!text) return '';
-  
-  // Input validation
   if (typeof text !== 'string') return '';
-  
-  // Create a temporary element in a safe way
-  const temp = document.createElement('div');
-  
-  // Set textContent first to avoid any script execution
-  temp.textContent = text;
-  
-  // Get the safely parsed content
-  let cleanText = temp.textContent || '';
-  
-  // Replace multiple whitespace with single space and trim
-  cleanText = cleanText.replaceAll(/\s+/g, ' ').trim();
-  
-  return cleanText;
+
+  // Strip HTML comments first, then tags, then normalise whitespace
+  return text
+    .replace(/<!--[\s\S]*?-->/g, ' ')
+    .replace(/<[^>]*>/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
 }
+
 
 /**
  * Generate snippet with highlighted query terms
