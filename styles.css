@@ -62,7 +62,6 @@
   --tooltip-arrow:    #1e2025;
 }
 
-:root,
 [data-theme="dark"] {
   --primary-color: #0088E6;
   --off-primary-color: #008ef3;
