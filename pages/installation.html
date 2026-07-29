@@ -189,15 +189,22 @@ python -m http.server 8080
   <p>Each documentation page is a plain HTML file inside the <code>pages/</code> directory. Pages must:</p>
 
   <ol>
-    <li>Be wrapped in a single <code>&lt;div class="content-body"&gt;</code> element.</li>
+    <li>Be wrapped in a single <code>&lt;div&gt;</code> element. (does not have to be wrapped in <code>&lt;div&gt;</code>, just preferred)</li>
     <li>Use heading tags (<code>h1</code>-<code>h4</code>) with unique <code>id</code> attributes
         (or let <code>app.js</code> auto-generate them from the heading text).</li>
     <li>Contain only the page body - no <code>&lt;html&gt;</code>, <code>&lt;head&gt;</code>,
         or <code>&lt;body&gt;</code> tags.</li>
   </ol>
 
+  <div class="callout">
+      <div class="callout-title">ℹ Note/Tip</div>
+      <p>
+        You may need to include a closing <code>&lt;/body&gt;</code> tag at the end of your HTML fragment. There is an error with vs code live server if it is missing. It will cut off portions of your content unexpectedly. See <code>sliders.html</code> for an example of this. But this only happens under certain circumstances.
+      </p>
+  </div>
+
   <pre><code>&lt;!-- pages/my-page.html --&gt;
-&lt;div class="content-body"&gt;
+&lt;div&gt;
   &lt;h1&gt;My Page Title&lt;/h1&gt;
   &lt;p&gt;Your content here.&lt;/p&gt;
   &lt;h2 id="section-one"&gt;Section One&lt;/h2&gt;
