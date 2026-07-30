@@ -996,25 +996,30 @@ function stripHtml(text) {
  * Generate snippet with highlighted query terms
  */
 function getSnippet(text, query, maxLength = 150) {
-  // Strip HTML first to get clean text
-  const cleanText = stripHtml(text);
-  
-  const queryIndex = cleanText.toLowerCase().indexOf(query.toLowerCase());
+  // text is already plain text from textContent - do NOT call stripHtml on it.
+  // stripHtml would treat decoded entities (e.g. "<!-- foo -->") as real HTML and
+  // erase them, making the query unfindable and preventing <mark> highlighting.
+  if (!text || !query) return '';
+
+  const queryIndex = text.toLowerCase().indexOf(query.toLowerCase());
+
   if (queryIndex === -1) {
-    return cleanText.length > maxLength ? cleanText.substring(0, maxLength) + '...' : cleanText;
+    const raw = text.length > maxLength ? text.substring(0, maxLength) : text;
+    const escaped = escapeHtml(raw);
+    return text.length > maxLength ? escaped + '...' : escaped;
   }
-  
-  // Try to center the query in the snippet
+
+  // Center the query inside the snippet window
   const start = Math.max(0, queryIndex - Math.floor((maxLength - query.length) / 2));
-  const end = Math.min(cleanText.length, start + maxLength);
-  
-  let snippet = cleanText.substring(start, end);
-  if (start > 0) snippet = '...' + snippet;
-  if (end < cleanText.length) snippet = snippet + '...';
-  
-  // Highlight query terms (case insensitive)
-  const regex = new RegExp(`(${escapeRegex(query)})`, 'gi');
-  return snippet.replace(regex, '<mark>$1</mark>');
+  const end = Math.min(text.length, start + maxLength);
+  let escaped = escapeHtml(text.substring(start, end));
+  if (start > 0) escaped = '...' + escaped;
+  if (end < text.length) escaped += '...';
+
+  // Wrap matches in <mark> using the HTML-escaped form of the query
+  const escapedQuery = escapeHtml(query);
+  const regex = new RegExp(`(${escapeRegex(escapedQuery)})`, 'gi');
+  return escaped.replace(regex, '<mark>$1</mark>');
 }
 
 /**
