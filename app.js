@@ -991,7 +991,6 @@ function stripHtml(text) {
     .trim();
 }
 
-
 /**
  * Generate snippet with highlighted query terms
  */
