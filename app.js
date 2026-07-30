@@ -1377,6 +1377,11 @@ function scrollToHighlight(index) {
   });
 }
 
+function scrollSelectedResultIntoView() {
+  const highlighted = elSearchResults.querySelector('.search-result-item.highlighted');
+  if (highlighted) highlighted.scrollIntoView({ block: 'nearest' });
+}
+
 /**
  * Handle search result selection
  */
@@ -1495,10 +1500,12 @@ function initSearch() {
       e.preventDefault();
       searchState.selectedResult = Math.min(searchState.selectedResult + 1, resultsCount - 1);
       renderSearchResults();
+      scrollSelectedResultIntoView();
     } else if (key === 'ArrowUp') {
       e.preventDefault();
       searchState.selectedResult = Math.max(searchState.selectedResult - 1, -1);
       renderSearchResults();
+      scrollSelectedResultIntoView();
     } else if (key === 'Enter') {
       e.preventDefault();
       if (searchState.selectedResult >= 0) {
