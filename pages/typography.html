@@ -1,0 +1,70 @@
+<div>
+    <h1 id="text-elements">Text Elements</h1>
+    
+    <p>These sections cover the various text elements available in the DevDocs.</p>
+    
+    <!-- Introduction to text elements -->
+    <h2 id="typography"><span data-tags="typography">Typography</span></h2>
+    <p>This section covers the various typography elements available in DevDocs.</p>
+    
+    <!-- Headings section -->
+    <h3 id="headings"><span data-tags="typography">Headings</span></h3>
+    <p>Headings are defined with <code>&lt;h1&gt;</code> through <code>&lt;h4&gt;</code> tags. The default font size and weight is set in <code>styles.css</code>. Headings can be used to create a table of contents for a page, and can be linked to directly with the <code>#id</code> in the URL.</p>
+    
+    <p>Use <code>h1</code> once per page as the page title. Use <code>h2</code>–<code>h4</code> for
+    sections and sub-sections. Headings are automatically picked up by the right-hand outline and
+    scroll-spy system:</p>
+    
+    <ul>
+        <li><code>h1</code> - Page title (one per page)</li>
+        <li><code>h2</code> - Major section</li>
+        <li><code>h3</code> - Sub-section</li>
+        <li><code>h4</code> - Minor sub-section</li>
+    </ul>
+    
+    <div class="callout">
+      <div class="callout-title">ℹ Best Practice</div>
+      <p>Always give headings unique, descriptive <code>id</code> attributes. This ensures stable deep-link
+    URLs and predictable scroll-spy behaviour.</p>
+    </div>
+    
+    <div style="border: 1px solid var(--border); padding: 10px; margin-bottom: 20px;">
+        <h1>Heading 1</h1>
+        <h2>Heading 2</h2>
+        <h3>Heading 3</h3>
+        <h4>Heading 4</h4>
+        <h5>Heading 5</h5>
+        <h6>Heading 6</h6>
+    </div>
+
+    <div class="callout">
+      <div class="callout-title">ℹ Note</div>
+      <ul>
+        <li>If you click on the Heading 1 link in the right-hand page outline, the page will scroll to the first <code>&lt;h1&gt;</code>, this is why you should only use one <code>&lt;h1&gt;</code> per page :)</li>
+        <li>Headings beyond <code>&lt;h4&gt;</code> are available but not commonly used in DevDocs, and are not supported for the right side menu.</li>
+        <li>Also notice that the headers above have affected the right side menu</li>
+      </ul>
+    </div>
+
+    <!-- Text Styles section -->
+    <h3 id="text-styles"><span data-tags="typography">Text Styles</span></h3>
+    <p>DevDocs supports a few text styles for emphasis and clarity. These include:</p>
+    <ul>
+        <li><code>&lt;strong&gt;</code> - <strong>for strong emphasis</strong> (bold)</li>
+        <li><code>&lt;em&gt;</code> - <em>for emphasis</em> (italic)</li>
+        <li><code>&lt;code&gt;</code> - <code data-tags="code blocks">for inline code snippets</code></li>
+        <li><code>&lt;mark&gt;</code> - <mark>for highlighting text</mark></li>
+        <li><code>&lt;del&gt;</code> - <del>for strikethrough text</del></li>
+        <li><code>&lt;ins&gt;</code> - <ins>for inserted text</ins> (underline)</li>
+        <li><code>.text-muted</code> - <span class="text-muted">muted text</span></li>
+    </ul>
+    <small class="text-muted">Note: These text styles can be combined for additional emphasis.</small>
+    
+    <p class="mt-20">Ordered list example:</p>
+    <ol>
+        <li><code>&lt;ol&gt;</code> - for ordered lists</li>
+        <li><code>&lt;ul&gt;</code> - for unordered lists</li>
+        <li><code>&lt;li&gt;</code> - for list items</li>
+    </ol>
+</div>
+ 
