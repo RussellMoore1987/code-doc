@@ -1,5 +1,5 @@
 <div>
-  <h1 id="grid-system"><span data-tags="layout,grid">Grid System</span></h1>
+  <h1 id="grid-system"><span>Grid System</span></h1>
 
   <p>
     This page documents the Bootstrap 5-style responsive grid utilities included in this project.
@@ -16,6 +16,7 @@
     </p>
   </div>
 
+  <!-- grid system overview -->
   <h2 id="grid-anatomy">Grid Anatomy</h2>
   <ul>
     <li><code>.container*</code> controls horizontal layout bounds and inner padding.</li>
@@ -31,6 +32,7 @@
   &lt;/div&gt;
 &lt;/div&gt;</code></pre>
 
+  <!-- breakpoints -->
   <h2 id="breakpoints">Breakpoints</h2>
   <ul>
     <li><code>xs</code> default: <code>#content-body</code> width &lt;576px</li>
@@ -41,6 +43,7 @@
     <li><code>xxl</code>: <code>#content-body</code> width &gt;=1400px</li>
   </ul>
 
+  <!-- containers -->
   <h2 id="containers">Containers</h2>
   <p>
     Use fixed-width containers at breakpoints, or full-width with <code>.container-fluid</code>.
@@ -53,6 +56,7 @@
 &lt;div class="container-lg"&gt;...&lt;/div&gt;
 &lt;div class="container-fluid"&gt;...&lt;/div&gt;</code></pre>
 
+  <!-- basic grid -->
   <h2 id="basic-grid">Basic Grid</h2>
   <pre><code>&lt;div class="row g-3"&gt;
   &lt;div class="col-12 col-md-8"&gt;Main&lt;/div&gt;
@@ -66,6 +70,7 @@
     </div>
   </div>
 
+  <!-- fixed 12-column spans -->
   <h2 id="fixed-columns">Fixed 12-Column Spans</h2>
   <p>Use explicit column spans when you need predictable widths.</p>
 
@@ -85,6 +90,7 @@
     </div>
   </div>
 
+  <!-- equal width columns -->
   <h2 id="equal-width">Equal Width Columns</h2>
   <pre><code>&lt;div class="row g-2"&gt;
   &lt;div class="col"&gt;1&lt;/div&gt;
@@ -100,6 +106,7 @@
     </div>
   </div>
 
+  <!-- auto and mixed columns -->
   <h2 id="auto-columns">Auto and Mixed Columns</h2>
   <p>
     <code>.col-auto</code> sizes to content width, while <code>.col</code> fills remaining space.
@@ -119,6 +126,7 @@
     </div>
   </div>
 
+  <!-- centering in grid rows -->
   <h2 id="grid-centering">Centering in Grid Rows</h2>
   <p>
     Use <code>.justify-content-center</code> on the row to horizontally center column content.
@@ -134,6 +142,7 @@
     </div>
   </div>
 
+  <!-- row columns utility -->
   <h2 id="row-cols">Row Columns Utility</h2>
   <p>Set child column count quickly with <code>.row-cols-*</code> classes.</p>
 
@@ -153,6 +162,7 @@
     </div>
   </div>
 
+  <!-- progressive row-cols example -->
   <h3 id="row-cols-progressive">Progressive Row-Cols Example</h3>
   <pre><code>&lt;div class="row row-cols-1 row-cols-sm-2 row-cols-lg-4 g-3"&gt;
   &lt;div class="col"&gt;Item 1&lt;/div&gt;
@@ -174,6 +184,7 @@
     </div>
   </div>
 
+  <!-- offsets -->
   <h2 id="offsets">Offsets</h2>
   <pre><code>&lt;div class="row g-3"&gt;
   &lt;div class="col-4"&gt;4&lt;/div&gt;
@@ -187,6 +198,7 @@
     </div>
   </div>
 
+  <!-- responsive offsets -->
   <h3 id="responsive-offsets">Responsive Offsets</h3>
   <pre><code>&lt;div class="row g-3"&gt;
   &lt;div class="col-12 col-md-5"&gt;Block A&lt;/div&gt;
@@ -200,6 +212,7 @@
     </div>
   </div>
 
+  <!-- gutters -->
   <h2 id="gutters">Gutters</h2>
   <p>Control spacing between columns and rows with <code>.g-*</code>, <code>.gx-*</code>, and <code>.gy-*</code>.</p>
 
@@ -220,6 +233,7 @@
     </div>
   </div>
 
+  <!-- nested grids -->
   <h2 id="nested-grids">Nested Grids</h2>
   <p>
     You can nest a <code>.row</code> inside any column. Use this to build complex card and dashboard layouts.
@@ -248,6 +262,7 @@
     </div>
   </div>
 
+  <!-- common pattern -->
   <h2 id="common-patterns">Common Pattern</h2>
   <pre><code>&lt;div class="container"&gt;
   &lt;div class="row g-4"&gt;
@@ -256,6 +271,7 @@
   &lt;/div&gt;
 &lt;/div&gt;</code></pre>
 
+  <!-- card grid pattern -->
   <h3 id="pattern-cards">Card Grid Pattern</h3>
   <pre><code>&lt;div class="row row-cols-1 row-cols-md-2 row-cols-xl-3 g-3"&gt;
   &lt;div class="col"&gt;Card&lt;/div&gt;
@@ -274,6 +290,7 @@
     </div>
   </div>
 
+  <!-- quick reference -->
   <h2 id="quick-reference">Quick Reference</h2>
   <ul>
     <li><strong>Containers:</strong> <code>.container</code>, <code>.container-fluid</code>, <code>.container-sm</code> ... <code>.container-xxl</code></li>
