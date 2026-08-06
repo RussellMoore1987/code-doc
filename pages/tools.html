@@ -97,7 +97,7 @@
     </ul>
 
     <p>
-        The following demonstrate how to use an image as a link.
+        <span data-tags="images, doc links">The following demonstrate how to use an image as a link.</span>
     </p>
 
     <a href="#tooltip-usage" data-target="tooltip-usage" class="d-inline-block image-link mr-20" style="width:300px;">
@@ -132,7 +132,7 @@
     </div>
     <figure class="img-block">
         <img src="/images/my_home.webp" alt="" class="img-block">
-        <figcaption>With caption in a footer bar.</figcaption>
+        <figcaption>Image with caption in a footer bar.</figcaption>
     </figure>
 
     <!-- Single Images With Lightbox section -->
@@ -153,12 +153,12 @@
         <figcaption>If the image doesn't have alt text, this caption text will be used in the lightbox.</figcaption>
     </figure>
     <figure class="img-block image-modal">
-        <img src="/images/my_home4.webp" class="img-block image-modal" alt="This is the alt text for the image, which will show up in the lightbox instead of the caption.">
-        <figcaption>If the image does have an alt, this caption text will not be used in the lightbox.</figcaption>
+        <img src="/images/my_home4.webp" class="img-block image-modal" alt="This is the alt text for the image, which will show up in the lightbox instead of the caption text.">
+        <figcaption>This image does have alt text, this caption text will not be used in the lightbox.</figcaption>
     </figure>
     
     <!-- Tooltip Usage section -->
-    <h2 id="tooltip-usage">Tooltip Usage</h2>
+    <h2 id="tooltip-usage"><span data-tags="tooltips">Tooltip Usage</span></h2>
     <p>
         Add <code>data-tooltip="…"</code> to any element to give it a tooltip. Use the optional
         <code>data-tooltip-position</code> attribute to set a preferred direction. If the tooltip would
@@ -167,19 +167,19 @@
     <div class="callout">
         <div class="callout-title">Syntax</div>
         <pre><code>&lt;!-- Plain-text tooltip (default position: top) --&gt;
-        &lt;button data-tooltip="Tooltip text here"&gt;Hover me&lt;/button&gt;
-    
-        &lt;!-- With preferred position --&gt;
-        &lt;button data-tooltip="Opens settings" data-tooltip-position="right"&gt;⚙&lt;/button&gt;
-    
-        &lt;!-- HTML tooltip - write real HTML inside a &lt;template&gt; element --&gt;
-        &lt;template id="my-tip"&gt;&lt;strong&gt;Bold&lt;/strong&gt; and &lt;em&gt;italic&lt;/em&gt;&lt;br&gt;Line two&lt;/template&gt;
-        &lt;button data-tooltip-template="my-tip"&gt;Hover me&lt;/button&gt;
-    
-        &lt;!-- Available positions --&gt;
-        top | top-left | top-right
-        bottom | bottom-left | bottom-right
-        left | right</code></pre>
+&lt;button data-tooltip="Tooltip text here"&gt;Hover me&lt;/button&gt;
+
+&lt;!-- With preferred position --&gt;
+&lt;button data-tooltip="Opens settings" data-tooltip-position="right"&gt;⚙&lt;/button&gt;
+
+&lt;!-- HTML tooltip - write real HTML inside a &lt;template&gt; element --&gt;
+&lt;template id="my-tip"&gt;&lt;strong&gt;Bold&lt;/strong&gt; and &lt;em&gt;italic&lt;/em&gt;&lt;br&gt;Line two&lt;/template&gt;
+&lt;button data-tooltip-template="my-tip"&gt;Hover me&lt;/button&gt;
+
+&lt;!-- Available positions --&gt;
+top | top-left | top-right
+bottom | bottom-left | bottom-right
+left | right</code></pre>
     </div>
     
     <p><strong>Live examples - hover or focus each button:</strong></p>
