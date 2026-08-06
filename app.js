@@ -2101,13 +2101,18 @@ function setActiveNav(id) {
       parent = parent.parentElement?.closest('.nav-item');
     }
 
-    /* Scroll the active nav item into view if it's outside the visible area */
-    const sidebarRect = elLeftSidebar.getBoundingClientRect();
-    const targetRect = target.getBoundingClientRect();
-    
-    if (targetRect.top < sidebarRect.top || targetRect.bottom > sidebarRect.bottom) {
-      target.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-    }
+    /* Scroll the active nav item into view after layout settles.
+       elLeftNav.clientHeight already accounts for the tag panel's height. */
+    requestAnimationFrame(() => {
+      const navRect = elLeftNav.getBoundingClientRect();
+      const targetRect = target.getBoundingClientRect();
+
+      if (targetRect.top < navRect.top || targetRect.bottom > navRect.bottom) {
+        const offsetInNav = targetRect.top - navRect.top + elLeftNav.scrollTop;
+        const desiredScroll = offsetInNav - (elLeftNav.clientHeight / 2) + (targetRect.height / 2);
+        elLeftNav.scrollTo({ top: Math.max(0, desiredScroll), behavior: 'smooth' });
+      }
+    });
   }
   state.activeNavId = id;
 }
