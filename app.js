@@ -4530,17 +4530,15 @@ function showTooltip(anchor) {
 
   tooltipTarget = anchor;
 
-  // Populate and initially hide to measure size.
+  // Populate off-screen to measure size without disturbing a visible tooltip.
   // innerHTML is intentional - tooltip content is authored in HTML source,
   // not supplied by end users, so the trust level matches the rest of the page.
   tooltipEl.innerHTML = text;
-  tooltipEl.className = '';           // clear previous placement class
+  // Preserve is-visible so a currently-showing tooltip stays opaque while repositioning.
+  tooltipEl.classList.remove('tt-top', 'tt-top-left', 'tt-top-right', 'tt-bottom', 'tt-bottom-left', 'tt-bottom-right', 'tt-left', 'tt-right');
   tooltipEl.style.left = '-9999px';
   tooltipEl.style.top  = '-9999px';
   tooltipEl.removeAttribute('aria-hidden');
-  // Make it "rendered but invisible" so we can measure it
-  tooltipEl.style.visibility = 'hidden';
-  tooltipEl.style.display    = '';
 
   const preferred = (anchor.dataset.tooltipPosition || 'top')
     .toLowerCase().trim().replace(/\s+/g, '-');
@@ -4548,9 +4546,10 @@ function showTooltip(anchor) {
 
   const anchorRect = anchor.getBoundingClientRect();
 
-  // Force a layout pass so getBoundingClientRect is accurate
+  // offsetWidth/offsetHeight give the pre-transform layout size; getBoundingClientRect()
+  // would return scaled-down dimensions (scale(0.96)) causing wrong overflow detection.
   tooltipEl.style.maxWidth = '260px';
-  const ttRect = tooltipEl.getBoundingClientRect();
+  const ttRect = { width: tooltipEl.offsetWidth, height: tooltipEl.offsetHeight };
 
   let chosenPlacement = fallbacks[fallbacks.length - 1]; // last-resort fallback
   let chosenPos       = null;
@@ -4575,9 +4574,8 @@ function showTooltip(anchor) {
 
   // Apply placement class (controls the arrow direction)
   tooltipEl.classList.add('tt-' + chosenPlacement);
-  tooltipEl.style.left       = chosenPos.left + 'px';
-  tooltipEl.style.top        = chosenPos.top  + 'px';
-  tooltipEl.style.visibility = '';
+  tooltipEl.style.left = chosenPos.left + 'px';
+  tooltipEl.style.top  = chosenPos.top  + 'px';
 
   // Trigger transition
   requestAnimationFrame(() => {
