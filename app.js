@@ -4459,7 +4459,7 @@ function createTooltipElement() {
  * Compute { left, top } (px, viewport-relative) for a given placement.
  * Returns null if the box would overflow off-screen.
  */
-function computeTooltipPosition(anchorRect, ttRect, placement) {
+function computeTooltipPosition(anchorRect, ttRect, placement, raw = false) {
   const vw = window.innerWidth;
   const vh = window.innerHeight;
   const g  = TOOLTIP_GAP;
@@ -4503,7 +4503,7 @@ function computeTooltipPosition(anchorRect, ttRect, placement) {
   }
 
   // Check if this placement fits inside the viewport
-  if (left < 0 || top < 0 || left + ttRect.width > vw || top + ttRect.height > vh) {
+  if (!raw && (left < 0 || top < 0 || left + ttRect.width > vw || top + ttRect.height > vh)) {
     return null; // Overflows - caller will try next fallback
   }
 
@@ -4564,11 +4564,13 @@ function showTooltip(anchor) {
     }
   }
 
-  // If every fallback overflows (tiny viewport), clamp to screen edges
+  // If every fallback overflows (tiny viewport), clamp the raw position to screen edges
   if (!chosenPos) {
-    chosenPos = computeTooltipPosition(anchorRect, ttRect, chosenPlacement) || { left: 4, top: 4 };
-    chosenPos.left = Math.max(4, Math.min(chosenPos.left, window.innerWidth  - ttRect.width  - 4));
-    chosenPos.top  = Math.max(4, Math.min(chosenPos.top,  window.innerHeight - ttRect.height - 4));
+    const raw = computeTooltipPosition(anchorRect, ttRect, chosenPlacement, true) || { left: 4, top: 4 };
+    chosenPos = {
+      left: Math.max(4, Math.min(raw.left, window.innerWidth  - ttRect.width  - 4)),
+      top:  Math.max(4, Math.min(raw.top,  window.innerHeight - ttRect.height - 4))
+    };
   }
 
   // Apply placement class (controls the arrow direction)
