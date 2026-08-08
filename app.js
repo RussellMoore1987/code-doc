@@ -134,14 +134,24 @@ const NAV_DATA = [
   /* ---------------------------------------------------------------------
      My book - will move out later
      --------------------------------------------------------------------- */
-     {
-        id: 'heaven-is-worth-it',
-        label: 'Heaven is Worth It',
-        children: [
-          { id: 'preference',  label: 'Preference',  page: 'pages/preference.html' },
-          { id: 'god-of-heaven',  label: 'God of Heaven',  page: 'pages/god-of-heaven.html' },
-        ]
-      },
+  {
+    id: 'heaven-is-worth-it',
+    label: 'Heaven is Worth It',
+    children: [
+      { id: 'preference',  label: 'Preference',  page: 'pages/preference.html' },
+      { id: 'god-of-heaven',  label: 'God of Heaven',  page: 'pages/god-of-heaven.html' },
+    ]
+  },
+  {
+    id: 'raw',
+    label: 'Gospel Quotes',
+    children: [
+      { id: 'quote-purpose',  label: 'Purpose of These Pages',  page: 'pages/quote-purpose.html' },
+      { id: 'heaven-quotes',  label: 'Heaven Quotes',  page: 'pages/heaven-quotes.html' },
+      { id: 'trial-quotes',  label: 'Trial Quotes',  page: 'pages/trial-quotes.html' },
+      { id: 'miracles-quotes',  label: 'God\'s Miracles',  page: 'pages/miracles-quotes.html' },
+    ]
+  },
   /* ---------------------------------------------------------------------
      My book - end
      --------------------------------------------------------------------- */
