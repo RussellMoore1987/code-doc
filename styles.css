@@ -1854,10 +1854,13 @@ code,
   overflow: hidden;
   border: 1px solid var(--border);
 }
-img.img-block,
-figure.img-block > img {
+img.img-block {
   display: block;
   max-width: 100%;
+}
+figure.img-block > img {
+  display: block;
+  width: 100%;
 }
 .image-slider-viewport img,
 figure.img-block > img {
@@ -3388,9 +3391,9 @@ a[data-nav]:focus-visible {
 /* ── Flash highlight for navigated-to tagged elements ─────────── */
 
 @keyframes tag-element-flash {
-  0%   { outline: 3px solid var(--accent); outline-offset: 4px; background-color: var(--accent-light); }
-  55%  { outline: 3px solid var(--accent); outline-offset: 4px; background-color: var(--accent-light); }
-  100% { outline: 3px solid transparent;  outline-offset: 4px; background-color: transparent; }
+  0%   { outline: 3px solid var(--accent); background-color: var(--accent-light); }
+  55%  { outline: 3px solid var(--accent); background-color: var(--accent-light); }
+  100% { outline: 3px solid transparent; background-color: transparent; }
 }
 
 .tag-highlight {
