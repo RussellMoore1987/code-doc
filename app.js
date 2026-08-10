@@ -3195,6 +3195,13 @@ function initializeSliderComponent(slider, options) {
       button.setAttribute('aria-current', isActive ? 'true' : 'false');
       button.tabIndex = isActive ? 0 : -1;
     });
+
+    if (options.adaptiveHeight) {
+      const activeSlide = slides[currentIndex];
+      if (activeSlide) {
+        track.parentElement.style.height = `${activeSlide.offsetHeight}px`;
+      }
+    }
   }
 
   function clearAutoSlideTimer() {
@@ -3309,7 +3316,8 @@ function setupTestimonialSliders() {
       dotLabel: (index) => `Show testimonial ${index + 1}`,
       autoSlideAttr: 'testimonialAutoplay',
       autoSlideSpeedAttr: 'testimonialSpeed',
-      defaultAutoSlideSpeed: 5000
+      defaultAutoSlideSpeed: 5000,
+      adaptiveHeight: true
     });
   });
 }

@@ -1386,10 +1386,12 @@ p {
 .testimonial-slider-viewport {
   flex: 1;
   overflow: hidden;
+  transition: height 0.4s ease;
 }
 
 .testimonial-slider-track {
   display: flex;
+  align-items: flex-start;
   transition: transform 0.4s ease;
   will-change: transform;
 }
