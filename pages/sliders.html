@@ -59,7 +59,15 @@
             <div class="testimonial-slider-dots" data-testimonial-dots></div>
         </div>
     </section>
+    
     <p>Optional autoplay for testimonials: <code>data-testimonial-autoplay="true"</code> and <code>data-testimonial-speed="4500"</code> (milliseconds). Use <code>data-testimonial-adaptive-height="true"</code> to resize the slider height to match each slide's content. Use <code>data-testimonial-pause-offscreen="true"</code> to pause autoplay when the slider is not in the viewport.</p>
+
+    <div class="callout warning">
+        <div class="callout-title">⚠ Note</div>
+        <p>
+            If you use <code>data-testimonial-adaptive-height="true"</code>, make sure also use <code>data-testimonial-pause-offscreen="true"</code> to ensure the the slider pauses when it is not in the viewport. If you don't, the slider will continue to adjust its size even when it is offscreen, causing the layout to move unexpectedly and potentially create visual glitches.
+        </p>
+    </div>
 
     <pre><code>&lt;section class="testimonial-slider" data-testimonial-slider data-testimonial-autoplay="true" data-testimonial-speed="4500" data-testimonial-adaptive-height="true" data-testimonial-pause-offscreen="true" aria-label="Testimonial slider"&gt;
   &lt;div class="testimonial-slider-shell"&gt;
