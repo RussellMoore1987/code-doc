@@ -2979,8 +2979,8 @@ body.right-collapsed .search-nav-controls {
 }
 
 @keyframes image-locate-flash {
-  0%   { box-shadow: 0 0 0 4px var(--primary-color); }
-  50%  { box-shadow: 0 0 0 4px var(--primary-color); }
+  0%   { box-shadow: 0 0 0 3px var(--primary-color); }
+  50%  { box-shadow: 0 0 0 3px var(--primary-color); }
   100% { box-shadow: 0 0 0 0   transparent; }
 }
 
