@@ -1868,6 +1868,9 @@ figure.img-block > img {
 figure.img-block {
   width: fit-content;
 }
+figure.img-block .img-block {
+  border: unset;
+}
 .img-center {
   display: block;
   margin-left: auto;
