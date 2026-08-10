@@ -3170,6 +3170,14 @@ function initializeSliderComponent(slider, options) {
     ? Math.max(600, configuredSpeed)
     : defaultSpeed;
 
+  const adaptiveHeight = options.adaptiveHeight ||
+    (options.adaptiveHeightAttr && (slider.dataset[options.adaptiveHeightAttr] || '').toLowerCase() === 'true');
+
+  const pauseOffScreen = options.pauseOffScreen ||
+    (options.pauseOffScreenAttr && (slider.dataset[options.pauseOffScreenAttr] || '').toLowerCase() === 'true');
+
+  let isInViewport = !pauseOffScreen;
+
   function normalizeIndex(index) {
     const total = slides.length;
     if (!total) return 0;
@@ -3196,7 +3204,7 @@ function initializeSliderComponent(slider, options) {
       button.tabIndex = isActive ? 0 : -1;
     });
 
-    if (options.adaptiveHeight) {
+    if (adaptiveHeight) {
       const activeSlide = slides[currentIndex];
       if (activeSlide) {
         track.parentElement.style.height = `${activeSlide.offsetHeight}px`;
@@ -3213,7 +3221,7 @@ function initializeSliderComponent(slider, options) {
 
   function scheduleAutoSlide() {
     clearAutoSlideTimer();
-    if (!autoSlideEnabled || isAutoPaused || slides.length < 2) return;
+    if (!autoSlideEnabled || isAutoPaused || slides.length < 2 || !isInViewport) return;
 
     autoSlideTimer = setTimeout(() => {
       if (!slider.isConnected) {
@@ -3291,6 +3299,18 @@ function initializeSliderComponent(slider, options) {
     });
   }
 
+  if (pauseOffScreen && 'IntersectionObserver' in globalThis) {
+    const viewportObserver = new IntersectionObserver((entries) => {
+      isInViewport = entries[0].isIntersecting;
+      if (isInViewport && autoSlideEnabled && !isAutoPaused) {
+        scheduleAutoSlide();
+      } else {
+        clearAutoSlideTimer();
+      }
+    }, { threshold: 0.1 });
+    viewportObserver.observe(slider);
+  }
+
   if (typeof options.onReady === 'function') {
     options.onReady({ slider, slides, goTo });
   }
@@ -3317,7 +3337,8 @@ function setupTestimonialSliders() {
       autoSlideAttr: 'testimonialAutoplay',
       autoSlideSpeedAttr: 'testimonialSpeed',
       defaultAutoSlideSpeed: 5000,
-      adaptiveHeight: true
+      adaptiveHeightAttr: 'testimonialAdaptiveHeight',
+      pauseOffScreenAttr: 'testimonialPauseOffscreen'
     });
   });
 }
