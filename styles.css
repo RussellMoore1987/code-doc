@@ -2138,10 +2138,6 @@ a[data-nav].image-link:hover {
     --gallery-cols: 2;
     --gallery-gap: 12px;
   }
-
-  .cover-img-tile {
-    aspect-ratio: 3 / 2;
-  }
 }
 
 /* ~480px viewport equivalent: very narrow */
