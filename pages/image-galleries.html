@@ -239,9 +239,9 @@
 <p>The thumbnail gallery auto crops the image to a square aspect ratio.</p>
 <p>Small thumbnails that open larger images in the modal viewer. The system tries to locate a larger image using the <code>_big</code> filename pattern if the <code>data-full</code> attribute is not provided.</p>
 
-<pre><code>&lt;div class="thumbnail-img-gallery img-col-6"&gt;
+<pre><code>&lt;div class="thumbnail-img-gallery img-col-8"&gt;
   &lt;img src="images/my_home.webp" data-full="images/my_home3.webp" alt="Sample 1"&gt;
-  &lt;img src="images/my_home2.webp" alt="Sample 2"&gt; // will get "images/my_home2_big.webp" automatically
+  &lt;img src="images/my_home2.webp" alt="Sample 2"&gt; &lt;!-- will get "images/my_home2_big.webp" automatically --&gt;
 &lt;/div&gt;</code></pre>
 
 <!-- Thumbnail Grid example -->
