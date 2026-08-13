@@ -3401,6 +3401,10 @@ a[data-nav]:focus-visible {
   border-radius: 4px;
 }
 
+figure.tag-highlight {
+  border-radius: 8px;
+}
+
 /* ═══════════════════════════════════════════════════════════════
    CITATION SYSTEM
    Superscript markers ([1], [2] …) and the auto-generated
