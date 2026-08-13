@@ -2405,7 +2405,7 @@ function setupTagIndicators() {
       btn.className = 'tag-indicator-btn';
       btn.dataset.tag = tag;
       btn.setAttribute('aria-label', `View tag: ${tag}`);
-      btn.dataset.tooltip = `#${tag}`;
+      btn.dataset.tooltip = `#${capitalizeWords(tag)}`;
       btn.innerHTML = TAG_SVG;
       btn.addEventListener('click', e => {
         e.preventDefault();
