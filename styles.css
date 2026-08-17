@@ -3621,7 +3621,7 @@ figure.tag-highlight {
 .youtube-modal:hover .youtube-play-btn,
 .youtube-modal:focus-visible .youtube-play-btn {
   background: rgba(200, 0, 0, 0.82);
-  transform: translate(-50%, -50%) scale(1.07);
+  transform: translate(-50%, -50%) scale(1.06);
 }
 
 .youtube-modal:focus-visible {
