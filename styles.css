@@ -3592,7 +3592,7 @@ figure.tag-highlight {
 }
 
 .youtube-play-btn svg {
-  margin-left: 3px; /* optical centering */
+  margin-left: 4px; /* optical centering */
 }
 
 /* ── Standalone lightbox trigger (.youtube-modal) ─────────────── */
@@ -3674,7 +3674,7 @@ figure.tag-highlight {
 .youtube-gallery-item:hover .youtube-play-btn,
 .youtube-gallery-item:focus-visible .youtube-play-btn {
   background: rgba(200, 0, 0, 0.82);
-  transform: translate(-50%, -50%) scale(1.07);
+  transform: translate(-50%, -50%) scale(1.06);
 }
 
 .youtube-gallery-caption {
