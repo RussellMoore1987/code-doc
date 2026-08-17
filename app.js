@@ -4163,7 +4163,7 @@ function showVideoAt(index) {
 
   elVideoModalIframe.src = getYoutubeEmbedUrl(entry.videoId, true);
   elVideoModalIframe.title = entry.title || 'YouTube video';
-  elVideoModalCaption.textContent = entry.captionText || entry.title || '';
+  elVideoModalCaption.textContent = entry.title || entry.captionText || '';
 
   if (elVideoModalSectionLink) {
     if (entry.sectionId && entry.sectionTitle) {
