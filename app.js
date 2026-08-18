@@ -1,15 +1,8 @@
-/**
- * app.js  -  Documentation App
- * Vanilla JS: navigation tree, Ajax content loading,
- * right-nav generation, scroll spy, sidebar resize & collapse,
- * light/dark theme toggle, copy-to-clipboard for code blocks.
- */
-
 // @versioning
 // * update JS with versioning to prevent caching issues. look for '?v=' in index.html
 
 /* ═══════════════════════════════════════════════════════════════
-   NAVIGATION DATA  -  4 levels deep
+   NAVIGATION DATA  -  tested to 5 levels deep
    ═══════════════════════════════════════════════════════════════ */
 
 const NAV_DATA = [
@@ -164,7 +157,7 @@ const NAV_DATA = [
 const MIN_SIDEBAR_WIDTH  = 220;   // absolute floor (px)
 const DEFAULT_LEFT_WIDTH = 280;   // initial left sidebar width
 const DEFAULT_RIGHT_WIDTH = 250;  // initial right sidebar width
-const HEADER_NAV_FORCE_OVERFLOW_WIDTH = 550;
+const HEADER_NAV_FORCE_OVERFLOW_WIDTH = 550; // Width at which the header navigation will force overflow behavior
 const STORAGE_KEY_THEME  = 'devdocs-theme';
 const STORAGE_KEY_LEFT_W = 'devdocs-left-w';
 const STORAGE_KEY_RIGHT_W= 'devdocs-right-w';

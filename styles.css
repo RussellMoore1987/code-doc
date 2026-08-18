@@ -921,11 +921,6 @@ button {
   gap: 10px;
   text-decoration: none;
 }
-.brand-icon { 
-    color: var(--accent);
-    flex-shrink: 0;
-    width: 39px;
-}
 .brand-title {
   font-size: 17px;
   font-weight: 700;
@@ -1874,25 +1869,6 @@ figure.img-block {
 figure.img-block .img-block {
   border: unset;
 }
-.img-center {
-  display: block;
-  margin-left: auto;
-  margin-right: auto;
-}
-.img-placeholder {
-  background: var(--bg-code);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  height: 200px;
-  gap: 10px;
-  color: var(--text-muted);
-  font-size: 14px;
-}
-.img-placeholder svg {
-  opacity: .4;
-}
 figure.img-block figcaption {
   padding: 8px 14px;
   font-size: 13px;
@@ -2603,16 +2579,6 @@ body.is-resizing {
   min-width: 200px;
   backdrop-filter: blur(8px);
   transition: all 0.3s ease;
-}
-
-/* Dynamic positioning based on right sidebar state */
-.sidebar-right.collapsed ~ .content-main .search-nav-controls,
-body.right-collapsed .search-nav-controls {
-  right: 16px; /* Normal positioning when sidebar is collapsed */
-}
-
-.sidebar-right:not(.collapsed) ~ .content-main .search-nav-controls {
-  right: 16px; /* Stay within content area when sidebar is open */
 }
 
 [data-theme="dark"] .search-nav-controls {
