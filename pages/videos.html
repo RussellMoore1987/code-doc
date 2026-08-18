@@ -24,7 +24,7 @@
         <p>Supply the 11-character YouTube video ID via <code>data-video-id</code>. The system validates this value and rejects anything that doesn't match the expected format, so arbitrary URLs cannot be injected. Videos are embedded using YouTube's privacy-enhanced domain (<code>youtube-nocookie.com</code>).</p>
     </div>
     
-    <!-- ═══════════════════════ INLINE EMBED ═══════════════════════ -->
+    <!-- Inline Embed -->
     <h2 id="inline-embed"><span>Inline Embed</span></h2>
     <p>Drop a <code>div.youtube-embed</code> with a <code>data-video-id</code> attribute anywhere in the page. The system replaces it with a responsive 16:9 iframe. An optional <code>data-title</code> attribute sets the iframe's accessible title.</p>
     
@@ -32,7 +32,7 @@
     
     <div class="youtube-embed" data-video-id="WhWc3b3KhnY" data-title="Spring - Blender Open Movie"></div>
     
-    <!-- ═══════════════════════ LIGHTBOX TRIGGER ═══════════════════ -->
+    <!-- Lightbox Trigger -->
     <h2 id="lightbox"><span>Lightbox Trigger</span></h2>
     <p>A <code>div.youtube-modal</code> or <code>figure.youtube-modal</code> renders as a thumbnail with a play button. Clicking it opens the video in a fullscreen modal overlay. Use <code>data-title</code> for a caption below the player and as the accessible label.</p>
     
@@ -44,15 +44,17 @@
     &lt;figcaption&gt;Caption shown in the modal and beneath the thumbnail.&lt;/figcaption&gt;
 &lt;/figure&gt;</code></pre>
     
+    <!-- Plain div trigger -->
     <h3 id="lightbox-div">Plain div trigger</h3>
     <div class="youtube-modal" data-video-id="WhWc3b3KhnY" data-title="Spring - Blender Open Movie"></div>
     
+    <!-- Figure trigger with caption -->
     <h3 id="lightbox-figure">Figure trigger with caption</h3>
     <figure class="youtube-modal" data-video-id="WhWc3b3KhnY" data-title="data-title wins!">
       <figcaption>Spring - Blender Open Movie - Blender Open Movie project released in 2019.</figcaption>
     </figure>
     
-    <!-- ═══════════════════════ VIDEO GALLERY ═══════════════════════ -->
+    <!-- Video gallery -->
     <h2 id="video-gallery"><span>Video Gallery</span></h2>
     <p>Wrap multiple <code>[data-video-id]</code> items inside a <code>div.youtube-gallery</code> to get a thumbnail grid. Each tile opens the same shared modal. The modal's Previous and Next arrows allow users to navigate through all YouTube videos on the page that use the modal, including videos from multiple galleries. Optionally include <code>figure</code> elements with <code>figcaption</code> for per-video captions.</p>
     
@@ -64,6 +66,7 @@
     &lt;/figure&gt;
 &lt;/div&gt;</code></pre>
     
+    <!-- 2 Columns Gallery -->
     <h3 id="gallery-2-col">2 Columns</h3>
     <div class="youtube-gallery img-col-2">
         <figure data-video-id="WhWc3b3KhnY">
@@ -74,6 +77,7 @@
         </figure>
     </div>
     
+    <!-- 3 Columns Gallery -->
     <h3 id="gallery-3-col">3 Columns</h3>
     <div class="youtube-gallery img-col-3">
         <div data-video-id="WhWc3b3KhnY" data-title="Video 1"></div>
@@ -81,6 +85,7 @@
         <div data-video-id="WhWc3b3KhnY" data-title="Video 3"></div>
     </div>
     
+    <!-- 4 Columns Gallery -->
     <h3 id="gallery-4-col">4 Columns</h3>
     <div class="youtube-gallery img-col-4">
         <div data-video-id="WhWc3b3KhnY" data-title="Video 1"></div>
@@ -89,6 +94,7 @@
         <div data-video-id="WhWc3b3KhnY" data-title="Video 4"></div>
     </div>
     
+    <!-- 6 Columns Gallery -->
     <h3 id="gallery-6-col">6 Columns</h3>
     <div class="youtube-gallery img-col-6">
         <div data-video-id="WhWc3b3KhnY" data-title="Video 1"></div>
@@ -105,6 +111,7 @@
         <div data-video-id="WhWc3b3KhnY" data-title="Video 12"></div>
     </div>
     
+    <!-- 8 Columns Gallery -->
     <h3 id="gallery-8-col">8 Columns</h3>
     <div class="youtube-gallery img-col-8">
         <div data-video-id="WhWc3b3KhnY" data-title="Video 1"></div>
@@ -117,6 +124,7 @@
         <div data-video-id="WhWc3b3KhnY" data-title="Video 8"></div>
     </div>
     
+    <!-- 12 Columns Gallery -->
     <h3 id="gallery-12-col">12 Columns</h3>
     <div class="youtube-gallery img-col-12">
         <div data-video-id="WhWc3b3KhnY" data-title="Video 1"></div>
@@ -133,7 +141,7 @@
         <div data-video-id="WhWc3b3KhnY" data-title="Video 12"></div>
     </div>
     
-    <!-- ═══════════════════════ MIXED PAGE ═══════════════════════ -->
+    <!-- Mixed Page -->
     <h2 id="modal-navigation"><span>Modal Navigation</span></h2>
     <p>All lightbox triggers (<code>.youtube-modal</code>) and gallery tiles (<code>.youtube-gallery-item</code>) on the current page share the same modal state. The counter and prev/next arrows let the viewer step through every video on the page in document order, regardless of which component type they came from.</p>
     
@@ -143,7 +151,7 @@
         <li><kbd>←</kbd> / <kbd>→</kbd> - navigate to the previous/next video</li>
     </ul>
     
-    <!-- ═══════════════════════ REFERENCE ═══════════════════════ -->
+    <!-- Attribute Reference -->
     <h2 id="reference"><span>Attribute Reference</span></h2>
     
     <table class="table-striped">
