@@ -1,51 +1,50 @@
 <div>
+    <h1 id="introduction">Introduction</h1>
 
-  <h1 id="introduction">Introduction</h1>
-
-  <p>
-    Welcome to <strong>DevDocs</strong> - a lightweight, generic documentation platform built for
-    teams who need fast, structured technical content without heavy toolchain overhead.
-    This guide walks you through the core concepts and helps you understand how everything fits together.
-  </p>
-
-  <div class="callout">
-    <div class="callout-title">ℹ Note</div>
     <p>
-      This documentation site is served as a static project. No server-side rendering or framework is
-      required. All you need is a basic local HTTP server or your IDE's Live Server extension.
+        Welcome to <strong>DevDocs</strong> - a lightweight, generic documentation platform built for
+        teams who need fast, structured technical content without heavy toolchain overhead.
+        This guide walks you through the core concepts and helps you understand how everything fits together.
     </p>
-  </div>
 
-  <!-- ─── WHAT IS DEVDOCS ─────────────────── -->
-  <h2 id="what-is-devdocs">What is DevDocs?</h2>
+    <div class="callout">
+        <div class="callout-title">ℹ Note</div>
+        <p>
+        This documentation site is served as a static project. No server-side rendering or framework is
+        required. All you need is a basic local HTTP server or your IDE's Live Server extension.
+        </p>
+    </div>
 
-  <p>
-    DevDocs is a three-column documentation layout inspired by modern developer portals. It features collapsible navigation panels, including a left-side navigation tree for page navigation and a context-sensitive "On This Page" outline on the right for quick access to sections within the current document/page.
-  </p>
+    <!-- ─── WHAT IS DEVDOCS ─────────────────── -->
+    <h2 id="what-is-devdocs">What is DevDocs?</h2>
 
-  <p>Key design goals include:</p>
+    <p>
+        DevDocs is a three-column documentation layout inspired by modern developer portals. It features collapsible navigation panels, including a left-side navigation tree for page navigation and a context-sensitive "On This Page" outline on the right for quick access to sections within the current document/page.
+    </p>
 
-  <ul>
-    <li>Keep dependencies to zero - pure HTML, CSS, and vanilla JavaScript.</li>
-    <li>Make it trivial to add or reorganise content by editing a single data structure in <code>app.js</code>.</li>
-    <li>Support light and dark themes with a single CSS variable system.</li>
-    <li>Provide a responsive layout that degrades gracefully on smaller screens.</li>
-  </ul>
+    <p>Key design goals include:</p>
 
-  <!-- ─── ARCHITECTURE ─────────────────────── -->
-  <h2 id="architecture">Architecture Overview</h2>
+    <ul>
+        <li>Keep dependencies to zero - pure HTML, CSS, and vanilla JavaScript.</li>
+        <li>Make it trivial to add or reorganise content by editing a single data structure in <code>app.js</code>.</li>
+        <li>Support light and dark themes with a single CSS variable system.</li>
+        <li>Provide a responsive layout that degrades gracefully on smaller screens.</li>
+    </ul>
 
-  <p>
-    The app consists of three files at the root level plus a page from the <code>pages/</code> directory that holds
-    HTML fragments. The host page (<code>index.html</code>) loads <code>styles.css</code> and
-    <code>app.js</code>; everything else happens at runtime.
-  </p>
+    <!-- ─── ARCHITECTURE ─────────────────────── -->
+    <h2 id="architecture">Architecture Overview</h2>
 
-  <h3 id="file-structure">File Structure</h3>
+    <p>
+        The app consists of three files at the root level plus a page from the <code>pages/</code> directory that holds
+        HTML fragments. The host page (<code>index.html</code>) loads <code>styles.css</code> and
+        <code>app.js</code>; everything else happens at runtime.
+    </p>
 
-  <p>All project files live in a flat directory with no build step required:</p>
+    <h3 id="file-structure">File Structure</h3>
 
-  <pre><code>doc/
+    <p>All project files live in a flat directory with no build step required:</p>
+
+    <pre><code>doc/
 ├── index.html          ← Shell HTML (header, layout, footer)
 ├── styles.css          ← All styles + CSS custom properties for theming
 ├── app.js              ← All behaviour: nav tree, Ajax, scroll spy, resize
@@ -55,43 +54,43 @@
     ├── first-steps.html
     └── deep-topic.html</code></pre>
 
-  <!-- content loading -->
-  <h3 id="content-loading">Content Loading</h3>
+    <!-- content loading -->
+    <h3 id="content-loading">Content Loading</h3>
 
-  <p>
-    Each page in <code>pages/</code> is an <em>HTML fragment</em> - you can wrap the page content in a <code>&lt;div&gt;</code> or just use raw HTML elements, but it should not include a full HTML document structure. The host page's <code>&lt;main&gt; &lt;div class="content-body"&gt;</code> element serves as a
-    wrapper with your content inside. When a user clicks a left-nav link, <code>app.js</code> fetches that
-    fragment via the Fetch API and injects it into the center column.
-  </p>
-
-  <div class="callout warning">
-    <div class="callout-title">⚠ Important</div>
     <p>
-      Because pages are loaded via <code>fetch()</code>, you must serve this project through a local HTTP server.
-      Opening <code>index.html</code> directly as a <code>file://</code> URL will fail due to browser CORS restrictions.
-      Use <strong>VS Code Live Server</strong> or run <code>python -m http.server 8080</code> from the project folder.
+        Each page in <code>pages/</code> is an <em>HTML fragment</em> - you can wrap the page content in a <code>&lt;div&gt;</code> or just use raw HTML elements, but it should not include a full HTML document structure. The host page's <code>&lt;main&gt; &lt;div class="content-body"&gt;</code> element serves as a
+        wrapper with your content inside. When a user clicks a left-nav link, <code>app.js</code> fetches that
+        fragment via the Fetch API and injects it into the center column.
     </p>
-  </div>
 
-  <!-- custom code -->
-  <h3 id="custom-code"><span>Custom Code</span></h3>
-  <p>The <code>custom.css</code> file allows you to add your own CSS styles to the application without modifying the core <code>styles.css</code> file.</p>
-  <p>The <code>custom.js</code> file allows you to add your own JavaScript functionality to the application without modifying the core <code>app.js</code> file.</p>
-  <small class="text-muted">Note: Of course, you can change any files as needed :)</small>
+    <div class="callout warning">
+        <div class="callout-title">⚠ Important</div>
+        <p>
+        Because pages are loaded via <code>fetch()</code>, you must serve this project through a local HTTP server.
+        Opening <code>index.html</code> directly as a <code>file://</code> URL will fail due to browser CORS restrictions.
+        Use <strong>VS Code Live Server</strong> or run <code>python -m http.server 8080</code> from the project folder.
+        </p>
+    </div>
 
-  <!-- core concepts -->
-  <h2 id="core-concepts">Core Concepts</h2>
+    <!-- custom code -->
+    <h3 id="custom-code"><span>Custom Code</span></h3>
+    <p>The <code>custom.css</code> file allows you to add your own CSS styles to the application without modifying the core <code>styles.css</code> file.</p>
+    <p>The <code>custom.js</code> file allows you to add your own JavaScript functionality to the application without modifying the core <code>app.js</code> file.</p>
+    <small class="text-muted">Note: Of course, you can change any files as needed :)</small>
 
-  <!-- navigation data -->
-  <h3 id="nav-data">Navigation Data</h3>
+    <!-- core concepts -->
+    <h2 id="core-concepts">Core Concepts</h2>
 
-  <p>
-    All navigation is defined in a single <code>NAV_DATA</code> array in <code>app.js</code>. Each entry
-    is a plain JavaScript object with <code>id</code>, <code>label</code>, and optionally <code>page</code>
-    (path to an HTML fragment) or <code>children</code> (nested items).
-  </p>
+    <!-- navigation data -->
+    <h3 id="nav-data">Navigation Data</h3>
 
-  <pre><code>const NAV_DATA = [
+    <p>
+        All navigation is defined in a single <code>NAV_DATA</code> array in <code>app.js</code>. Each entry
+        is a plain JavaScript object with <code>id</code>, <code>label</code>, and optionally <code>page</code>
+        (path to an HTML fragment) or <code>children</code> (nested items).
+    </p>
+
+    <pre><code>const NAV_DATA = [
   {
     id: 'getting-started',
     label: 'Getting Started',
@@ -102,59 +101,57 @@
   }
 ];</code></pre>
 
-  <!-- theming -->
-  <h3 id="theming">Theming</h3>
+    <!-- theming -->
+    <h3 id="theming">Theming</h3>
 
-  <p>
-    All colors and spacing tokens are defined as CSS custom properties on <code>[data-theme="light"]</code> and <code>[data-theme="dark"]</code>. Switching themes is a single
-    attribute change on <code>&lt;html&gt;</code>, which the browser handles in a single style pass.
-  </p>
+    <p>
+        All colors and spacing tokens are defined as CSS custom properties on <code>[data-theme="light"]</code> and <code>[data-theme="dark"]</code>. Switching themes is a single
+        attribute change on <code>&lt;html&gt;</code>, which the browser handles in a single style pass.
+    </p>
 
-  <!-- adding custom tokens -->
-  <h4 id="adding-tokens">Adding custom tokens</h4>
+    <!-- adding custom tokens -->
+    <h4 id="adding-tokens">Adding custom tokens</h4>
 
-  <p>
-    Open <code>styles.css</code> and add your token/CSS variable (ex: <code>--primary-color: #ff0000;</code>) to both the <code>[data-theme="light"]</code> and <code>[data-theme="dark"]</code> blocks, then reference it anywhere with <code>var(--my-token)</code>.
-  </p>
+    <p>
+        Open <code>styles.css</code> and add your token/CSS variable (ex: <code>--primary-color: #ff0000;</code>) to both the <code>[data-theme="light"]</code> and <code>[data-theme="dark"]</code> blocks, then reference it anywhere with <code>var(--my-token)</code>.
+    </p>
 
-  <!-- browser support -->
-  <h2 id="browser-support"><span>Browser Support</span></h2>
+    <!-- browser support -->
+    <h2 id="browser-support"><span>Browser Support</span></h2>
 
-  <p>
-    DevDocs targets evergreen browsers. The following APIs are used without polyfills:
-  </p>
+    <p>DevDocs targets evergreen browsers. The following APIs are used without polyfills:</p>
 
-  <ul>
-    <li><code>fetch()</code> - page loading</li>
-    <li><code>IntersectionObserver</code> - scroll spy</li>
-    <li><code>CSS Custom Properties</code> - theming</li>
-    <li><code>DOMParser</code> - HTML fragment parsing</li>
-    <li><code>localStorage</code> - theme &amp; sidebar persistence</li>
-  </ul>
+    <ul>
+        <li><code>fetch()</code> - page loading</li>
+        <li><code>IntersectionObserver</code> - scroll spy</li>
+        <li><code>CSS Custom Properties</code> - theming</li>
+        <li><code>DOMParser</code> - HTML fragment parsing</li>
+        <li><code>localStorage</code> - theme &amp; sidebar persistence</li>
+    </ul>
 
-  <div class="callout danger">
-    <div class="callout-title">✖ Not supported</div>
-    <p>Internet Explorer is not supported. No polyfills are provided or planned.</p>
-  </div>
+    <div class="callout danger">
+        <div class="callout-title">✖ Not supported</div>
+        <p>Internet Explorer is not supported. No polyfills are provided or planned.</p>
+    </div>
 
-  <!-- next steps -->
-  <h2 id="next-steps">Next Steps</h2>
+    <!-- next steps -->
+    <h2 id="next-steps">Next Steps</h2>
 
-  <p>Ready to set up DevDocs for your own project? Head to the <strong>Installation</strong> page to
-  get your local environment running in minutes.</p>
+    <p>Ready to set up DevDocs for your own project? Head to the <strong>Installation</strong> page to
+    get your local environment running in minutes.</p>
 
-  <ul>
-    <li><a href="#installation" data-nav="installation">Installation</a> - clone, serve, customize</li>
-    <li><a href="#layout" data-nav="layout">DevDocs GUI Features</a> - sidebar, panels, and layout features</li>
-    <li><a href="#text-elements" data-nav="typography">Typography</a> - explore typography options and styles</li>
-    <li><a href="#html-elements" data-nav="elements">HTML Elements</a> - explore available HTML elements and their usage</li>
-    <li><a href="#utility-classes" data-nav="utility-classes">Utility Classes</a> - explore available utility CSS classes</li>
-    <li><a href="#grid-system" data-nav="grid-system">Grid System</a> - responsive grid layout system</li>
-    <li><a href="#tools" data-nav="tools">DevDocs Tools</a> - built-in tooling features</li>
-    <li><a href="#sliders" data-nav="sliders">Sliders</a> - image and content slider components</li>
-    <li><a href="#image-galleries" data-nav="image-galleries">Image Galleries</a> - explore available image gallery features</li>
-    <li><a href="#videos" data-nav="videos">Videos</a> - embed YouTube and video content</li>
-    <li><a href="#custom" data-nav="custom">Custom Elements</a> - custom HTML elements and components</li>
-    <li>For more information use the left sidebar to navigate through the documentation examples</li>
-  </ul>
+    <ul>
+        <li><a href="#installation" data-nav="installation">Installation</a> - clone, serve, customize</li>
+        <li><a href="#layout" data-nav="layout">DevDocs GUI Features</a> - sidebar, panels, and layout features</li>
+        <li><a href="#text-elements" data-nav="typography">Typography</a> - explore typography options and styles</li>
+        <li><a href="#html-elements" data-nav="elements">HTML Elements</a> - explore available HTML elements and their usage</li>
+        <li><a href="#utility-classes" data-nav="utility-classes">Utility Classes</a> - explore available utility CSS classes</li>
+        <li><a href="#grid-system" data-nav="grid-system">Grid System</a> - responsive grid layout system</li>
+        <li><a href="#tools" data-nav="tools">DevDocs Tools</a> - built-in tooling features</li>
+        <li><a href="#sliders" data-nav="sliders">Sliders</a> - image and content slider components</li>
+        <li><a href="#image-galleries" data-nav="image-galleries">Image Galleries</a> - explore available image gallery features</li>
+        <li><a href="#videos" data-nav="videos">Videos</a> - embed YouTube and video content</li>
+        <li><a href="#custom" data-nav="custom">Custom Elements</a> - custom HTML elements and components</li>
+        <li>For more information use the left sidebar to navigate through the documentation examples</li>
+    </ul>
 </div>
