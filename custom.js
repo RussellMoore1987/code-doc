@@ -2,3 +2,1285 @@
 
 // @versioning
 // * update JS with versioning to prevent caching issues. look for '?v=' in index.html
+
+/* ============================================================
+   GRAPHIC NOVEL / COMIC BOOK VIEWER
+   BEGIN
+============================================================ */
+
+(function () {
+
+'use strict';
+
+// ------------------------------------------------------------
+// Constants
+// ------------------------------------------------------------
+
+const GN_LS_PREFIX     = 'gn-progress-';
+const GN_ZOOM_MIN      = 0.5;
+const GN_ZOOM_MAX      = 3.0;
+const GN_ZOOM_STEP     = 0.25;
+const GN_MODAL_ID      = 'gn-viewer-modal';
+
+// ------------------------------------------------------------
+// State
+// ------------------------------------------------------------
+
+const gn = {
+    // View state
+    isOpen:       false,
+    isLibrary:    true,
+    books:        [],
+    currentBook:  null,
+    currentPage:  0,        // 0-indexed
+    viewMode:     'single', // single | double | triple | scroll
+    zoom:         1.0,
+    tocOpen:      false,
+    lastFocused:  null,
+    // DOM refs (populated after modal is built)
+    modal:        null,
+    refs:         {},
+};
+
+// ------------------------------------------------------------
+// Book Discovery / HTML Parsing
+// ------------------------------------------------------------
+
+/** Discovers and parses all .graphic-novel-book elements in the document. */
+function gnDiscoverBooks() {
+    const bookEls = document.querySelectorAll('.graphic-novel-book');
+    gn.books = Array.from(bookEls).map(gnParseBook).filter(Boolean);
+}
+
+/** Parses a single .graphic-novel-book element into a plain object. */
+function gnParseBook(el) {
+    const id = el.dataset.bookId;
+    if (!id) return null;
+
+    const titleEl   = el.querySelector('.book-title');
+    const descEl    = el.querySelector('.book-description');
+    const coverImg  = el.querySelector('.book-cover img');
+    const pageImgs  = el.querySelectorAll('.book-pages img');
+
+    if (!titleEl || !descEl || !coverImg || !pageImgs.length) return null;
+
+    const pages = Array.from(pageImgs).map((img) => ({
+        src: img.getAttribute('src') || '',
+        alt: img.getAttribute('alt') || '',
+    }));
+
+    const chapters = Array.from(el.querySelectorAll('.book-chapter')).map((ch) => ({
+        name:    ch.textContent.trim(),
+        page:    Math.max(1, parseInt(ch.dataset.page, 10) || 1),
+    }));
+
+    return {
+        id,
+        title:       titleEl.textContent.trim(),
+        description: descEl.textContent.trim(),
+        author:      el.querySelector('.book-author')?.textContent.trim() || '',
+        year:        el.querySelector('.book-year')?.textContent.trim()   || '',
+        genre:       el.querySelector('.book-genre')?.textContent.trim()  || '',
+        coverSrc:    coverImg.getAttribute('src') || '',
+        coverAlt:    coverImg.getAttribute('alt') || '',
+        pages,
+        chapters,
+    };
+}
+
+// ------------------------------------------------------------
+// Modal Management
+// ------------------------------------------------------------
+
+/** Builds the full modal DOM and appends it to <body>. Called once. */
+function gnBuildModal() {
+    if (document.getElementById(GN_MODAL_ID)) return; // already built
+
+    const overlay = document.createElement('div');
+    overlay.id = GN_MODAL_ID;
+    overlay.className = 'gn-overlay';
+    overlay.setAttribute('role', 'dialog');
+    overlay.setAttribute('aria-modal', 'true');
+    overlay.setAttribute('aria-label', 'Graphic Novel Viewer');
+    overlay.setAttribute('aria-hidden', 'true');
+
+    overlay.innerHTML = `
+      <div class="gn-modal">
+
+        <!-- Top bar (shared by both views) -->
+        <div class="gn-modal-bar" id="gn-modal-bar">
+          <div class="gn-modal-bar-left">
+            <button class="gn-btn gn-hidden" id="gn-back-to-library"
+                    aria-label="Back to Library"
+                    data-tooltip="Back to Library">
+              <svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true" fill="none"
+                   stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="15 18 9 12 15 6"/>
+              </svg>
+              Library
+            </button>
+            <span class="gn-bar-book-title gn-hidden" id="gn-bar-book-title"></span>
+          </div>
+          <button class="gn-modal-close" id="gn-modal-close"
+                  aria-label="Close Graphic Novel Viewer"
+                  data-tooltip="Close">
+            <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+              <line x1="18" y1="6" x2="6" y2="18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              <line x1="6" y1="6" x2="18" y2="18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+          </button>
+        </div>
+
+        <!-- Library view -->
+        <div id="gn-library" class="gn-library">
+          <div class="gn-library-header">
+            <h3>Graphic Novel Library</h3>
+            <p>Select a book below to start reading.</p>
+          </div>
+          <ul id="gn-book-grid" class="gn-book-grid"
+               aria-label="Available graphic novels"></ul>
+        </div>
+
+        <!-- Reader view (hidden until a book is opened) -->
+        <div id="gn-reader" class="gn-reader gn-hidden">
+
+          <!-- Reader toolbar -->
+          <div class="gn-reader-toolbar" id="gn-reader-toolbar" role="toolbar" aria-label="Reader controls">
+
+            <!-- Navigation group -->
+            <div class="gn-toolbar-group">
+              <button class="gn-icon-btn" id="gn-first-page"
+                      aria-label="First page" data-tooltip="First Page" title="First page">
+                <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" fill="none"
+                     stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <line x1="19" y1="20" x2="9" y2="12"/><line x1="9" y1="12" x2="19" y2="4"/>
+                  <line x1="5" y1="19" x2="5" y2="5"/>
+                </svg>
+              </button>
+              <button class="gn-icon-btn" id="gn-prev-page"
+                      aria-label="Previous page" data-tooltip="Previous Page (←)" title="Previous page">
+                <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" fill="none"
+                     stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="15 18 9 12 15 6"/>
+                </svg>
+              </button>
+
+              <div class="gn-page-counter" aria-live="polite" aria-atomic="true">
+                <input type="number" class="gn-page-input" id="gn-page-input"
+                       min="1" aria-label="Go to page" title="Go to page"/>
+                <span>&nbsp;/&nbsp;</span>
+                <span id="gn-total-pages">0</span>
+              </div>
+
+              <button class="gn-icon-btn" id="gn-next-page"
+                      aria-label="Next page" data-tooltip="Next Page (→)" title="Next page">
+                <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" fill="none"
+                     stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="9 18 15 12 9 6"/>
+                </svg>
+              </button>
+              <button class="gn-icon-btn" id="gn-last-page"
+                      aria-label="Last page" data-tooltip="Last Page" title="Last page">
+                <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" fill="none"
+                     stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <line x1="5" y1="20" x2="15" y2="12"/><line x1="15" y1="12" x2="5" y2="4"/>
+                  <line x1="19" y1="19" x2="19" y2="5"/>
+                </svg>
+              </button>
+            </div>
+
+            <div class="gn-toolbar-sep"></div>
+
+            <!-- View mode group -->
+            <div class="gn-toolbar-group">
+              <button class="gn-icon-btn" id="gn-view-single"
+                      aria-label="Single page" aria-pressed="true"
+                      data-tooltip="Single Page View" title="Single page"
+                      data-view="single">
+                <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" fill="none"
+                     stroke="currentColor" stroke-width="2">
+                  <rect x="7" y="3" width="10" height="18" rx="1"/>
+                </svg>
+              </button>
+              <button class="gn-icon-btn" id="gn-view-double"
+                      aria-label="Two-page spread" aria-pressed="false"
+                      data-tooltip="Two-Page Spread" title="Two-page spread"
+                      data-view="double">
+                <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" fill="none"
+                     stroke="currentColor" stroke-width="2">
+                  <rect x="2" y="4" width="9" height="16" rx="1"/>
+                  <rect x="13" y="4" width="9" height="16" rx="1"/>
+                </svg>
+              </button>
+              <button class="gn-icon-btn gn-view-btn-triple" id="gn-view-triple"
+                      aria-label="Three-page view" aria-pressed="false"
+                      data-tooltip="Three-Page View" title="Three-page view"
+                      data-view="triple">
+                <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" fill="none"
+                     stroke="currentColor" stroke-width="2">
+                  <rect x="1" y="5" width="6" height="14" rx="1"/>
+                  <rect x="9" y="5" width="6" height="14" rx="1"/>
+                  <rect x="17" y="5" width="6" height="14" rx="1"/>
+                </svg>
+              </button>
+              <button class="gn-icon-btn" id="gn-view-scroll"
+                      aria-label="Scroll / Detail view" aria-pressed="false"
+                      data-tooltip="Scroll / Detail View" title="Scroll view"
+                      data-view="scroll">
+                <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" fill="none"
+                     stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                  <rect x="5" y="3" width="14" height="18" rx="1"/>
+                  <line x1="9" y1="8" x2="15" y2="8"/>
+                  <line x1="9" y1="12" x2="15" y2="12"/>
+                  <line x1="9" y1="16" x2="13" y2="16"/>
+                </svg>
+              </button>
+            </div>
+
+            <div class="gn-toolbar-sep"></div>
+
+            <!-- Zoom group -->
+            <div class="gn-toolbar-group">
+              <button class="gn-icon-btn" id="gn-zoom-out"
+                      aria-label="Zoom out" data-tooltip="Zoom Out (−)" title="Zoom out">
+                <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" fill="none"
+                     stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                  <circle cx="11" cy="11" r="7"/>
+                  <line x1="8" y1="11" x2="14" y2="11"/>
+                  <line x1="16.5" y1="16.5" x2="21" y2="21"/>
+                </svg>
+              </button>
+              <span class="gn-zoom-display" id="gn-zoom-display" aria-live="polite">100%</span>
+              <button class="gn-icon-btn" id="gn-zoom-in"
+                      aria-label="Zoom in" data-tooltip="Zoom In (+)" title="Zoom in">
+                <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" fill="none"
+                     stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                  <circle cx="11" cy="11" r="7"/>
+                  <line x1="11" y1="8" x2="11" y2="14"/>
+                  <line x1="8" y1="11" x2="14" y2="11"/>
+                  <line x1="16.5" y1="16.5" x2="21" y2="21"/>
+                </svg>
+              </button>
+              <button class="gn-icon-btn" id="gn-zoom-reset"
+                      aria-label="Reset zoom" data-tooltip="Reset Zoom (0)" title="Reset zoom">
+                <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" fill="none"
+                     stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
+                  <polyline points="3 3 3 8 8 8"/>
+                </svg>
+              </button>
+            </div>
+
+            <div class="gn-toolbar-sep"></div>
+
+            <!-- Actions group -->
+            <div class="gn-toolbar-group">
+              <button class="gn-icon-btn" id="gn-magnify"
+                      aria-label="Magnify page" data-tooltip="Magnify / Detail View (M)" title="Magnify">
+                <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" fill="none"
+                     stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                  <circle cx="11" cy="11" r="7"/>
+                  <line x1="16.5" y1="16.5" x2="21" y2="21"/>
+                  <line x1="11" y1="8" x2="11" y2="14"/>
+                  <line x1="8" y1="11" x2="14" y2="11"/>
+                </svg>
+              </button>
+              <button class="gn-icon-btn" id="gn-bookmark"
+                      aria-label="Bookmark this page" aria-pressed="false"
+                      data-tooltip="Bookmark (B)" title="Bookmark">
+                <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" fill="none"
+                     stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
+                </svg>
+              </button>
+              <button class="gn-icon-btn" id="gn-toc-toggle"
+                      aria-label="Table of contents" aria-pressed="false"
+                      data-tooltip="Table of Contents (T)" title="Table of contents">
+                <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" fill="none"
+                     stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                  <line x1="3" y1="6" x2="21" y2="6"/>
+                  <line x1="3" y1="12" x2="21" y2="12"/>
+                  <line x1="3" y1="18" x2="15" y2="18"/>
+                </svg>
+              </button>
+              <button class="gn-icon-btn" id="gn-fullscreen"
+                      aria-label="Toggle fullscreen" aria-pressed="false"
+                      data-tooltip="Fullscreen (F)" title="Fullscreen">
+                <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" fill="none"
+                     stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="15 3 21 3 21 9"/>
+                  <polyline points="9 21 3 21 3 15"/>
+                  <line x1="21" y1="3" x2="14" y2="10"/>
+                  <line x1="3" y1="21" x2="10" y2="14"/>
+                </svg>
+              </button>
+            </div>
+
+          </div><!-- end .gn-reader-toolbar -->
+
+          <!-- Reader body: stage + optional TOC -->
+          <div class="gn-reader-body">
+
+            <div class="gn-stage" id="gn-stage">
+              <div class="gn-pages-wrap" id="gn-pages-wrap"></div>
+            </div>
+
+            <!-- Table of Contents panel -->
+            <div class="gn-toc-panel" id="gn-toc-panel" hidden
+                 role="navigation" aria-label="Table of Contents">
+              <div class="gn-toc-header">
+                <span class="gn-toc-header-title">Contents</span>
+                <button class="gn-icon-btn" id="gn-toc-close"
+                        aria-label="Close table of contents">
+                  <svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true">
+                    <line x1="18" y1="6" x2="6" y2="18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                    <line x1="6" y1="6" x2="18" y2="18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                  </svg>
+                </button>
+              </div>
+              <div class="gn-toc-list" id="gn-toc-list" role="list"></div>
+            </div>
+
+          </div><!-- end .gn-reader-body -->
+
+        </div><!-- end #gn-reader -->
+
+      </div><!-- end .gn-modal -->
+    `;
+
+    document.body.appendChild(overlay);
+    gn.modal = overlay;
+    gnCacheRefs();
+    gnBindModalEvents();
+
+    // Wire tooltips on the newly built modal
+    if (typeof setupTooltipsIn === 'function') {
+        setupTooltipsIn(overlay);
+    }
+}
+
+/** Caches frequently-used DOM refs from the modal. */
+function gnCacheRefs() {
+    const q = (id) => document.getElementById(id);
+    gn.refs = {
+        overlay:       gn.modal,
+        library:       q('gn-library'),
+        reader:        q('gn-reader'),
+        bookGrid:      q('gn-book-grid'),
+        backBtn:       q('gn-back-to-library'),
+        closeBtn:      q('gn-modal-close'),
+        barTitle:      q('gn-bar-book-title'),
+        // Nav
+        firstBtn:      q('gn-first-page'),
+        prevBtn:       q('gn-prev-page'),
+        nextBtn:       q('gn-next-page'),
+        lastBtn:       q('gn-last-page'),
+        pageInput:     q('gn-page-input'),
+        totalPages:    q('gn-total-pages'),
+        // View buttons
+        viewSingle:    q('gn-view-single'),
+        viewDouble:    q('gn-view-double'),
+        viewTriple:    q('gn-view-triple'),
+        viewScroll:    q('gn-view-scroll'),
+        // Zoom
+        zoomIn:        q('gn-zoom-in'),
+        zoomOut:       q('gn-zoom-out'),
+        zoomReset:     q('gn-zoom-reset'),
+        zoomDisplay:   q('gn-zoom-display'),
+        // Actions
+        magnify:       q('gn-magnify'),
+        bookmark:      q('gn-bookmark'),
+        tocToggle:     q('gn-toc-toggle'),
+        fullscreen:    q('gn-fullscreen'),
+        // Stage
+        stage:         q('gn-stage'),
+        pagesWrap:     q('gn-pages-wrap'),
+        // TOC
+        tocPanel:      q('gn-toc-panel'),
+        tocClose:      q('gn-toc-close'),
+        tocList:       q('gn-toc-list'),
+    };
+}
+
+/** Opens the modal overlay and traps focus. */
+function gnOpenModal() {
+    if (!gn.modal) return;
+    gn.isOpen = true;
+    gn.lastFocused = document.activeElement;
+    gn.modal.classList.add('gn-overlay--open');
+    gn.modal.setAttribute('aria-hidden', 'false');
+    document.body.style.overflow = 'hidden';
+    // Focus first interactive element
+    const first = gn.modal.querySelector('button:not(:disabled), input');
+    if (first) first.focus();
+    document.addEventListener('keydown', gnHandleKeydown);
+}
+
+/** Closes the modal overlay and restores focus. */
+function gnCloseModal() {
+    if (!gn.modal) return;
+    gn.isOpen = false;
+    gn.modal.classList.remove('gn-overlay--open');
+    gn.modal.setAttribute('aria-hidden', 'true');
+    document.body.style.overflow = '';
+    // Exit fullscreen if active
+    if (document.fullscreenElement) {
+        document.exitFullscreen().catch(() => {});
+    }
+    gn.modal.classList.remove('gn-fullscreen');
+    document.removeEventListener('keydown', gnHandleKeydown);
+    if (gn.lastFocused && typeof gn.lastFocused.focus === 'function') {
+        gn.lastFocused.focus();
+    }
+    gn.lastFocused = null;
+}
+
+// ------------------------------------------------------------
+// Library
+// ------------------------------------------------------------
+
+/** Switches to the library view inside the modal. */
+function gnShowLibrary() {
+    gn.isLibrary = true;
+    const r = gn.refs;
+    r.library.classList.remove('gn-hidden');
+    r.reader.classList.add('gn-hidden');
+    r.backBtn.classList.add('gn-hidden');
+    r.barTitle.classList.add('gn-hidden');
+    r.barTitle.textContent = '';
+    // Close TOC if open
+    if (gn.tocOpen) gnToggleToc();
+    gnRenderLibrary();
+}
+
+/** Rebuilds all book cards in the library grid. */
+function gnRenderLibrary() {
+    const grid = gn.refs.bookGrid;
+    grid.innerHTML = '';
+    if (!gn.books.length) {
+        grid.innerHTML = '<p style="padding:20px;color:var(--text-muted);">No graphic novels found on this page.</p>';
+        return;
+    }
+    gn.books.forEach((book) => {
+        const card = gnBuildLibraryCard(book);
+        grid.appendChild(card);
+    });
+}
+
+/** Builds a single book card for the library grid. */
+function gnBuildLibraryCard(book) {
+    const progress = gnLoadProgress(book.id);
+    const total    = book.pages.length;
+    const lastPage = progress ? progress.lastPage : 0; // 0-indexed
+    const pct      = total > 0 ? Math.round((lastPage / (total - 1)) * 100) : 0;
+
+    let badgeClass = 'gn-book-card-badge--new';
+    let badgeLabel = 'New';
+    let openLabel  = 'Open Book';
+    if (progress && lastPage > 0 && lastPage < total - 1) {
+        badgeClass = 'gn-book-card-badge--progress';
+        badgeLabel = 'In Progress';
+        openLabel  = 'Continue Reading';
+    } else if (progress && lastPage >= total - 1 && total > 1) {
+        badgeClass = 'gn-book-card-badge--done';
+        badgeLabel = 'Completed';
+        openLabel  = 'Read Again';
+    }
+
+    const chapterCount = book.chapters.length ? `${book.chapters.length} chapters · ` : '';
+    const progressHtml = progress
+        ? `<div class="gn-book-card-progress-wrap">
+             <div class="gn-book-card-progress-bg">
+               <div class="gn-book-card-progress-fill" style="width:${pct}%"></div>
+             </div>
+             <span class="gn-book-card-progress-label">${lastPage + 1} / ${total} pages</span>
+           </div>`
+        : '';
+
+    const li = document.createElement('li');
+    li.style.listStyle = 'none';
+
+    const card = document.createElement('article');
+    card.className = 'gn-book-card';
+    card.innerHTML = `
+      <span class="gn-book-card-badge ${badgeClass}">${badgeLabel}</span>
+      <div class="gn-book-card-cover">
+        <img src="${gnEscHtml(book.coverSrc)}" alt="${gnEscHtml(book.coverAlt)}" loading="lazy">
+      </div>
+      <div class="gn-book-card-body">
+        <h4 class="gn-book-card-title">${gnEscHtml(book.title)}</h4>
+        <div class="gn-book-card-meta-row">
+          ${book.genre ? `<span class="gn-book-card-genre">${gnEscHtml(book.genre)}</span>` : ''}
+          ${book.author ? `<span class="gn-book-card-author">${gnEscHtml(book.author)}</span>` : ''}
+        </div>
+        <p class="gn-book-card-desc">${gnEscHtml(book.description)}</p>
+        <div class="gn-book-card-info-row">
+          <span>${chapterCount}${total} page${total !== 1 ? 's' : ''}</span>
+          ${book.year ? `<span>${gnEscHtml(book.year)}</span>` : ''}
+        </div>
+        ${progressHtml}
+        <button class="gn-book-card-open" data-book-id="${gnEscHtml(book.id)}"
+                aria-label="Open ${gnEscHtml(book.title)}">
+          ${openLabel}
+        </button>
+      </div>
+    `;
+
+    card.querySelector('.gn-book-card-open').addEventListener('click', () => gnOpenBook(book.id));
+    card.querySelector('.gn-book-card-cover').addEventListener('click', () => gnOpenBook(book.id));
+
+    li.appendChild(card);
+    return li;
+}
+
+// ------------------------------------------------------------
+// Reader Rendering
+// ------------------------------------------------------------
+
+/** Opens a book by ID, switching to reader view. */
+function gnOpenBook(bookId) {
+    const book = gn.books.find((b) => b.id === bookId);
+    if (!book) return;
+
+    gn.currentBook = book;
+
+    // Restore saved progress
+    const progress = gnLoadProgress(bookId);
+    gn.viewMode   = (progress && progress.viewMode) || 'single';
+    gn.zoom       = 1.0;
+    gn.currentPage = progress ? Math.min(progress.lastPage, book.pages.length - 1) : 0;
+
+    gnShowReaderView();
+}
+
+/** Switches the modal to the reader view. */
+function gnShowReaderView() {
+    gn.isLibrary = false;
+    const r = gn.refs;
+
+    r.library.classList.add('gn-hidden');
+    r.reader.classList.remove('gn-hidden');
+    r.backBtn.classList.remove('gn-hidden');
+    r.barTitle.classList.remove('gn-hidden');
+    r.barTitle.textContent = gn.currentBook.title;
+
+    gnBuildToc(gn.currentBook);
+    gnRenderPage();
+    gnUpdateNavUI();
+    gnUpdateViewModeUI();
+    gnUpdateZoomUI();
+    gnUpdateBookmarkUI();
+
+    // Focus the reader area
+    r.stage.focus && r.stage.setAttribute('tabindex', '-1');
+    r.stage.focus();
+}
+
+/**
+ * Renders the current page(s) into the pages wrapper
+ * according to the current view mode.
+ */
+function gnRenderPage() {
+    const r     = gn.refs;
+    const book  = gn.currentBook;
+    const wrap  = r.pagesWrap;
+
+    if (!book) return;
+
+    // Page transition
+    wrap.classList.add('gn-page-transition');
+
+    setTimeout(() => {
+        wrap.innerHTML = '';
+        const stage   = r.stage;
+        const total   = book.pages.length;
+
+        // Set CSS classes for view mode on stage and wrap
+        stage.className = 'gn-stage' + (gn.viewMode === 'scroll' ? ' gn-stage--scroll' : '');
+        wrap.className  = 'gn-pages-wrap' + (gn.viewMode === 'scroll' ? ' gn-pages-wrap--scroll' : '');
+
+        if (gn.viewMode === 'scroll') {
+            // All pages stacked
+            book.pages.forEach((page, i) => {
+                wrap.appendChild(gnBuildPageFrame(page, i, book));
+            });
+            // Scroll to current page
+            setTimeout(() => {
+                const target = wrap.children[gn.currentPage];
+                if (target) target.scrollIntoView({ block: 'start', behavior: 'smooth' });
+            }, 60);
+        } else {
+            const step = gnGetStep();
+            const start = gn.currentPage;
+            for (let i = start; i < start + step && i < total; i++) {
+                wrap.appendChild(gnBuildPageFrame(book.pages[i], i, book));
+            }
+        }
+
+        // Apply zoom in scroll mode
+        gnApplyZoomVar();
+
+        wrap.classList.remove('gn-page-transition');
+        gnUpdateTocHighlight();
+        gnPreloadAdjacent();
+    }, 80);
+}
+
+/** Builds a single page frame element (wrapper + img). */
+function gnBuildPageFrame(page, index, book) {
+    const frame = document.createElement('div');
+    frame.className = 'gn-page-frame';
+    frame.dataset.pageIndex = index;
+
+    // Loading placeholder
+    const placeholder = document.createElement('div');
+    placeholder.className = 'gn-page-placeholder';
+    placeholder.setAttribute('aria-label', `Loading page ${index + 1}`);
+    const spinner = document.createElement('div');
+    spinner.className = 'gn-page-spinner';
+    placeholder.appendChild(spinner);
+    frame.appendChild(placeholder);
+
+    // Image
+    const img = new Image();
+    img.className = 'gn-page-img gn-img-loading';
+    img.alt = page.alt || `${book.title} — Page ${index + 1}`;
+    img.loading = 'lazy';
+
+    img.onload = () => {
+        img.classList.remove('gn-img-loading');
+        placeholder.remove();
+        frame.appendChild(img);
+    };
+
+    img.onerror = () => {
+        spinner.remove();
+        placeholder.setAttribute('aria-label', `Page ${index + 1} could not be loaded`);
+        placeholder.innerHTML = `
+          <svg viewBox="0 0 24 24" width="32" height="32" aria-hidden="true" fill="none"
+               stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+            <rect x="3" y="3" width="18" height="18" rx="2"/>
+            <line x1="3" y1="3" x2="21" y2="21"/>
+          </svg>
+          <span>Page ${index + 1} unavailable</span>`;
+    };
+
+    img.src = page.src;
+    return frame;
+}
+
+// ------------------------------------------------------------
+// Page Navigation
+// ------------------------------------------------------------
+
+/** Navigates to the given 0-indexed page number. */
+function gnGoToPage(n) {
+    const book  = gn.currentBook;
+    if (!book) return;
+    const total = book.pages.length;
+    n = Math.max(0, Math.min(n, total - 1));
+    // Align to step boundary (except in scroll mode)
+    if (gn.viewMode !== 'scroll') {
+        const step = gnGetStep();
+        n = Math.floor(n / step) * step;
+    }
+    gn.currentPage = n;
+    gnRenderPage();
+    gnUpdateNavUI();
+    gnSaveProgress();
+}
+
+function gnPrevPage() {
+    if (gn.viewMode === 'scroll') {
+        const prev = Math.max(0, gn.currentPage - 1);
+        if (prev !== gn.currentPage) gnGoToPage(prev);
+        return;
+    }
+    gnGoToPage(gn.currentPage - gnGetStep());
+}
+
+function gnNextPage() {
+    if (gn.viewMode === 'scroll') {
+        const next = Math.min((gn.currentBook?.pages.length || 1) - 1, gn.currentPage + 1);
+        if (next !== gn.currentPage) gnGoToPage(next);
+        return;
+    }
+    gnGoToPage(gn.currentPage + gnGetStep());
+}
+
+function gnFirstPage() { gnGoToPage(0); }
+
+function gnLastPage() {
+    if (!gn.currentBook) return;
+    const total = gn.currentBook.pages.length;
+    gnGoToPage(gn.viewMode === 'scroll' ? total - 1 : total - 1);
+}
+
+/** Returns how many pages advance per "next" in the current mode. */
+function gnGetStep() {
+    return gn.viewMode === 'double' ? 2 : gn.viewMode === 'triple' ? 3 : 1;
+}
+
+/** Updates nav button disabled states and page counter. */
+function gnUpdateNavUI() {
+    const r    = gn.refs;
+    const book = gn.currentBook;
+    if (!book) return;
+
+    const total  = book.pages.length;
+    const cur    = gn.currentPage; // 0-indexed
+    const step   = gn.viewMode === 'scroll' ? 1 : gnGetStep();
+    const atEnd  = cur + step >= total;
+    const atStart = cur === 0;
+
+    r.firstBtn.disabled = atStart;
+    r.prevBtn.disabled  = atStart;
+    r.nextBtn.disabled  = atEnd;
+    r.lastBtn.disabled  = atEnd;
+
+    // Page input: show 1-indexed
+    r.pageInput.value = cur + 1;
+    r.pageInput.max   = total;
+
+    // Page label: show range for multi-page modes
+    const displayEnd = Math.min(cur + step - 1, total - 1);
+    r.totalPages.textContent = total;
+
+    if (step > 1 && displayEnd > cur) {
+        r.pageInput.setAttribute('aria-label', `Current pages ${cur + 1}–${displayEnd + 1} of ${total}`);
+    } else {
+        r.pageInput.setAttribute('aria-label', `Page ${cur + 1} of ${total}`);
+    }
+}
+
+// ------------------------------------------------------------
+// Viewing Modes
+// ------------------------------------------------------------
+
+/** Sets the view mode and re-renders. */
+function gnSetViewMode(mode) {
+    if (gn.viewMode === mode) return;
+    const prevStep = gnGetStep();
+    gn.viewMode = mode;
+    // Align current page to new step
+    const step = gnGetStep();
+    gn.currentPage = Math.floor(gn.currentPage / step) * step;
+    gn.zoom = 1.0;
+    gnUpdateViewModeUI();
+    gnUpdateZoomUI();
+    gnRenderPage();
+    gnUpdateNavUI();
+    gnSaveProgress();
+}
+
+/** Updates aria-pressed on all view mode buttons. */
+function gnUpdateViewModeUI() {
+    const r = gn.refs;
+    const btns = [r.viewSingle, r.viewDouble, r.viewTriple, r.viewScroll];
+    btns.forEach((btn) => {
+        if (!btn) return;
+        const active = btn.dataset.view === gn.viewMode;
+        btn.setAttribute('aria-pressed', active ? 'true' : 'false');
+        btn.classList.toggle('gn-icon-btn--active', active);
+    });
+}
+
+// ------------------------------------------------------------
+// Zoom / Magnification
+// ------------------------------------------------------------
+
+function gnZoomIn()    { gnSetZoom(gn.zoom + GN_ZOOM_STEP); }
+function gnZoomOut()   { gnSetZoom(gn.zoom - GN_ZOOM_STEP); }
+function gnZoomReset() { gnSetZoom(1.0); }
+
+/** Sets zoom level, clamped to allowed range, and refreshes. */
+function gnSetZoom(z) {
+    gn.zoom = Math.round(Math.min(GN_ZOOM_MAX, Math.max(GN_ZOOM_MIN, z)) * 100) / 100;
+    if (gn.viewMode !== 'scroll') {
+        gnSetViewMode('scroll');
+        return; // gnSetViewMode calls gnUpdateZoomUI and gnRenderPage
+    }
+    gnApplyZoomVar();
+    gnUpdateZoomUI();
+}
+
+/** Applies zoom as a CSS variable on the stage for scroll mode. */
+function gnApplyZoomVar() {
+    if (gn.viewMode !== 'scroll') return;
+    gn.refs.stage.style.setProperty('--gn-zoom-w', `${gn.zoom * 100}%`);
+}
+
+function gnUpdateZoomUI() {
+    const r = gn.refs;
+    r.zoomDisplay.textContent = `${Math.round(gn.zoom * 100)}%`;
+    r.zoomIn.disabled  = gn.zoom >= GN_ZOOM_MAX;
+    r.zoomOut.disabled = gn.zoom <= GN_ZOOM_MIN;
+    r.zoomReset.disabled = gn.zoom === 1.0;
+}
+
+/** Magnify: enter scroll mode centered on the current page. */
+function gnMagnify() {
+    if (gn.viewMode !== 'scroll') {
+        gnSetViewMode('scroll');
+    } else {
+        gnZoomIn();
+    }
+}
+
+// ------------------------------------------------------------
+// Table of Contents
+// ------------------------------------------------------------
+
+function gnToggleToc() {
+    gn.tocOpen = !gn.tocOpen;
+    const r = gn.refs;
+    r.tocPanel.hidden = !gn.tocOpen;
+    r.tocToggle.setAttribute('aria-pressed', gn.tocOpen ? 'true' : 'false');
+    r.tocToggle.classList.toggle('gn-icon-btn--active', gn.tocOpen);
+    if (gn.tocOpen) {
+        // Focus first TOC item
+        const firstItem = r.tocList.querySelector('.gn-toc-item');
+        if (firstItem) firstItem.focus();
+    }
+}
+
+/** Rebuilds the TOC list from book chapter data. */
+function gnBuildToc(book) {
+    const list = gn.refs.tocList;
+    list.innerHTML = '';
+    if (!book.chapters.length) {
+        list.innerHTML = '<p style="padding:12px 16px;font-size:13px;color:#8b949e;">No chapters defined.</p>';
+        return;
+    }
+    book.chapters.forEach((ch) => {
+        const btn = document.createElement('button');
+        btn.className = 'gn-toc-item';
+        btn.setAttribute('role', 'listitem');
+        btn.dataset.page = ch.page; // 1-based
+        btn.innerHTML = `${gnEscHtml(ch.name)}<span class="gn-toc-page-num">Page ${ch.page}</span>`;
+        btn.addEventListener('click', () => {
+            gnGoToPage(ch.page - 1); // convert to 0-indexed
+            // On mobile, close TOC after selection
+            if (window.innerWidth < 640 && gn.tocOpen) gnToggleToc();
+        });
+        list.appendChild(btn);
+    });
+}
+
+/** Highlights the TOC item matching the current page. */
+function gnUpdateTocHighlight() {
+    const book = gn.currentBook;
+    if (!book || !book.chapters.length) return;
+
+    const cur  = gn.currentPage + 1; // 1-indexed
+    const items = gn.refs.tocList.querySelectorAll('.gn-toc-item');
+
+    // Find the last chapter whose start page <= current page
+    let activeIndex = 0;
+    book.chapters.forEach((ch, i) => {
+        if (ch.page <= cur) activeIndex = i;
+    });
+
+    items.forEach((item, i) => {
+        item.classList.toggle('gn-toc-item--active', i === activeIndex);
+    });
+}
+
+// ------------------------------------------------------------
+// Bookmarks / Local Storage
+// ------------------------------------------------------------
+
+const GN_LS_KEY = (bookId) => GN_LS_PREFIX + bookId;
+
+function gnLoadProgress(bookId) {
+    try {
+        const raw = localStorage.getItem(GN_LS_KEY(bookId));
+        return raw ? JSON.parse(raw) : null;
+    } catch {
+        return null;
+    }
+}
+
+function gnSaveProgress() {
+    if (!gn.currentBook) return;
+    const data = {
+        lastPage: gn.currentPage,
+        bookmark: gnGetBookmark(),
+        viewMode: gn.viewMode,
+    };
+    try {
+        localStorage.setItem(GN_LS_KEY(gn.currentBook.id), JSON.stringify(data));
+    } catch {
+        // localStorage unavailable — silent fail
+    }
+    // Update the page-level preview cards to reflect new progress
+    gnRenderPageCards();
+}
+
+function gnGetBookmark() {
+    try {
+        const raw = localStorage.getItem(GN_LS_KEY(gn.currentBook.id));
+        const data = raw ? JSON.parse(raw) : null;
+        return data ? data.bookmark : null;
+    } catch {
+        return null;
+    }
+}
+
+function gnToggleBookmark() {
+    if (!gn.currentBook) return;
+    const current  = gnGetBookmark();
+    const cur      = gn.currentPage;
+    const progress = gnLoadProgress(gn.currentBook.id) || {};
+    // Toggle: if already bookmarked on this page, remove; else set
+    progress.bookmark = (current === cur) ? null : cur;
+    try {
+        localStorage.setItem(GN_LS_KEY(gn.currentBook.id), JSON.stringify(progress));
+    } catch {}
+    gnUpdateBookmarkUI();
+}
+
+function gnUpdateBookmarkUI() {
+    if (!gn.currentBook) return;
+    const bm = gnGetBookmark();
+    const active = bm === gn.currentPage;
+    const btn = gn.refs.bookmark;
+    btn.setAttribute('aria-pressed', active ? 'true' : 'false');
+    btn.classList.toggle('gn-icon-btn--active', active);
+    // Fill the bookmark icon when active
+    const svgPath = btn.querySelector('path');
+    if (svgPath) svgPath.setAttribute('fill', active ? 'currentColor' : 'none');
+}
+
+// ------------------------------------------------------------
+// Preloading
+// ------------------------------------------------------------
+
+/** Preloads the page(s) adjacent to the current position. */
+function gnPreloadAdjacent() {
+    const book = gn.currentBook;
+    if (!book) return;
+    const total = book.pages.length;
+    const step  = gnGetStep();
+    const indices = [
+        gn.currentPage + step,
+        gn.currentPage - step,
+        gn.currentPage + step * 2,
+    ];
+    indices.forEach((i) => {
+        if (i >= 0 && i < total) {
+            const src = book.pages[i]?.src;
+            if (src && !gnPreloadCache.has(src)) {
+                const img = new Image();
+                img.src = src;
+                gnPreloadCache.add(src);
+            }
+        }
+    });
+}
+
+const gnPreloadCache = new Set();
+
+// ------------------------------------------------------------
+// Page Preview Cards (inline on custom.html, outside the modal)
+// ------------------------------------------------------------
+
+/** Renders book preview cards into #gn-page-cards on the page. */
+function gnRenderPageCards() {
+    const container = document.getElementById('gn-page-cards');
+    if (!container) return;
+
+    container.innerHTML = '';
+    gn.books.forEach((book) => {
+        const card = gnBuildPreviewCard(book);
+        container.appendChild(card);
+    });
+}
+
+function gnBuildPreviewCard(book) {
+    const progress = gnLoadProgress(book.id);
+    const total    = book.pages.length;
+    const lastPage = progress ? progress.lastPage : 0;
+    const pct      = total > 1 ? Math.round((lastPage / (total - 1)) * 100) : 0;
+    const hasProgress = !!progress;
+    const openLabel = hasProgress && lastPage > 0 ? 'Continue' : 'Open';
+
+    const li = document.createElement('li');
+    li.style.listStyle = 'none';
+
+    const card = document.createElement('article');
+    card.className = 'gn-page-card';
+
+    const progressHtml = hasProgress
+        ? `<div class="gn-page-card-progress-bar-bg">
+             <div class="gn-page-card-progress-fill" style="width:${pct}%"></div>
+           </div>
+           <span class="gn-page-card-progress-label">${lastPage + 1} / ${total} pages</span>`
+        : '';
+
+    card.innerHTML = `
+      <div class="gn-page-card-cover">
+        <img src="${gnEscHtml(book.coverSrc)}" alt="${gnEscHtml(book.coverAlt)}" loading="lazy">
+      </div>
+      <div class="gn-page-card-body">
+        <div class="gn-page-card-title">${gnEscHtml(book.title)}</div>
+        <div class="gn-page-card-meta">${total} page${total !== 1 ? 's' : ''}${book.author ? ' · ' + gnEscHtml(book.author) : ''}</div>
+        ${progressHtml}
+        <button class="gn-page-card-open-btn" aria-label="${openLabel} ${gnEscHtml(book.title)}">${openLabel}</button>
+      </div>
+    `;
+
+    card.querySelector('.gn-page-card-open-btn').addEventListener('click', (e) => {
+        e.stopPropagation();
+        gnOpenBook(book.id);
+        gnOpenModal();
+    });
+    card.addEventListener('click', () => {
+        gnOpenBook(book.id);
+        gnOpenModal();
+    });
+
+    li.appendChild(card);
+    return li;
+}
+
+// ------------------------------------------------------------
+// Keyboard Controls
+// ------------------------------------------------------------
+
+function gnHandleKeydown(e) {
+    // Don't steal keys from form fields
+    const tag = document.activeElement?.tagName;
+    if (tag === 'INPUT' || tag === 'TEXTAREA' || document.activeElement?.isContentEditable) return;
+
+    // Focus trap (Tab)
+    if (e.key === 'Tab') {
+        const focusable = Array.from(gn.modal.querySelectorAll(
+            'button:not(:disabled), input:not(:disabled), [tabindex="0"]'
+        )).filter((el) => el.offsetParent !== null);
+        if (!focusable.length) return;
+        const first = focusable[0];
+        const last  = focusable[focusable.length - 1];
+        if (e.shiftKey && document.activeElement === first) {
+            e.preventDefault(); last.focus();
+        } else if (!e.shiftKey && document.activeElement === last) {
+            e.preventDefault(); first.focus();
+        }
+        return;
+    }
+
+    if (!gn.isOpen) return;
+
+    switch (e.key) {
+        case 'Escape':
+            if (gn.tocOpen) { gnToggleToc(); break; }
+            gnCloseModal();
+            break;
+        case 'ArrowLeft':
+            if (!gn.isLibrary) { e.preventDefault(); gnPrevPage(); }
+            break;
+        case 'ArrowRight':
+            if (!gn.isLibrary) { e.preventDefault(); gnNextPage(); }
+            break;
+        case '+':
+        case '=':
+            if (!gn.isLibrary) { e.preventDefault(); gnZoomIn(); }
+            break;
+        case '-':
+            if (!gn.isLibrary) { e.preventDefault(); gnZoomOut(); }
+            break;
+        case '0':
+            if (!gn.isLibrary) { e.preventDefault(); gnZoomReset(); }
+            break;
+        case 'b':
+        case 'B':
+            if (!gn.isLibrary) { e.preventDefault(); gnToggleBookmark(); }
+            break;
+        case 't':
+        case 'T':
+            if (!gn.isLibrary) { e.preventDefault(); gnToggleToc(); }
+            break;
+        case 'm':
+        case 'M':
+            if (!gn.isLibrary) { e.preventDefault(); gnMagnify(); }
+            break;
+        case 'f':
+        case 'F':
+            if (!gn.isLibrary) { e.preventDefault(); gnToggleFullscreen(); }
+            break;
+    }
+}
+
+// ------------------------------------------------------------
+// Fullscreen
+// ------------------------------------------------------------
+
+function gnToggleFullscreen() {
+    const r = gn.refs;
+    if (!document.fullscreenEnabled) return;
+
+    if (!document.fullscreenElement) {
+        gn.modal.requestFullscreen().catch(() => {});
+    } else {
+        document.exitFullscreen().catch(() => {});
+    }
+}
+
+function gnUpdateFullscreenUI() {
+    const isFs = !!document.fullscreenElement;
+    const btn  = gn.refs.fullscreen;
+    if (!btn) return;
+    btn.setAttribute('aria-pressed', isFs ? 'true' : 'false');
+    btn.classList.toggle('gn-icon-btn--active', isFs);
+    // Swap icon
+    btn.innerHTML = isFs
+        ? `<svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" fill="none"
+               stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+             <polyline points="4 14 10 14 10 20"/>
+             <polyline points="20 10 14 10 14 4"/>
+             <line x1="10" y1="14" x2="3" y2="21"/>
+             <line x1="21" y1="3" x2="14" y2="10"/>
+           </svg>`
+        : `<svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" fill="none"
+               stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+             <polyline points="15 3 21 3 21 9"/>
+             <polyline points="9 21 3 21 3 15"/>
+             <line x1="21" y1="3" x2="14" y2="10"/>
+             <line x1="3" y1="21" x2="10" y2="14"/>
+           </svg>`;
+}
+
+// ------------------------------------------------------------
+// Modal Event Binding
+// ------------------------------------------------------------
+
+function gnBindModalEvents() {
+    const r = gn.refs;
+
+    // Close
+    r.closeBtn.addEventListener('click', gnCloseModal);
+
+    // Click backdrop (outside .gn-modal) to close
+    gn.modal.addEventListener('click', (e) => {
+        if (e.target === gn.modal) gnCloseModal();
+    });
+
+    // Back to Library
+    r.backBtn.addEventListener('click', () => gnShowLibrary());
+
+    // Navigation
+    r.firstBtn.addEventListener('click', gnFirstPage);
+    r.prevBtn.addEventListener('click',  gnPrevPage);
+    r.nextBtn.addEventListener('click',  gnNextPage);
+    r.lastBtn.addEventListener('click',  gnLastPage);
+
+    r.pageInput.addEventListener('change', () => {
+        const val = parseInt(r.pageInput.value, 10);
+        if (!isNaN(val)) gnGoToPage(val - 1);
+    });
+
+    // View mode
+    [r.viewSingle, r.viewDouble, r.viewTriple, r.viewScroll].forEach((btn) => {
+        if (!btn) return;
+        btn.addEventListener('click', () => gnSetViewMode(btn.dataset.view));
+    });
+
+    // Zoom
+    r.zoomIn.addEventListener('click',    gnZoomIn);
+    r.zoomOut.addEventListener('click',   gnZoomOut);
+    r.zoomReset.addEventListener('click', gnZoomReset);
+
+    // Magnify
+    r.magnify.addEventListener('click', gnMagnify);
+
+    // Bookmark
+    r.bookmark.addEventListener('click', gnToggleBookmark);
+
+    // TOC
+    r.tocToggle.addEventListener('click', gnToggleToc);
+    r.tocClose.addEventListener('click',  gnToggleToc);
+
+    // Fullscreen
+    r.fullscreen.addEventListener('click', gnToggleFullscreen);
+    document.addEventListener('fullscreenchange', gnUpdateFullscreenUI);
+}
+
+// ------------------------------------------------------------
+// Utility
+// ------------------------------------------------------------
+
+/** Escapes HTML special characters to prevent XSS. */
+function gnEscHtml(str) {
+    return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
+
+// ------------------------------------------------------------
+// Initialization & Page-Load Detection
+// ------------------------------------------------------------
+
+/** Called every time custom.html loads (books are discovered). */
+function gnSetup() {
+    gnDiscoverBooks();
+    if (!gn.books.length) return;
+
+    // Build modal once (stays in <body> permanently)
+    if (!document.getElementById(GN_MODAL_ID)) {
+        gnBuildModal();
+    }
+
+    // Render preview cards on the page
+    gnRenderPageCards();
+
+    // Wire the "Open Library" button
+    const openBtn = document.getElementById('gn-open-library-btn');
+    if (openBtn) {
+        // Remove previous listener (page re-loaded)
+        openBtn.replaceWith(openBtn.cloneNode(true));
+        const freshBtn = document.getElementById('gn-open-library-btn');
+        if (freshBtn) {
+            freshBtn.addEventListener('click', () => {
+                gnShowLibrary();
+                gnOpenModal();
+            });
+        }
+    }
+}
+
+/** Sets up a MutationObserver to detect when custom.html is loaded via AJAX. */
+function gnInit() {
+    const contentBody = document.getElementById('content-body');
+    if (!contentBody) return;
+
+    // Check immediately (page might already be loaded)
+    if (contentBody.querySelector('.graphic-novel-book')) {
+        gnSetup();
+    }
+
+    // Watch for future AJAX navigations
+    const observer = new MutationObserver(() => {
+        if (contentBody.querySelector('.graphic-novel-book')) {
+            gnSetup();
+        }
+    });
+
+    observer.observe(contentBody, { childList: true });
+}
+
+// Boot
+if (document.readyState !== 'loading') {
+    gnInit();
+} else {
+    document.addEventListener('DOMContentLoaded', gnInit);
+}
+
+})(); // end IIFE
+
+/* ============================================================
+   GRAPHIC NOVEL / COMIC BOOK VIEWER
+   END
+============================================================ */

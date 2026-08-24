@@ -1,4 +1,206 @@
 <div>
     <h1 id="custom"><span data-tags="Custom Elements">Custom Elements</span></h1>
     <p>Custom elements allow you to define your own HTML elements with custom behavior and appearance. Make sure to use the <code>custom.js</code> and <code>custom.css</code> files to implement the custom behavior and styling for your elements.</p>
+
+    <!-- ============================================================
+         GRAPHIC NOVEL / COMIC BOOK VIEWER
+         BEGIN
+    ============================================================ -->
+
+    <!-- ── VIEWER / INTERFACE HTML ──────────────────────────────── -->
+
+    <section class="gn-gallery-section" id="graphic-novel-viewer" aria-labelledby="gn-gallery-heading">
+
+        <div class="gn-gallery-intro">
+            <h2 id="gn-gallery-heading">
+                <span data-tags="Graphic Novel, Comic Book, Reader, Viewer">Graphic Novel Viewer</span>
+            </h2>
+            <p>Browse and read digital graphic novels in a full-featured reader. Supports single-page, two-page spread, three-page, and scroll/detail reading modes with zoom, bookmarks, table of contents, and automatic progress saving.</p>
+            <button id="gn-open-library-btn" class="gn-open-library-btn" type="button"
+                    data-tooltip="Browse available graphic novels">
+                <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none"
+                     stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/>
+                    <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>
+                </svg>
+                Open Library
+            </button>
+        </div>
+
+        <!--
+            Preview cards are generated automatically from the
+            .graphic-novel-book elements below by custom.js.
+        -->
+        <ul id="gn-page-cards" class="gn-page-cards"
+            aria-label="Available graphic novels"></ul>
+
+    </section>
+
+    <!-- ── END VIEWER / INTERFACE HTML ─────────────────────────── -->
+
+    <!--
+    ============================================================
+    GRAPHIC NOVEL BOOKS CONFIGURATION
+    ============================================================
+
+    HOW TO ADD A NEW GRAPHIC NOVEL
+    ================================
+     1. Copy one of the .graphic-novel-book blocks below.
+     2. Give it a new unique data-book-id value.
+          - Use lowercase letters and hyphens only.
+          - Example: "my-new-book"
+          - This ID is stored in localStorage, so keep it stable.
+     3. Update .book-title text.
+     4. Update .book-description text.
+     5. Replace the <img> inside .book-cover with your cover image.
+     6. Replace or add <img> elements inside .book-pages.
+          - Pages display in DOM order (first img = Page 1).
+          - Write meaningful alt text for each page.
+     7. Update or remove .book-toc.
+          - Each .book-chapter marks a chapter.
+          - data-page is the 1-based page number where the chapter starts.
+          - The element's text is the chapter name shown in the TOC.
+     8. Optionally fill in .book-author, .book-year, .book-genre.
+     9. Save the file. The book appears automatically in the Library.
+        No changes to custom.js or custom.css are needed.
+
+    ELEMENT REFERENCE
+    =================
+    Parent:
+      .graphic-novel-book               Required  Identifies this div as a book.
+      data-book-id="unique-id"          Required  Unique ID (used for localStorage).
+
+    Required children:
+      .book-title                       Required  Book title text.
+      .book-description                 Required  Short description text.
+      .book-cover img                   Required  Cover <img src="..." alt="...">.
+      .book-pages                       Required  Container for page images.
+      .book-pages img (one or more)     Required  Page images, top-to-bottom = page order.
+
+    Optional children:
+      .book-author                      Optional  Author name.
+      .book-year                        Optional  Publication year.
+      .book-genre                       Optional  Genre label (shown as a badge).
+      .book-toc                         Optional  Table of Contents container.
+      .book-chapter[data-page="N"]      Optional  Chapter; text = name, data-page = start page.
+
+    LOCALSTORAGE / READING PROGRESS
+    ================================
+      Each book saves its progress under the key:
+        gn-progress-{data-book-id}
+      Stored JSON: { lastPage, bookmark, viewMode }
+      Each book's progress is completely independent.
+      Clearing localStorage resets all reading progress.
+
+    WHAT IS REQUIRED vs OPTIONAL
+    ==============================
+      Required: data-book-id, .book-title, .book-description,
+                .book-cover img, at least one .book-pages img.
+      Optional: .book-author, .book-year, .book-genre, .book-toc /
+                .book-chapter elements.
+
+    NOTE: These .graphic-novel-book divs are hidden in the normal page
+    layout via CSS. They exist solely to configure the viewer.
+    The Graphic Novel modal is built and managed by custom.js.
+    ============================================================
+    -->
+
+    <!-- ── BOOK CONFIGURATION HTML ─────────────────────────────── -->
+
+    <!-- =========================================================
+         GRAPHIC NOVEL BOOK EXAMPLE
+         Copy this entire block to add another book.
+    ========================================================= -->
+    <div class="graphic-novel-book" data-book-id="starbound-chronicles">
+
+        <div class="book-title">The Starbound Chronicles</div>
+
+        <div class="book-description">
+            A crew of explorers ventures into uncharted star systems, encountering ancient civilizations and unexpected dangers among the stars.
+        </div>
+
+        <div class="book-author">A. Cosmos</div>
+        <div class="book-year">2024</div>
+        <div class="book-genre">Sci-Fi Adventure</div>
+
+        <div class="book-cover">
+            <img src="images/graphic_novel/title_ex_1.png" alt="The Starbound Chronicles cover">
+        </div>
+
+        <div class="book-pages">
+            <img src="images/graphic_novel/page_1.png"    alt="Page 1 – Cover spread">
+            <img src="images/graphic_novel/page_1_v2.png" alt="Page 2 – Into the Void">
+            <img src="images/graphic_novel/page_1_v3.png" alt="Page 3">
+            <img src="images/graphic_novel/page_2.png"    alt="Page 4">
+            <img src="images/graphic_novel/page_2_v2.png" alt="Page 5 – First Contact">
+            <img src="images/graphic_novel/page_3.png"    alt="Page 6">
+            <img src="images/graphic_novel/page_3_v2.png" alt="Page 7 – The Discovery">
+            <img src="images/graphic_novel/page_4.png"    alt="Page 8 – Final page">
+        </div>
+
+        <div class="book-toc">
+            <div class="book-chapter" data-page="1">Cover</div>
+            <div class="book-chapter" data-page="2">Chapter 1: Into the Void</div>
+            <div class="book-chapter" data-page="5">Chapter 2: First Contact</div>
+            <div class="book-chapter" data-page="7">Chapter 3: The Discovery</div>
+        </div>
+
+    </div>
+    <!-- =========================================================
+         END GRAPHIC NOVEL BOOK EXAMPLE
+    ========================================================= -->
+
+    <!-- =========================================================
+         GRAPHIC NOVEL BOOK: ECHOES OF TOMORROW
+         (Second example — copy/adapt as needed.)
+    ========================================================= -->
+    <div class="graphic-novel-book" data-book-id="echoes-of-tomorrow">
+
+        <div class="book-title">Echoes of Tomorrow</div>
+
+        <div class="book-description">
+            In a world where time echoes forward and backward, a lone cartographer maps the edges of what was, what is, and what might yet be.
+        </div>
+
+        <div class="book-author">R. Veil</div>
+        <div class="book-year">2025</div>
+        <div class="book-genre">Dystopian Fantasy</div>
+
+        <div class="book-cover">
+            <img src="images/graphic_novel/title_ex_2.png" alt="Echoes of Tomorrow cover">
+        </div>
+
+        <div class="book-pages">
+            <img src="images/graphic_novel/title_ex_3.png"  alt="Page 1 – Title page">
+            <img src="images/graphic_novel/page_1_v4.png"   alt="Page 2 – The Cartographer">
+            <img src="images/graphic_novel/page_1_v5.png"   alt="Page 3">
+            <img src="images/graphic_novel/page_2_v3.png"   alt="Page 4 – The Edge of Maps">
+            <img src="images/graphic_novel/page_3_v3.png"   alt="Page 5 – Final page">
+        </div>
+
+        <div class="book-toc">
+            <div class="book-chapter" data-page="1">Title Page</div>
+            <div class="book-chapter" data-page="2">Chapter 1: The Cartographer</div>
+            <div class="book-chapter" data-page="4">Chapter 2: The Edge of Maps</div>
+        </div>
+
+    </div>
+    <!-- =========================================================
+         END GRAPHIC NOVEL BOOK: ECHOES OF TOMORROW
+    ========================================================= -->
+
+    <!-- ── END BOOK CONFIGURATION HTML ─────────────────────────── -->
+
+    <!--
+    ============================================================
+    GRAPHIC NOVEL / COMIC BOOK VIEWER
+    END
+
+    The viewer modal is built entirely by custom.js and appended
+    to <body> on first initialization, where it persists across
+    page navigations. See the "GRAPHIC NOVEL / COMIC BOOK VIEWER"
+    section in custom.js for the modal structure and all logic.
+    ============================================================
+    -->
+
 </div>

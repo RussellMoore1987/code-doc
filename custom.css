@@ -2,3 +2,1014 @@
 
 /* @versioning */
 /* * update CSS with versioning to prevent caching issues. look for '?v=' in index.html */
+
+/* ============================================================
+   GRAPHIC NOVEL / COMIC BOOK VIEWER
+   BEGIN
+============================================================ */
+
+/* ------------------------------------------------------------
+   Book Configuration — Hidden in Normal Page Layout
+   These divs are pure data-source elements used only by JS.
+------------------------------------------------------------ */
+
+.graphic-novel-book {
+    display: none;
+}
+
+/* ------------------------------------------------------------
+   Gallery Section — inline on custom.html
+------------------------------------------------------------ */
+
+.gn-gallery-section {
+    margin-top: 32px;
+}
+
+.gn-gallery-intro {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 24px;
+}
+
+.gn-gallery-intro p {
+    max-width: 640px;
+    color: var(--text-muted);
+    font-size: 14px;
+}
+
+.gn-open-library-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 20px;
+    background: var(--primary-color);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s, transform 0.1s, box-shadow 0.15s;
+    align-self: flex-start;
+}
+
+.gn-open-library-btn:hover {
+    background: var(--off-primary-color);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(48,158,255,0.3);
+}
+
+.gn-open-library-btn:active {
+    transform: translateY(0);
+}
+
+.gn-open-library-btn:focus-visible {
+    outline: 2px solid var(--border-focus);
+    outline-offset: 3px;
+}
+
+/* ------------------------------------------------------------
+   Page Preview Cards (inline on custom.html, outside modal)
+------------------------------------------------------------ */
+
+.gn-page-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 16px;
+    margin-top: 8px;
+}
+
+.gn-page-card {
+    background: var(--bg-content);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    cursor: pointer;
+    transition: box-shadow 0.18s, transform 0.15s, border-color 0.15s;
+}
+
+.gn-page-card:hover {
+    box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+    transform: translateY(-3px);
+    border-color: var(--primary-color);
+}
+
+.gn-page-card:focus-visible {
+    outline: 2px solid var(--border-focus);
+    outline-offset: 2px;
+}
+
+.gn-page-card-cover {
+    aspect-ratio: 2 / 3;
+    background: var(--bg-code);
+    overflow: hidden;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.gn-page-card-cover img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.gn-page-card-cover-placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    color: var(--text-muted);
+}
+
+.gn-page-card-body {
+    padding: 10px 12px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    flex: 1;
+}
+
+.gn-page-card-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text-base);
+    line-height: 1.3;
+}
+
+.gn-page-card-meta {
+    font-size: 11px;
+    color: var(--text-muted);
+}
+
+.gn-page-card-progress-bar-bg {
+    height: 3px;
+    background: var(--border);
+    border-radius: 2px;
+    overflow: hidden;
+    margin-top: 6px;
+}
+
+.gn-page-card-progress-fill {
+    height: 100%;
+    background: var(--primary-color);
+    border-radius: 2px;
+    transition: width 0.3s;
+}
+
+.gn-page-card-progress-label {
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-top: 2px;
+}
+
+.gn-page-card-open-btn {
+    margin: 4px 0 0;
+    padding: 7px 10px;
+    background: var(--bg-hover);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-base);
+    cursor: pointer;
+    text-align: center;
+    transition: background 0.14s, color 0.14s, border-color 0.14s;
+}
+
+.gn-page-card-open-btn:hover {
+    background: var(--primary-color);
+    color: #fff;
+    border-color: var(--primary-color);
+}
+
+.gn-page-card-open-btn:focus-visible {
+    outline: 2px solid var(--border-focus);
+    outline-offset: 2px;
+}
+
+/* ------------------------------------------------------------
+   Modal Overlay — Full-screen, fixed position
+   (appended to <body> by custom.js)
+------------------------------------------------------------ */
+
+.gn-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 5000;
+    background: rgba(0, 0, 0, 0.88);
+    display: flex;
+    flex-direction: column;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease;
+}
+
+.gn-overlay.gn-overlay--open {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .gn-overlay {
+        transition: none;
+    }
+}
+
+/* Inner modal panel */
+.gn-modal {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background: var(--bg-content);
+}
+
+/* ------------------------------------------------------------
+   Modal Top Bar (shared by library and reader views)
+------------------------------------------------------------ */
+
+.gn-modal-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 10px 6px 12px;
+    background: var(--bg-header);
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+    min-height: 48px;
+    z-index: 1;
+}
+
+.gn-modal-bar-left {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex: 1;
+    min-width: 0;
+}
+
+.gn-bar-book-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-base);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    min-width: 0;
+}
+
+/* ------------------------------------------------------------
+   Shared Button Styles
+------------------------------------------------------------ */
+
+/* Text button (Library back, Open Book, etc.) */
+.gn-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    background: none;
+    color: var(--text-base);
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.14s, color 0.14s, border-color 0.14s;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.gn-btn:hover {
+    background: var(--bg-hover);
+}
+
+.gn-btn:focus-visible {
+    outline: 2px solid var(--border-focus);
+    outline-offset: 2px;
+}
+
+/* Icon-only button (toolbar controls) */
+.gn-icon-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 6px;
+    border: none;
+    background: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: background 0.14s, color 0.14s;
+    flex-shrink: 0;
+    padding: 0;
+}
+
+.gn-icon-btn:hover {
+    background: var(--bg-hover);
+    color: var(--text-base);
+}
+
+.gn-icon-btn:focus-visible {
+    outline: 2px solid var(--border-focus);
+    outline-offset: 2px;
+}
+
+.gn-icon-btn[aria-pressed="true"],
+.gn-icon-btn.gn-icon-btn--active {
+    background: var(--bg-active);
+    color: var(--primary-color);
+}
+
+.gn-icon-btn:disabled {
+    opacity: 0.32;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+/* Modal close button — always visible in top-right */
+.gn-modal-close {
+    width: 36px;
+    height: 36px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    border: none;
+    background: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: background 0.14s, color 0.14s;
+    flex-shrink: 0;
+    margin-left: auto;
+}
+
+.gn-modal-close:hover {
+    background: var(--bg-hover);
+    color: var(--text-base);
+}
+
+.gn-modal-close:focus-visible {
+    outline: 2px solid var(--border-focus);
+    outline-offset: 2px;
+}
+
+/* ------------------------------------------------------------
+   Library View
+------------------------------------------------------------ */
+
+.gn-library {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    overflow: hidden;
+    background: var(--bg-body);
+}
+
+.gn-library-header {
+    padding: 20px 24px 12px;
+    flex-shrink: 0;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg-content);
+}
+
+.gn-library-header h3 {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--text-base);
+    margin: 0 0 4px;
+}
+
+.gn-library-header p {
+    font-size: 13px;
+    color: var(--text-muted);
+    margin: 0;
+}
+
+.gn-book-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 20px;
+    padding: 20px 24px 28px;
+    overflow-y: auto;
+    flex: 1;
+}
+
+/* Book card */
+.gn-book-card {
+    background: var(--bg-content);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    transition: box-shadow 0.2s, transform 0.15s, border-color 0.15s;
+    position: relative;
+}
+
+.gn-book-card:hover {
+    box-shadow: 0 8px 28px rgba(0,0,0,0.18);
+    transform: translateY(-4px);
+    border-color: var(--primary-color);
+}
+
+/* Progress badge */
+.gn-book-card-badge {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    padding: 3px 8px;
+    border-radius: 20px;
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    z-index: 1;
+    backdrop-filter: blur(4px);
+}
+
+/* Dark theme (default) badge colors — opaque bg for reliable contrast */
+.gn-book-card-badge--new {
+    background: #162b3e;
+    color: #60b4ff;
+    border: 1px solid #1e4068;
+}
+
+.gn-book-card-badge--progress {
+    background: #2d1e00;
+    color: #f0b060;
+    border: 1px solid #4a3000;
+}
+
+.gn-book-card-badge--done {
+    background: #052614;
+    color: #4dcfa0;
+    border: 1px solid #0a4027;
+}
+
+/* Light theme badge color overrides */
+[data-theme="light"] .gn-book-card-badge--new {
+    background: #dbeafe;
+    color: #1d4ed8;
+    border-color: #bfdbfe;
+}
+
+[data-theme="light"] .gn-book-card-badge--progress {
+    background: #fef3c7;
+    color: #92400e;
+    border-color: #fde68a;
+}
+
+[data-theme="light"] .gn-book-card-badge--done {
+    background: #d1fae5;
+    color: #065f46;
+    border-color: #a7f3d0;
+}
+
+.gn-book-card-cover {
+    aspect-ratio: 2 / 3;
+    background: var(--bg-code);
+    overflow: hidden;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    max-height: 280px;
+}
+
+.gn-book-card-cover img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    transition: transform 0.3s;
+}
+
+.gn-book-card:hover .gn-book-card-cover img {
+    transform: scale(1.04);
+}
+
+.gn-book-card-body {
+    padding: 12px 14px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    flex: 1;
+}
+
+.gn-book-card-title {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text-base);
+    line-height: 1.3;
+    margin: 0;
+}
+
+.gn-book-card-meta-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+}
+
+.gn-book-card-genre {
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--primary-color);
+    background: var(--accent-light);
+    padding: 2px 7px;
+    border-radius: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.gn-book-card-author {
+    font-size: 12px;
+    color: var(--text-muted);
+}
+
+.gn-book-card-desc {
+    font-size: 13px;
+    color: var(--text-muted);
+    line-height: 1.5;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    margin: 0;
+    flex: 1;
+}
+
+.gn-book-card-info-row {
+    display: flex;
+    gap: 12px;
+    font-size: 12px;
+    color: var(--text-muted);
+}
+
+.gn-book-card-progress-wrap {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+
+.gn-book-card-progress-bg {
+    height: 4px;
+    background: var(--border);
+    border-radius: 2px;
+    overflow: hidden;
+}
+
+.gn-book-card-progress-fill {
+    height: 100%;
+    background: var(--primary-color);
+    border-radius: 2px;
+    transition: width 0.3s;
+    min-width: 0;
+}
+
+.gn-book-card-progress-label {
+    font-size: 11px;
+    color: var(--text-muted);
+}
+
+.gn-book-card-open {
+    margin-top: auto;
+    padding: 9px 14px;
+    background: var(--primary-color);
+    color: #fff;
+    border: none;
+    border-radius: 7px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.14s, transform 0.1s;
+    text-align: center;
+}
+
+.gn-book-card-open:hover {
+    background: var(--off-primary-color);
+    transform: translateY(-1px);
+}
+
+.gn-book-card-open:focus-visible {
+    outline: 2px solid var(--border-focus);
+    outline-offset: 2px;
+}
+
+/* ------------------------------------------------------------
+   Reader View — Dark cinema-style reading area
+------------------------------------------------------------ */
+
+.gn-reader {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    overflow: hidden;
+    background: #0d1117;
+    color: #e6edf3;
+}
+
+/* Reader toolbar */
+.gn-reader-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    padding: 4px 8px;
+    background: #161b22;
+    border-bottom: 1px solid #30363d;
+    flex-shrink: 0;
+    min-height: 44px;
+    flex-wrap: wrap;
+}
+
+/* Override icon button colors inside the dark toolbar */
+.gn-reader-toolbar .gn-icon-btn {
+    color: #8b949e;
+}
+
+.gn-reader-toolbar .gn-icon-btn:hover {
+    background: #252b33;
+    color: #e6edf3;
+}
+
+.gn-reader-toolbar .gn-icon-btn[aria-pressed="true"],
+.gn-reader-toolbar .gn-icon-btn.gn-icon-btn--active {
+    background: #1b334a;
+    color: #58a6ff;
+}
+
+.gn-reader-toolbar .gn-icon-btn:disabled {
+    opacity: 0.28;
+}
+
+.gn-toolbar-group {
+    display: flex;
+    align-items: center;
+    gap: 1px;
+    flex-shrink: 0;
+}
+
+.gn-toolbar-sep {
+    width: 1px;
+    height: 20px;
+    background: #30363d;
+    margin: 0 5px;
+    flex-shrink: 0;
+    align-self: center;
+}
+
+/* Page counter widget */
+.gn-page-counter {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 0 2px;
+    font-size: 12px;
+    color: #8b949e;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.gn-page-input {
+    width: 40px;
+    padding: 3px 5px;
+    background: #21262d;
+    border: 1px solid #30363d;
+    border-radius: 4px;
+    color: #e6edf3;
+    font-size: 12px;
+    font-family: inherit;
+    text-align: center;
+    -moz-appearance: textfield;
+}
+
+.gn-page-input::-webkit-inner-spin-button,
+.gn-page-input::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+.gn-page-input:focus {
+    outline: none;
+    border-color: #309eff;
+}
+
+.gn-zoom-display {
+    font-size: 11px;
+    color: #8b949e;
+    padding: 0 4px;
+    min-width: 36px;
+    text-align: center;
+    white-space: nowrap;
+}
+
+/* ------------------------------------------------------------
+   Reader Body — Stage + optional TOC panel
+------------------------------------------------------------ */
+
+.gn-reader-body {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+    position: relative;
+}
+
+/* Stage — where pages live */
+.gn-stage {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    padding: 16px;
+    position: relative;
+    min-width: 0;
+}
+
+/* In scroll/detail mode the stage becomes scrollable */
+.gn-stage--scroll {
+    overflow: auto;
+    align-items: flex-start;
+    justify-content: flex-start;
+    padding: 20px 24px;
+}
+
+/* Pages wrapper (holds 1, 2, or 3 page frames) */
+.gn-pages-wrap {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    width: 100%;
+    height: 100%;
+    position: relative;
+    transition: opacity 0.12s ease;
+}
+
+.gn-pages-wrap.gn-page-transition {
+    opacity: 0;
+}
+
+/* Scroll mode: vertical stack */
+.gn-pages-wrap--scroll {
+    flex-direction: column;
+    height: auto;
+    align-items: center;
+    gap: 16px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .gn-pages-wrap {
+        transition: none;
+    }
+}
+
+/* Individual page frame */
+.gn-page-frame {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex: 1;
+    height: 100%;
+    min-width: 0;
+    min-height: 0;
+    position: relative;
+}
+
+.gn-pages-wrap--scroll .gn-page-frame {
+    width: 100%;
+    flex: none;
+    height: auto;
+}
+
+/* Page image */
+.gn-page-img {
+    max-width: 100%;
+    max-height: 100%;
+    width: auto;
+    height: auto;
+    object-fit: contain;
+    display: block;
+    border-radius: 2px;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.55), 0 1px 4px rgba(0,0,0,0.35);
+    transition: opacity 0.18s ease;
+    image-rendering: auto;
+    user-select: none;
+}
+
+.gn-page-img.gn-img-loading {
+    opacity: 0;
+}
+
+/* Scroll mode: width driven by zoom, height auto */
+.gn-pages-wrap--scroll .gn-page-img {
+    max-width: none;
+    max-height: none;
+    width: var(--gn-zoom-w, 100%);
+    height: auto;
+    margin: 0 auto;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .gn-page-img {
+        transition: none;
+    }
+}
+
+/* Loading / error placeholder */
+.gn-page-placeholder {
+    aspect-ratio: 2 / 3;
+    width: 100%;
+    max-width: 320px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    background: #161b22;
+    border: 1px dashed #30363d;
+    border-radius: 4px;
+    color: #8b949e;
+    font-size: 13px;
+    text-align: center;
+    padding: 20px;
+}
+
+.gn-page-spinner {
+    width: 26px;
+    height: 26px;
+    border: 2px solid #30363d;
+    border-top-color: #309eff;
+    border-radius: 50%;
+    animation: gn-spin 0.65s linear infinite;
+}
+
+@keyframes gn-spin {
+    to { transform: rotate(360deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .gn-page-spinner {
+        animation: none;
+        border-top-color: #309eff;
+    }
+}
+
+/* ------------------------------------------------------------
+   Table of Contents Panel
+------------------------------------------------------------ */
+
+.gn-toc-panel {
+    width: 260px;
+    min-width: 0;
+    background: #13161c;
+    border-left: 1px solid #30363d;
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0;
+    overflow: hidden;
+    transition: width 0.2s ease;
+}
+
+.gn-toc-panel[hidden] {
+    display: none;
+}
+
+.gn-toc-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 11px 14px;
+    border-bottom: 1px solid #30363d;
+    flex-shrink: 0;
+}
+
+.gn-toc-header-title {
+    font-size: 12px;
+    font-weight: 600;
+    color: #cdd9e5;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+}
+
+/* TOC close button */
+.gn-toc-panel .gn-icon-btn {
+    color: #8b949e;
+    width: 28px;
+    height: 28px;
+}
+
+.gn-toc-panel .gn-icon-btn:hover {
+    background: #21242a;
+    color: #e6edf3;
+}
+
+.gn-toc-list {
+    overflow-y: auto;
+    flex: 1;
+    padding: 6px 0;
+    list-style: none;
+    margin: 0;
+}
+
+.gn-toc-item {
+    display: block;
+    width: 100%;
+    padding: 9px 16px;
+    text-align: left;
+    background: none;
+    border: none;
+    border-left: 3px solid transparent;
+    font-size: 13px;
+    color: #8b949e;
+    cursor: pointer;
+    transition: background 0.12s, color 0.12s, border-left-color 0.12s;
+    line-height: 1.4;
+    overflow-wrap: break-word;
+}
+
+.gn-toc-item:hover {
+    background: #1e2436;
+    color: #cdd9e5;
+}
+
+.gn-toc-item:focus-visible {
+    outline: 2px solid #309eff;
+    outline-offset: -2px;
+}
+
+.gn-toc-item--active {
+    background: #1e2d5a;
+    color: #79b8ff;
+    border-left-color: #309eff;
+}
+
+.gn-toc-page-num {
+    display: block;
+    font-size: 11px;
+    color: #6e7681;
+    margin-top: 2px;
+}
+
+/* ------------------------------------------------------------
+   Utility
+------------------------------------------------------------ */
+
+.gn-hidden {
+    display: none !important;
+}
+
+/* Mobile TOC overlay (slides from right over the stage) */
+@media (max-width: 640px) {
+    .gn-toc-panel {
+        position: absolute;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        width: 80%;
+        max-width: 280px;
+        z-index: 10;
+        box-shadow: -4px 0 16px rgba(0,0,0,0.4);
+    }
+
+    .gn-book-grid {
+        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+        gap: 14px;
+        padding: 14px 16px 20px;
+    }
+
+    .gn-library-header {
+        padding: 14px 16px 10px;
+    }
+}
+
+/* On very small screens hide triple-page view button */
+@media (max-width: 480px) {
+    .gn-view-btn-triple {
+        display: none;
+    }
+    .gn-page-cards {
+        grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    }
+}
+
+/* Fullscreen reading — hide non-essential chrome */
+.gn-overlay.gn-fullscreen .gn-modal-bar {
+    display: none;
+}
+
+/* ============================================================
+   GRAPHIC NOVEL / COMIC BOOK VIEWER
+   END
+============================================================ */
