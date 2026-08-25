@@ -1008,6 +1008,21 @@ function gnRenderInlineCards() {
     });
 }
 
+/** Wires any element with data-gn-open="book-id" to open that book on click. */
+function gnWireOpenLinks() {
+    document.querySelectorAll('[data-gn-open]').forEach((el) => {
+        const bookId = el.dataset.gnOpen;
+        if (!gn.books.find((b) => b.id === bookId)) return;
+        // Clone to drop any listener attached during a previous navigation
+        const fresh = el.cloneNode(true);
+        el.replaceWith(fresh);
+        fresh.addEventListener('click', () => {
+            gnOpenBook(bookId);
+            gnOpenModal();
+        });
+    });
+}
+
 function gnBuildPreviewCard(book) {
     const progress = gnLoadProgress(book.id);
     const total    = book.pages.length;
@@ -1247,6 +1262,7 @@ function gnSetup() {
     // Render preview cards on the page
     gnRenderPageCards();
     gnRenderInlineCards();
+    gnWireOpenLinks();
 
     // Wire the "Open Library" button
     const openBtn = document.getElementById('gn-open-library-btn');
