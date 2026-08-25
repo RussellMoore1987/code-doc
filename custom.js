@@ -1328,6 +1328,11 @@ function gnInit() {
     });
 
     observer.observe(contentBody, { childList: true });
+
+    // Close the modal when the browser navigates back/forward
+    window.addEventListener('popstate', () => {
+        if (gn.isOpen) gnCloseModal();
+    });
 }
 
 // Boot
