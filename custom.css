@@ -488,7 +488,6 @@ ul.gn-page-cards {
     display: flex;
     align-items: center;
     justify-content: center;
-    max-height: 280px;
 }
 
 .gn-book-card-cover img {
@@ -496,11 +495,6 @@ ul.gn-page-cards {
     height: 100%;
     object-fit: cover;
     display: block;
-    transition: transform 0.3s;
-}
-
-.gn-book-card:hover .gn-book-card-cover img {
-    transform: scale(1.04);
 }
 
 .gn-book-card-body {
