@@ -526,7 +526,17 @@ function gnBuildLibraryCard(book) {
       </div>
     `;
 
-    card.querySelector('.gn-book-card-open').addEventListener('click', () => gnOpenBook(book.id));
+    card.querySelector('.gn-book-card-open').addEventListener('click', (e) => {
+        e.stopPropagation();
+        // "Read Again" resets progress so the book reopens from page 1
+        if (openLabel === 'Read Again') {
+            try { localStorage.removeItem(GN_LS_KEY(book.id)); } catch { /* silent */ }
+            gnRenderLibrary();
+            gnRenderPageCards();
+            gnRenderInlineCards();
+        }
+        gnOpenBook(book.id);
+    });
     card.querySelector('.gn-book-card-cover').addEventListener('click', () => gnOpenBook(book.id));
 
     li.appendChild(card);
@@ -1070,6 +1080,12 @@ function gnBuildPreviewCard(book) {
 
     card.querySelector('.gn-page-card-open-btn').addEventListener('click', (e) => {
         e.stopPropagation();
+        // "Read Again" resets progress so the book reopens from page 1
+        if (openLabel === 'Read Again') {
+            try { localStorage.removeItem(GN_LS_KEY(book.id)); } catch { /* silent */ }
+            gnRenderPageCards();
+            gnRenderInlineCards();
+        }
         gnOpenBook(book.id);
         gnOpenModal();
     });
