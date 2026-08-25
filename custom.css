@@ -80,6 +80,10 @@
     margin-top: 8px;
 }
 
+ul.gn-page-cards {
+    margin: 0;
+}
+
 .gn-page-card {
     background: var(--bg-content);
     border: 1px solid var(--border);

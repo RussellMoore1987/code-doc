@@ -997,6 +997,17 @@ function gnRenderPageCards() {
     });
 }
 
+/** Renders a single card into any element with data-gn-card="book-id". */
+function gnRenderInlineCards() {
+    document.querySelectorAll('[data-gn-card]').forEach((el) => {
+        const book = gn.books.find((b) => b.id === el.dataset.gnCard);
+        if (!book) return;
+        el.innerHTML = '';
+        // Reuse gnBuildPreviewCard and unwrap the <article> from its <li>
+        el.appendChild(gnBuildPreviewCard(book).firstElementChild);
+    });
+}
+
 function gnBuildPreviewCard(book) {
     const progress = gnLoadProgress(book.id);
     const total    = book.pages.length;
@@ -1235,6 +1246,7 @@ function gnSetup() {
 
     // Render preview cards on the page
     gnRenderPageCards();
+    gnRenderInlineCards();
 
     // Wire the "Open Library" button
     const openBtn = document.getElementById('gn-open-library-btn');
