@@ -1028,8 +1028,19 @@ function gnBuildPreviewCard(book) {
     const total    = book.pages.length;
     const lastPage = progress ? progress.lastPage : 0;
     const pct      = total > 1 ? Math.round((lastPage / (total - 1)) * 100) : 0;
-    const hasProgress = !!progress;
-    const openLabel = hasProgress && lastPage > 0 ? 'Continue' : 'Open';
+
+    let badgeClass = 'gn-book-card-badge--new';
+    let badgeLabel = 'New';
+    let openLabel  = 'Open Book';
+    if (progress && lastPage > 0 && lastPage < total - 1) {
+        badgeClass = 'gn-book-card-badge--progress';
+        badgeLabel = 'In Progress';
+        openLabel  = 'Continue Reading';
+    } else if (progress && lastPage >= total - 1 && total > 1) {
+        badgeClass = 'gn-book-card-badge--done';
+        badgeLabel = 'Completed';
+        openLabel  = 'Read Again';
+    }
 
     const li = document.createElement('li');
     li.style.listStyle = 'none';
@@ -1037,7 +1048,7 @@ function gnBuildPreviewCard(book) {
     const card = document.createElement('article');
     card.className = 'gn-page-card';
 
-    const progressHtml = hasProgress
+    const progressHtml = progress
         ? `<div class="gn-page-card-progress-bar-bg">
              <div class="gn-page-card-progress-fill" style="width:${pct}%"></div>
            </div>
@@ -1046,6 +1057,7 @@ function gnBuildPreviewCard(book) {
 
     card.innerHTML = `
       <div class="gn-page-card-cover">
+        <span class="gn-book-card-badge ${badgeClass}">${badgeLabel}</span>
         <img src="${gnEscHtml(book.coverSrc)}" alt="${gnEscHtml(book.coverAlt)}" loading="lazy">
       </div>
       <div class="gn-page-card-body">
