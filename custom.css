@@ -74,9 +74,11 @@
 ------------------------------------------------------------ */
 
 .gn-page-cards {
+    --gn-page-cols: 4;
+    --gn-page-gap: 16px;
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-    gap: 16px;
+    grid-template-columns: repeat(var(--gn-page-cols), minmax(0, 1fr));
+    gap: var(--gn-page-gap);
     margin-top: 8px;
 }
 
@@ -379,6 +381,8 @@ ul.gn-page-cards {
     flex: 1;
     overflow: hidden;
     background: var(--bg-body);
+    container-type: inline-size;
+    container-name: gn-library;
 }
 
 .gn-library-header {
@@ -402,9 +406,11 @@ ul.gn-page-cards {
 }
 
 .gn-book-grid {
+    --gn-book-cols: 3;
+    --gn-book-gap: 20px;
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 20px;
+    grid-template-columns: repeat(var(--gn-book-cols), minmax(0, 1fr));
+    gap: var(--gn-book-gap);
     padding: 20px 24px 28px;
     overflow-y: auto;
     flex: 1;
@@ -984,8 +990,8 @@ ul.gn-page-cards {
     }
 
     .gn-book-grid {
-        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-        gap: 14px;
+        --gn-book-cols: 2;
+        --gn-book-gap: 14px;
         padding: 14px 16px 20px;
     }
 
@@ -999,14 +1005,36 @@ ul.gn-page-cards {
     .gn-view-btn-triple {
         display: none;
     }
-    .gn-page-cards {
-        grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-    }
 }
 
 /* Fullscreen reading — hide non-essential chrome */
 .gn-overlay.gn-fullscreen .gn-modal-bar {
     display: none;
+}
+
+/* ------------------------------------------------------------
+   Book Grid — container queries (mirrors image gallery pattern)
+   Page cards use @container content-body; library uses @container gn-library.
+------------------------------------------------------------ */
+
+@container content-body (max-width: 920px) {
+    .gn-page-cards { --gn-page-cols: 3; }
+}
+
+@container content-body (max-width: 600px) {
+    .gn-page-cards { --gn-page-cols: 2; --gn-page-gap: 12px; }
+}
+
+@container content-body (max-width: 380px) {
+    .gn-page-cards { --gn-page-cols: 1; }
+}
+
+@container gn-library (max-width: 680px) {
+    .gn-book-grid { --gn-book-cols: 2; }
+}
+
+@container gn-library (max-width: 440px) {
+    .gn-book-grid { --gn-book-cols: 1; --gn-book-gap: 14px; }
 }
 
 /* ============================================================
