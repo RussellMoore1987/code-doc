@@ -531,9 +531,7 @@ function gnBuildLibraryCard(book) {
         // "Read Again" resets progress so the book reopens from page 1
         if (openLabel === 'Read Again') {
             try { localStorage.removeItem(GN_LS_KEY(book.id)); } catch { /* silent */ }
-            gnRenderLibrary();
-            gnRenderPageCards();
-            gnRenderInlineCards();
+            gnRefreshAllCards();
         }
         gnOpenBook(book.id);
     });
@@ -923,8 +921,14 @@ function gnSaveProgress() {
     } catch {
         // localStorage unavailable — silent fail
     }
-    // Update the page-level preview cards to reflect new progress
+    // Update all card surfaces to reflect new progress
+    gnRefreshAllCards();
+}
+
+function gnRefreshAllCards() {
     gnRenderPageCards();
+    gnRenderInlineCards();
+    gnRenderLibrary();
 }
 
 function gnGetBookmark() {
@@ -1083,8 +1087,7 @@ function gnBuildPreviewCard(book) {
         // "Read Again" resets progress so the book reopens from page 1
         if (openLabel === 'Read Again') {
             try { localStorage.removeItem(GN_LS_KEY(book.id)); } catch { /* silent */ }
-            gnRenderPageCards();
-            gnRenderInlineCards();
+            gnRefreshAllCards();
         }
         gnOpenBook(book.id);
         gnOpenModal();
