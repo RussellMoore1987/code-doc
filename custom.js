@@ -37,6 +37,7 @@ const gn = {
     zoom:         1.0,
     tocOpen:      false,
     lastFocused:  null,
+    _scrollTracker: null,
     // DOM refs (populated after modal is built)
     modal:        null,
     refs:         {},
@@ -596,6 +597,12 @@ function gnRenderPage() {
     wrap.classList.add('gn-page-transition');
 
     setTimeout(() => {
+        // Remove any previous scroll tracker
+        if (gn._scrollTracker) {
+            r.stage.removeEventListener('scroll', gn._scrollTracker);
+            gn._scrollTracker = null;
+        }
+
         wrap.innerHTML = '';
         const stage   = r.stage;
         const total   = book.pages.length;
@@ -609,6 +616,33 @@ function gnRenderPage() {
             book.pages.forEach((page, i) => {
                 wrap.appendChild(gnBuildPageFrame(page, i, book));
             });
+
+            // Update page counter as user scrolls
+            let ticking = false;
+            gn._scrollTracker = () => {
+                if (ticking) return;
+                ticking = true;
+                requestAnimationFrame(() => {
+                    ticking = false;
+                    const frames = wrap.children;
+                    if (!frames.length) return;
+                    const stageRect = stage.getBoundingClientRect();
+                    let bestIndex = gn.currentPage;
+                    let bestVisible = -1;
+                    for (let i = 0; i < frames.length; i++) {
+                        const rect = frames[i].getBoundingClientRect();
+                        const visible = Math.max(0, Math.min(rect.bottom, stageRect.bottom) - Math.max(rect.top, stageRect.top));
+                        if (visible > bestVisible) { bestVisible = visible; bestIndex = i; }
+                    }
+                    if (bestIndex !== gn.currentPage) {
+                        gn.currentPage = bestIndex;
+                        gnUpdateNavUI();
+                        gnUpdateTocHighlight();
+                    }
+                });
+            };
+            stage.addEventListener('scroll', gn._scrollTracker, { passive: true });
+
             // Scroll to current page
             setTimeout(() => {
                 const target = wrap.children[gn.currentPage];
