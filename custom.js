@@ -171,7 +171,7 @@ function gnBuildModal() {
               </button>
 
               <div class="gn-page-counter" aria-live="polite" aria-atomic="true">
-                <input type="number" class="gn-page-input" id="gn-page-input"
+                <input type="text" class="gn-page-input" id="gn-page-input"
                        min="1" aria-label="Go to page" title="Go to page"/>
                 <span>&nbsp;/&nbsp;</span>
                 <span id="gn-total-pages">0</span>
@@ -806,12 +806,13 @@ function gnUpdateNavUI() {
     r.nextBtn.disabled  = atEnd;
     r.lastBtn.disabled  = atEnd;
 
-    // Page input: show 1-indexed
-    r.pageInput.value = cur + 1;
+    // Page input: show 1-indexed; show spread range in multi-page modes
+    const displayEnd = Math.min(cur + step - 1, total - 1);
+    r.pageInput.value = (step > 1 && displayEnd > cur)
+        ? `${cur + 1}–${displayEnd + 1}`
+        : cur + 1;
     r.pageInput.max   = total;
 
-    // Page label: show range for multi-page modes
-    const displayEnd = Math.min(cur + step - 1, total - 1);
     r.totalPages.textContent = total;
 
     if (step > 1 && displayEnd > cur) {
