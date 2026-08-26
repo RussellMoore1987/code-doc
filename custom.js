@@ -37,7 +37,10 @@ const gn = {
     zoom:         1.0,
     tocOpen:      false,
     lastFocused:  null,
-    _scrollTracker: null,
+    _scrollTracker:  null,
+    magnifyOn:       false,
+    _magnifierMove:  null,
+    _magnifierLeave: null,
     // DOM refs (populated after modal is built)
     modal:        null,
     refs:         {},
@@ -325,7 +328,7 @@ function gnBuildModal() {
           </div><!-- end .gn-reader-toolbar -->
 
           <!-- Reader body: stage + optional TOC -->
-          <div class="gn-reader-body">
+          <div class="gn-reader-body" id="gn-reader-body">
 
             <div class="gn-stage" id="gn-stage">
               <div class="gn-pages-wrap" id="gn-pages-wrap"></div>
@@ -401,6 +404,7 @@ function gnCacheRefs() {
         // Stage
         stage:         q('gn-stage'),
         pagesWrap:     q('gn-pages-wrap'),
+        readerBody:    q('gn-reader-body'),
         // TOC
         tocPanel:      q('gn-toc-panel'),
         tocClose:      q('gn-toc-close'),
@@ -432,6 +436,8 @@ function gnCloseModal() {
     }
     gn.modal.classList.remove('gn-fullscreen');
     document.removeEventListener('keydown', gnHandleKeydown);
+    // Turn off magnifier loupe
+    if (gn.magnifyOn) { gn.magnifyOn = false; gnDetachMagnifier(); gn.refs.magnify?.classList.remove('gn-icon-btn--active'); }
     if (gn.lastFocused && typeof gn.lastFocused.focus === 'function') {
         gn.lastFocused.focus();
     }
@@ -453,6 +459,8 @@ function gnShowLibrary() {
     r.barTitle.textContent = '';
     // Close TOC if open
     if (gn.tocOpen) gnToggleToc();
+    // Turn off magnifier loupe
+    if (gn.magnifyOn) { gn.magnifyOn = false; gnDetachMagnifier(); gn.refs.magnify?.classList.remove('gn-icon-btn--active'); gn.refs.magnify?.setAttribute('aria-pressed', 'false'); }
     gnRenderLibrary();
 }
 
@@ -871,11 +879,69 @@ function gnUpdateZoomUI() {
 
 /** Magnify: enter scroll mode centered on the current page. */
 function gnMagnify() {
-    if (gn.viewMode !== 'scroll') {
-        gnSetViewMode('scroll');
-    } else {
-        gnZoomIn();
+    gn.magnifyOn = !gn.magnifyOn;
+    const btn = gn.refs.magnify;
+    btn.setAttribute('aria-pressed', gn.magnifyOn ? 'true' : 'false');
+    btn.classList.toggle('gn-icon-btn--active', gn.magnifyOn);
+    if (gn.magnifyOn) { gnAttachMagnifier(); } else { gnDetachMagnifier(); }
+}
+
+function gnAttachMagnifier() {
+    const body = gn.refs.readerBody;
+    body.classList.add('gn-magnify-active');
+    let glass = document.getElementById('gn-magnifier-glass');
+    if (!glass) {
+        glass = document.createElement('div');
+        glass.id = 'gn-magnifier-glass';
+        glass.setAttribute('aria-hidden', 'true');
+        document.body.appendChild(glass);
     }
+    glass.style.display = 'none';
+    gn._magnifierMove  = (e) => gnOnMagnifierMove(e, glass);
+    gn._magnifierLeave = ()  => { glass.style.display = 'none'; };
+    body.addEventListener('mousemove',  gn._magnifierMove);
+    body.addEventListener('mouseleave', gn._magnifierLeave);
+}
+
+function gnDetachMagnifier() {
+    const body = gn.refs.readerBody;
+    if (!body) return;
+    body.classList.remove('gn-magnify-active');
+    if (gn._magnifierMove)  { body.removeEventListener('mousemove',  gn._magnifierMove);  gn._magnifierMove  = null; }
+    if (gn._magnifierLeave) { body.removeEventListener('mouseleave', gn._magnifierLeave); gn._magnifierLeave = null; }
+    const glass = document.getElementById('gn-magnifier-glass');
+    if (glass) glass.style.display = 'none';
+}
+
+function gnOnMagnifierMove(e, glass) {
+    const el  = document.elementFromPoint(e.clientX, e.clientY);
+    const img = el && (el.tagName === 'IMG' ? el : el.closest('.gn-page-frame')?.querySelector('img.gn-page-img'));
+    if (!img || !img.complete || !img.naturalWidth) { glass.style.display = 'none'; return; }
+
+    const ZOOM    = 2.5;
+    const GLASS_W = 260;
+    const GLASS_H = 260;
+    const GAP     = 16;
+
+    const rect = img.getBoundingClientRect();
+    const relX = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+    const relY = Math.max(0, Math.min(1, (e.clientY - rect.top)  / rect.height));
+    const bgW  = rect.width  * ZOOM;
+    const bgH  = rect.height * ZOOM;
+    const bgPX = relX * bgW - GLASS_W / 2;
+    const bgPY = relY * bgH - GLASS_H / 2;
+
+    // Place on the side with the most horizontal room
+    const spaceRight = window.innerWidth - e.clientX - GAP;
+    const left = spaceRight >= GLASS_W ? e.clientX + GAP : e.clientX - GLASS_W - GAP;
+    const top  = Math.max(8, Math.min(window.innerHeight - GLASS_H - 8, e.clientY - GLASS_H / 2));
+
+    glass.style.display          = 'block';
+    glass.style.left             = left + 'px';
+    glass.style.top              = top  + 'px';
+    glass.style.backgroundImage  = `url('${img.src}')`;
+    glass.style.backgroundSize   = `${bgW}px ${bgH}px`;
+    glass.style.backgroundPosition = `-${bgPX}px -${bgPY}px`;
 }
 
 // ------------------------------------------------------------
