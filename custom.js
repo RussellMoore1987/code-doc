@@ -41,6 +41,7 @@ const gn = {
     magnifyOn:       false,
     _magnifierMove:  null,
     _magnifierLeave: null,
+    _bmHideTimer:    null,
     // DOM refs (populated after modal is built)
     modal:        null,
     refs:         {},
@@ -294,14 +295,17 @@ function gnBuildModal() {
                   <line x1="8" y1="11" x2="14" y2="11"/>
                 </svg>
               </button>
-              <button class="gn-icon-btn" id="gn-bookmark"
-                      aria-label="Bookmark this page" aria-pressed="false"
-                      data-tooltip="Bookmark (B)" title="Bookmark">
-                <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" fill="none"
-                     stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
-                </svg>
-              </button>
+              <div class="gn-bookmark-wrap" id="gn-bookmark-wrap">
+                <button class="gn-icon-btn" id="gn-bookmark"
+                        aria-label="Bookmark this page" aria-pressed="false"
+                        data-tooltip="Bookmark (B)" title="Bookmark">
+                  <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" fill="none"
+                       stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
+                  </svg>
+                </button>
+                <div class="gn-bookmark-dropdown" id="gn-bookmark-dropdown" hidden></div>
+              </div>
               <button class="gn-icon-btn" id="gn-toc-toggle"
                       aria-label="Table of contents" aria-pressed="false"
                       data-tooltip="Table of Contents (T)" title="Table of contents">
@@ -398,7 +402,9 @@ function gnCacheRefs() {
         zoomDisplay:   q('gn-zoom-display'),
         // Actions
         magnify:       q('gn-magnify'),
-        bookmark:      q('gn-bookmark'),
+        bookmark:         q('gn-bookmark'),
+        bookmarkWrap:     q('gn-bookmark-wrap'),
+        bookmarkDropdown: q('gn-bookmark-dropdown'),
         tocToggle:     q('gn-toc-toggle'),
         fullscreen:    q('gn-fullscreen'),
         // Stage
@@ -650,6 +656,7 @@ function gnRenderPage() {
                     if (bestIndex !== gn.currentPage) {
                         gn.currentPage = bestIndex;
                         gnUpdateNavUI();
+                        gnUpdateBookmarkUI();
                         gnUpdateTocHighlight();
                     }
                 });
@@ -739,6 +746,7 @@ function gnGoToPage(n) {
     gn.currentPage = n;
     gnRenderPage();
     gnUpdateNavUI();
+    gnUpdateBookmarkUI();
     gnSaveProgress();
 }
 
@@ -1021,10 +1029,10 @@ function gnLoadProgress(bookId) {
 function gnSaveProgress() {
     if (!gn.currentBook) return;
     const data = {
-        lastPage: gn.currentPage,
-        bookmark: gnGetBookmark(),
-        viewMode: gn.viewMode,
-        zoom:     gn.viewMode === 'scroll' ? gn.zoom : undefined,
+        lastPage:  gn.currentPage,
+        bookmarks: gnLoadBookmarks(gn.currentBook.id),
+        viewMode:  gn.viewMode,
+        zoom:      gn.viewMode === 'scroll' ? gn.zoom : undefined,
     };
     try {
         localStorage.setItem(GN_LS_KEY(gn.currentBook.id), JSON.stringify(data));
@@ -1041,39 +1049,88 @@ function gnRefreshAllCards() {
     gnRenderLibrary();
 }
 
-function gnGetBookmark() {
+// Returns sorted array of bookmarked page indices; migrates old single-bookmark format
+function gnLoadBookmarks(bookId) {
     try {
-        const raw = localStorage.getItem(GN_LS_KEY(gn.currentBook.id));
+        const raw  = localStorage.getItem(GN_LS_KEY(bookId));
         const data = raw ? JSON.parse(raw) : null;
-        return data ? data.bookmark : null;
-    } catch {
-        return null;
-    }
+        if (!data) return [];
+        if (Array.isArray(data.bookmarks)) return data.bookmarks;
+        return typeof data.bookmark === 'number' ? [data.bookmark] : [];
+    } catch { return []; }
+}
+
+function gnSaveBookmarks(bms) {
+    if (!gn.currentBook) return;
+    try {
+        const raw  = localStorage.getItem(GN_LS_KEY(gn.currentBook.id));
+        const data = raw ? JSON.parse(raw) : {};
+        data.bookmarks = bms;
+        delete data.bookmark;
+        localStorage.setItem(GN_LS_KEY(gn.currentBook.id), JSON.stringify(data));
+    } catch {}
 }
 
 function gnToggleBookmark() {
     if (!gn.currentBook) return;
-    const current  = gnGetBookmark();
-    const cur      = gn.currentPage;
-    const progress = gnLoadProgress(gn.currentBook.id) || {};
-    // Toggle: if already bookmarked on this page, remove; else set
-    progress.bookmark = (current === cur) ? null : cur;
-    try {
-        localStorage.setItem(GN_LS_KEY(gn.currentBook.id), JSON.stringify(progress));
-    } catch {}
+    const cur = gn.currentPage;
+    let bms   = gnLoadBookmarks(gn.currentBook.id);
+    bms = bms.includes(cur) ? bms.filter((p) => p !== cur) : [...bms, cur].sort((a, b) => a - b);
+    gnSaveBookmarks(bms);
+    gnUpdateBookmarkUI();
+}
+
+function gnRemoveBookmark(pageIndex) {
+    if (!gn.currentBook) return;
+    gnSaveBookmarks(gnLoadBookmarks(gn.currentBook.id).filter((p) => p !== pageIndex));
     gnUpdateBookmarkUI();
 }
 
 function gnUpdateBookmarkUI() {
     if (!gn.currentBook) return;
-    const bm = gnGetBookmark();
-    const active = bm === gn.currentPage;
-    const btn = gn.refs.bookmark;
+    const active = gnLoadBookmarks(gn.currentBook.id).includes(gn.currentPage);
+    const btn    = gn.refs.bookmark;
     btn.setAttribute('aria-pressed', active ? 'true' : 'false');
     btn.classList.toggle('gn-icon-btn--active', active);
-    // Fill the bookmark icon when active
     const svgPath = btn.querySelector('path');
     if (svgPath) svgPath.setAttribute('fill', active ? 'currentColor' : 'none');
+    gnBuildBookmarkDropdown();
+}
+
+function gnBuildBookmarkDropdown() {
+    const dropdown = gn.refs.bookmarkDropdown;
+    if (!dropdown || !gn.currentBook) return;
+    const bms = gnLoadBookmarks(gn.currentBook.id);
+    dropdown.innerHTML = '';
+    if (!bms.length) { dropdown.hidden = true; return; }
+    bms.forEach((pageIndex) => {
+        const item = document.createElement('div');
+        item.className = 'gn-bm-item';
+
+        const link = document.createElement('button');
+        link.className = 'gn-bm-link';
+        link.textContent = `Page ${pageIndex + 1}`;
+        link.addEventListener('click', () => {
+            gnGoToPage(pageIndex);
+            dropdown.hidden = true;
+        });
+
+        const del = document.createElement('button');
+        del.className = 'gn-bm-delete';
+        del.setAttribute('aria-label', `Remove bookmark for page ${pageIndex + 1}`);
+        del.innerHTML = `<svg viewBox="0 0 24 24" width="13" height="13" aria-hidden="true" fill="none"
+            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="3 6 5 6 21 6"/>
+            <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
+            <path d="M10 11v6"/><path d="M14 11v6"/>
+            <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
+        </svg>`;
+        del.addEventListener('click', (e) => { e.stopPropagation(); gnRemoveBookmark(pageIndex); });
+
+        item.appendChild(link);
+        item.appendChild(del);
+        dropdown.appendChild(item);
+    });
 }
 
 // ------------------------------------------------------------
@@ -1373,6 +1430,14 @@ function gnBindModalEvents() {
 
     // Bookmark
     r.bookmark.addEventListener('click', gnToggleBookmark);
+    r.bookmarkWrap.addEventListener('mouseenter', () => {
+        clearTimeout(gn._bmHideTimer);
+        const bms = gn.currentBook ? gnLoadBookmarks(gn.currentBook.id) : [];
+        if (bms.length) { gnBuildBookmarkDropdown(); r.bookmarkDropdown.hidden = false; }
+    });
+    r.bookmarkWrap.addEventListener('mouseleave', () => {
+        gn._bmHideTimer = setTimeout(() => { r.bookmarkDropdown.hidden = true; }, 200);
+    });
 
     // TOC
     r.tocToggle.addEventListener('click', gnToggleToc);
