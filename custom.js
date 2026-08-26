@@ -17,8 +17,8 @@
 // ------------------------------------------------------------
 
 const GN_LS_PREFIX     = 'gn-progress-';
-const GN_ZOOM_MIN      = 0.5;
-const GN_ZOOM_MAX      = 3.0;
+const GN_ZOOM_MIN      = 0.25;
+const GN_ZOOM_MAX      = 1.0;
 const GN_ZOOM_STEP     = 0.25;
 const GN_MODAL_ID      = 'gn-viewer-modal';
 
