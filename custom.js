@@ -410,9 +410,6 @@ function gnOpenModal() {
     gn.modal.classList.add('gn-overlay--open');
     gn.modal.setAttribute('aria-hidden', 'false');
     document.body.style.overflow = 'hidden';
-    // Focus first interactive element
-    const first = gn.modal.querySelector('button:not(:disabled), input');
-    if (first) first.focus();
     document.addEventListener('keydown', gnHandleKeydown);
 }
 
