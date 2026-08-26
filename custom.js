@@ -251,7 +251,12 @@ function gnBuildModal() {
                   <line x1="16.5" y1="16.5" x2="21" y2="21"/>
                 </svg>
               </button>
-              <span class="gn-zoom-display" id="gn-zoom-display" aria-live="polite">100%</span>
+              <div class="gn-page-counter">
+                <input type="text" class="gn-page-input" id="gn-zoom-display"
+                       aria-label="Zoom percentage" title="Zoom percentage"
+                       value="100" maxlength="3"/>
+                <span>%</span>
+              </div>
               <button class="gn-icon-btn" id="gn-zoom-in"
                       aria-label="Zoom in" data-tooltip="Zoom In (+)" title="Zoom in">
                 <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" fill="none"
@@ -833,8 +838,9 @@ function gnUpdateViewModeUI() {
 // Zoom / Magnification
 // ------------------------------------------------------------
 
-function gnZoomIn()    { gnSetZoom(gn.zoom + GN_ZOOM_STEP); }
-function gnZoomOut()   { gnSetZoom(gn.zoom - GN_ZOOM_STEP); }
+// Snap to next/prev 25% boundary rather than blindly adding the step
+function gnZoomIn()    { gnSetZoom(Math.ceil((gn.zoom + 0.001) / GN_ZOOM_STEP) * GN_ZOOM_STEP); }
+function gnZoomOut()   { gnSetZoom(Math.floor((gn.zoom - 0.001) / GN_ZOOM_STEP) * GN_ZOOM_STEP); }
 function gnZoomReset() { gnSetZoom(1.0); }
 
 /** Sets zoom level, clamped to allowed range, and refreshes. */
@@ -857,7 +863,7 @@ function gnApplyZoomVar() {
 
 function gnUpdateZoomUI() {
     const r = gn.refs;
-    r.zoomDisplay.textContent = `${Math.round(gn.zoom * 100)}%`;
+    r.zoomDisplay.value = `${Math.round(gn.zoom * 100)}`;
     r.zoomIn.disabled  = gn.zoom >= GN_ZOOM_MAX;
     r.zoomOut.disabled = gn.zoom <= GN_ZOOM_MIN;
     r.zoomReset.disabled = gn.zoom === 1.0;
@@ -1284,6 +1290,17 @@ function gnBindModalEvents() {
     r.zoomIn.addEventListener('click',    gnZoomIn);
     r.zoomOut.addEventListener('click',   gnZoomOut);
     r.zoomReset.addEventListener('click', gnZoomReset);
+
+    // Zoom input: commit on blur/enter, arrow keys ±5%
+    r.zoomDisplay.addEventListener('change', () => {
+        const val = parseInt(r.zoomDisplay.value, 10);
+        gnSetZoom(isNaN(val) ? gn.zoom : val / 100);
+    });
+    r.zoomDisplay.addEventListener('keydown', (e) => {
+        if (e.key === 'ArrowUp')   { e.preventDefault(); gnSetZoom(gn.zoom + 0.05); }
+        if (e.key === 'ArrowDown') { e.preventDefault(); gnSetZoom(gn.zoom - 0.05); }
+        if (e.key === 'Enter')     { r.zoomDisplay.blur(); }
+    });
 
     // Magnify
     r.magnify.addEventListener('click', gnMagnify);
