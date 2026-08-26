@@ -917,6 +917,23 @@ ul.gn-page-cards {
 }
 .gn-bm-delete:hover { color: #f85149; background: rgba(248, 81, 73, 0.12); }
 
+.gn-bm-badge {
+    position: absolute;
+    top: -1px;
+    right: -3px;
+    min-width: 14px;
+    height: 14px;
+    padding: 0 3px;
+    background: #309eff;
+    color: #fff;
+    font-size: 9px;
+    font-weight: 700;
+    line-height: 14px;
+    border-radius: 7px;
+    text-align: center;
+    pointer-events: none;
+}
+
 #gn-magnifier-glass {
     position: fixed;
     width: 260px;

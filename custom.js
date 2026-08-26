@@ -303,6 +303,7 @@ function gnBuildModal() {
                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
                   </svg>
+                  <span class="gn-bm-badge" id="gn-bm-badge" hidden></span>
                 </button>
                 <div class="gn-bookmark-dropdown" id="gn-bookmark-dropdown" hidden></div>
               </div>
@@ -403,6 +404,7 @@ function gnCacheRefs() {
         // Actions
         magnify:       q('gn-magnify'),
         bookmark:         q('gn-bookmark'),
+        bookmarkBadge:    q('gn-bm-badge'),
         bookmarkWrap:     q('gn-bookmark-wrap'),
         bookmarkDropdown: q('gn-bookmark-dropdown'),
         tocToggle:     q('gn-toc-toggle'),
@@ -1088,12 +1090,19 @@ function gnRemoveBookmark(pageIndex) {
 
 function gnUpdateBookmarkUI() {
     if (!gn.currentBook) return;
-    const active = gnLoadBookmarks(gn.currentBook.id).includes(gn.currentPage);
+    const bms    = gnLoadBookmarks(gn.currentBook.id);
+    const active = bms.includes(gn.currentPage);
     const btn    = gn.refs.bookmark;
     btn.setAttribute('aria-pressed', active ? 'true' : 'false');
     btn.classList.toggle('gn-icon-btn--active', active);
     const svgPath = btn.querySelector('path');
     if (svgPath) svgPath.setAttribute('fill', active ? 'currentColor' : 'none');
+    // Update badge count
+    const badge = gn.refs.bookmarkBadge;
+    if (badge) {
+        badge.textContent = bms.length;
+        badge.hidden = bms.length === 0;
+    }
     gnBuildBookmarkDropdown();
 }
 
