@@ -746,7 +746,13 @@ function gnGoToPage(n) {
         n = Math.floor(n / step) * step;
     }
     gn.currentPage = n;
-    gnRenderPage();
+    // In scroll mode pages are already in the DOM — just scroll to the target frame
+    if (gn.viewMode === 'scroll' && gn.refs.pagesWrap.children.length > 0) {
+        const target = gn.refs.pagesWrap.children[n];
+        if (target) target.scrollIntoView({ block: 'start', behavior: 'smooth' });
+    } else {
+        gnRenderPage();
+    }
     gnUpdateNavUI();
     gnUpdateBookmarkUI();
     gnSaveProgress();
