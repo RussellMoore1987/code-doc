@@ -553,7 +553,7 @@ function gnOpenBook(bookId) {
     // Restore saved progress
     const progress = gnLoadProgress(bookId);
     gn.viewMode   = (progress && progress.viewMode) || 'single';
-    gn.zoom       = 1.0;
+    gn.zoom       = (progress && progress.zoom)     || 1.0;
     gn.currentPage = progress ? Math.min(progress.lastPage, book.pages.length - 1) : 0;
 
     gnShowReaderView();
@@ -804,7 +804,12 @@ function gnSetViewMode(mode) {
     // Align current page to new step
     const step = gnGetStep();
     gn.currentPage = Math.floor(gn.currentPage / step) * step;
-    gn.zoom = 1.0;
+    if (mode === 'scroll') {
+        const saved = gnLoadProgress(gn.currentBook?.id);
+        gn.zoom = (saved && saved.zoom) || gn.zoom;
+    } else {
+        gn.zoom = 1.0;
+    }
     gnUpdateViewModeUI();
     gnUpdateZoomUI();
     gnRenderPage();
@@ -841,6 +846,7 @@ function gnSetZoom(z) {
     }
     gnApplyZoomVar();
     gnUpdateZoomUI();
+    gnSaveProgress();
 }
 
 /** Applies zoom as a CSS variable on the stage for scroll mode. */
@@ -946,6 +952,7 @@ function gnSaveProgress() {
         lastPage: gn.currentPage,
         bookmark: gnGetBookmark(),
         viewMode: gn.viewMode,
+        zoom:     gn.viewMode === 'scroll' ? gn.zoom : undefined,
     };
     try {
         localStorage.setItem(GN_LS_KEY(gn.currentBook.id), JSON.stringify(data));
