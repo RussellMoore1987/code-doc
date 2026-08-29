@@ -866,10 +866,13 @@ function gnZoomIn()    { gnSetZoom(Math.ceil((gn.zoom + 0.001) / GN_ZOOM_STEP) *
 function gnZoomOut()   { gnSetZoom(Math.floor((gn.zoom - 0.001) / GN_ZOOM_STEP) * GN_ZOOM_STEP); }
 function gnZoomReset() { gnSetZoom(1.0); }
 
-/** Sets zoom level, clamped to allowed range, and refreshes. Zoom only applies in scroll mode. */
+/** Sets zoom level, clamped to allowed range; switches to scroll mode if needed. */
 function gnSetZoom(z) {
-    if (gn.viewMode !== 'scroll') return;
     gn.zoom = Math.round(Math.min(GN_ZOOM_MAX, Math.max(GN_ZOOM_MIN, z)) * 100) / 100;
+    if (gn.viewMode !== 'scroll') {
+        gnSetViewMode('scroll');
+        return; // gnSetViewMode calls gnUpdateZoomUI and gnRenderPage
+    }
     gnApplyZoomVar();
     gnUpdateZoomUI();
     gnSaveProgress();
@@ -886,9 +889,9 @@ function gnUpdateZoomUI() {
     const inScroll = gn.viewMode === 'scroll';
     r.zoomDisplay.value    = `${Math.round(gn.zoom * 100)}`;
     r.zoomDisplay.disabled = !inScroll;
-    r.zoomIn.disabled      = !inScroll || gn.zoom >= GN_ZOOM_MAX;
-    r.zoomOut.disabled     = !inScroll || gn.zoom <= GN_ZOOM_MIN;
-    r.zoomReset.disabled   = !inScroll || gn.zoom === 1.0;
+    r.zoomIn.disabled      = inScroll && gn.zoom >= GN_ZOOM_MAX;
+    r.zoomOut.disabled     = inScroll && gn.zoom <= GN_ZOOM_MIN;
+    r.zoomReset.disabled   = inScroll && gn.zoom === 1.0;
 }
 
 /** Magnify: enter scroll mode centered on the current page. */
