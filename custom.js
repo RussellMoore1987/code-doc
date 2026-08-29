@@ -1077,11 +1077,25 @@ function gnSaveBookmarks(bms) {
     } catch {}
 }
 
+/** Returns the page indices visible in the current span (1 in single/scroll, 2 in double, 3 in triple). */
+function gnGetCurrentSpan() {
+    if (!gn.currentBook) return [];
+    const step  = gn.viewMode === 'scroll' ? 1 : gnGetStep();
+    const total = gn.currentBook.pages.length;
+    const pages = [];
+    for (let i = gn.currentPage; i < gn.currentPage + step && i < total; i++) pages.push(i);
+    return pages;
+}
+
 function gnToggleBookmark() {
     if (!gn.currentBook) return;
-    const cur = gn.currentPage;
-    let bms   = gnLoadBookmarks(gn.currentBook.id);
-    bms = bms.includes(cur) ? bms.filter((p) => p !== cur) : [...bms, cur].sort((a, b) => a - b);
+    const span = gnGetCurrentSpan();
+    let bms    = gnLoadBookmarks(gn.currentBook.id);
+    if (span.some((p) => bms.includes(p))) {
+        bms = bms.filter((p) => !span.includes(p)); // remove all in span
+    } else {
+        bms = [...bms, span[0]].sort((a, b) => a - b); // bookmark first page of span
+    }
     gnSaveBookmarks(bms);
     gnUpdateBookmarkUI();
 }
@@ -1095,7 +1109,7 @@ function gnRemoveBookmark(pageIndex) {
 function gnUpdateBookmarkUI() {
     if (!gn.currentBook) return;
     const bms    = gnLoadBookmarks(gn.currentBook.id);
-    const active = bms.includes(gn.currentPage);
+    const active = gnGetCurrentSpan().some((p) => bms.includes(p));
     const btn    = gn.refs.bookmark;
     btn.setAttribute('aria-pressed', active ? 'true' : 'false');
     btn.classList.toggle('gn-icon-btn--active', active);
