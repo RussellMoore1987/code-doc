@@ -62,17 +62,22 @@ function gnParseBook(el) {
     const id = el.dataset.bookId;
     if (!id) return null;
 
-    const titleEl   = el.querySelector('.book-title');
-    const descEl    = el.querySelector('.book-description');
-    const coverImg  = el.querySelector('.book-cover img');
-    const pageImgs  = el.querySelectorAll('.book-pages img');
+    const titleEl     = el.querySelector('.book-title');
+    const descEl      = el.querySelector('.book-description');
+    const coverImg    = el.querySelector('.book-cover img');
+    const bookPagesEl = el.querySelector('.book-pages');
 
-    if (!titleEl || !descEl || !coverImg || !pageImgs.length) return null;
+    // Accept both <img> (image pages) and <div data-page-src> (text pages)
+    const pages = bookPagesEl
+        ? Array.from(bookPagesEl.children)
+              .filter((c) => c.tagName === 'IMG' || c.dataset.pageSrc)
+              .map((c) => c.tagName === 'IMG'
+                  ? { type: 'image', src: c.getAttribute('src') || '', alt: c.getAttribute('alt') || '' }
+                  : { type: 'text',  src: c.dataset.pageSrc || '',    alt: c.getAttribute('alt') || '' }
+              )
+        : [];
 
-    const pages = Array.from(pageImgs).map((img) => ({
-        src: img.getAttribute('src') || '',
-        alt: img.getAttribute('alt') || '',
-    }));
+    if (!titleEl || !descEl || !coverImg || !pages.length) return null;
 
     const chapters = Array.from(el.querySelectorAll('.book-chapter')).map((ch) => ({
         name:    ch.textContent.trim(),
@@ -81,6 +86,7 @@ function gnParseBook(el) {
 
     return {
         id,
+        type:        el.dataset.bookType || 'image',
         title:       titleEl.textContent.trim(),
         description: descEl.textContent.trim(),
         author:      el.querySelector('.book-author')?.textContent.trim() || '',
@@ -578,6 +584,8 @@ function gnOpenBook(bookId) {
     gn.viewMode   = (progress && progress.viewMode) || 'single';
     gn.zoom       = (progress && progress.zoom)     || 1.0;
     gn.currentPage = progress ? Math.min(progress.lastPage, book.pages.length - 1) : 0;
+    // Triple view is not supported for novel books
+    if (book.type === 'novel' && gn.viewMode === 'triple') gn.viewMode = 'double';
 
     gnShowReaderView();
 }
@@ -592,6 +600,13 @@ function gnShowReaderView() {
     r.backBtn.classList.remove('gn-hidden');
     r.barTitle.classList.remove('gn-hidden');
     r.barTitle.textContent = gn.currentBook.title;
+
+    // Clear type-specific zoom CSS vars from any previous book
+    r.stage.style.removeProperty('--gn-text-size');
+    r.stage.style.removeProperty('--gn-zoom-w');
+
+    const isNovel = gn.currentBook.type === 'novel';
+    if (r.magnify) r.magnify.disabled = isNovel;
 
     gnBuildToc(gn.currentBook);
     gnRenderPage();
@@ -689,8 +704,10 @@ function gnRenderPage() {
     }, 80);
 }
 
-/** Builds a single page frame element (wrapper + img). */
+/** Builds a single page frame element (wrapper + img or fetched text content). */
 function gnBuildPageFrame(page, index, book) {
+    if (page.type === 'text') return gnBuildTextPageFrame(page, index, book);
+
     const frame = document.createElement('div');
     frame.className = 'gn-page-frame';
     frame.dataset.pageIndex = index;
@@ -729,6 +746,44 @@ function gnBuildPageFrame(page, index, book) {
     };
 
     img.src = page.src;
+    return frame;
+}
+
+/** Builds a text page frame; fetches the HTML fragment and injects it asynchronously. */
+function gnBuildTextPageFrame(page, index, book) {
+    const frame = document.createElement('div');
+    frame.className = 'gn-page-frame gn-page-frame--text';
+    frame.dataset.pageIndex = index;
+
+    const placeholder = document.createElement('div');
+    placeholder.className = 'gn-page-placeholder';
+    placeholder.setAttribute('aria-label', `Loading page ${index + 1}`);
+    const spinner = document.createElement('div');
+    spinner.className = 'gn-page-spinner';
+    placeholder.appendChild(spinner);
+    frame.appendChild(placeholder);
+
+    gnFetchTextPage(page.src).then((html) => {
+        placeholder.remove();
+        if (html === null) {
+            const err = document.createElement('div');
+            err.className = 'gn-page-placeholder';
+            err.innerHTML = `
+              <svg viewBox="0 0 24 24" width="32" height="32" aria-hidden="true" fill="none"
+                   stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+                <rect x="3" y="3" width="18" height="18" rx="2"/>
+                <line x1="3" y1="3" x2="21" y2="21"/>
+              </svg>
+              <span>Page ${index + 1} unavailable</span>`;
+            frame.appendChild(err);
+            return;
+        }
+        const content = document.createElement('div');
+        content.className = 'gn-text-page';
+        content.innerHTML = html;
+        frame.appendChild(content);
+    });
+
     return frame;
 }
 
@@ -831,6 +886,8 @@ function gnUpdateNavUI() {
 /** Sets the view mode and re-renders. */
 function gnSetViewMode(mode) {
     if (gn.viewMode === mode) return;
+    // Triple view not supported for novel books
+    if (mode === 'triple' && gn.currentBook?.type === 'novel') mode = 'double';
     const prevStep = gnGetStep();
     gn.viewMode = mode;
     // Align current page to new step
@@ -847,9 +904,10 @@ function gnSetViewMode(mode) {
     gnSaveProgress();
 }
 
-/** Updates aria-pressed on all view mode buttons. */
+/** Updates aria-pressed on all view mode buttons. Hides triple-page for novel books. */
 function gnUpdateViewModeUI() {
     const r = gn.refs;
+    const isNovel = gn.currentBook?.type === 'novel';
     const btns = [r.viewSingle, r.viewDouble, r.viewTriple, r.viewScroll];
     btns.forEach((btn) => {
         if (!btn) return;
@@ -857,6 +915,11 @@ function gnUpdateViewModeUI() {
         btn.setAttribute('aria-pressed', active ? 'true' : 'false');
         btn.classList.toggle('gn-icon-btn--active', active);
     });
+    // Triple view is not meaningful for text novels
+    if (r.viewTriple) {
+        r.viewTriple.hidden   = isNovel;
+        r.viewTriple.disabled = isNovel;
+    }
 }
 
 // ------------------------------------------------------------
@@ -868,10 +931,13 @@ function gnZoomIn()    { gnSetZoom(Math.ceil((gn.zoom + 0.001) / GN_ZOOM_STEP) *
 function gnZoomOut()   { gnSetZoom(Math.floor((gn.zoom - 0.001) / GN_ZOOM_STEP) * GN_ZOOM_STEP); }
 function gnZoomReset() { gnSetZoom(1.0); }
 
-/** Sets zoom level, clamped to allowed range; switches to scroll mode if needed. */
+/** Sets zoom level; for novels scales font size, for images may switch to scroll mode. */
 function gnSetZoom(z) {
-    gn.zoom = Math.round(Math.min(GN_ZOOM_MAX, Math.max(GN_ZOOM_MIN, z)) * 100) / 100;
-    if (gn.viewMode !== 'scroll') {
+    const isNovel = gn.currentBook?.type === 'novel';
+    const minZ = isNovel ? 0.5 : GN_ZOOM_MIN;
+    const maxZ = isNovel ? 2.0 : GN_ZOOM_MAX;
+    gn.zoom = Math.round(Math.min(maxZ, Math.max(minZ, z)) * 100) / 100;
+    if (!isNovel && gn.viewMode !== 'scroll') {
         gnSetViewMode('scroll');
         return; // gnSetViewMode calls gnUpdateZoomUI and gnRenderPage
     }
@@ -880,24 +946,31 @@ function gnSetZoom(z) {
     gnSaveProgress();
 }
 
-/** Applies zoom as a CSS variable on the stage for scroll mode. */
+/** Applies zoom as a CSS variable: font-size for novels, image width for scroll mode. */
 function gnApplyZoomVar() {
+    if (gn.currentBook?.type === 'novel') {
+        gn.refs.stage.style.setProperty('--gn-text-size', `${Math.round(gn.zoom * 16)}px`);
+        return;
+    }
     if (gn.viewMode !== 'scroll') return;
     gn.refs.stage.style.setProperty('--gn-zoom-w', `${gn.zoom * 100}%`);
 }
 
 function gnUpdateZoomUI() {
     const r = gn.refs;
+    const isNovel  = gn.currentBook?.type === 'novel';
     const inScroll = gn.viewMode === 'scroll';
+    const zoomOn   = isNovel || inScroll;
     r.zoomDisplay.value    = `${Math.round(gn.zoom * 100)}`;
-    r.zoomDisplay.disabled = !inScroll;
-    r.zoomIn.disabled      = inScroll && gn.zoom >= GN_ZOOM_MAX;
-    r.zoomOut.disabled     = inScroll && gn.zoom <= GN_ZOOM_MIN;
-    r.zoomReset.disabled   = inScroll && gn.zoom === 1.0;
+    r.zoomDisplay.disabled = !zoomOn;
+    r.zoomIn.disabled      = zoomOn && gn.zoom >= (isNovel ? 2.0 : GN_ZOOM_MAX);
+    r.zoomOut.disabled     = zoomOn && gn.zoom <= (isNovel ? 0.5 : GN_ZOOM_MIN);
+    r.zoomReset.disabled   = zoomOn && gn.zoom === 1.0;
 }
 
-/** Magnify: enter scroll mode centered on the current page. */
+/** Magnify: enter scroll mode centered on the current page. Only works for image books. */
 function gnMagnify() {
+    if (gn.currentBook?.type === 'novel') return;
     gn.magnifyOn = !gn.magnifyOn;
     const btn = gn.refs.magnify;
     btn.setAttribute('aria-pressed', gn.magnifyOn ? 'true' : 'false');
@@ -1189,17 +1262,39 @@ function gnPreloadAdjacent() {
     ];
     indices.forEach((i) => {
         if (i >= 0 && i < total) {
-            const src = book.pages[i]?.src;
-            if (src && !gnPreloadCache.has(src)) {
-                const img = new Image();
-                img.src = src;
-                gnPreloadCache.add(src);
+            const page = book.pages[i];
+            if (!page) return;
+            if (page.type === 'text') {
+                if (page.src && !gnTextPageCache.has(page.src)) gnFetchTextPage(page.src);
+            } else {
+                if (page.src && !gnPreloadCache.has(page.src)) {
+                    const img = new Image();
+                    img.src = page.src;
+                    gnPreloadCache.add(page.src);
+                }
             }
         }
     });
 }
 
 const gnPreloadCache = new Set();
+const gnTextPageCache = new Map();
+
+/** Fetches and caches an HTML text page fragment. Strips scripts and inline handlers for safety. */
+async function gnFetchTextPage(src) {
+    if (gnTextPageCache.has(src)) return gnTextPageCache.get(src);
+    try {
+        const resp = await fetch(src);
+        if (!resp.ok) return null;
+        let html = await resp.text();
+        html = html.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '');
+        html = html.replace(/\s+on\w+\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]*)/gi, '');
+        gnTextPageCache.set(src, html);
+        return html;
+    } catch {
+        return null;
+    }
+}
 
 // ------------------------------------------------------------
 // Page Preview Cards (inline on custom.html, outside the modal)
