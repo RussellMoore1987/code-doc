@@ -1006,20 +1006,27 @@ function gnBuildToc(book) {
 /** Highlights the TOC item matching the current page. */
 function gnUpdateTocHighlight() {
     const book = gn.currentBook;
-    if (!book || !book.chapters.length) return;
+    if (!book) return;
 
     const cur  = gn.currentPage + 1; // 1-indexed
-    const items = gn.refs.tocList.querySelectorAll('.gn-toc-item');
 
-    // Find the last chapter whose start page <= current page
-    let activeIndex = 0;
-    book.chapters.forEach((ch, i) => {
-        if (ch.page <= cur) activeIndex = i;
-    });
+    // Update bar title with chapter name when chapters exist
+    const r = gn.refs;
+    if (book.chapters.length) {
+        let activeIndex = 0;
+        book.chapters.forEach((ch, i) => {
+            if (ch.page <= cur) activeIndex = i;
+        });
+        const chapterName = book.chapters[activeIndex].name;
+        r.barTitle.textContent = `${book.title} \u2013 ${chapterName}`;
 
-    items.forEach((item, i) => {
-        item.classList.toggle('gn-toc-item--active', i === activeIndex);
-    });
+        const items = r.tocList.querySelectorAll('.gn-toc-item');
+        items.forEach((item, i) => {
+            item.classList.toggle('gn-toc-item--active', i === activeIndex);
+        });
+    } else {
+        r.barTitle.textContent = book.title;
+    }
 }
 
 // ------------------------------------------------------------
