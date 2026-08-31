@@ -1043,12 +1043,12 @@ function gnSaveProgress() {
         lastPage:  gn.currentPage,
         bookmarks: gnLoadBookmarks(gn.currentBook.id),
         viewMode:  gn.viewMode,
-        zoom:      gn.viewMode === 'scroll' ? gn.zoom : undefined,
+        zoom:      gn.zoom,
     };
     try {
         localStorage.setItem(GN_LS_KEY(gn.currentBook.id), JSON.stringify(data));
     } catch {
-        // localStorage unavailable — silent fail
+        // localStorage unavailable - silent fail
     }
     // Update all card surfaces to reflect new progress
     gnRefreshAllCards();
