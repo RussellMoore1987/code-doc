@@ -429,6 +429,7 @@ function gnOpenModal() {
     gn.modal.setAttribute('aria-hidden', 'false');
     document.body.style.overflow = 'hidden';
     document.addEventListener('keydown', gnHandleKeydown);
+    gn.modal.addEventListener('wheel', gnHandleWheel, { passive: false });
 }
 
 /** Closes the modal overlay and restores focus. */
@@ -444,6 +445,7 @@ function gnCloseModal() {
     }
     gn.modal.classList.remove('gn-fullscreen');
     document.removeEventListener('keydown', gnHandleKeydown);
+    gn.modal.removeEventListener('wheel', gnHandleWheel);
     // Turn off magnifier loupe
     if (gn.magnifyOn) { gn.magnifyOn = false; gnDetachMagnifier(); gn.refs.magnify?.classList.remove('gn-icon-btn--active'); }
     if (gn.lastFocused && typeof gn.lastFocused.focus === 'function') {
@@ -1363,6 +1365,28 @@ function gnHandleKeydown(e) {
             if (!gn.isLibrary) { e.preventDefault(); gnToggleFullscreen(); }
             break;
     }
+}
+
+// ------------------------------------------------------------
+// Wheel / Scroll-to-page-turn
+// ------------------------------------------------------------
+
+let _gnWheelLast = 0;
+
+function gnHandleWheel(e) {
+    if (!gn.isOpen || gn.isLibrary || gn.viewMode === 'scroll') return;
+    // Ignore events that originate inside a real scrollable element other than the stage
+    let node = e.target;
+    while (node && node !== gn.modal) {
+        if (node !== gn.refs.stage && (node.scrollHeight > node.clientHeight || node.scrollWidth > node.clientWidth)) return;
+        node = node.parentElement;
+    }
+    e.preventDefault();
+    const now = Date.now();
+    if (now - _gnWheelLast < 400) return; // throttle
+    _gnWheelLast = now;
+    if (e.deltaY > 0) gnNextPage();
+    else if (e.deltaY < 0) gnPrevPage();
 }
 
 // ------------------------------------------------------------
