@@ -901,6 +901,67 @@ ul.gn-page-cards {
     }
 }
 
+/* ------------------------------------------------------------
+   Novel Image Layout Helpers
+   For use inside a book's text-page HTML fragments (.gn-text-page).
+------------------------------------------------------------ */
+
+.gn-text-page img {
+    display: block;
+    max-width: 100%;
+    height: auto;
+    border-radius: 4px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+}
+
+/* Single full-width image */
+.gn-text-page .gn-img-full {
+    width: 100%;
+    margin: 1.5em 0;
+}
+
+/* Row container — place 2 or 3 <img> (or wrapper) children inside */
+.gn-text-page .gn-img-row {
+    display: flex;
+    gap: 12px;
+    margin: 1.5em 0;
+    align-items: flex-start;
+}
+
+.gn-text-page .gn-img-row img {
+    width: 100%;
+    margin: 0;
+    flex: 1 1 0;
+}
+
+/* Explicit 2-up / 3-up equal-width variants of .gn-img-row */
+.gn-text-page .gn-img-row-2 > img,
+.gn-text-page .gn-img-row-3 > img {
+    flex-basis: 0;
+}
+
+/* Flex-grow ratio helpers for uneven splits within a .gn-img-row,
+   e.g. <div class="gn-img-row"><img class="gn-flex-60" ...><img class="gn-flex-40" ...></div> */
+.gn-text-page .gn-flex-10 { flex-grow: 10; }
+.gn-text-page .gn-flex-20 { flex-grow: 20; }
+.gn-text-page .gn-flex-25 { flex-grow: 25; }
+.gn-text-page .gn-flex-30 { flex-grow: 30; }
+.gn-text-page .gn-flex-33 { flex-grow: 33; }
+.gn-text-page .gn-flex-40 { flex-grow: 40; }
+.gn-text-page .gn-flex-50 { flex-grow: 50; }
+.gn-text-page .gn-flex-60 { flex-grow: 60; }
+.gn-text-page .gn-flex-66 { flex-grow: 66; }
+.gn-text-page .gn-flex-70 { flex-grow: 70; }
+.gn-text-page .gn-flex-75 { flex-grow: 75; }
+.gn-text-page .gn-flex-80 { flex-grow: 80; }
+.gn-text-page .gn-flex-90 { flex-grow: 90; }
+
+@media (max-width: 640px) {
+    .gn-text-page .gn-img-row {
+        flex-direction: column;
+    }
+}
+
 /* Loading / error placeholder */
 .gn-page-placeholder {
     aspect-ratio: 2 / 3;
