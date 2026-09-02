@@ -126,9 +126,7 @@
         </thead>
         <tbody>
             <tr><td><code>.gn-img-full</code></td><td><code>&lt;img&gt;</code></td><td>Single full-width image with prose spacing.</td></tr>
-            <tr><td><code>.gn-img-row</code></td><td>Wrapping <code>&lt;div&gt;</code></td><td>Flex row container that holds 2 or 3 images side by side.</td></tr>
-            <tr><td><code>.gn-img-row-2</code></td><td>Wrapping <code>&lt;div&gt;</code> (with <code>.gn-img-row</code>)</td><td>Splits the row into 2 equal-width images.</td></tr>
-            <tr><td><code>.gn-img-row-3</code></td><td>Wrapping <code>&lt;div&gt;</code> (with <code>.gn-img-row</code>)</td><td>Splits the row into 3 equal-width images.</td></tr>
+            <tr><td><code>.gn-img-row</code></td><td>Wrapping <code>&lt;div&gt;</code></td><td>Flex row container that splits any number of images evenly (2, 3, or more) side by side.</td></tr>
             <tr><td><code>.gn-flex-10</code> … <code>.gn-flex-90</code></td><td><code>&lt;img&gt;</code> inside <code>.gn-img-row</code></td><td>Flex-grow weight for uneven splits — pair e.g. <code>gn-flex-60</code> with <code>gn-flex-40</code> for a 60/40 split, or <code>gn-flex-20</code> with <code>gn-flex-80</code> for 20/80.</td></tr>
         </tbody>
     </table>
@@ -156,7 +154,7 @@
 
     <!-- localStorage / Reading Progress section -->
     <h4>localStorage / Reading Progress</h4>
-    <p>Each book saves its progress under the key <code>gn-progress-{data-book-id}</code>. The stored JSON is <code>{ lastPage, bookmark, viewMode }</code>. Each book's progress is completely independent. Clearing localStorage resets all reading progress.</p>
+    <p>Each book saves its progress under the key <code>gn-progress-{data-book-id}</code>. The stored JSON is <code>{ lastPage, bookmarks, viewMode, zoom }</code>, where <code>bookmarks</code> is an array of 0-indexed bookmarked page numbers. Each book's progress is completely independent. Clearing localStorage resets all reading progress.</p>
 
     <p><strong>Note:</strong> The <code>.graphic-novel-book</code> divs are hidden in the normal page layout via CSS. They exist solely to configure the viewer. The Graphic Novel modal is built and managed by <code>custom.js</code>.</p>
 
