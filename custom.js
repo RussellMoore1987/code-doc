@@ -606,7 +606,6 @@ function gnShowReaderView() {
     r.stage.style.removeProperty('--gn-zoom-w');
 
     const isNovel = gn.currentBook.type === 'novel';
-    if (r.magnify) r.magnify.disabled = isNovel;
 
     gnBuildToc(gn.currentBook);
     gnRenderPage();
@@ -968,9 +967,8 @@ function gnUpdateZoomUI() {
     r.zoomReset.disabled   = zoomOn && gn.zoom === 1.0;
 }
 
-/** Magnify: enter scroll mode centered on the current page. Only works for image books. */
+/** Magnify: loupe for image books; zoomed text clone for novel books. */
 function gnMagnify() {
-    if (gn.currentBook?.type === 'novel') return;
     gn.magnifyOn = !gn.magnifyOn;
     const btn = gn.refs.magnify;
     btn.setAttribute('aria-pressed', gn.magnifyOn ? 'true' : 'false');
@@ -988,9 +986,12 @@ function gnAttachMagnifier() {
         glass.setAttribute('aria-hidden', 'true');
         document.body.appendChild(glass);
     }
+    glass.innerHTML = '';
+    glass.style.backgroundImage = '';
     glass.style.display = 'none';
-    gn._magnifierMove  = (e) => gnOnMagnifierMove(e, glass);
-    gn._magnifierLeave = ()  => { glass.style.display = 'none'; };
+    const isNovel = gn.currentBook?.type === 'novel';
+    gn._magnifierMove  = isNovel ? (e) => gnOnTextMagnifierMove(e, glass) : (e) => gnOnMagnifierMove(e, glass);
+    gn._magnifierLeave = () => { glass.style.display = 'none'; };
     body.addEventListener('mousemove',  gn._magnifierMove);
     body.addEventListener('mouseleave', gn._magnifierLeave);
 }
@@ -1002,7 +1003,85 @@ function gnDetachMagnifier() {
     if (gn._magnifierMove)  { body.removeEventListener('mousemove',  gn._magnifierMove);  gn._magnifierMove  = null; }
     if (gn._magnifierLeave) { body.removeEventListener('mouseleave', gn._magnifierLeave); gn._magnifierLeave = null; }
     const glass = document.getElementById('gn-magnifier-glass');
-    if (glass) glass.style.display = 'none';
+    if (glass) {
+        glass.style.display = 'none';
+        glass.innerHTML = '';
+        glass.style.backgroundImage = '';
+    }
+}
+
+/** Text loupe: positions a fixed clipping window over a scaled copy of the live text page. */
+function gnOnTextMagnifierMove(e, glass) {
+    // Hit-test the actual point under the cursor so this works across single,
+    // double/triple spreads (multiple frames side by side), and scroll mode
+    // (multiple frames stacked, only some of which are visible/scrolled into view).
+    const el       = document.elementFromPoint(e.clientX, e.clientY);
+    const frame    = el && el.closest('.gn-page-frame--text');
+    const textPage = frame && frame.querySelector('.gn-text-page');
+    if (!textPage) { glass.style.display = 'none'; return; }
+
+    const ZOOM    = 2.0;
+    const GLASS_W = 340;
+    const GLASS_H = 260;
+    const GAP     = 16;
+
+    // Position glass beside cursor
+    const spaceRight = window.innerWidth - e.clientX - GAP;
+    const glassLeft  = spaceRight >= GLASS_W ? e.clientX + GAP : e.clientX - GLASS_W - GAP;
+    const glassTop   = Math.max(8, Math.min(window.innerHeight - GLASS_H - 8, e.clientY - GLASS_H / 2));
+
+    // Cursor position within the text page's content coordinate space
+    const pageRect = textPage.getBoundingClientRect();
+    const relX = e.clientX - pageRect.left;
+    const relY = e.clientY - pageRect.top + textPage.scrollTop;
+
+    // Scaled origin: the point in the scaled space that should appear at glass top-left
+    const originX = relX * ZOOM - GLASS_W / 2;
+    const originY = relY * ZOOM - GLASS_H / 2;
+
+    // The glass acts as a viewport: it shows a ZOOM-scaled slice of the text page.
+    // We render the loupe by placing a wrapper inside the glass that:
+    //   1. Is the same width as the text page
+    //   2. Is scaled by ZOOM from its top-left
+    //   3. Is offset so the cursor region is centred in the glass
+    let inner = glass.querySelector('.gn-text-loupe-inner');
+    if (!inner) {
+        inner = document.createElement('div');
+        inner.className = 'gn-text-loupe-inner';
+        glass.appendChild(inner);
+    }
+
+    // Mirror content only when the hovered frame (page) changes, keyed by its page index
+    const pageKey = frame.dataset.pageIndex;
+    if (inner.dataset.pageIndex !== pageKey) {
+        inner.innerHTML = textPage.innerHTML;
+        inner.dataset.pageIndex = pageKey;
+        // Carry over computed text styles explicitly
+        const cs = getComputedStyle(textPage);
+        inner.style.cssText = [
+            'position:absolute', 'top:0', 'left:0', 'margin:0',
+            `width:${textPage.offsetWidth}px`,
+            'height:auto', 'overflow:visible', 'pointer-events:none',
+            'transform-origin:0 0', 'box-sizing:border-box',
+            `font-family:${cs.fontFamily}`,
+            `font-size:${cs.fontSize}`,
+            `line-height:${cs.lineHeight}`,
+            `padding:${cs.paddingTop} ${cs.paddingRight} ${cs.paddingBottom} ${cs.paddingLeft}`,
+            'color:#e6edf3',
+        ].join(';');
+        inner.querySelectorAll('img').forEach((img) => {
+            img.style.cssText += ';max-width:100%;min-width:0;height:auto;display:block;';
+        });
+    }
+
+    inner.style.transform = `scale(${ZOOM}) translate(${-originX / ZOOM}px, ${-originY / ZOOM}px)`;
+
+    glass.style.display    = 'block';
+    glass.style.width      = GLASS_W + 'px';
+    glass.style.height     = GLASS_H + 'px';
+    glass.style.left       = glassLeft + 'px';
+    glass.style.top        = glassTop  + 'px';
+    glass.style.background = '#161b22';
 }
 
 function gnOnMagnifierMove(e, glass) {

@@ -1074,7 +1074,26 @@ ul.gn-page-cards {
     pointer-events: none;
     z-index: 99999;
     background-repeat: no-repeat;
+    overflow: hidden;
     display: none;
+}
+
+/* Text magnifier inner content — paragraph and image row styles */
+.gn-text-loupe-inner p {
+    margin: 0 0 1em;
+    text-indent: 1.5em;
+}
+.gn-text-loupe-inner p:first-child { text-indent: 0; }
+.gn-text-loupe-inner h1,
+.gn-text-loupe-inner h2,
+.gn-text-loupe-inner h3 {
+    margin: 1.5em 0 0.5em;
+    line-height: 1.3;
+    color: #e6edf3;
+}
+.gn-text-loupe-inner .gn-img-row {
+    display: flex;
+    gap: 12px;
 }
 
 @media (prefers-reduced-motion: reduce) {
