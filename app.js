@@ -239,6 +239,7 @@ const elImageModalCaption     = document.getElementById('image-modal-caption');
 const elImageModalSectionLink = document.getElementById('image-modal-section-link');
 const elImageModalViewLink    = document.getElementById('image-modal-view-link');
 const elImageModalClose       = document.getElementById('image-modal-close');
+const elImageModalMagnify     = document.getElementById('image-modal-magnify');
 const elImageModalPrev        = document.getElementById('image-modal-prev');
 const elImageModalNext        = document.getElementById('image-modal-next');
 const elImageModalCounter     = document.getElementById('image-modal-counter');
@@ -3738,6 +3739,9 @@ const imageModalState = {
   currentIndex: -1,
   lastFocused: null,
   isOpen: false,
+  magnifyOn: false,   // gallery magnifier loupe toggle state
+  _magnifierMove: null,
+  _magnifierLeave: null,
 };
 
 /**
@@ -3909,6 +3913,9 @@ function closeImageModal() {
   elImageModal.removeEventListener('keydown', trapModalFocus);
   document.removeEventListener('keydown', handleModalKeydown);
 
+  // Turn off the magnifier loupe so it doesn't linger into the next open
+  if (imageModalState.magnifyOn) toggleImageModalMagnify();
+
   if (imageModalState.lastFocused && typeof imageModalState.lastFocused.focus === 'function') {
     imageModalState.lastFocused.focus();
   }
@@ -3964,6 +3971,86 @@ function showImageAt(index) {
   elImageModalCounter.textContent = total > 1 ? `${index + 1} / ${total}` : '';
   elImageModalPrev.disabled = index <= 0;
   elImageModalNext.disabled = index >= total - 1;
+
+  // Hide any active loupe - it will reappear on the next mousemove over the new image
+  const glass = document.getElementById('gallery-magnifier-glass');
+  if (glass) glass.style.display = 'none';
+}
+
+/**
+ * Toggle the magnifier loupe for the image currently shown in the modal.
+ * Mirrors the graphic-novel reader's magnifier (see custom.js) but targets
+ * the site-wide image modal used by all photo galleries.
+ */
+function toggleImageModalMagnify() {
+  if (!elImageModalMagnify) return;
+  imageModalState.magnifyOn = !imageModalState.magnifyOn;
+  elImageModalMagnify.setAttribute('aria-pressed', imageModalState.magnifyOn ? 'true' : 'false');
+  elImageModalImg.classList.toggle('gallery-magnify-active', imageModalState.magnifyOn);
+
+  if (imageModalState.magnifyOn) {
+    attachImageModalMagnifier();
+  } else {
+    detachImageModalMagnifier();
+  }
+}
+
+function attachImageModalMagnifier() {
+  let glass = document.getElementById('gallery-magnifier-glass');
+  if (!glass) {
+    glass = document.createElement('div');
+    glass.id = 'gallery-magnifier-glass';
+    glass.setAttribute('aria-hidden', 'true');
+    document.body.appendChild(glass);
+  }
+  glass.style.display = 'none';
+
+  imageModalState._magnifierMove  = (e) => onImageModalMagnifierMove(e, glass);
+  imageModalState._magnifierLeave = () => { glass.style.display = 'none'; };
+  elImageModalImg.addEventListener('mousemove',  imageModalState._magnifierMove);
+  elImageModalImg.addEventListener('mouseleave', imageModalState._magnifierLeave);
+}
+
+function detachImageModalMagnifier() {
+  if (imageModalState._magnifierMove)  { elImageModalImg.removeEventListener('mousemove',  imageModalState._magnifierMove);  imageModalState._magnifierMove  = null; }
+  if (imageModalState._magnifierLeave) { elImageModalImg.removeEventListener('mouseleave', imageModalState._magnifierLeave); imageModalState._magnifierLeave = null; }
+  const glass = document.getElementById('gallery-magnifier-glass');
+  if (glass) glass.style.display = 'none';
+}
+
+/**
+ * Renders a zoomed crop of the modal image inside a fixed loupe that follows the cursor.
+ */
+function onImageModalMagnifierMove(e, glass) {
+  const img = elImageModalImg;
+  if (!img || !img.complete || !img.naturalWidth) { glass.style.display = 'none'; return; }
+
+  const ZOOM    = 2.5;
+  const GLASS_W = 260;
+  const GLASS_H = 260;
+  const GAP     = 16;
+
+  const rect = img.getBoundingClientRect();
+  const relX = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+  const relY = Math.max(0, Math.min(1, (e.clientY - rect.top)  / rect.height));
+  const bgW  = rect.width  * ZOOM;
+  const bgH  = rect.height * ZOOM;
+  // Clamp so the pan never goes negative (leaves a blank leading gap) or past the
+  // far edge (leaves a blank trailing gap) — without this it "sticks" near edges.
+  const bgPX = Math.max(0, Math.min(bgW - GLASS_W, relX * bgW - GLASS_W / 2));
+  const bgPY = Math.max(0, Math.min(bgH - GLASS_H, relY * bgH - GLASS_H / 2));
+
+  // Place on the side with the most horizontal room
+  const spaceRight = window.innerWidth - e.clientX - GAP;
+  const left = spaceRight >= GLASS_W ? e.clientX + GAP : e.clientX - GLASS_W - GAP;
+  const top  = Math.max(8, Math.min(window.innerHeight - GLASS_H - 8, e.clientY - GLASS_H / 2));
+
+  glass.style.display            = 'block';
+  glass.style.left               = left + 'px';
+  glass.style.top                = top  + 'px';
+  glass.style.backgroundImage    = `url('${img.src}')`;
+  glass.style.backgroundSize     = `${bgW}px ${bgH}px`;
+  glass.style.backgroundPosition = `-${bgPX}px -${bgPY}px`;
 }
 
 /**
@@ -3991,7 +4078,7 @@ function trapModalFocus(e) {
 
 /**
  * Keyboard shortcuts while the modal is open.
- * Escape closes; ArrowLeft/ArrowRight navigate images.
+ * Escape closes; ArrowLeft/ArrowRight navigate images; M toggles the magnifier.
  */
 function handleModalKeydown(e) {
   if (!imageModalState.isOpen) return;
@@ -4007,6 +4094,11 @@ function handleModalKeydown(e) {
     case 'ArrowRight':
       e.preventDefault();
       if (imageModalState.currentIndex < imageModalState.images.length - 1) showImageAt(imageModalState.currentIndex + 1);
+      break;
+    case 'm':
+    case 'M':
+      e.preventDefault();
+      toggleImageModalMagnify();
       break;
   }
 }
@@ -4035,6 +4127,10 @@ function initImageModal() {
   if (!elImageModal) return;
 
   elImageModalClose.addEventListener('click', closeImageModal);
+
+  if (elImageModalMagnify) {
+    elImageModalMagnify.addEventListener('click', toggleImageModalMagnify);
+  }
 
   elImageModalPrev.addEventListener('click', () => {
     showImageAt(imageModalState.currentIndex - 1);

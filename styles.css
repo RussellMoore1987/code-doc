@@ -2852,6 +2852,55 @@ body.is-resizing {
   outline-offset: 2px;
 }
 
+/* Magnify toggle button — sits just left of the close button */
+.image-modal-magnify {
+  position: fixed;
+  top: 14px;
+  right: 64px;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.72);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  color: #fff;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s, color 0.15s;
+  z-index: 1001;
+}
+.image-modal-magnify:hover,
+.image-modal-magnify:focus-visible {
+  background: rgba(0, 0, 0, 0.85);
+  outline: 2px solid rgba(255, 255, 255, 0.6);
+  outline-offset: 2px;
+}
+.image-modal-magnify[aria-pressed="true"] {
+  background: var(--primary-color);
+  border-color: var(--primary-color);
+}
+
+/* Loupe crosshair cursor while magnify mode is active */
+.image-modal-img.gallery-magnify-active {
+  cursor: zoom-in;
+}
+
+/* Magnifier glass — fixed floating loupe that follows the cursor */
+#gallery-magnifier-glass {
+  position: fixed;
+  width: 260px;
+  height: 260px;
+  border: 2px solid rgba(255, 255, 255, 0.25);
+  border-radius: 6px;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.6);
+  pointer-events: none;
+  z-index: 1002;
+  background-color: #000;
+  background-repeat: no-repeat;
+  display: none;
+}
+
 /* Prev / Content / Next row */
 .image-modal-container {
   display: flex;
@@ -2959,6 +3008,11 @@ body.is-resizing {
 @media (max-width: 600px) {
   .image-modal-prev,
   .image-modal-next {
+    width: 36px;
+    height: 36px;
+  }
+  .image-modal-magnify {
+    right: 56px;
     width: 36px;
     height: 36px;
   }

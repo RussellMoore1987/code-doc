@@ -1136,8 +1136,10 @@ function gnOnMagnifierMove(e, glass) {
     const relY = Math.max(0, Math.min(1, (e.clientY - rect.top)  / rect.height));
     const bgW  = rect.width  * ZOOM;
     const bgH  = rect.height * ZOOM;
-    const bgPX = relX * bgW - GLASS_W / 2;
-    const bgPY = relY * bgH - GLASS_H / 2;
+    // Clamp so the pan never goes negative (leaves a blank leading gap) or past the
+    // far edge (leaves a blank trailing gap) — without this it "sticks" near edges.
+    const bgPX = Math.max(0, Math.min(bgW - GLASS_W, relX * bgW - GLASS_W / 2));
+    const bgPY = Math.max(0, Math.min(bgH - GLASS_H, relY * bgH - GLASS_H / 2));
 
     // Place on the side with the most horizontal room
     const spaceRight = window.innerWidth - e.clientX - GAP;
