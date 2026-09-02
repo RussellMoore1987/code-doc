@@ -498,7 +498,7 @@ function gnRenderLibrary() {
 function gnBuildLibraryCard(book) {
     const progress = gnLoadProgress(book.id);
     const total    = book.pages.length;
-    const lastPage = progress ? progress.lastPage : 0; // 0-indexed
+    const lastPage = gnFurthestPage(progress, total); // 0-indexed, spread-aware
     const pct      = total > 0 ? Math.round((lastPage / (total - 1)) * 100) : 0;
 
     let badgeClass = 'gn-book-card-badge--new';
@@ -843,6 +843,19 @@ function gnLastPage() {
 /** Returns how many pages advance per "next" in the current mode. */
 function gnGetStep() {
     return gn.viewMode === 'double' ? 2 : gn.viewMode === 'triple' ? 3 : 1;
+}
+
+/** Same as gnGetStep but for arbitrary saved progress, independent of the live gn state. */
+function gnStepForViewMode(viewMode) {
+    return viewMode === 'double' ? 2 : viewMode === 'triple' ? 3 : 1;
+}
+
+/** Resolves the last page actually reached, accounting for double/triple spreads where
+ *  the stored lastPage is the spread's start index rather than its final page. */
+function gnFurthestPage(progress, total) {
+    if (!progress) return 0;
+    const step = gnStepForViewMode(progress.viewMode);
+    return Math.min(progress.lastPage + step - 1, total - 1);
 }
 
 /** Updates nav button disabled states and page counter. */
@@ -1420,7 +1433,7 @@ function gnWireOpenLinks() {
 function gnBuildPreviewCard(book) {
     const progress = gnLoadProgress(book.id);
     const total    = book.pages.length;
-    const lastPage = progress ? progress.lastPage : 0;
+    const lastPage = gnFurthestPage(progress, total); // spread-aware
     const pct      = total > 1 ? Math.round((lastPage / (total - 1)) * 100) : 0;
 
     let badgeClass = 'gn-book-card-badge--new';
