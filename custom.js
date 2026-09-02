@@ -341,9 +341,25 @@ function gnBuildModal() {
           <!-- Reader body: stage + optional TOC -->
           <div class="gn-reader-body" id="gn-reader-body">
 
+            <button class="gn-nav-arrow gn-nav-arrow--prev" id="gn-stage-prev"
+                    aria-label="Previous page" data-tooltip="Previous Page (←)" title="Previous page">
+              <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" fill="none"
+                   stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="15 18 9 12 15 6"/>
+              </svg>
+            </button>
+
             <div class="gn-stage" id="gn-stage">
               <div class="gn-pages-wrap" id="gn-pages-wrap"></div>
             </div>
+
+            <button class="gn-nav-arrow gn-nav-arrow--next" id="gn-stage-next"
+                    aria-label="Next page" data-tooltip="Next Page (→)" title="Next page">
+              <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" fill="none"
+                   stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="9 18 15 12 9 6"/>
+              </svg>
+            </button>
 
             <!-- Table of Contents panel -->
             <div class="gn-toc-panel" id="gn-toc-panel" hidden
@@ -395,6 +411,8 @@ function gnCacheRefs() {
         prevBtn:       q('gn-prev-page'),
         nextBtn:       q('gn-next-page'),
         lastBtn:       q('gn-last-page'),
+        stagePrev:     q('gn-stage-prev'),
+        stageNext:     q('gn-stage-next'),
         pageInput:     q('gn-page-input'),
         totalPages:    q('gn-total-pages'),
         // View buttons
@@ -874,6 +892,8 @@ function gnUpdateNavUI() {
     r.prevBtn.disabled  = atStart;
     r.nextBtn.disabled  = atEnd;
     r.lastBtn.disabled  = atEnd;
+    r.stagePrev.disabled = atStart;
+    r.stageNext.disabled = atEnd;
 
     // Page input: show 1-indexed; show spread range in multi-page modes
     const displayEnd = Math.min(cur + step - 1, total - 1);
@@ -1136,6 +1156,7 @@ function gnToggleToc() {
     gn.tocOpen = !gn.tocOpen;
     const r = gn.refs;
     r.tocPanel.hidden = !gn.tocOpen;
+    r.readerBody.classList.toggle('gn-toc-open', gn.tocOpen);
     r.tocToggle.setAttribute('aria-pressed', gn.tocOpen ? 'true' : 'false');
     r.tocToggle.classList.toggle('gn-icon-btn--active', gn.tocOpen);
     if (gn.tocOpen) {
@@ -1645,6 +1666,8 @@ function gnBindModalEvents() {
     r.prevBtn.addEventListener('click',  gnPrevPage);
     r.nextBtn.addEventListener('click',  gnNextPage);
     r.lastBtn.addEventListener('click',  gnLastPage);
+    r.stagePrev.addEventListener('click', gnPrevPage);
+    r.stageNext.addEventListener('click', gnNextPage);
 
     r.pageInput.addEventListener('change', () => {
         const val = parseInt(r.pageInput.value, 10);

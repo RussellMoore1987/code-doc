@@ -751,6 +751,72 @@ ul.gn-page-cards {
     padding: 20px 24px;
 }
 
+/* ------------------------------------------------------------
+   Hover-reveal Prev/Next Arrows — overlaid on the reader body,
+   shown only while hovering (mouse/trackpad devices).
+------------------------------------------------------------ */
+
+.gn-nav-arrow {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 42px;
+    height: 42px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    border: 1px solid rgba(255,255,255,0.12);
+    background: rgba(13,17,23,0.5);
+    backdrop-filter: blur(3px);
+    color: #e6edf3;
+    cursor: pointer;
+    z-index: 5;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.18s ease, background 0.14s ease, transform 0.14s ease;
+}
+
+.gn-nav-arrow--prev { left: 14px; }
+.gn-nav-arrow--next { right: 14px; }
+
+/* Push the next arrow clear of the TOC panel when it's open (desktop layout only) */
+.gn-reader-body.gn-toc-open .gn-nav-arrow--next {
+    right: calc(260px + 14px);
+}
+
+@media (hover: hover) and (pointer: fine) {
+    .gn-reader-body:hover .gn-nav-arrow:not(:disabled) {
+        opacity: 0.6;
+        pointer-events: auto;
+    }
+}
+
+.gn-nav-arrow:hover:not(:disabled) {
+    opacity: 0.95 !important;
+    background: rgba(13,17,23,0.75);
+    transform: translateY(-50%) scale(1.05);
+}
+
+.gn-nav-arrow:focus-visible {
+    opacity: 1;
+    pointer-events: auto;
+    outline: 2px solid #309eff;
+    outline-offset: 2px;
+}
+
+.gn-nav-arrow:disabled {
+    opacity: 0 !important;
+    pointer-events: none !important;
+}
+
+/* Touch devices: no hover state to reveal these, so keep them out of the way */
+@media (hover: none) {
+    .gn-nav-arrow {
+        display: none;
+    }
+}
+
 /* Pages wrapper (holds 1, 2, or 3 page frames) */
 .gn-pages-wrap {
     display: flex;
@@ -883,7 +949,6 @@ ul.gn-page-cards {
 
 .gn-text-page p {
     margin: 0 0 1em;
-    text-indent: 1.5em;
     color: var(--text-base);
 }
 
@@ -1081,7 +1146,6 @@ ul.gn-page-cards {
 /* Text magnifier inner content — paragraph and image row styles */
 .gn-text-loupe-inner p {
     margin: 0 0 1em;
-    text-indent: 1.5em;
 }
 .gn-text-loupe-inner p:first-child { text-indent: 0; }
 .gn-text-loupe-inner h1,
