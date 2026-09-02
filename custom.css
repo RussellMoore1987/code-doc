@@ -810,10 +810,11 @@ ul.gn-page-cards {
     pointer-events: none !important;
 }
 
-/* Touch devices: no hover state to reveal these, so keep them out of the way */
+/* Touch devices: no hover state to reveal these, so show them always instead */
 @media (hover: none) {
-    .gn-nav-arrow {
-        display: none;
+    .gn-nav-arrow:not(:disabled) {
+        opacity: 0.6;
+        pointer-events: auto;
     }
 }
 
