@@ -1092,7 +1092,8 @@ function gnOnTextMagnifierMove(e, glass) {
     if (inner.dataset.pageIndex !== pageKey) {
         inner.innerHTML = textPage.innerHTML;
         inner.dataset.pageIndex = pageKey;
-        // Carry over computed text styles explicitly
+        // Carry over computed text styles explicitly (theme-aware — reads the live page's
+        // actual colors rather than assuming the dark reader chrome's palette)
         const cs = getComputedStyle(textPage);
         inner.style.cssText = [
             'position:absolute', 'top:0', 'left:0', 'margin:0',
@@ -1103,7 +1104,7 @@ function gnOnTextMagnifierMove(e, glass) {
             `font-size:${cs.fontSize}`,
             `line-height:${cs.lineHeight}`,
             `padding:${cs.paddingTop} ${cs.paddingRight} ${cs.paddingBottom} ${cs.paddingLeft}`,
-            'color:#e6edf3',
+            `color:${cs.color}`,
         ].join(';');
         inner.querySelectorAll('img').forEach((img) => {
             img.style.cssText += ';max-width:100%;min-width:0;height:auto;display:block;';
@@ -1117,7 +1118,7 @@ function gnOnTextMagnifierMove(e, glass) {
     glass.style.height     = GLASS_H + 'px';
     glass.style.left       = glassLeft + 'px';
     glass.style.top        = glassTop  + 'px';
-    glass.style.background = '#161b22';
+    glass.style.background = getComputedStyle(frame).backgroundColor;
 }
 
 function gnOnMagnifierMove(e, glass) {
