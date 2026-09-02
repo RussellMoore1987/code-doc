@@ -1080,7 +1080,10 @@ function gnOnTextMagnifierMove(e, glass) {
     let inner = glass.querySelector('.gn-text-loupe-inner');
     if (!inner) {
         inner = document.createElement('div');
-        inner.className = 'gn-text-loupe-inner';
+        // Keep the "gn-text-page" class so the real image/row layout rules
+        // (max-width, flex ratios, min-width:0, etc.) apply to the mirrored
+        // content — without it, images render at native size and overlap.
+        inner.className = 'gn-text-page gn-text-loupe-inner';
         glass.appendChild(inner);
     }
 
@@ -1093,7 +1096,7 @@ function gnOnTextMagnifierMove(e, glass) {
         const cs = getComputedStyle(textPage);
         inner.style.cssText = [
             'position:absolute', 'top:0', 'left:0', 'margin:0',
-            `width:${textPage.offsetWidth}px`,
+            `width:${textPage.offsetWidth}px`, 'max-width:none',
             'height:auto', 'overflow:visible', 'pointer-events:none',
             'transform-origin:0 0', 'box-sizing:border-box',
             `font-family:${cs.fontFamily}`,
