@@ -3463,6 +3463,29 @@ figure.tag-highlight {
   outline-offset: 1px;
 }
 
+.citation-source-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: 3px;
+  color: var(--text-muted);
+  vertical-align: middle;
+  border-radius: 3px;
+  transition: color 0.15s, background 0.15s;
+}
+
+.citation-source-link:hover,
+.citation-source-link:focus-visible {
+  color: var(--text-link);
+  background: var(--bg-active);
+  outline: none;
+}
+
+.citation-source-link:focus-visible {
+  outline: 2px solid var(--border-focus);
+  outline-offset: 1px;
+}
+
 /* ── References section ──────────────────────────────────────── */
 
 .references-section {

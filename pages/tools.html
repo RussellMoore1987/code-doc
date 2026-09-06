@@ -32,6 +32,22 @@
             If <code>data-citation</code> is omitted and only <code>data-link</code> is set, the
             References section shows just the link - no empty text line above it.
         </p>
+        <p><strong>Disable the source-link icon on one citation:</strong></p>
+        <pre><code>&lt;span
+    class="citation"
+    data-citation="…"
+    data-link="https://example.com"
+    data-link-icon="false"&gt;
+    Laravel documentation
+&lt;/span&gt;</code></pre>
+        <p>
+            When a citation has a <code>data-link</code>, a small link icon is appended next to its
+            <code>[n]</code> superscript so readers can jump straight to the source in a new tab
+            without visiting the References section first. This icon is <strong>on by default</strong>.
+            Set <code>data-link-icon="false"</code> on an individual <code>.citation</code> element to hide
+            its icon, or flip the site-wide default by changing <code>CITATION_SHOW_LINK_ICON_DEFAULT</code>
+            in <code>app.js</code>.
+        </p>
     </div>
     <div class="callout">
         <div class="callout-title">ℹ Behaviour</div>
@@ -39,6 +55,7 @@
             <li>Citations are numbered sequentially in the order they appear.</li>
             <li>Identical citations (same text and link) reuse the same number.</li>
             <li>If a citation only has <code>data-link</code> (no <code>data-citation</code>), only the link is shown in the References section.</li>
+            <li>Citations with a <code>data-link</code> show a small link icon next to <code>[n]</code> that opens the source directly - controlled globally by <code>CITATION_SHOW_LINK_ICON_DEFAULT</code> in <code>app.js</code>, or per citation with <code>data-link-icon="true"/"false"</code>.</li>
             <li>Clicking a superscript scrolls to its matching reference; each reference has a
                 <strong>↩ Back</strong> link that returns to the citation you clicked.</li>
             <li>The References section is rebuilt on every page load, so it always matches the page.</li>
@@ -64,6 +81,9 @@
     </p>
     <p>
         A citation can also be just a link with no description text <span class="citation" data-link="https://developer.mozilla.org/en-US/docs/Web/HTML">MDN HTML docs</span> - the References section will show only the URL, not an empty text line.
+    </p>
+    <p>
+        Notice the small link icon after each superscript above - it opens the source directly. Here the icon is turned off with <code>data-link-icon="false"</code>, even though a link is present <span class="citation" data-citation="This citation still has a link, but its icon is hidden for this instance only." data-link="https://developer.mozilla.org/en-US/docs/Web/API/URL" data-link-icon="false">MDN URL API</span>.
     </p>
     
     <!-- Doc Link Usage section -->

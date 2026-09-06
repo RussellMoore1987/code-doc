@@ -2597,6 +2597,22 @@ async function navigateToTaggedElement(navId, tagElIndex) {
 
 const CITATION_SCROLL_OFFSET = 20; // px breathing room above the scroll target
 
+// Site-wide default: show a small link icon next to [n] for citations that have a data-link.
+// Override per citation with data-link-icon="false" (or "true") on the .citation element.
+const CITATION_SHOW_LINK_ICON_DEFAULT = true;
+
+const CITATION_LINK_ICON_SVG = `<svg viewBox="0 0 16 16" width="10" height="10" aria-hidden="true"><path d="M6.5 2.5h-3a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1v-3" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/><path d="M9.5 2.5h4v4M13 3 7 9" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+
+/**
+ * Resolve whether the source-link icon should render for a given citation element,
+ * honoring a per-element data-link-icon="true|false" override over the site default.
+ */
+function shouldShowCitationLinkIcon(el) {
+  const override = el.dataset.linkIcon;
+  if (override === undefined) return CITATION_SHOW_LINK_ICON_DEFAULT;
+  return override.trim().toLowerCase() !== 'false';
+}
+
 /**
  * Remove any previously generated citation markers and References section.
  * Keeps the authored .citation source elements untouched.
@@ -2645,6 +2661,8 @@ function collectCitations() {
 
 /**
  * Append a superscript "[n]" marker immediately after each cited element.
+ * Citations with a data-link get an extra small icon that opens the source
+ * directly in a new tab, unless disabled via shouldShowCitationLinkIcon().
  */
 function renderCitationMarkers(items) {
   items.forEach(({ el, ref, markerId }) => {
@@ -2661,6 +2679,19 @@ function renderCitationMarkers(items) {
     link.setAttribute('aria-label', `View reference ${ref.number}`);
 
     sup.appendChild(link);
+
+    if (ref.link && shouldShowCitationLinkIcon(el)) {
+      const sourceLink = document.createElement('a');
+      sourceLink.className = 'citation-source-link';
+      sourceLink.href = ref.link;
+      sourceLink.target = '_blank';
+      sourceLink.rel = 'noopener noreferrer';
+      sourceLink.innerHTML = CITATION_LINK_ICON_SVG;
+      sourceLink.dataset.tooltip = 'Open source in new tab';
+      sourceLink.setAttribute('aria-label', 'Open citation source in new tab');
+      sup.appendChild(sourceLink);
+    }
+
     el.after(sup);
   });
 }
