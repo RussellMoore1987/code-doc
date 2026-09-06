@@ -23,10 +23,14 @@
 &lt;/span&gt;</code></pre>
         <p><strong>Text only (no link):</strong></p>
         <pre><code>&lt;span class="citation" data-citation="Internal design note, 2026."&gt;design note&lt;/span&gt;</code></pre>
+        <p><strong>Link only (no citation text):</strong></p>
+        <pre><code>&lt;span class="citation" data-link="https://developer.mozilla.org/en-US/docs/Web/HTML"&gt;MDN HTML docs&lt;/span&gt;</code></pre>
         <p>
             <code>data-citation</code> is the reference text shown in the References section.
             <code>data-link</code> is optional; when present it is rendered as a hyperlink that opens in
             a new tab (<code>target="_blank"</code> with <code>rel="noopener noreferrer"</code>).
+            If <code>data-citation</code> is omitted and only <code>data-link</code> is set, the
+            References section shows just the link - no empty text line above it.
         </p>
     </div>
     <div class="callout">
@@ -34,6 +38,7 @@
         <ul>
             <li>Citations are numbered sequentially in the order they appear.</li>
             <li>Identical citations (same text and link) reuse the same number.</li>
+            <li>If a citation only has <code>data-link</code> (no <code>data-citation</code>), only the link is shown in the References section.</li>
             <li>Clicking a superscript scrolls to its matching reference; each reference has a
                 <strong>↩ Back</strong> link that returns to the citation you clicked.</li>
             <li>The References section is rebuilt on every page load, so it always matches the page.</li>
@@ -53,6 +58,12 @@
     </p>
     <p>
         Here is an example of the third citation again <span class="citation" data-citation="Any secret embedded in client-side JavaScript is publicly visible in the browser." data-link="https://owasp.org/www-project-top-ten/">OWASP Top 10</span>.
+    </p>
+    <p>
+        Here is an example of a citation with no link <span class="citation" data-citation="Any secret embedded in client-side JavaScript is publicly visible in the browser.">OWASP Top 10</span>.
+    </p>
+    <p>
+        A citation can also be just a link with no description text <span class="citation" data-link="https://developer.mozilla.org/en-US/docs/Web/HTML">MDN HTML docs</span> - the References section will show only the URL, not an empty text line.
     </p>
     
     <!-- Doc Link Usage section -->

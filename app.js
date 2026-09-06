@@ -2615,16 +2615,16 @@ function clearCitations() {
  * items map each source element to its reference + unique marker id.
  */
 function collectCitations() {
-  const els = Array.from(elContentBody.querySelectorAll('.citation[data-citation]'));
+  const els = Array.from(elContentBody.querySelectorAll('.citation[data-citation], .citation[data-link]'));
   const references = [];
   const keyToRef = new Map();
   const items = [];
 
   els.forEach(el => {
     const text = (el.dataset.citation || '').trim();
-    if (!text) return; // nothing to cite
-
     const link = (el.dataset.link || '').trim();
+    if (!text && !link) return; // nothing to cite - link-only citations are allowed
+
     const key = `${text}\u0000${link}`; // identical text + link => same reference
 
     let ref = keyToRef.get(key);
@@ -2693,13 +2693,16 @@ function renderReferencesSection(references) {
     li.className = 'reference-item';
     li.id = ref.id;
 
-    const text = document.createElement('span');
-    text.className = 'reference-text';
-    text.textContent = ref.text;
-    li.appendChild(text);
+    if (ref.text) {
+      const text = document.createElement('span');
+      text.className = 'reference-text';
+      text.textContent = ref.text;
+      li.appendChild(text);
+    }
 
     if (ref.link) {
-      li.appendChild(document.createElement('br'));
+      // Link-only citations (no data-citation text) show just the link, nothing else.
+      if (ref.text) li.appendChild(document.createElement('br'));
       const anchor = document.createElement('a');
       anchor.className = 'reference-link';
       anchor.href = ref.link;
