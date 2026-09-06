@@ -3525,12 +3525,12 @@ figure.tag-highlight {
 
 @keyframes citation-flash {
   0%   { background-color: var(--accent-light); }
-  55%  { background-color: var(--accent-light); }
+  70%  { background-color: var(--accent-light); }
   100% { background-color: transparent; }
 }
 
 .citation-flash {
-  animation: citation-flash 2s ease-out forwards;
+  animation: citation-flash 4s ease-out forwards;
   border-radius: 4px;
 }
 
