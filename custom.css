@@ -1333,6 +1333,97 @@ ul.gn-page-cards {
     .gn-book-grid { --gn-book-cols: 1; }
 }
 
+/* Export to PDF button — spin the icon while pages are being prepared for print */
+.gn-icon-btn--busy svg {
+    animation: gn-spin 0.8s linear infinite;
+}
+
+/* ------------------------------------------------------------
+   Export to PDF — hidden print-only view of the current book.
+   Populated by gnBuildPrintArea() in custom.js, then window.print()
+   is invoked so the user can "Save as PDF" from their print dialog.
+------------------------------------------------------------ */
+
+#gn-print-area {
+    display: none;
+}
+
+@media print {
+    body > *:not(#gn-print-area) {
+        display: none !important;
+    }
+
+    #gn-print-area {
+        display: block !important;
+        background: #fff;
+        color: #000;
+    }
+
+    .gn-print-page {
+        page-break-after: always;
+        padding: 32px;
+        background: #fff;
+        color: #000;
+    }
+
+    .gn-print-page:last-child {
+        page-break-after: auto;
+    }
+
+    /* Comic/image pages: constrain to one physical page so a tall image can't
+       overflow onto extra, mostly-blank trailing pages. */
+    .gn-print-page--image {
+        box-sizing: border-box;
+        height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+    }
+
+    .gn-print-page img {
+        display: block;
+        max-width: 100%;
+        max-height: 100%;
+        width: auto;
+        height: auto;
+        margin: 0 auto;
+        object-fit: contain;
+    }
+
+    .gn-print-cover h1 {
+        font-size: 26px;
+        margin: 0 0 8px;
+    }
+
+    .gn-print-meta {
+        margin: 2px 0;
+        color: #444;
+    }
+
+    .gn-print-desc {
+        margin-top: 16px;
+        line-height: 1.6;
+        color: #000;
+    }
+
+    .gn-print-page .gn-text-page {
+        color: #000;
+        font-family: Georgia, 'Times New Roman', serif;
+        font-size: 13pt;
+        line-height: 1.6;
+    }
+
+    /* Override the reader's dark-theme text color (var(--text-base)) set on these
+       elements directly, which would otherwise win over the inherited black above */
+    .gn-print-page .gn-text-page h1,
+    .gn-print-page .gn-text-page h2,
+    .gn-print-page .gn-text-page h3,
+    .gn-print-page .gn-text-page p {
+        color: #000;
+    }
+}
+
 /* ============================================================
    GRAPHIC NOVEL / COMIC BOOK VIEWER
    END

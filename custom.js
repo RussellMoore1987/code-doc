@@ -336,6 +336,15 @@ function gnBuildModal() {
                   <line x1="3" y1="21" x2="10" y2="14"/>
                 </svg>
               </button>
+              <button class="gn-icon-btn" id="gn-export-pdf"
+                      aria-label="Export to PDF" data-tooltip="Export to PDF (Print)" title="Export to PDF">
+                <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" fill="none"
+                     stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="6 9 6 2 18 2 18 9"/>
+                  <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/>
+                  <rect x="6" y="14" width="12" height="8"/>
+                </svg>
+              </button>
             </div>
 
           </div><!-- end .gn-reader-toolbar -->
@@ -435,6 +444,7 @@ function gnCacheRefs() {
         bookmarkDropdown: q('gn-bookmark-dropdown'),
         tocToggle:     q('gn-toc-toggle'),
         fullscreen:    q('gn-fullscreen'),
+        exportPdf:     q('gn-export-pdf'),
         // Stage
         stage:         q('gn-stage'),
         pagesWrap:     q('gn-pages-wrap'),
@@ -1683,6 +1693,73 @@ function gnUpdateFullscreenUI() {
 }
 
 // ------------------------------------------------------------
+// Export to PDF (browser print dialog)
+// ------------------------------------------------------------
+
+/** Renders every page of the current book into a hidden print area, then opens the print dialog. */
+async function gnExportToPdf() {
+    const book = gn.currentBook;
+    if (!book) return;
+    const btn = gn.refs.exportPdf;
+    btn.disabled = true;
+    btn.classList.add('gn-icon-btn--busy');
+    try {
+        await gnBuildPrintArea(book);
+        window.print();
+    } finally {
+        btn.disabled = false;
+        btn.classList.remove('gn-icon-btn--busy');
+    }
+}
+
+/** Builds/fills #gn-print-area with a title page followed by every page of the book, in order. */
+async function gnBuildPrintArea(book) {
+    let area = document.getElementById('gn-print-area');
+    if (!area) {
+        area = document.createElement('div');
+        area.id = 'gn-print-area';
+        document.body.appendChild(area);
+    }
+    area.innerHTML = '';
+
+    const cover = document.createElement('div');
+    cover.className = 'gn-print-page gn-print-cover';
+    cover.innerHTML = `
+        <h1>${gnEscHtml(book.title)}</h1>
+        ${book.author ? `<p class="gn-print-meta">${gnEscHtml(book.author)}</p>` : ''}
+        ${book.year   ? `<p class="gn-print-meta">${gnEscHtml(book.year)}</p>`   : ''}
+        <p class="gn-print-desc">${gnEscHtml(book.description)}</p>
+    `;
+    area.appendChild(cover);
+
+    for (const page of book.pages) {
+        const pageEl = document.createElement('div');
+        pageEl.className = 'gn-print-page';
+        if (page.type === 'text') {
+            const html = await gnFetchTextPage(page.src);
+            const content = document.createElement('div');
+            content.className = 'gn-text-page';
+            content.innerHTML = html || '<p>Page unavailable.</p>';
+            pageEl.appendChild(content);
+        } else {
+            pageEl.classList.add('gn-print-page--image');
+            const img = document.createElement('img');
+            img.alt = page.alt || '';
+            img.src = page.src;
+            pageEl.appendChild(img);
+        }
+        area.appendChild(pageEl);
+    }
+
+    // Wait for every image (page images + any embedded within novel page fragments) to finish loading
+    const imgs = Array.from(area.querySelectorAll('img'));
+    await Promise.all(imgs.map((img) => img.complete ? Promise.resolve() : new Promise((resolve) => {
+        img.addEventListener('load',  resolve, { once: true });
+        img.addEventListener('error', resolve, { once: true });
+    })));
+}
+
+// ------------------------------------------------------------
 // Modal Event Binding
 // ------------------------------------------------------------
 
@@ -1756,6 +1833,9 @@ function gnBindModalEvents() {
     // Fullscreen
     r.fullscreen.addEventListener('click', gnToggleFullscreen);
     document.addEventListener('fullscreenchange', gnUpdateFullscreenUI);
+
+    // Export to PDF (browser print dialog)
+    r.exportPdf.addEventListener('click', gnExportToPdf);
 }
 
 // ------------------------------------------------------------
