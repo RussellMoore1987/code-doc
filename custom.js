@@ -38,6 +38,8 @@ const gn = {
     tocOpen:      false,
     lastFocused:  null,
     _scrollTracker:  null,
+    _scrollSaveTimer: null,
+    _wheelGraceUntil: 0,
     magnifyOn:       false,
     _magnifierMove:  null,
     _magnifierLeave: null,
@@ -459,6 +461,12 @@ function gnOpenModal() {
 /** Closes the modal overlay and restores focus. */
 function gnCloseModal() {
     if (!gn.modal) return;
+    // Flush any pending scroll-position save so progress isn't lost
+    if (gn._scrollSaveTimer) {
+        clearTimeout(gn._scrollSaveTimer);
+        gn._scrollSaveTimer = null;
+        gnSaveProgress();
+    }
     gn.isOpen = false;
     gn.modal.classList.remove('gn-overlay--open');
     gn.modal.setAttribute('aria-hidden', 'true');
@@ -484,6 +492,12 @@ function gnCloseModal() {
 
 /** Switches to the library view inside the modal. */
 function gnShowLibrary() {
+    // Flush any pending scroll-position save before leaving the current book
+    if (gn._scrollSaveTimer) {
+        clearTimeout(gn._scrollSaveTimer);
+        gn._scrollSaveTimer = null;
+        gnSaveProgress();
+    }
     gn.isLibrary = true;
     const r = gn.refs;
     r.library.classList.remove('gn-hidden');
@@ -595,7 +609,18 @@ function gnOpenBook(bookId) {
     const book = gn.books.find((b) => b.id === bookId);
     if (!book) return;
 
+    // Flush any pending scroll-position save for whatever book was open before this one
+    if (gn._scrollSaveTimer) {
+        clearTimeout(gn._scrollSaveTimer);
+        gn._scrollSaveTimer = null;
+        gnSaveProgress();
+    }
+
     gn.currentBook = book;
+
+    // Ignore wheel events for a moment after opening — guards against residual
+    // trackpad/mouse momentum silently flipping pages in the freshly-opened book
+    gn._wheelGraceUntil = Date.now() + 500;
 
     // Restore saved progress
     const progress = gnLoadProgress(bookId);
@@ -694,6 +719,10 @@ function gnRenderPage() {
                         gnUpdateNavUI();
                         gnUpdateBookmarkUI();
                         gnUpdateTocHighlight();
+                        // Debounce progress saves so rapid scrolling doesn't spam localStorage,
+                        // but still persist the reached page (needed for resume + completion state).
+                        clearTimeout(gn._scrollSaveTimer);
+                        gn._scrollSaveTimer = setTimeout(gnSaveProgress, 250);
                     }
                 });
             };
@@ -1596,6 +1625,7 @@ let _gnWheelLast = 0;
 
 function gnHandleWheel(e) {
     if (!gn.isOpen || gn.isLibrary || gn.viewMode === 'scroll') return;
+    if (Date.now() < gn._wheelGraceUntil) return;
     // Ignore events that originate inside a real scrollable element other than the stage
     let node = e.target;
     while (node && node !== gn.modal) {
@@ -1603,6 +1633,9 @@ function gnHandleWheel(e) {
         node = node.parentElement;
     }
     e.preventDefault();
+    // Ignore weak/trailing deltas from decaying trackpad momentum so it can't
+    // keep silently flipping pages after the user has stopped scrolling
+    if (Math.abs(e.deltaY) < 15) return;
     const now = Date.now();
     if (now - _gnWheelLast < 400) return; // throttle
     _gnWheelLast = now;
@@ -1795,6 +1828,15 @@ function gnInit() {
     // Close the modal when the browser navigates back/forward
     window.addEventListener('popstate', () => {
         if (gn.isOpen) gnCloseModal();
+    });
+
+    // Flush any pending debounced scroll-progress save before the tab/page unloads
+    window.addEventListener('pagehide', () => {
+        if (gn._scrollSaveTimer) {
+            clearTimeout(gn._scrollSaveTimer);
+            gn._scrollSaveTimer = null;
+            gnSaveProgress();
+        }
     });
 }
 
