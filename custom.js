@@ -21,6 +21,8 @@ const GN_ZOOM_MIN      = 0.25;
 const GN_ZOOM_MAX      = 1.0;
 const GN_ZOOM_STEP     = 0.25;
 const GN_MODAL_ID      = 'gn-viewer-modal';
+const GN_URL_BOOK_PARAM = 'gnbook';
+const GN_URL_PAGE_PARAM = 'gnpage';
 
 // ------------------------------------------------------------
 // State
@@ -477,6 +479,7 @@ function gnCloseModal() {
         gn._scrollSaveTimer = null;
         gnSaveProgress();
     }
+    gnClearUrlParams();
     gn.isOpen = false;
     gn.modal.classList.remove('gn-overlay--open');
     gn.modal.setAttribute('aria-hidden', 'true');
@@ -508,6 +511,7 @@ function gnShowLibrary() {
         gn._scrollSaveTimer = null;
         gnSaveProgress();
     }
+    gnClearUrlParams();
     gn.isLibrary = true;
     const r = gn.refs;
     r.library.classList.remove('gn-hidden');
@@ -614,8 +618,8 @@ function gnBuildLibraryCard(book) {
 // Reader Rendering
 // ------------------------------------------------------------
 
-/** Opens a book by ID, switching to reader view. */
-function gnOpenBook(bookId) {
+/** Opens a book by ID, switching to reader view. Pass explicitPage (0-indexed) to override saved progress, e.g. from a deep-linked URL. */
+function gnOpenBook(bookId, explicitPage) {
     const book = gn.books.find((b) => b.id === bookId);
     if (!book) return;
 
@@ -637,6 +641,9 @@ function gnOpenBook(bookId) {
     gn.viewMode   = (progress && progress.viewMode) || 'single';
     gn.zoom       = (progress && progress.zoom)     || 1.0;
     gn.currentPage = progress ? Math.min(progress.lastPage, book.pages.length - 1) : 0;
+    if (typeof explicitPage === 'number') {
+        gn.currentPage = Math.max(0, Math.min(explicitPage, book.pages.length - 1));
+    }
     // Triple view is not supported for novel books
     if (book.type === 'novel' && gn.viewMode === 'triple') gn.viewMode = 'double';
 
@@ -646,6 +653,7 @@ function gnOpenBook(bookId) {
 /** Switches the modal to the reader view. */
 function gnShowReaderView() {
     gn.isLibrary = false;
+    gnUpdateUrl();
     const r = gn.refs;
 
     r.library.classList.add('gn-hidden');
@@ -781,7 +789,9 @@ function gnBuildPageFrame(page, index, book) {
     const img = new Image();
     img.className = 'gn-page-img gn-img-loading';
     img.alt = page.alt || `${book.title} — Page ${index + 1}`;
-    img.loading = 'lazy';
+    // No loading="lazy" here: this element is detached until onload appends it,
+    // and Chrome's viewport-distance heuristic can't evaluate a detached image -
+    // it sometimes just defers the fetch forever, deadlocking the placeholder/spinner.
 
     img.onload = () => {
         img.classList.remove('gn-img-loading');
@@ -1288,6 +1298,7 @@ function gnSaveProgress() {
     } catch {
         // localStorage unavailable - silent fail
     }
+    gnUpdateUrl();
     // Update all card surfaces to reflect new progress
     gnRefreshAllCards();
 }
@@ -1296,6 +1307,42 @@ function gnRefreshAllCards() {
     gnRenderPageCards();
     gnRenderInlineCards();
     gnRenderLibrary();
+}
+
+// ------------------------------------------------------------
+// URL State (deep-linkable book + page)
+// ------------------------------------------------------------
+
+/** Reflects the current book + page in the URL query string, without adding a history entry. */
+function gnUpdateUrl() {
+    if (!gn.currentBook) return;
+    const url = new URL(location.href);
+    url.searchParams.set(GN_URL_BOOK_PARAM, gn.currentBook.id);
+    url.searchParams.set(GN_URL_PAGE_PARAM, String(gn.currentPage + 1)); // 1-indexed for readability
+    history.replaceState(history.state, '', url);
+}
+
+/** Removes the book/page params from the URL, e.g. when returning to the library or closing the reader. */
+function gnClearUrlParams() {
+    const url = new URL(location.href);
+    if (!url.searchParams.has(GN_URL_BOOK_PARAM) && !url.searchParams.has(GN_URL_PAGE_PARAM)) return;
+    url.searchParams.delete(GN_URL_BOOK_PARAM);
+    url.searchParams.delete(GN_URL_PAGE_PARAM);
+    history.replaceState(history.state, '', url);
+}
+
+/** Opens directly to the book/page referenced in the URL query string, if any (deep-link support). */
+function gnRestoreFromUrl() {
+    if (gn.isOpen) return;
+    const params = new URLSearchParams(location.search);
+    const bookId = params.get(GN_URL_BOOK_PARAM);
+    if (!bookId) return;
+    const book = gn.books.find((b) => b.id === bookId);
+    if (!book) return;
+    const pageParam = Number.parseInt(params.get(GN_URL_PAGE_PARAM), 10);
+    const pageIndex = Number.isFinite(pageParam) ? Math.max(0, pageParam - 1) : 0;
+    gnOpenBook(bookId, pageIndex);
+    gnOpenModal();
 }
 
 // Returns sorted array of bookmarked page indices; migrates old single-bookmark format
@@ -1890,6 +1937,9 @@ function gnSetup() {
             });
         }
     }
+
+    // Deep link: open directly to a book/page named in the URL, if any
+    gnRestoreFromUrl();
 }
 
 /** Sets up a MutationObserver to detect when custom.html is loaded via AJAX. */
