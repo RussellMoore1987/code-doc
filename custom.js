@@ -41,6 +41,10 @@ const gn = {
     lastFocused:  null,
     _scrollTracker:  null,
     _scrollSaveTimer: null,
+    _scrollSettleObserver: null,
+    _scrollSettleTimer:    null,
+    _scrollSettleCancelEvents: null,
+    _scrollSettleStage:    null,
     _wheelGraceUntil: 0,
     magnifyOn:       false,
     _magnifierMove:  null,
@@ -479,6 +483,7 @@ function gnCloseModal() {
         gn._scrollSaveTimer = null;
         gnSaveProgress();
     }
+    gnStopScrollSettle();
     gnClearUrlParams();
     gn.isOpen = false;
     gn.modal.classList.remove('gn-overlay--open');
@@ -511,6 +516,7 @@ function gnShowLibrary() {
         gn._scrollSaveTimer = null;
         gnSaveProgress();
     }
+    gnStopScrollSettle();
     gnClearUrlParams();
     gn.isLibrary = true;
     const r = gn.refs;
@@ -680,6 +686,46 @@ function gnShowReaderView() {
     r.stage.focus();
 }
 
+/** Stops any in-progress scroll-settle correction (see gnStartScrollSettle). */
+function gnStopScrollSettle() {
+    if (gn._scrollSettleObserver) {
+        gn._scrollSettleObserver.disconnect();
+        gn._scrollSettleObserver = null;
+    }
+    clearTimeout(gn._scrollSettleTimer);
+    if (gn._scrollSettleCancelEvents && gn._scrollSettleStage) {
+        gn._scrollSettleCancelEvents.forEach((evt) => {
+            gn._scrollSettleStage.removeEventListener(evt, gnStopScrollSettle);
+        });
+    }
+    gn._scrollSettleCancelEvents = null;
+    gn._scrollSettleStage = null;
+}
+
+/**
+ * Keeps the target frame pinned to the top of the stage in scroll mode while its
+ * still-loading images/text reflow the page above it (the initial scrollIntoView()
+ * lands using placeholder-sized frames, then drifts once real content loads in).
+ * Backs off the moment the user starts scrolling/interacting on their own.
+ */
+function gnStartScrollSettle(stage, wrap, targetIndex) {
+    gnStopScrollSettle();
+    const observer = new ResizeObserver(() => {
+        const target = wrap.children[targetIndex];
+        if (target) target.scrollIntoView({ block: 'start', behavior: 'auto' });
+    });
+    Array.from(wrap.children).forEach((el) => observer.observe(el));
+    gn._scrollSettleObserver = observer;
+    // Hard cap regardless of how long images take
+    gn._scrollSettleTimer = setTimeout(gnStopScrollSettle, 2500);
+    // Any real user interaction cancels the auto re-pinning immediately
+    gn._scrollSettleCancelEvents = ['wheel', 'touchstart', 'pointerdown'];
+    gn._scrollSettleStage = stage;
+    gn._scrollSettleCancelEvents.forEach((evt) => {
+        stage.addEventListener(evt, gnStopScrollSettle, { passive: true, once: true });
+    });
+}
+
 /**
  * Renders the current page(s) into the pages wrapper
  * according to the current view mode.
@@ -700,6 +746,7 @@ function gnRenderPage() {
             r.stage.removeEventListener('scroll', gn._scrollTracker);
             gn._scrollTracker = null;
         }
+        gnStopScrollSettle();
 
         wrap.innerHTML = '';
         const stage   = r.stage;
@@ -750,6 +797,10 @@ function gnRenderPage() {
             setTimeout(() => {
                 const target = wrap.children[gn.currentPage];
                 if (target) target.scrollIntoView({ block: 'start', behavior: 'smooth' });
+                // Images/text above the target keep loading and can reflow the page after
+                // this initial scroll, drifting away from the target - keep it pinned
+                // until layout settles or the user starts scrolling on their own.
+                gnStartScrollSettle(stage, wrap, gn.currentPage);
             }, 60);
         } else {
             const step = gnGetStep();
@@ -873,6 +924,8 @@ function gnGoToPage(n) {
     if (gn.viewMode === 'scroll' && gn.refs.pagesWrap.children.length > 0) {
         const target = gn.refs.pagesWrap.children[n];
         if (target) target.scrollIntoView({ block: 'start', behavior: 'smooth' });
+        // Still-loading images/text can reflow the page after this scroll - keep it pinned
+        gnStartScrollSettle(gn.refs.stage, gn.refs.pagesWrap, n);
     } else {
         gnRenderPage();
     }
