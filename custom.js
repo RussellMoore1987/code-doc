@@ -41,10 +41,13 @@ const gn = {
     lastFocused:  null,
     _scrollTracker:  null,
     _scrollSaveTimer: null,
+    _scrollFrameReady: null,
     _scrollSettleObserver: null,
-    _scrollSettleTimer:    null,
+    _scrollSettleIdleTimer:    null,
+    _scrollSettleHardCapTimer: null,
     _scrollSettleCancelEvents: null,
     _scrollSettleStage:    null,
+    _scrollTrackerSuspended: false,
     _wheelGraceUntil: 0,
     magnifyOn:       false,
     _magnifierMove:  null,
@@ -688,11 +691,13 @@ function gnShowReaderView() {
 
 /** Stops any in-progress scroll-settle correction (see gnStartScrollSettle). */
 function gnStopScrollSettle() {
+    gn._scrollTrackerSuspended = false;
     if (gn._scrollSettleObserver) {
         gn._scrollSettleObserver.disconnect();
         gn._scrollSettleObserver = null;
     }
-    clearTimeout(gn._scrollSettleTimer);
+    clearTimeout(gn._scrollSettleIdleTimer);
+    clearTimeout(gn._scrollSettleHardCapTimer);
     if (gn._scrollSettleCancelEvents && gn._scrollSettleStage) {
         gn._scrollSettleCancelEvents.forEach((evt) => {
             gn._scrollSettleStage.removeEventListener(evt, gnStopScrollSettle);
@@ -710,14 +715,29 @@ function gnStopScrollSettle() {
  */
 function gnStartScrollSettle(stage, wrap, targetIndex) {
     gnStopScrollSettle();
+    // While we're actively re-pinning the scroll position ourselves, the resulting
+    // 'scroll' events can hit gn._scrollTracker mid-layout-flux and make it briefly
+    // miscompute the current page from geometry, overwriting the page we already
+    // know is correct. Suspend the tracker for the duration of this correction —
+    // it resumes as soon as the user does any real scrolling/interacting.
+    gn._scrollTrackerSuspended = true;
+    const rearm = () => {
+        // Sliding idle window: keep correcting as long as layout keeps shifting
+        // (e.g. several images in a long preceding chapter loading in one by one),
+        // only stopping once things have been quiet for a bit.
+        clearTimeout(gn._scrollSettleIdleTimer);
+        gn._scrollSettleIdleTimer = setTimeout(gnStopScrollSettle, 700);
+    };
     const observer = new ResizeObserver(() => {
         const target = wrap.children[targetIndex];
         if (target) target.scrollIntoView({ block: 'start', behavior: 'auto' });
+        rearm();
     });
     Array.from(wrap.children).forEach((el) => observer.observe(el));
     gn._scrollSettleObserver = observer;
-    // Hard cap regardless of how long images take
-    gn._scrollSettleTimer = setTimeout(gnStopScrollSettle, 2500);
+    rearm();
+    // Absolute safety net regardless of how long images keep trickling in
+    gn._scrollSettleHardCapTimer = setTimeout(gnStopScrollSettle, 10000);
     // Any real user interaction cancels the auto re-pinning immediately
     gn._scrollSettleCancelEvents = ['wheel', 'touchstart', 'pointerdown'];
     gn._scrollSettleStage = stage;
@@ -758,9 +778,13 @@ function gnRenderPage() {
 
         if (gn.viewMode === 'scroll') {
             // All pages stacked
+            const readyPromises = [];
             book.pages.forEach((page, i) => {
-                wrap.appendChild(gnBuildPageFrame(page, i, book));
+                const { frame, ready } = gnBuildPageFrame(page, i, book);
+                wrap.appendChild(frame);
+                readyPromises[i] = ready;
             });
+            gn._scrollFrameReady = readyPromises;
 
             // Update page counter as user scrolls
             let ticking = false;
@@ -769,15 +793,27 @@ function gnRenderPage() {
                 ticking = true;
                 requestAnimationFrame(() => {
                     ticking = false;
+                    // While a programmatic scroll-settle correction is in flight, skip —
+                    // its own 'scroll' events can hit mid-layout-flux and misread the
+                    // page from geometry, overwriting a target we already know is correct.
+                    if (gn._scrollTrackerSuspended) return;
                     const frames = wrap.children;
                     if (!frames.length) return;
                     const stageRect = stage.getBoundingClientRect();
-                    let bestIndex = gn.currentPage;
-                    let bestVisible = -1;
+                    // The "current" page is whichever frame's top has scrolled up to (or
+                    // past) the stage's top edge — NOT whichever has the most visible area.
+                    // Using visible area instead misidentifies short pages: right after
+                    // landing on one via scrollIntoView({block:'start'}), the next page can
+                    // already show more visible height, flipping currentPage forward by one.
+                    const threshold = stageRect.top + 2;
+                    let bestIndex = 0;
                     for (let i = 0; i < frames.length; i++) {
                         const rect = frames[i].getBoundingClientRect();
-                        const visible = Math.max(0, Math.min(rect.bottom, stageRect.bottom) - Math.max(rect.top, stageRect.top));
-                        if (visible > bestVisible) { bestVisible = visible; bestIndex = i; }
+                        if (rect.top <= threshold) {
+                            bestIndex = i;
+                        } else {
+                            break; // frames are stacked top-to-bottom in order
+                        }
                     }
                     if (bestIndex !== gn.currentPage) {
                         gn.currentPage = bestIndex;
@@ -793,20 +829,24 @@ function gnRenderPage() {
             };
             stage.addEventListener('scroll', gn._scrollTracker, { passive: true });
 
-            // Scroll to current page
-            setTimeout(() => {
-                const target = wrap.children[gn.currentPage];
+            // Wait for the target page and everything above it to fully finish loading
+            // (including embedded images) BEFORE scrolling at all, rather than scrolling
+            // immediately and correcting for drift afterward - this is the actual source
+            // of truth for "is layout stable yet", not a fixed delay/timeout guess.
+            const targetPage = gn.currentPage;
+            Promise.all(readyPromises.slice(0, targetPage + 1)).then(() => {
+                // Bail if the user navigated elsewhere while we were waiting
+                if (gn.currentBook !== book || gn.viewMode !== 'scroll' || gn.currentPage !== targetPage) return;
+                const target = wrap.children[targetPage];
                 if (target) target.scrollIntoView({ block: 'start', behavior: 'smooth' });
-                // Images/text above the target keep loading and can reflow the page after
-                // this initial scroll, drifting away from the target - keep it pinned
-                // until layout settles or the user starts scrolling on their own.
-                gnStartScrollSettle(stage, wrap, gn.currentPage);
-            }, 60);
+                // Backup safety net for any late reflow we didn't account for (fonts, etc.)
+                gnStartScrollSettle(stage, wrap, targetPage);
+            });
         } else {
             const step = gnGetStep();
             const start = gn.currentPage;
             for (let i = start; i < start + step && i < total; i++) {
-                wrap.appendChild(gnBuildPageFrame(book.pages[i], i, book));
+                wrap.appendChild(gnBuildPageFrame(book.pages[i], i, book).frame);
             }
         }
 
@@ -819,7 +859,9 @@ function gnRenderPage() {
     }, 80);
 }
 
-/** Builds a single page frame element (wrapper + img or fetched text content). */
+/** Builds a single page frame element (wrapper + img or fetched text content).
+ *  Returns { frame, ready } where ready resolves once the frame's content —
+ *  including any embedded images — has fully finished loading. */
 function gnBuildPageFrame(page, index, book) {
     if (page.type === 'text') return gnBuildTextPageFrame(page, index, book);
 
@@ -844,29 +886,34 @@ function gnBuildPageFrame(page, index, book) {
     // and Chrome's viewport-distance heuristic can't evaluate a detached image -
     // it sometimes just defers the fetch forever, deadlocking the placeholder/spinner.
 
-    img.onload = () => {
-        img.classList.remove('gn-img-loading');
-        placeholder.remove();
-        frame.appendChild(img);
-    };
+    const ready = new Promise((resolveReady) => {
+        img.onload = () => {
+            img.classList.remove('gn-img-loading');
+            placeholder.remove();
+            frame.appendChild(img);
+            resolveReady();
+        };
 
-    img.onerror = () => {
-        spinner.remove();
-        placeholder.setAttribute('aria-label', `Page ${index + 1} could not be loaded`);
-        placeholder.innerHTML = `
-          <svg viewBox="0 0 24 24" width="32" height="32" aria-hidden="true" fill="none"
-               stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
-            <rect x="3" y="3" width="18" height="18" rx="2"/>
-            <line x1="3" y1="3" x2="21" y2="21"/>
-          </svg>
-          <span>Page ${index + 1} unavailable</span>`;
-    };
+        img.onerror = () => {
+            spinner.remove();
+            placeholder.setAttribute('aria-label', `Page ${index + 1} could not be loaded`);
+            placeholder.innerHTML = `
+              <svg viewBox="0 0 24 24" width="32" height="32" aria-hidden="true" fill="none"
+                   stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+                <rect x="3" y="3" width="18" height="18" rx="2"/>
+                <line x1="3" y1="3" x2="21" y2="21"/>
+              </svg>
+              <span>Page ${index + 1} unavailable</span>`;
+            resolveReady();
+        };
+    });
 
     img.src = page.src;
-    return frame;
+    return { frame, ready };
 }
 
-/** Builds a text page frame; fetches the HTML fragment and injects it asynchronously. */
+/** Builds a text page frame; fetches the HTML fragment and injects it asynchronously.
+ *  Returns { frame, ready } where ready also waits for embedded images to load. */
 function gnBuildTextPageFrame(page, index, book) {
     const frame = document.createElement('div');
     frame.className = 'gn-page-frame gn-page-frame--text';
@@ -880,7 +927,7 @@ function gnBuildTextPageFrame(page, index, book) {
     placeholder.appendChild(spinner);
     frame.appendChild(placeholder);
 
-    gnFetchTextPage(page.src).then((html) => {
+    const ready = gnFetchTextPage(page.src).then((html) => {
         placeholder.remove();
         if (html === null) {
             const err = document.createElement('div');
@@ -899,9 +946,17 @@ function gnBuildTextPageFrame(page, index, book) {
         content.className = 'gn-text-page';
         content.innerHTML = html;
         frame.appendChild(content);
+        // The fetched fragment's own <img>s (e.g. chapter art) can keep reflowing
+        // this frame's height well after the text itself is in the DOM — wait for
+        // them too so "ready" actually means "height is stable".
+        const imgs = Array.from(content.querySelectorAll('img'));
+        return Promise.all(imgs.map((img) => img.complete ? Promise.resolve() : new Promise((resolve) => {
+            img.addEventListener('load', resolve, { once: true });
+            img.addEventListener('error', resolve, { once: true });
+        })));
     });
 
-    return frame;
+    return { frame, ready };
 }
 
 // ------------------------------------------------------------
@@ -920,12 +975,21 @@ function gnGoToPage(n) {
         n = Math.floor(n / step) * step;
     }
     gn.currentPage = n;
-    // In scroll mode pages are already in the DOM — just scroll to the target frame
+    // In scroll mode pages are already in the DOM — wait for the target and
+    // everything above it to fully settle (images/text loaded) before scrolling,
+    // same rationale as the initial scroll-mode render in gnRenderPage().
     if (gn.viewMode === 'scroll' && gn.refs.pagesWrap.children.length > 0) {
-        const target = gn.refs.pagesWrap.children[n];
-        if (target) target.scrollIntoView({ block: 'start', behavior: 'smooth' });
-        // Still-loading images/text can reflow the page after this scroll - keep it pinned
-        gnStartScrollSettle(gn.refs.stage, gn.refs.pagesWrap, n);
+        const stage = gn.refs.stage;
+        const wrap  = gn.refs.pagesWrap;
+        const readyPromises = gn._scrollFrameReady || [];
+        Promise.all(readyPromises.slice(0, n + 1)).then(() => {
+            // Bail if the user navigated elsewhere while we were waiting
+            if (gn.currentBook !== book || gn.viewMode !== 'scroll' || gn.currentPage !== n) return;
+            const target = wrap.children[n];
+            if (target) target.scrollIntoView({ block: 'start', behavior: 'smooth' });
+            // Backup safety net for any late reflow we didn't account for (fonts, etc.)
+            gnStartScrollSettle(stage, wrap, n);
+        });
     } else {
         gnRenderPage();
     }
