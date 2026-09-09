@@ -1736,6 +1736,8 @@ async function gnBuildPrintArea(book) {
         const pageEl = document.createElement('div');
         pageEl.className = 'gn-print-page';
         if (page.type === 'text') {
+            // Text/novel pages flow together in print - only the cover forces a page break
+            pageEl.classList.add('gn-print-page--flow');
             const html = await gnFetchTextPage(page.src);
             const content = document.createElement('div');
             content.className = 'gn-text-page';

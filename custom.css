@@ -1370,6 +1370,27 @@ ul.gn-page-cards {
         page-break-after: auto;
     }
 
+    /* Novel text pages: run together instead of each starting a new page \u2014
+       only the cover (.gn-print-page, not --flow) keeps the forced break.
+       page-break-before is intentionally left alone; setting it to "avoid"
+       here would fight the cover's page-break-after:always and leave a
+       blank gap instead of a clean break. */
+    .gn-print-page--flow {
+        page-break-after: avoid;
+        /* Each flow page still carries the base .gn-print-page + .gn-text-page
+           vertical padding meant for a standalone page; stacked between two
+           consecutive flow pages that reads as a big blank gap. Drop the
+           vertical padding here so chapters run together, keeping horizontal
+           padding for reading margins. */
+        padding-top: 0;
+        padding-bottom: 0;
+    }
+
+    .gn-print-page--flow .gn-text-page {
+        padding-top: 0;
+        padding-bottom: 0;
+    }
+
     /* Comic/image pages: constrain to one physical page so a tall image can't
        overflow onto extra, mostly-blank trailing pages. */
     .gn-print-page--image {
@@ -1412,6 +1433,11 @@ ul.gn-page-cards {
         font-family: Georgia, 'Times New Roman', serif;
         font-size: 13pt;
         line-height: 1.6;
+        /* Screen rule sets height:100% (resolves against html/body's own
+           height:100%) plus overflow-y:auto, which pads text pages out to a
+           full page of blank space in print instead of sizing to content. */
+        height: auto;
+        overflow: visible;
     }
 
     /* Override the reader's dark-theme text color (var(--text-base)) set on these
