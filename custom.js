@@ -1703,10 +1703,14 @@ async function gnExportToPdf() {
     const btn = gn.refs.exportPdf;
     btn.disabled = true;
     btn.classList.add('gn-icon-btn--busy');
+    // Browsers suggest document.title as the "Save as PDF" filename
+    const prevTitle = document.title;
+    document.title = book.title || prevTitle;
     try {
         await gnBuildPrintArea(book);
         window.print();
     } finally {
+        document.title = prevTitle;
         btn.disabled = false;
         btn.classList.remove('gn-icon-btn--busy');
     }
