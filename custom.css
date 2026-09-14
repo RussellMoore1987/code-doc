@@ -666,6 +666,14 @@ ul.gn-page-cards {
     flex-shrink: 0;
 }
 
+.gn-tts-controls[hidden] {
+    display: none;
+}
+
+#gn-tts-group[hidden] {
+    display: none;
+}
+
 .gn-toolbar-sep {
     width: 1px;
     height: 20px;
@@ -718,6 +726,28 @@ ul.gn-page-cards {
     min-width: 36px;
     text-align: center;
     white-space: nowrap;
+}
+
+/* Read-aloud voice picker */
+.gn-tts-voice-select {
+    max-width: 130px;
+    margin-left: 4px;
+    padding: 3px 5px;
+    background: var(--bg-code);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    color: var(--text-base);
+    font-size: 12px;
+    font-family: inherit;
+}
+
+.gn-tts-voice-select:focus {
+    outline: none;
+    border-color: var(--border-focus);
+}
+
+.gn-tts-voice-select[hidden] {
+    display: none;
 }
 
 /* ------------------------------------------------------------
