@@ -336,7 +336,7 @@ function gnBuildModal() {
               </button>
               <button class="gn-icon-btn" id="gn-fullscreen"
                       aria-label="Toggle fullscreen" aria-pressed="false"
-                      data-tooltip="Fullscreen (F)" title="Fullscreen">
+                      data-tooltip="Fullscreen (S)" title="Fullscreen">
                 <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" fill="none"
                      stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                   <polyline points="15 3 21 3 21 9"/>
@@ -1784,8 +1784,8 @@ function gnHandleKeydown(e) {
         case 'M':
             if (!gn.isLibrary) { e.preventDefault(); gnMagnify(); }
             break;
-        case 'f':
-        case 'F':
+        case 's':
+        case 'S':
             if (!gn.isLibrary) { e.preventDefault(); gnToggleFullscreen(); }
             break;
     }
