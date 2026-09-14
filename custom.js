@@ -354,6 +354,23 @@ function gnBuildModal() {
                   <rect x="6" y="14" width="12" height="8"/>
                 </svg>
               </button>
+              <button class="gn-icon-btn" id="gn-shortcuts"
+                      aria-label="Keyboard shortcuts" aria-pressed="false"
+                      data-tooltip="Keyboard Shortcuts (?)" title="Keyboard shortcuts">
+                <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" fill="none"
+                     stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="2" y="5" width="20" height="14" rx="2"/>
+                  <line x1="6" y1="9" x2="6" y2="9"/>
+                  <line x1="10" y1="9" x2="10" y2="9"/>
+                  <line x1="14" y1="9" x2="14" y2="9"/>
+                  <line x1="18" y1="9" x2="18" y2="9"/>
+                  <line x1="6" y1="12" x2="6" y2="12"/>
+                  <line x1="10" y1="12" x2="10" y2="12"/>
+                  <line x1="14" y1="12" x2="14" y2="12"/>
+                  <line x1="18" y1="12" x2="18" y2="12"/>
+                  <line x1="7" y1="16" x2="17" y2="16"/>
+                </svg>
+              </button>
             </div>
 
           </div><!-- end .gn-reader-toolbar -->
@@ -400,6 +417,32 @@ function gnBuildModal() {
           </div><!-- end .gn-reader-body -->
 
         </div><!-- end #gn-reader -->
+
+        <!-- Keyboard shortcuts help dialog -->
+        <div class="gn-shortcuts-overlay" id="gn-shortcuts-overlay" hidden>
+          <div class="gn-shortcuts-dialog" role="dialog" aria-modal="true" aria-label="Keyboard Shortcuts">
+            <div class="gn-shortcuts-header">
+              <span class="gn-shortcuts-title">Keyboard Shortcuts</span>
+              <button class="gn-icon-btn" id="gn-shortcuts-close" aria-label="Close keyboard shortcuts">
+                <svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true">
+                  <line x1="18" y1="6" x2="6" y2="18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                  <line x1="6" y1="6" x2="18" y2="18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                </svg>
+              </button>
+            </div>
+            <ul class="gn-shortcuts-list">
+              <li><span class="gn-shortcuts-keys"><kbd>&larr;</kbd><kbd>&rarr;</kbd></span><span>Previous / next page</span></li>
+              <li><span class="gn-shortcuts-keys"><kbd>+</kbd><kbd>-</kbd></span><span>Zoom in / out</span></li>
+              <li><span class="gn-shortcuts-keys"><kbd>0</kbd></span><span>Reset zoom</span></li>
+              <li><span class="gn-shortcuts-keys"><kbd>B</kbd></span><span>Bookmark current page</span></li>
+              <li><span class="gn-shortcuts-keys"><kbd>T</kbd></span><span>Toggle table of contents</span></li>
+              <li><span class="gn-shortcuts-keys"><kbd>M</kbd></span><span>Toggle magnifier</span></li>
+              <li><span class="gn-shortcuts-keys"><kbd>S</kbd></span><span>Toggle fullscreen</span></li>
+              <li><span class="gn-shortcuts-keys"><kbd>?</kbd></span><span>Toggle this help</span></li>
+              <li><span class="gn-shortcuts-keys"><kbd>Esc</kbd></span><span>Close panel / viewer</span></li>
+            </ul>
+          </div>
+        </div>
 
       </div><!-- end .gn-modal -->
     `;
@@ -454,6 +497,9 @@ function gnCacheRefs() {
         tocToggle:     q('gn-toc-toggle'),
         fullscreen:    q('gn-fullscreen'),
         exportPdf:     q('gn-export-pdf'),
+        shortcutsBtn:      q('gn-shortcuts'),
+        shortcutsOverlay:  q('gn-shortcuts-overlay'),
+        shortcutsClose:    q('gn-shortcuts-close'),
         // Stage
         stage:         q('gn-stage'),
         pagesWrap:     q('gn-pages-wrap'),
@@ -499,6 +545,8 @@ function gnCloseModal() {
     gn.modal.classList.remove('gn-fullscreen');
     document.removeEventListener('keydown', gnHandleKeydown);
     gn.modal.removeEventListener('wheel', gnHandleWheel);
+    // Close shortcuts help if open
+    if (gn.refs.shortcutsOverlay && !gn.refs.shortcutsOverlay.hidden) gn.refs.shortcutsOverlay.hidden = true;
     // Turn off magnifier loupe
     if (gn.magnifyOn) { gn.magnifyOn = false; gnDetachMagnifier(); gn.refs.magnify?.classList.remove('gn-icon-btn--active'); }
     if (gn.lastFocused && typeof gn.lastFocused.focus === 'function') {
@@ -530,6 +578,8 @@ function gnShowLibrary() {
     r.barTitle.textContent = '';
     // Close TOC if open
     if (gn.tocOpen) gnToggleToc();
+    // Close shortcuts help if open
+    if (gn.refs.shortcutsOverlay && !gn.refs.shortcutsOverlay.hidden) gn.refs.shortcutsOverlay.hidden = true;
     // Turn off magnifier loupe
     if (gn.magnifyOn) { gn.magnifyOn = false; gnDetachMagnifier(); gn.refs.magnify?.classList.remove('gn-icon-btn--active'); gn.refs.magnify?.setAttribute('aria-pressed', 'false'); }
     gnRenderLibrary();
@@ -1753,6 +1803,7 @@ function gnHandleKeydown(e) {
 
     switch (e.key) {
         case 'Escape':
+            if (gn.refs.shortcutsOverlay && !gn.refs.shortcutsOverlay.hidden) { gnToggleShortcuts(); break; }
             if (gn.tocOpen) { gnToggleToc(); break; }
             gnCloseModal();
             break;
@@ -1787,6 +1838,10 @@ function gnHandleKeydown(e) {
         case 's':
         case 'S':
             if (!gn.isLibrary) { e.preventDefault(); gnToggleFullscreen(); }
+            break;
+        case '?':
+        case '/':
+            e.preventDefault(); gnToggleShortcuts();
             break;
     }
 }
@@ -1830,6 +1885,21 @@ function gnToggleFullscreen() {
     } else {
         document.exitFullscreen().catch(() => {});
     }
+}
+
+// ------------------------------------------------------------
+// Keyboard Shortcuts Help Dialog
+// ------------------------------------------------------------
+
+function gnToggleShortcuts() {
+    const r = gn.refs;
+    if (!r.shortcutsOverlay) return;
+    const opening = r.shortcutsOverlay.hidden;
+    r.shortcutsOverlay.hidden = !opening;
+    r.shortcutsBtn?.setAttribute('aria-pressed', opening ? 'true' : 'false');
+    r.shortcutsBtn?.classList.toggle('gn-icon-btn--active', opening);
+    if (opening) r.shortcutsClose?.focus();
+    else r.shortcutsBtn?.focus();
 }
 
 function gnUpdateFullscreenUI() {
@@ -2006,6 +2076,13 @@ function gnBindModalEvents() {
 
     // Export to PDF (browser print dialog)
     r.exportPdf.addEventListener('click', gnExportToPdf);
+
+    // Keyboard shortcuts help
+    r.shortcutsBtn?.addEventListener('click', gnToggleShortcuts);
+    r.shortcutsClose?.addEventListener('click', gnToggleShortcuts);
+    r.shortcutsOverlay?.addEventListener('click', (e) => {
+        if (e.target === r.shortcutsOverlay) gnToggleShortcuts();
+    });
 }
 
 // ------------------------------------------------------------

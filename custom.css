@@ -1261,6 +1261,98 @@ ul.gn-page-cards {
 }
 
 /* ------------------------------------------------------------
+   Keyboard Shortcuts Help Dialog
+------------------------------------------------------------ */
+
+.gn-shortcuts-overlay {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.55);
+    z-index: 20;
+}
+
+.gn-shortcuts-overlay[hidden] {
+    display: none;
+}
+
+.gn-shortcuts-dialog {
+    width: 320px;
+    max-width: calc(100vw - 32px);
+    max-height: calc(100vh - 64px);
+    overflow-y: auto;
+    background: #13161c;
+    border: 1px solid #30363d;
+    border-radius: 8px;
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5);
+}
+
+.gn-shortcuts-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 11px 14px;
+    border-bottom: 1px solid #30363d;
+}
+
+.gn-shortcuts-title {
+    font-size: 12px;
+    font-weight: 600;
+    color: #cdd9e5;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+}
+
+.gn-shortcuts-dialog .gn-icon-btn {
+    color: #8b949e;
+    width: 28px;
+    height: 28px;
+}
+
+.gn-shortcuts-dialog .gn-icon-btn:hover {
+    background: #21242a;
+    color: #e6edf3;
+}
+
+.gn-shortcuts-list {
+    list-style: none;
+    margin: 0;
+    padding: 8px 0;
+}
+
+.gn-shortcuts-list li {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 8px 16px;
+    font-size: 13px;
+    color: #cdd9e5;
+}
+
+.gn-shortcuts-keys {
+    display: flex;
+    gap: 4px;
+    flex-shrink: 0;
+    min-width: 60px;
+}
+
+.gn-shortcuts-list kbd {
+    display: inline-block;
+    min-width: 20px;
+    padding: 2px 6px;
+    text-align: center;
+    font-family: inherit;
+    font-size: 12px;
+    color: #cdd9e5;
+    background: #21242a;
+    border: 1px solid #30363d;
+    border-bottom-width: 2px;
+    border-radius: 4px;
+}
+
+/* ------------------------------------------------------------
    Utility
 ------------------------------------------------------------ */
 
