@@ -27,7 +27,6 @@ const GN_TTS_WPM        = 200; // words-per-minute used for the estimated readin
 const GN_TTS_SUPPORTED  = 'speechSynthesis' in window && typeof SpeechSynthesisUtterance !== 'undefined';
 const GN_TTS_VOICE_LS_KEY = 'gn-tts-voice-uri';
 const GN_TTS_RATE_LS_KEY  = 'gn-tts-rate';
-const GN_TTS_PANEL_LS_KEY = 'gn-tts-panel-open';
 
 // ------------------------------------------------------------
 // State
@@ -72,7 +71,7 @@ const gn = {
     _ttsContextAction: null,
     ttsVoiceURI:       '', // selected SpeechSynthesisVoice.voiceURI, persisted across sessions
     ttsRate:           1,  // selected playback speed, persisted across sessions
-    ttsPanelOpen:      true, // whether the read-aloud controls section is expanded
+    ttsPanelOpen:      false, // whether the read-aloud controls section is expanded (closed by default, per book)
     _ttsProgress:      null, // { page, wordIndex } remembered resume point, persisted per book
     _ttsSaveTimer:     null,
     // DOM refs (populated after modal is built)
@@ -325,7 +324,7 @@ function gnBuildModal() {
             <!-- Read Aloud group -->
             <div class="gn-toolbar-group" id="gn-tts-group">
               <button class="gn-icon-btn" id="gn-tts-section-toggle"
-                      aria-label="Show or hide read-aloud controls" aria-pressed="true"
+                      aria-label="Show or hide read-aloud controls" aria-pressed="false"
                       data-tooltip="Show/Hide Read Aloud Controls" title="Read aloud controls">
                 <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" fill="none"
                      stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -333,7 +332,7 @@ function gnBuildModal() {
                   <path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"/>
                 </svg>
               </button>
-              <div class="gn-toolbar-group gn-tts-controls" id="gn-tts-controls">
+              <div class="gn-toolbar-group gn-tts-controls" id="gn-tts-controls" hidden>
               <button class="gn-icon-btn" id="gn-tts-prev"
                       aria-label="Read previous page" data-tooltip="Read Previous Page" title="Read previous page">
                 <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" fill="none"
@@ -553,7 +552,7 @@ function gnBuildModal() {
               <li><span class="gn-shortcuts-keys"><kbd>B</kbd></span><span>Toggle Bookmark, current page</span></li>
               <li><span class="gn-shortcuts-keys"><kbd>T</kbd></span><span>Toggle table of contents</span></li>
               <li><span class="gn-shortcuts-keys"><kbd>M</kbd></span><span>Toggle magnifier</span></li>
-              <li><span class="gn-shortcuts-keys"><kbd>R</kbd></span><span>Read page aloud, only for text novels</span></li>
+              <li><span class="gn-shortcuts-keys"><kbd>R</kbd></span><span>Read page aloud, (only for text novels)</span></li>
               <li><span class="gn-shortcuts-keys"><kbd>S</kbd></span><span>Toggle fullscreen</span></li>
               <li><span class="gn-shortcuts-keys"><kbd>?</kbd></span><span>Toggle this help</span></li>
               <li><span class="gn-shortcuts-keys"><kbd>Esc</kbd></span><span>Close panel / viewer</span></li>
@@ -587,10 +586,6 @@ function gnBuildModal() {
     // Restore the saved playback speed
     gn.ttsRate = gnLoadTtsRatePref();
     if (gn.refs.ttsRateSelect) gn.refs.ttsRateSelect.value = String(gn.ttsRate);
-
-    // Restore the saved read-aloud panel open/closed state
-    try { gn.ttsPanelOpen = localStorage.getItem(GN_TTS_PANEL_LS_KEY) !== '0'; } catch { gn.ttsPanelOpen = true; }
-    gnApplyTtsPanelState();
 
     // Wire tooltips on the newly built modal
     if (typeof setupTooltipsIn === 'function') {
@@ -860,6 +855,7 @@ function gnOpenBook(bookId, explicitPage) {
     gn.zoom       = (progress && progress.zoom)     || 1.0;
     gn.currentPage = progress ? Math.min(progress.lastPage, book.pages.length - 1) : 0;
     gn._ttsProgress = progress?.ttsProgress || null;
+    gn.ttsPanelOpen = progress?.ttsPanelOpen || false;
     if (typeof explicitPage === 'number') {
         gn.currentPage = Math.max(0, Math.min(explicitPage, book.pages.length - 1));
     }
@@ -894,6 +890,7 @@ function gnShowReaderView() {
     gnUpdateZoomUI();
     gnUpdateBookmarkUI();
     gnUpdateTtsAvailability();
+    gnApplyTtsPanelState();
 
     // Focus the reader area
     r.stage.focus && r.stage.setAttribute('tabindex', '-1');
@@ -1640,6 +1637,7 @@ function gnSaveProgress() {
         viewMode:  gn.viewMode,
         zoom:      gn.zoom,
         ttsProgress: gn._ttsProgress || null,
+        ttsPanelOpen: gn.ttsPanelOpen,
     };
     try {
         localStorage.setItem(GN_LS_KEY(gn.currentBook.id), JSON.stringify(data));
@@ -2145,11 +2143,11 @@ function gnUpdateTtsAvailability() {
     if (!show && r.readingTime) r.readingTime.hidden = true;
 }
 
-/** Shows/hides the whole read-aloud controls group, remembering the choice across sessions. */
+/** Shows/hides the whole read-aloud controls group, remembering the choice per book. */
 function gnToggleTtsPanel() {
     gn.ttsPanelOpen = !gn.ttsPanelOpen;
     gnApplyTtsPanelState();
-    try { localStorage.setItem(GN_TTS_PANEL_LS_KEY, gn.ttsPanelOpen ? '1' : '0'); } catch { /* silent */ }
+    gnSaveProgress();
 }
 
 function gnApplyTtsPanelState() {
