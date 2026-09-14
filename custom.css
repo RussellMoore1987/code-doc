@@ -938,6 +938,72 @@ ul.gn-page-cards {
     padding: 32px;
 }
 
+/* Reading-time estimate badge, in the Read Aloud toolbar group */
+.gn-reading-time {
+    font-size: 11px;
+    color: var(--text-muted);
+    white-space: nowrap;
+    padding: 2px 8px;
+    margin-left: 5px;
+    background: var(--bg-code);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    flex-shrink: 0;
+}
+
+.gn-reading-time[hidden] {
+    display: none;
+}
+
+/* Read-aloud word highlight */
+.gn-tts-word--active {
+    background: rgba(255, 216, 94, 0.4);
+    border-radius: 3px;
+    box-shadow: 0 0 0 1px rgba(255, 216, 94, 0.6);
+}
+
+/* Read-from-here mode: hint that right-clicking text does something special */
+.gn-tts-click-mode .gn-text-page {
+    cursor: context-menu;
+}
+
+/* Read-from-here context menu */
+.gn-tts-context-menu {
+    position: fixed;
+    z-index: 30;
+    background: #13161c;
+    border: 1px solid #30363d;
+    border-radius: 6px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+    padding: 4px;
+}
+
+.gn-tts-context-menu[hidden] {
+    display: none;
+}
+
+.gn-tts-context-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    padding: 8px 12px;
+    background: none;
+    border: none;
+    border-radius: 4px;
+    color: #cdd9e5;
+    font-size: 13px;
+    white-space: nowrap;
+    text-align: left;
+    cursor: pointer;
+}
+
+.gn-tts-context-item:hover,
+.gn-tts-context-item:focus-visible {
+    background: #21242a;
+    outline: none;
+}
+
 .gn-text-page h1,
 .gn-text-page h2,
 .gn-text-page h3 {

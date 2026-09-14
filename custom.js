@@ -23,6 +23,8 @@ const GN_ZOOM_STEP     = 0.25;
 const GN_MODAL_ID      = 'gn-viewer-modal';
 const GN_URL_BOOK_PARAM = 'gnbook';
 const GN_URL_PAGE_PARAM = 'gnpage';
+const GN_TTS_WPM        = 200; // words-per-minute used for the estimated reading time badge
+const GN_TTS_SUPPORTED  = 'speechSynthesis' in window && typeof SpeechSynthesisUtterance !== 'undefined';
 
 // ------------------------------------------------------------
 // State
@@ -53,6 +55,20 @@ const gn = {
     _magnifierMove:  null,
     _magnifierLeave: null,
     _bmHideTimer:    null,
+    // Text-to-speech (read aloud) state
+    ttsPlaying:        false,
+    ttsAutoAdvance:    true,
+    _ttsUtterance:     null,
+    _ttsWordMap:       null,
+    _ttsWordMapPage:   null,
+    _ttsWordIndex:     0,
+    _ttsFullText:      '',
+    _ttsAutoAdvancing: false,
+    _ttsPageOffset:    0, // which page within a multi-page spread (double/triple) is being read
+    ttsClickToReadOn:  false,
+    _ttsContextAction: null,
+    _ttsProgress:      null, // { page, wordIndex } remembered resume point, persisted per book
+    _ttsSaveTimer:     null,
     // DOM refs (populated after modal is built)
     modal:        null,
     refs:         {},
@@ -300,6 +316,75 @@ function gnBuildModal() {
 
             <div class="gn-toolbar-sep"></div>
 
+            <!-- Read Aloud group -->
+            <div class="gn-toolbar-group">
+              <button class="gn-icon-btn" id="gn-tts-prev"
+                      aria-label="Read previous page" data-tooltip="Read Previous Page" title="Read previous page">
+                <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" fill="none"
+                     stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <polygon points="19 20 9 12 19 4 19 20"/>
+                  <line x1="5" y1="19" x2="5" y2="5"/>
+                </svg>
+              </button>
+              <button class="gn-icon-btn" id="gn-tts-skip-back"
+                      aria-label="Skip back 10 words" data-tooltip="Skip Back 10 Words" title="Skip back 10 words">
+                <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" fill="none"
+                     stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <polygon points="11 19 2 12 11 5 11 19"/>
+                  <polygon points="22 19 13 12 22 5 22 19"/>
+                </svg>
+              </button>
+              <button class="gn-icon-btn" id="gn-tts-toggle"
+                      aria-label="Read page aloud" aria-pressed="false"
+                      data-tooltip="Read Aloud (R)" title="Read aloud">
+                <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" fill="none"
+                     stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <polygon points="6 4 18 12 6 20 6 4"/>
+                </svg>
+              </button>
+              <button class="gn-icon-btn" id="gn-tts-skip-forward"
+                      aria-label="Skip ahead 10 words" data-tooltip="Skip Ahead 10 Words" title="Skip ahead 10 words">
+                <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" fill="none"
+                     stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <polygon points="13 19 22 12 13 5 13 19"/>
+                  <polygon points="2 19 11 12 2 5 2 19"/>
+                </svg>
+              </button>
+              <button class="gn-icon-btn" id="gn-tts-next"
+                      aria-label="Read next page" data-tooltip="Read Next Page" title="Read next page">
+                <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" fill="none"
+                     stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <polygon points="5 4 15 12 5 20 5 4"/>
+                  <line x1="19" y1="5" x2="19" y2="19"/>
+                </svg>
+              </button>
+              <button class="gn-icon-btn" id="gn-tts-autoplay"
+                      aria-label="Auto-advance pages while reading" aria-pressed="true"
+                      data-tooltip="Auto-Advance Pages" title="Auto-advance pages">
+                <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" fill="none"
+                     stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="17 1 21 5 17 9"/>
+                  <path d="M3 11V9a4 4 0 0 1 4-4h14"/>
+                  <polyline points="7 23 3 19 7 15"/>
+                  <path d="M21 13v2a4 4 0 0 1-4 4H3"/>
+                </svg>
+              </button>
+              <button class="gn-icon-btn" id="gn-tts-click-read"
+                      aria-label="Toggle read-from-here mode" aria-pressed="false"
+                      data-tooltip="Read From Here (Right-Click Text)" title="Read from here">
+                <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" fill="none"
+                     stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M9 12V5.5a1.5 1.5 0 0 1 3 0V11"/>
+                  <path d="M12 11.5V4.5a1.5 1.5 0 0 1 3 0V11"/>
+                  <path d="M15 11.5v-2a1.5 1.5 0 0 1 3 0V13"/>
+                  <path d="M18 13v-1a1.5 1.5 0 0 1 3 0v5a6 6 0 0 1-6 6h-2.5a6 6 0 0 1-5-2.7L5 15.5A1.5 1.5 0 1 1 7.5 13.8L9 15.5"/>
+                </svg>
+              </button>
+              <span class="gn-reading-time" id="gn-reading-time" hidden></span>
+            </div>
+
+            <div class="gn-toolbar-sep"></div>
+
             <!-- Actions group -->
             <div class="gn-toolbar-group">
               <button class="gn-icon-btn" id="gn-magnify"
@@ -437,11 +522,23 @@ function gnBuildModal() {
               <li><span class="gn-shortcuts-keys"><kbd>B</kbd></span><span>Bookmark current page</span></li>
               <li><span class="gn-shortcuts-keys"><kbd>T</kbd></span><span>Toggle table of contents</span></li>
               <li><span class="gn-shortcuts-keys"><kbd>M</kbd></span><span>Toggle magnifier</span></li>
+              <li><span class="gn-shortcuts-keys"><kbd>R</kbd></span><span>Read page aloud</span></li>
               <li><span class="gn-shortcuts-keys"><kbd>S</kbd></span><span>Toggle fullscreen</span></li>
               <li><span class="gn-shortcuts-keys"><kbd>?</kbd></span><span>Toggle this help</span></li>
               <li><span class="gn-shortcuts-keys"><kbd>Esc</kbd></span><span>Close panel / viewer</span></li>
             </ul>
           </div>
+        </div>
+
+        <!-- Read-from-here context menu (shown on right-click when the mode is active) -->
+        <div class="gn-tts-context-menu" id="gn-tts-context-menu" hidden role="menu">
+          <button class="gn-tts-context-item" id="gn-tts-context-read" role="menuitem">
+            <svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true" fill="none"
+                 stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polygon points="6 4 18 12 6 20 6 4"/>
+            </svg>
+            Read from Here
+          </button>
         </div>
 
       </div><!-- end .gn-modal -->
@@ -500,6 +597,16 @@ function gnCacheRefs() {
         shortcutsBtn:      q('gn-shortcuts'),
         shortcutsOverlay:  q('gn-shortcuts-overlay'),
         shortcutsClose:    q('gn-shortcuts-close'),
+        ttsToggle:     q('gn-tts-toggle'),
+        ttsAutoplay:   q('gn-tts-autoplay'),
+        ttsPrev:       q('gn-tts-prev'),
+        ttsNext:       q('gn-tts-next'),
+        ttsSkipBack:   q('gn-tts-skip-back'),
+        ttsSkipForward: q('gn-tts-skip-forward'),
+        ttsClickRead:  q('gn-tts-click-read'),
+        ttsContextMenu: q('gn-tts-context-menu'),
+        ttsContextRead: q('gn-tts-context-read'),
+        readingTime:   q('gn-reading-time'),
         // Stage
         stage:         q('gn-stage'),
         pagesWrap:     q('gn-pages-wrap'),
@@ -547,6 +654,8 @@ function gnCloseModal() {
     gn.modal.removeEventListener('wheel', gnHandleWheel);
     // Close shortcuts help if open
     if (gn.refs.shortcutsOverlay && !gn.refs.shortcutsOverlay.hidden) gn.refs.shortcutsOverlay.hidden = true;
+    gnHideTtsContextMenu();
+    gnStopTts();
     // Turn off magnifier loupe
     if (gn.magnifyOn) { gn.magnifyOn = false; gnDetachMagnifier(); gn.refs.magnify?.classList.remove('gn-icon-btn--active'); }
     if (gn.lastFocused && typeof gn.lastFocused.focus === 'function') {
@@ -580,6 +689,7 @@ function gnShowLibrary() {
     if (gn.tocOpen) gnToggleToc();
     // Close shortcuts help if open
     if (gn.refs.shortcutsOverlay && !gn.refs.shortcutsOverlay.hidden) gn.refs.shortcutsOverlay.hidden = true;
+    gnStopTts();
     // Turn off magnifier loupe
     if (gn.magnifyOn) { gn.magnifyOn = false; gnDetachMagnifier(); gn.refs.magnify?.classList.remove('gn-icon-btn--active'); gn.refs.magnify?.setAttribute('aria-pressed', 'false'); }
     gnRenderLibrary();
@@ -689,6 +799,7 @@ function gnOpenBook(bookId, explicitPage) {
         gnSaveProgress();
     }
 
+    gnStopTts();
     gn.currentBook = book;
 
     // Ignore wheel events for a moment after opening — guards against residual
@@ -700,6 +811,7 @@ function gnOpenBook(bookId, explicitPage) {
     gn.viewMode   = (progress && progress.viewMode) || 'single';
     gn.zoom       = (progress && progress.zoom)     || 1.0;
     gn.currentPage = progress ? Math.min(progress.lastPage, book.pages.length - 1) : 0;
+    gn._ttsProgress = progress?.ttsProgress || null;
     if (typeof explicitPage === 'number') {
         gn.currentPage = Math.max(0, Math.min(explicitPage, book.pages.length - 1));
     }
@@ -733,6 +845,7 @@ function gnShowReaderView() {
     gnUpdateViewModeUI();
     gnUpdateZoomUI();
     gnUpdateBookmarkUI();
+    gnUpdateTtsAvailability();
 
     // Focus the reader area
     r.stage.focus && r.stage.setAttribute('tabindex', '-1');
@@ -887,6 +1000,8 @@ function gnRenderPage() {
             Promise.all(readyPromises.slice(0, targetPage + 1)).then(() => {
                 // Bail if the user navigated elsewhere while we were waiting
                 if (gn.currentBook !== book || gn.viewMode !== 'scroll' || gn.currentPage !== targetPage) return;
+                gnUpdateReadingTime();
+                gnPrepareTtsForCurrentPage();
                 const target = wrap.children[targetPage];
                 if (target) target.scrollIntoView({ block: 'start', behavior: 'smooth' });
                 // Backup safety net for any late reflow we didn't account for (fonts, etc.)
@@ -895,9 +1010,18 @@ function gnRenderPage() {
         } else {
             const step = gnGetStep();
             const start = gn.currentPage;
+            const frameReadies = [];
             for (let i = start; i < start + step && i < total; i++) {
-                wrap.appendChild(gnBuildPageFrame(book.pages[i], i, book).frame);
+                const { frame, ready } = gnBuildPageFrame(book.pages[i], i, book);
+                wrap.appendChild(frame);
+                frameReadies.push(ready);
             }
+            Promise.all(frameReadies).then(() => {
+                // Bail if the user navigated elsewhere while we were waiting
+                if (gn.currentBook !== book || gn.currentPage !== start) return;
+                gnUpdateReadingTime();
+                gnPrepareTtsForCurrentPage();
+            });
         }
 
         // Apply zoom in scroll mode
@@ -1017,6 +1141,9 @@ function gnBuildTextPageFrame(page, index, book) {
 function gnGoToPage(n) {
     const book  = gn.currentBook;
     if (!book) return;
+    gn._ttsPageOffset = 0;
+    gnHideTtsContextMenu();
+    if (!gn._ttsAutoAdvancing) gnStopTts();
     const total = book.pages.length;
     n = Math.max(0, Math.min(n, total - 1));
     // Align to step boundary (except in scroll mode)
@@ -1035,6 +1162,8 @@ function gnGoToPage(n) {
         Promise.all(readyPromises.slice(0, n + 1)).then(() => {
             // Bail if the user navigated elsewhere while we were waiting
             if (gn.currentBook !== book || gn.viewMode !== 'scroll' || gn.currentPage !== n) return;
+            gnUpdateReadingTime();
+            gnPrepareTtsForCurrentPage();
             const target = wrap.children[n];
             if (target) target.scrollIntoView({ block: 'start', behavior: 'smooth' });
             // Backup safety net for any late reflow we didn't account for (fonts, etc.)
@@ -1110,6 +1239,8 @@ function gnUpdateNavUI() {
     r.lastBtn.disabled  = atEnd;
     r.stagePrev.disabled = atStart;
     r.stageNext.disabled = atEnd;
+    if (r.ttsPrev) r.ttsPrev.disabled = atStart;
+    if (r.ttsNext) r.ttsNext.disabled = atEnd;
 
     // Page input: show 1-indexed; show spread range in multi-page modes
     const displayEnd = Math.min(cur + step - 1, total - 1);
@@ -1134,6 +1265,7 @@ function gnUpdateNavUI() {
 /** Sets the view mode and re-renders. */
 function gnSetViewMode(mode) {
     if (gn.viewMode === mode) return;
+    gnStopTts();
     // Triple view not supported for novel books
     if (mode === 'triple' && gn.currentBook?.type === 'novel') mode = 'double';
     const prevStep = gnGetStep();
@@ -1459,6 +1591,7 @@ function gnSaveProgress() {
         bookmarks: gnLoadBookmarks(gn.currentBook.id),
         viewMode:  gn.viewMode,
         zoom:      gn.zoom,
+        ttsProgress: gn._ttsProgress || null,
     };
     try {
         localStorage.setItem(GN_LS_KEY(gn.currentBook.id), JSON.stringify(data));
@@ -1803,6 +1936,7 @@ function gnHandleKeydown(e) {
 
     switch (e.key) {
         case 'Escape':
+            if (gn.refs.ttsContextMenu && !gn.refs.ttsContextMenu.hidden) { gnHideTtsContextMenu(); break; }
             if (gn.refs.shortcutsOverlay && !gn.refs.shortcutsOverlay.hidden) { gnToggleShortcuts(); break; }
             if (gn.tocOpen) { gnToggleToc(); break; }
             gnCloseModal();
@@ -1838,6 +1972,10 @@ function gnHandleKeydown(e) {
         case 's':
         case 'S':
             if (!gn.isLibrary) { e.preventDefault(); gnToggleFullscreen(); }
+            break;
+        case 'r':
+        case 'R':
+            if (!gn.isLibrary) { e.preventDefault(); gnToggleTts(); }
             break;
         case '?':
         case '/':
@@ -1924,6 +2062,380 @@ function gnUpdateFullscreenUI() {
              <line x1="21" y1="3" x2="14" y2="10"/>
              <line x1="3" y1="21" x2="10" y2="14"/>
            </svg>`;
+}
+
+// ------------------------------------------------------------
+// Text-to-Speech / Read Aloud
+// ------------------------------------------------------------
+
+/** Finds the rendered .gn-text-page element for the given page index (defaults to the current page). */
+function gnGetActiveTextPage(pageIndex = gn.currentPage) {
+    const wrap = gn.refs.pagesWrap;
+    if (!wrap) return null;
+    const frame = Array.from(wrap.children).find((f) => Number(f.dataset.pageIndex) === pageIndex);
+    return frame ? frame.querySelector('.gn-text-page') : null;
+}
+
+/** Resolves the actual page index being read aloud, accounting for double/triple-page spreads. */
+function gnGetTtsReadIndex() {
+    const total = gn.currentBook?.pages.length || 0;
+    return Math.min(gn.currentPage + (gn._ttsPageOffset || 0), Math.max(total - 1, 0));
+}
+
+/** Shows/hides the read-aloud controls based on whether the current book has readable text. */
+function gnUpdateTtsAvailability() {
+    const r = gn.refs;
+    const show = GN_TTS_SUPPORTED && gn.currentBook?.type === 'novel';
+    if (r.ttsToggle)   r.ttsToggle.hidden   = !show;
+    if (r.ttsAutoplay) r.ttsAutoplay.hidden = !show;
+    if (r.ttsPrev)     r.ttsPrev.hidden     = !show;
+    if (r.ttsNext)     r.ttsNext.hidden     = !show;
+    if (r.ttsSkipBack)    r.ttsSkipBack.hidden    = !show;
+    if (r.ttsSkipForward) r.ttsSkipForward.hidden = !show;
+    if (r.ttsClickRead)   r.ttsClickRead.hidden   = !show;
+    if (!show && r.readingTime) r.readingTime.hidden = true;
+}
+
+/** Enables the read-aloud button once the current page's text frame exists, and resumes
+ *  playback automatically when a page change was triggered by auto-advance. */
+function gnPrepareTtsForCurrentPage() {
+    const r = gn.refs;
+    if (!r.ttsToggle) return;
+    const textPage = gnGetActiveTextPage();
+    const disabled = !GN_TTS_SUPPORTED || gn.currentBook?.type !== 'novel' || !textPage;
+    r.ttsToggle.disabled = disabled;
+    if (r.ttsSkipBack)    r.ttsSkipBack.disabled    = disabled;
+    if (r.ttsSkipForward) r.ttsSkipForward.disabled = disabled;
+    if (gn.ttsPlaying) gnSpeakCurrentPage();
+}
+
+/** Updates the "pN ~M min read" badge for the current page's word count. */
+function gnUpdateReadingTime() {
+    const r = gn.refs;
+    if (!r.readingTime) return;
+    const textPage = gn.currentBook?.type === 'novel' ? gnGetActiveTextPage() : null;
+    const words = textPage ? (textPage.textContent.match(/\S+/g) || []).length : 0;
+    if (!words) { r.readingTime.hidden = true; return; }
+    r.readingTime.textContent = `p${gn.currentPage + 1} ~${Math.max(1, Math.round(words / GN_TTS_WPM))} min read`;
+    r.readingTime.hidden = false;
+}
+
+/** Wraps each word of a text page's content in a <span> for read-aloud highlighting.
+ *  Returns { start, end, el } offsets that match the container's original textContent. */
+function gnWrapWordsForTts(container) {
+    const wordMap = [];
+    let offset = 0;
+    const walker = document.createTreeWalker(container, NodeFilter.SHOW_TEXT, null);
+    const textNodes = [];
+    let node;
+    while ((node = walker.nextNode())) textNodes.push(node);
+
+    textNodes.forEach((textNode) => {
+        const chunks = textNode.nodeValue.match(/\s+|\S+/g) || [];
+        const frag = document.createDocumentFragment();
+        chunks.forEach((chunk) => {
+            if (/\S/.test(chunk)) {
+                const span = document.createElement('span');
+                span.className = 'gn-tts-word';
+                span.textContent = chunk;
+                frag.appendChild(span);
+                wordMap.push({ start: offset, end: offset + chunk.length, el: span });
+            } else {
+                frag.appendChild(document.createTextNode(chunk));
+            }
+            offset += chunk.length;
+        });
+        textNode.parentNode.replaceChild(frag, textNode);
+    });
+
+    return wordMap;
+}
+
+function gnClearTtsHighlight() {
+    gn.refs.pagesWrap?.querySelectorAll('.gn-tts-word--active').forEach((el) => el.classList.remove('gn-tts-word--active'));
+}
+
+function gnUpdateTtsUI() {
+    const btn = gn.refs.ttsToggle;
+    if (!btn) return;
+    btn.setAttribute('aria-pressed', gn.ttsPlaying ? 'true' : 'false');
+    btn.classList.toggle('gn-icon-btn--active', gn.ttsPlaying);
+    btn.innerHTML = gn.ttsPlaying
+        ? `<svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" fill="none"
+               stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+             <rect x="6" y="4" width="4" height="16"/>
+             <rect x="14" y="4" width="4" height="16"/>
+           </svg>`
+        : `<svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" fill="none"
+               stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+             <polygon points="6 4 18 12 6 20 6 4"/>
+           </svg>`;
+}
+
+/** Stops any in-progress read-aloud playback and clears highlighting. */
+function gnStopTts() {
+    if (!gn.ttsPlaying && !gn._ttsUtterance) return;
+    if (GN_TTS_SUPPORTED) window.speechSynthesis.cancel();
+    clearTimeout(gn._ttsSaveTimer);
+    gn.ttsPlaying = false;
+    gn._ttsUtterance = null;
+    gn._ttsWordMap = null;
+    gn._ttsWordMapPage = null;
+    gn._ttsWordIndex = 0;
+    gn._ttsFullText = '';
+    gn._ttsPageOffset = 0;
+    gnClearTtsHighlight();
+    gnUpdateTtsUI();
+    gnSaveProgress(); // remember the resume point (gn._ttsProgress) immediately
+}
+
+/** Builds (once per page frame) the word map + full text used for read-aloud highlighting and seeking. */
+function gnEnsureTtsWordMap() {
+    const textPage = gnGetActiveTextPage(gnGetTtsReadIndex());
+    if (!textPage) return null;
+    if (gn._ttsWordMap && gn._ttsWordMapPage === textPage) return gn._ttsWordMap;
+    gn._ttsFullText = textPage.textContent;
+    gn._ttsWordMap = gnWrapWordsForTts(textPage);
+    gn._ttsWordMapPage = textPage;
+    gn._ttsWordIndex = 0;
+    return gn._ttsWordMap;
+}
+
+/** Speaks the current page's text aloud, highlighting each word as it's spoken.
+ *  Resumes from the last remembered word if this page was where playback last stopped. */
+function gnSpeakCurrentPage() {
+    if (!GN_TTS_SUPPORTED) return;
+    const wordMap = gnEnsureTtsWordMap();
+    if (!wordMap) { gnStopTts(); return; }
+    if (!wordMap.length) {
+        // Nothing to read on this page — skip ahead or stop
+        if (gn.ttsAutoAdvance) gnTtsAdvanceToNextPage();
+        else gnStopTts();
+        return;
+    }
+    gn.ttsPlaying = true;
+    const resumeAt = gn._ttsProgress && gn._ttsProgress.page === gnGetTtsReadIndex()
+        ? Math.min(gn._ttsProgress.wordIndex, wordMap.length - 1)
+        : 0;
+    gnSpeakFromWordIndex(resumeAt);
+}
+
+/** Speaks the current page starting at the given word index — used by skip-forward/back. */
+function gnSpeakFromWordIndex(startIndex) {
+    const wordMap = gn._ttsWordMap;
+    if (!wordMap || !wordMap.length) { gnStopTts(); return; }
+    if (startIndex >= wordMap.length) {
+        // Skipped past the end of this page
+        if (gn.ttsAutoAdvance) gnTtsAdvanceToNextPage();
+        else gnStopTts();
+        return;
+    }
+    startIndex = Math.max(0, startIndex);
+
+    window.speechSynthesis.cancel();
+    gnClearTtsHighlight();
+
+    const baseOffset = wordMap[startIndex].start;
+    const text = gn._ttsFullText.slice(baseOffset);
+
+    const utterance = new SpeechSynthesisUtterance(text);
+    let wordCursor = startIndex;
+    utterance.onboundary = (e) => {
+        if (e.name && e.name !== 'word') return;
+        const charIndex = e.charIndex + baseOffset;
+        while (wordCursor < wordMap.length - 1 && wordMap[wordCursor].end <= charIndex) wordCursor++;
+        gn._ttsWordIndex = wordCursor;
+        gn._ttsProgress = { page: gnGetTtsReadIndex(), wordIndex: wordCursor };
+        clearTimeout(gn._ttsSaveTimer);
+        gn._ttsSaveTimer = setTimeout(gnSaveProgress, 1000);
+        gnClearTtsHighlight();
+        const word = wordMap[wordCursor];
+        if (word) {
+            word.el.classList.add('gn-tts-word--active');
+            word.el.scrollIntoView({ block: 'center', behavior: 'smooth' });
+        }
+    };
+    utterance.onend = () => {
+        if (gn._ttsUtterance !== utterance) return; // superseded by a skip/cancel
+        gnClearTtsHighlight();
+        if (!gn.ttsPlaying) return; // stopped manually mid-utterance
+        if (gn.ttsAutoAdvance) gnTtsAdvanceToNextPage();
+        else gnStopTts();
+    };
+    utterance.onerror = () => {
+        if (gn._ttsUtterance !== utterance) return; // superseded by a skip/cancel
+        gnStopTts();
+    };
+
+    gn._ttsUtterance = utterance;
+    gn._ttsWordIndex = startIndex;
+    gn.ttsPlaying = true;
+    gnUpdateTtsUI();
+    window.speechSynthesis.speak(utterance);
+}
+
+/** Advances to the next page within the current spread, or to the next spread/page,
+ *  and keeps reading — or stops once the book ends. */
+function gnTtsAdvanceToNextPage() {
+    const book  = gn.currentBook;
+    const total = book?.pages.length || 0;
+    if (!book) { gnStopTts(); return; }
+    const step = gn.viewMode === 'scroll' ? 1 : gnGetStep();
+
+    // Double/triple-page spreads show several pages at once — read each one in turn
+    // before flipping to the next spread.
+    const nextOffset = (gn._ttsPageOffset || 0) + 1;
+    if (gn.viewMode !== 'scroll' && nextOffset < step && gn.currentPage + nextOffset < total) {
+        gn._ttsPageOffset = nextOffset;
+        gnSpeakCurrentPage();
+        return;
+    }
+
+    if (gn.currentPage + step >= total) {
+        gn._ttsProgress = null; // finished the book — start over next time
+        gnStopTts();
+        return;
+    }
+    gn._ttsPageOffset = 0;
+    gn._ttsAutoAdvancing = true;
+    gnNextPage();
+    gn._ttsAutoAdvancing = false;
+    // gnPrepareTtsForCurrentPage() resumes reading once the new page's text frame is ready
+}
+
+function gnToggleTts() {
+    if (!GN_TTS_SUPPORTED) return;
+    if (gn.ttsPlaying) gnStopTts();
+    else gnSpeakCurrentPage();
+}
+
+function gnToggleTtsAutoAdvance() {
+    gn.ttsAutoAdvance = !gn.ttsAutoAdvance;
+    const btn = gn.refs.ttsAutoplay;
+    btn?.setAttribute('aria-pressed', gn.ttsAutoAdvance ? 'true' : 'false');
+    btn?.classList.toggle('gn-icon-btn--active', gn.ttsAutoAdvance);
+}
+
+/** Skips the read-aloud position forward/back by N words on the current page. */
+function gnTtsSkipWords(delta) {
+    if (!GN_TTS_SUPPORTED || !gn.currentBook) return;
+    const wordMap = gnEnsureTtsWordMap();
+    if (!wordMap || !wordMap.length) return;
+    gn.ttsPlaying = true;
+    gnSpeakFromWordIndex((gn._ttsWordIndex || 0) + delta);
+}
+
+/** Jumps to the previous/next page and (re)starts reading it, cutting off any speech in progress. */
+function gnTtsJumpAndRead(delta) {
+    if (!GN_TTS_SUPPORTED || !gn.currentBook) return;
+    window.speechSynthesis.cancel();
+    gnClearTtsHighlight();
+    gn.ttsPlaying = true;
+    gnUpdateTtsUI();
+    gn._ttsAutoAdvancing = true; // page frame's onReady resumes reading once it lands
+    if (delta < 0) gnPrevPage(); else gnNextPage();
+    gn._ttsAutoAdvancing = false;
+}
+
+// ------------------------------------------------------------
+// Read From Here (right-click a word to start reading there)
+// ------------------------------------------------------------
+
+function gnToggleTtsClickToRead() {
+    gn.ttsClickToReadOn = !gn.ttsClickToReadOn;
+    const btn = gn.refs.ttsClickRead;
+    btn?.setAttribute('aria-pressed', gn.ttsClickToReadOn ? 'true' : 'false');
+    btn?.classList.toggle('gn-icon-btn--active', gn.ttsClickToReadOn);
+    gn.refs.readerBody?.classList.toggle('gn-tts-click-mode', gn.ttsClickToReadOn);
+    gnHideTtsContextMenu();
+}
+
+/** Resolves the character offset (relative to container's full textContent) under a click point. */
+function gnCharOffsetFromPoint(container, x, y) {
+    let range = null;
+    if (document.caretRangeFromPoint) {
+        range = document.caretRangeFromPoint(x, y);
+    } else if (document.caretPositionFromPoint) {
+        const pos = document.caretPositionFromPoint(x, y);
+        if (pos) {
+            range = document.createRange();
+            range.setStart(pos.offsetNode, pos.offset);
+        }
+    }
+    if (!range || !container.contains(range.startContainer)) return null;
+
+    const walker = document.createTreeWalker(container, NodeFilter.SHOW_TEXT, null);
+    let offset = 0;
+    let node;
+    while ((node = walker.nextNode())) {
+        if (node === range.startContainer) return offset + range.startOffset;
+        offset += node.nodeValue.length;
+    }
+    return null;
+}
+
+/** Finds the word map entry containing (or nearest after) a given character offset. */
+function gnFindWordIndexForOffset(wordMap, charOffset) {
+    for (let i = 0; i < wordMap.length; i++) {
+        if (charOffset < wordMap[i].end) return i;
+    }
+    return wordMap.length - 1;
+}
+
+/** Right-click handler active only while "read from here" mode is on. */
+function gnHandleTtsContextMenu(e) {
+    if (!gn.ttsClickToReadOn) return;
+    const frame = e.target.closest('.gn-page-frame--text');
+    const textPage = frame?.querySelector('.gn-text-page');
+    if (!textPage) return;
+    const charOffset = gnCharOffsetFromPoint(textPage, e.clientX, e.clientY);
+    if (charOffset === null) return;
+    e.preventDefault();
+
+    const pageIndex = Number(frame.dataset.pageIndex);
+    let wordMap;
+    if (gn._ttsWordMap && gn._ttsWordMapPage === textPage) {
+        wordMap = gn._ttsWordMap;
+    } else {
+        gn._ttsFullText = textPage.textContent;
+        wordMap = gnWrapWordsForTts(textPage);
+        gn._ttsWordMap = wordMap;
+        gn._ttsWordMapPage = textPage;
+    }
+    if (!wordMap.length) return;
+    const wordIndex = gnFindWordIndexForOffset(wordMap, charOffset);
+
+    gnShowTtsContextMenu(e.clientX, e.clientY, () => {
+        if (gn.viewMode === 'scroll') {
+            gn.currentPage = pageIndex;
+            gn._ttsPageOffset = 0;
+            gnUpdateNavUI();
+            gnUpdateBookmarkUI();
+            gnUpdateTocHighlight();
+        } else {
+            gn._ttsPageOffset = pageIndex - gn.currentPage;
+        }
+        gnSpeakFromWordIndex(wordIndex);
+    });
+}
+
+function gnShowTtsContextMenu(x, y, onConfirm) {
+    const menu = gn.refs.ttsContextMenu;
+    if (!menu) return;
+    gn._ttsContextAction = onConfirm;
+    menu.hidden = false;
+    const rect = menu.getBoundingClientRect();
+    const maxX = Math.max(8, window.innerWidth - rect.width - 8);
+    const maxY = Math.max(8, window.innerHeight - rect.height - 8);
+    menu.style.left = `${Math.min(x, maxX)}px`;
+    menu.style.top  = `${Math.min(y, maxY)}px`;
+}
+
+function gnHideTtsContextMenu() {
+    const menu = gn.refs.ttsContextMenu;
+    if (!menu || menu.hidden) return;
+    menu.hidden = true;
+    gn._ttsContextAction = null;
 }
 
 // ------------------------------------------------------------
@@ -2083,6 +2595,28 @@ function gnBindModalEvents() {
     r.shortcutsOverlay?.addEventListener('click', (e) => {
         if (e.target === r.shortcutsOverlay) gnToggleShortcuts();
     });
+
+    // Read aloud
+    r.ttsToggle?.addEventListener('click', gnToggleTts);
+    r.ttsAutoplay?.addEventListener('click', gnToggleTtsAutoAdvance);
+    r.ttsPrev?.addEventListener('click', () => gnTtsJumpAndRead(-1));
+    r.ttsNext?.addEventListener('click', () => gnTtsJumpAndRead(1));
+    r.ttsSkipBack?.addEventListener('click', () => gnTtsSkipWords(-10));
+    r.ttsSkipForward?.addEventListener('click', () => gnTtsSkipWords(10));
+
+    // Read from here
+    r.ttsClickRead?.addEventListener('click', gnToggleTtsClickToRead);
+    r.pagesWrap?.addEventListener('contextmenu', gnHandleTtsContextMenu);
+    r.ttsContextRead?.addEventListener('click', () => {
+        const action = gn._ttsContextAction;
+        gnHideTtsContextMenu();
+        if (action) action();
+    });
+    document.addEventListener('click', (e) => {
+        if (r.ttsContextMenu && !r.ttsContextMenu.hidden && !r.ttsContextMenu.contains(e.target)) {
+            gnHideTtsContextMenu();
+        }
+    });
 }
 
 // ------------------------------------------------------------
@@ -2160,11 +2694,16 @@ function gnInit() {
         if (gn.isOpen) gnCloseModal();
     });
 
-    // Flush any pending debounced scroll-progress save before the tab/page unloads
+    // Flush any pending debounced scroll-progress or read-aloud-progress save before the tab/page unloads
     window.addEventListener('pagehide', () => {
         if (gn._scrollSaveTimer) {
             clearTimeout(gn._scrollSaveTimer);
             gn._scrollSaveTimer = null;
+            gnSaveProgress();
+        }
+        if (gn._ttsSaveTimer) {
+            clearTimeout(gn._ttsSaveTimer);
+            gn._ttsSaveTimer = null;
             gnSaveProgress();
         }
     });
