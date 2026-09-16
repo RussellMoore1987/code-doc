@@ -803,8 +803,9 @@ function gnShowLibrary() {
     r.barTitle.textContent = '';
     // Close TOC if open
     if (gn.tocOpen) gnToggleToc();
-    // Close highlights panel if open
-    if (gn.hlPanelOpen) gnToggleHighlightsPanel();
+    // Highlights panel is left as-is (not force-closed): its open/closed state is
+    // persisted per book, and the whole #gn-reader (panel included) is already hidden
+    // below — toggling it here would call gnSaveProgress() and overwrite that saved state.
     gnHideHighlightPopup();
     // Close shortcuts help if open
     if (gn.refs.shortcutsOverlay && !gn.refs.shortcutsOverlay.hidden) gn.refs.shortcutsOverlay.hidden = true;
@@ -934,6 +935,7 @@ function gnOpenBook(bookId, explicitPage) {
     gn.currentPage = progress ? Math.min(progress.lastPage, book.pages.length - 1) : 0;
     gn._ttsProgress = progress?.ttsProgress || null;
     gn.ttsPanelOpen = progress?.ttsPanelOpen || false;
+    gn.hlPanelOpen  = progress?.hlPanelOpen  || false;
     if (typeof explicitPage === 'number') {
         gn.currentPage = Math.max(0, Math.min(explicitPage, book.pages.length - 1));
     }
@@ -970,7 +972,7 @@ function gnShowReaderView() {
     gnUpdateTtsAvailability();
     gnApplyTtsPanelState();
     gnUpdateHighlightAvailability();
-    if (gn.hlPanelOpen) gnRenderHighlightsPanel();
+    gnApplyHighlightsPanelState();
 
     // Focus the reader area
     r.stage.focus && r.stage.setAttribute('tabindex', '-1');
@@ -1737,6 +1739,7 @@ function gnSaveProgress() {
         zoom:      gn.zoom,
         ttsProgress: gn._ttsProgress || null,
         ttsPanelOpen: gn.ttsPanelOpen,
+        hlPanelOpen: gn.hlPanelOpen,
     };
     try {
         localStorage.setItem(GN_LS_KEY(gn.currentBook.id), JSON.stringify(data));
@@ -2917,19 +2920,24 @@ function gnRemoveHighlightById(id) {
 }
 
 /** Opens/closes the right-side highlights panel. Only one right-side panel (TOC or
- *  Highlights) is shown at a time. */
+ *  Highlights) is shown at a time. Open/closed state is remembered per book. */
 function gnToggleHighlightsPanel() {
     gn.hlPanelOpen = !gn.hlPanelOpen;
-    const r = gn.refs;
     if (gn.hlPanelOpen && gn.tocOpen) gnToggleToc();
-    r.hlPanel.hidden = !gn.hlPanelOpen;
-    r.readerBody.classList.toggle('gn-hl-open', gn.hlPanelOpen);
-    r.hlToggle.setAttribute('aria-pressed', gn.hlPanelOpen ? 'true' : 'false');
-    r.hlToggle.classList.toggle('gn-icon-btn--active', gn.hlPanelOpen);
-    if (gn.hlPanelOpen) {
-        gnRenderHighlightsPanel();
-        r.hlSearchInput?.focus();
-    }
+    gnApplyHighlightsPanelState();
+    if (gn.hlPanelOpen) gn.refs.hlSearchInput?.focus();
+    gnSaveProgress();
+}
+
+/** Reflects gn.hlPanelOpen onto the DOM without toggling it — used both by
+ *  gnToggleHighlightsPanel() and to restore a book's saved panel state on open. */
+function gnApplyHighlightsPanelState() {
+    const r = gn.refs;
+    if (r.hlPanel) r.hlPanel.hidden = !gn.hlPanelOpen;
+    r.readerBody?.classList.toggle('gn-hl-open', gn.hlPanelOpen);
+    r.hlToggle?.setAttribute('aria-pressed', gn.hlPanelOpen ? 'true' : 'false');
+    r.hlToggle?.classList.toggle('gn-icon-btn--active', gn.hlPanelOpen);
+    if (gn.hlPanelOpen) gnRenderHighlightsPanel();
 }
 
 /** Toggles a color on/off in the highlights panel's color filter (multi-select; no colors active = show all). */

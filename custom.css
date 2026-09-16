@@ -1383,12 +1383,17 @@ mark.gn-highlight[data-color="pink"]   { background: rgba(255, 158, 207, 0.55); 
 mark.gn-highlight[data-color="orange"] { background: rgba(255, 176, 102, 0.55); }
 
 mark.gn-highlight--flash {
-    animation: gn-hl-flash 3s ease;
+    animation: gn-hl-flash 3s ease-out;
 }
 
 @keyframes gn-hl-flash {
-    0%, 100% { box-shadow: none; }
-    20% { box-shadow: 0 0 0 3px rgba(48, 158, 255, 0.55); }
+    0% { box-shadow: none; }
+    /* Snap on quickly, hold at full visibility, then fade only near the very end —
+       interpolating box-shadow the whole 20%→100% span made it visually fade out
+       within ~1-2s regardless of the total duration, since the color/opacity ramps
+       down continuously across that whole range instead of staying held. */
+    10%, 80% { box-shadow: 0 0 0 3px rgba(48, 158, 255, 0.55); }
+    100% { box-shadow: none; }
 }
 
 @media (prefers-reduced-motion: reduce) {
