@@ -79,6 +79,7 @@ const gn = {
     // Text highlighter state (novel books only)
     hlPanelOpen:       false,
     _hlPending:        null, // { mode: 'create', container, start, end, page, text } | { mode: 'manage', id }
+    _hlColorFilter:    new Set(), // active color filters in the highlights panel; empty = show all
     // DOM refs (populated after modal is built)
     modal:        null,
     refs:         {},
@@ -560,6 +561,13 @@ function gnBuildModal() {
               <div class="gn-hl-panel-search">
                 <input type="text" id="gn-highlights-search"
                        placeholder="Search highlights…" aria-label="Search highlights">
+                <div class="gn-hl-color-filter" id="gn-highlights-color-filter" role="group" aria-label="Filter by color">
+                  <button class="gn-hl-color-filter-btn gn-hl-color-filter-btn--yellow" data-color="yellow" title="Yellow" aria-label="Filter yellow highlights" aria-pressed="false"></button>
+                  <button class="gn-hl-color-filter-btn gn-hl-color-filter-btn--green"  data-color="green"  title="Green"  aria-label="Filter green highlights"  aria-pressed="false"></button>
+                  <button class="gn-hl-color-filter-btn gn-hl-color-filter-btn--blue"   data-color="blue"   title="Blue"   aria-label="Filter blue highlights"   aria-pressed="false"></button>
+                  <button class="gn-hl-color-filter-btn gn-hl-color-filter-btn--pink"   data-color="pink"   title="Pink"   aria-label="Filter pink highlights"   aria-pressed="false"></button>
+                  <button class="gn-hl-color-filter-btn gn-hl-color-filter-btn--orange" data-color="orange" title="Orange" aria-label="Filter orange highlights" aria-pressed="false"></button>
+                </div>
               </div>
               <div class="gn-hl-list" id="gn-highlights-list"></div>
             </div>
@@ -690,6 +698,7 @@ function gnCacheRefs() {
         hlClose:       q('gn-highlights-close'),
         hlSearchInput: q('gn-highlights-search'),
         hlList:        q('gn-highlights-list'),
+        hlColorFilterButtons: gn.modal.querySelectorAll('.gn-hl-color-filter-btn'),
         hlPopup:       q('gn-hl-popup'),
         hlRemoveBtn:   q('gn-hl-remove-btn'),
         hlColorButtons: gn.modal.querySelectorAll('.gn-hl-color'),
@@ -2923,18 +2932,27 @@ function gnToggleHighlightsPanel() {
     }
 }
 
-/** Rebuilds the highlights panel list, filtered by the current search term. */
+/** Toggles a color on/off in the highlights panel's color filter (multi-select; no colors active = show all). */
+function gnToggleHlColorFilter(color, btn) {
+    if (gn._hlColorFilter.has(color)) gn._hlColorFilter.delete(color);
+    else gn._hlColorFilter.add(color);
+    btn.setAttribute('aria-pressed', gn._hlColorFilter.has(color) ? 'true' : 'false');
+    gnRenderHighlightsPanel();
+}
+
+/** Rebuilds the highlights panel list, filtered by the current search term and active color filters. */
 function gnRenderHighlightsPanel() {
     const list = gn.refs.hlList;
     if (!list || !gn.currentBook) return;
     const term = (gn.refs.hlSearchInput?.value || '').trim().toLowerCase();
+    const colors = gn._hlColorFilter;
     const highlights = gnLoadHighlights(gn.currentBook.id)
-        .filter((h) => !term || h.text.toLowerCase().includes(term))
+        .filter((h) => (!term || h.text.toLowerCase().includes(term)) && (!colors.size || colors.has(h.color)))
         .sort((a, b) => a.page - b.page || a.start - b.start);
 
     list.innerHTML = '';
     if (!highlights.length) {
-        const msg = term ? 'No highlights match your search.' : 'No highlights yet. Select text in the novel to add one.';
+        const msg = (term || colors.size) ? 'No highlights match your search.' : 'No highlights yet. Select text in the novel to add one.';
         list.innerHTML = `<p class="gn-hl-empty">${msg}</p>`;
         return;
     }
@@ -2979,7 +2997,7 @@ function gnFlashHighlightWhenReady(id, attemptsLeft = 20) {
     if (mark) {
         mark.scrollIntoView({ block: 'center', behavior: 'smooth' });
         mark.classList.add('gn-highlight--flash');
-        setTimeout(() => mark.classList.remove('gn-highlight--flash'), 1600);
+        setTimeout(() => mark.classList.remove('gn-highlight--flash'), 3000);
         return;
     }
     if (attemptsLeft <= 0) return;
@@ -3174,6 +3192,7 @@ function gnBindModalEvents() {
     r.hlToggle?.addEventListener('click', gnToggleHighlightsPanel);
     r.hlClose?.addEventListener('click', gnToggleHighlightsPanel);
     r.hlSearchInput?.addEventListener('input', gnRenderHighlightsPanel);
+    r.hlColorFilterButtons?.forEach((btn) => btn.addEventListener('click', () => gnToggleHlColorFilter(btn.dataset.color, btn)));
     r.hlColorButtons?.forEach((btn) => btn.addEventListener('click', () => gnHandleHlColorClick(btn.dataset.color)));
     r.hlRemoveBtn?.addEventListener('click', () => {
         if (gn._hlPending?.mode === 'manage') gnRemoveHighlightById(gn._hlPending.id);
