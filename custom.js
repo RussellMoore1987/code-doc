@@ -2513,6 +2513,20 @@ function gnToggleTtsClickToRead() {
     gnHideTtsContextMenu();
 }
 
+/** Resolves the character offset (relative to container's full textContent) of a range's start. */
+function gnCharOffsetForRangeStart(container, range) {
+    if (!range || !container.contains(range.startContainer)) return null;
+
+    const walker = document.createTreeWalker(container, NodeFilter.SHOW_TEXT, null);
+    let offset = 0;
+    let node;
+    while ((node = walker.nextNode())) {
+        if (node === range.startContainer) return offset + range.startOffset;
+        offset += node.nodeValue.length;
+    }
+    return null;
+}
+
 /** Resolves the character offset (relative to container's full textContent) under a click point. */
 function gnCharOffsetFromPoint(container, x, y) {
     let range = null;
@@ -2525,16 +2539,14 @@ function gnCharOffsetFromPoint(container, x, y) {
             range.setStart(pos.offsetNode, pos.offset);
         }
     }
-    if (!range || !container.contains(range.startContainer)) return null;
+    return gnCharOffsetForRangeStart(container, range);
+}
 
-    const walker = document.createTreeWalker(container, NodeFilter.SHOW_TEXT, null);
-    let offset = 0;
-    let node;
-    while ((node = walker.nextNode())) {
-        if (node === range.startContainer) return offset + range.startOffset;
-        offset += node.nodeValue.length;
-    }
-    return null;
+/** Resolves the character offset of the start of the active (non-collapsed) text selection, if any. */
+function gnCharOffsetFromSelectionStart(container) {
+    const sel = window.getSelection();
+    if (!sel || sel.rangeCount === 0 || sel.isCollapsed) return null;
+    return gnCharOffsetForRangeStart(container, sel.getRangeAt(0));
 }
 
 /** Finds the word map entry containing (or nearest after) a given character offset. */
@@ -2551,7 +2563,8 @@ function gnHandleTtsContextMenu(e) {
     const frame = e.target.closest('.gn-page-frame--text');
     const textPage = frame?.querySelector('.gn-text-page');
     if (!textPage) return;
-    const charOffset = gnCharOffsetFromPoint(textPage, e.clientX, e.clientY);
+    // A right-click on selected text reads from the selection's first word, not the click point
+    const charOffset = gnCharOffsetFromSelectionStart(textPage) ?? gnCharOffsetFromPoint(textPage, e.clientX, e.clientY);
     if (charOffset === null) return;
     e.preventDefault();
 
