@@ -1267,8 +1267,8 @@ ul.gn-page-cards {
 .gn-toc-panel {
     width: 260px;
     min-width: 0;
-    background: #13161c;
-    border-left: 1px solid #30363d;
+    background: var(--bg-content);
+    border-left: 1px solid var(--border);
     display: flex;
     flex-direction: column;
     flex-shrink: 0;
@@ -1285,28 +1285,28 @@ ul.gn-page-cards {
     align-items: center;
     justify-content: space-between;
     padding: 11px 14px;
-    border-bottom: 1px solid #30363d;
+    border-bottom: 1px solid var(--border);
     flex-shrink: 0;
 }
 
 .gn-toc-header-title {
     font-size: 12px;
     font-weight: 600;
-    color: #cdd9e5;
+    color: var(--text-base);
     text-transform: uppercase;
     letter-spacing: 0.06em;
 }
 
 /* TOC close button */
 .gn-toc-panel .gn-icon-btn {
-    color: #8b949e;
+    color: var(--text-muted);
     width: 28px;
     height: 28px;
 }
 
 .gn-toc-panel .gn-icon-btn:hover {
-    background: #21242a;
-    color: #e6edf3;
+    background: var(--bg-hover);
+    color: var(--text-base);
 }
 
 .gn-toc-list {
@@ -1326,7 +1326,7 @@ ul.gn-page-cards {
     border: none;
     border-left: 3px solid transparent;
     font-size: 13px;
-    color: #8b949e;
+    color: var(--text-muted);
     cursor: pointer;
     transition: background 0.12s, color 0.12s, border-left-color 0.12s;
     line-height: 1.4;
@@ -1334,26 +1334,27 @@ ul.gn-page-cards {
 }
 
 .gn-toc-item:hover {
-    background: #1e2436;
-    color: #cdd9e5;
+    background: var(--bg-hover);
+    color: var(--text-base);
 }
 
 .gn-toc-item:focus-visible {
-    outline: 2px solid #309eff;
+    outline: 2px solid var(--border-focus);
     outline-offset: -2px;
 }
 
 .gn-toc-item--active {
-    background: #1e2d5a;
-    color: #79b8ff;
-    border-left-color: #309eff;
+    background: var(--bg-active);
+    color: var(--primary-color);
+    border-left-color: var(--primary-color);
 }
 
 .gn-toc-page-num {
     display: block;
     font-size: 11px;
-    color: #6e7681;
+    color: var(--text-muted);
     margin-top: 2px;
+    opacity: 0.8;
 }
 
 /* ------------------------------------------------------------
@@ -1379,10 +1380,14 @@ ul.gn-page-cards {
     max-width: calc(100vw - 32px);
     max-height: calc(100vh - 64px);
     overflow-y: auto;
-    background: #13161c;
-    border: 1px solid #30363d;
+    background: var(--bg-content);
+    border: 1px solid var(--border);
     border-radius: 8px;
     box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5);
+}
+
+[data-theme="light"] .gn-shortcuts-dialog {
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.18);
 }
 
 .gn-shortcuts-header {
@@ -1390,26 +1395,26 @@ ul.gn-page-cards {
     align-items: center;
     justify-content: space-between;
     padding: 11px 14px;
-    border-bottom: 1px solid #30363d;
+    border-bottom: 1px solid var(--border);
 }
 
 .gn-shortcuts-title {
     font-size: 12px;
     font-weight: 600;
-    color: #cdd9e5;
+    color: var(--text-base);
     text-transform: uppercase;
     letter-spacing: 0.06em;
 }
 
 .gn-shortcuts-dialog .gn-icon-btn {
-    color: #8b949e;
+    color: var(--text-muted);
     width: 28px;
     height: 28px;
 }
 
 .gn-shortcuts-dialog .gn-icon-btn:hover {
-    background: #21242a;
-    color: #e6edf3;
+    background: var(--bg-hover);
+    color: var(--text-base);
 }
 
 .gn-shortcuts-list {
@@ -1424,7 +1429,7 @@ ul.gn-page-cards {
     gap: 14px;
     padding: 8px 16px;
     font-size: 13px;
-    color: #cdd9e5;
+    color: var(--text-base);
 }
 
 .gn-shortcuts-keys {
@@ -1441,9 +1446,9 @@ ul.gn-page-cards {
     text-align: center;
     font-family: inherit;
     font-size: 12px;
-    color: #cdd9e5;
-    background: #21242a;
-    border: 1px solid #30363d;
+    color: var(--text-base);
+    background: var(--bg-code);
+    border: 1px solid var(--border);
     border-bottom-width: 2px;
     border-radius: 4px;
 }
