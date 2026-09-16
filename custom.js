@@ -2128,6 +2128,17 @@ function gnGetTtsReadIndex() {
     return Math.min(gn.currentPage + (gn._ttsPageOffset || 0), Math.max(total - 1, 0));
 }
 
+/** Resolves the page actually feeding the live word map (i.e., genuinely being read aloud),
+ *  independent of gn.currentPage. In scroll mode gn.currentPage tracks scroll position, and the
+ *  read-aloud highlight's own scrollIntoView({block:'center'}) can nudge that past a page boundary,
+ *  making it disagree with the page that's really being read. Falls back to gn.currentPage when
+ *  nothing is being read yet. */
+function gnGetTtsActiveReadPage() {
+    const frame = gn._ttsWordMapPage?.closest('.gn-page-frame');
+    const idx = frame ? Number(frame.dataset.pageIndex) : NaN;
+    return Number.isFinite(idx) ? idx : gn.currentPage;
+}
+
 /** Shows/hides the entire read-aloud section \u2014 only text novel books have anything to read. */
 function gnUpdateTtsAvailability() {
     const r = gn.refs;
@@ -2475,7 +2486,17 @@ function gnTtsJumpAndRead(delta) {
     gn.ttsPlaying = true;
     gnUpdateTtsUI();
     gn._ttsAutoAdvancing = true; // page frame's onReady resumes reading once it lands
-    if (delta < 0) gnPrevPage(); else gnNextPage();
+    if (gn.viewMode === 'scroll') {
+        // Navigate off the page actually being read, not the scroll-tracked gn.currentPage
+        // (see gnGetTtsActiveReadPage for why those two can disagree in scroll mode).
+        const total = gn.currentBook.pages.length;
+        const target = Math.max(0, Math.min(gnGetTtsActiveReadPage() + delta, total - 1));
+        gnGoToPage(target);
+    } else if (delta < 0) {
+        gnPrevPage();
+    } else {
+        gnNextPage();
+    }
     gn._ttsAutoAdvancing = false;
 }
 
