@@ -2398,7 +2398,15 @@ function gnSpeakFromWordIndex(startIndex) {
     gn._ttsWordIndex = startIndex;
     gn.ttsPlaying = true;
     gnUpdateTtsUI();
-    window.speechSynthesis.speak(utterance);
+    // Chrome/Edge intermittently swallow speak() when it's called in the same tick as
+    // cancel() (a long-standing engine bug) - the utterance silently never starts, and
+    // speechSynthesis.speaking can get stuck true. Deferring one tick reliably avoids it.
+    // This is why "read next page" seemed to work "on and off": whether it failed depended
+    // on how fast the page's text/images finished loading before this ran.
+    setTimeout(() => {
+        if (gn._ttsUtterance !== utterance) return; // superseded before the deferred speak fired
+        window.speechSynthesis.speak(utterance);
+    }, 50);
 }
 
 /** Advances to the next page within the current spread, or to the next spread/page,
@@ -2455,6 +2463,13 @@ function gnTtsSkipWords(delta) {
 /** Jumps to the previous/next page and (re)starts reading it, cutting off any speech in progress. */
 function gnTtsJumpAndRead(delta) {
     if (!GN_TTS_SUPPORTED || !gn.currentBook) return;
+    // Null this out BEFORE cancel(): cancel() asynchronously fires the in-progress utterance's
+    // onend/onerror, and their "superseded" guard (`gn._ttsUtterance !== utterance`) only works
+    // if this no longer matches by the time that fires. Otherwise that stale onend still passes
+    // the guard, sees gn.ttsPlaying === true, and calls gnTtsAdvanceToNextPage() itself - racing
+    // with the explicit gnPrevPage()/gnNextPage() below and skipping/misplacing the target page
+    // (the intermittent "next page doesn't start reading" symptom).
+    gn._ttsUtterance = null;
     window.speechSynthesis.cancel();
     gnClearTtsHighlight();
     gn.ttsPlaying = true;
