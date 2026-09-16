@@ -1293,6 +1293,7 @@ function gnUpdateNavUI() {
         ? `${cur + 1}–${displayEnd + 1}`
         : cur + 1;
     r.pageInput.max   = total;
+    gnSizePageInput();
 
     r.totalPages.textContent = total;
 
@@ -1303,9 +1304,19 @@ function gnUpdateNavUI() {
     }
 }
 
+/** Grows/shrinks #gn-page-input's width to fit its current text (e.g. "1" vs "125–126")
+ *  instead of clipping at a fixed width. */
+function gnSizePageInput() {
+    const input = gn.refs.pageInput;
+    if (!input) return;
+    const len = String(input.value).length;
+    input.style.width = `${Math.max(2, len) + 1.5}ch`;
+}
+
 // ------------------------------------------------------------
 // Viewing Modes
 // ------------------------------------------------------------
+
 
 /** Sets the view mode and re-renders. */
 function gnSetViewMode(mode) {
@@ -2717,6 +2728,7 @@ function gnBindModalEvents() {
         const val = parseInt(r.pageInput.value, 10);
         if (!isNaN(val)) gnGoToPage(val - 1);
     });
+    r.pageInput.addEventListener('input', gnSizePageInput);
 
     // View mode
     [r.viewSingle, r.viewDouble, r.viewTriple, r.viewScroll].forEach((btn) => {

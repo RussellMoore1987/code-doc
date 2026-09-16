@@ -705,6 +705,9 @@ ul.gn-page-cards {
     font-size: 12px;
     font-family: inherit;
     text-align: center;
+    box-sizing: content-box;
+    flex-shrink: 0;
+    transition: width 0.12s ease;
     -moz-appearance: textfield;
 }
 
