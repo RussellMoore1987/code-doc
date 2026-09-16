@@ -27,6 +27,8 @@ const GN_TTS_WPM        = 200; // words-per-minute used for the estimated readin
 const GN_TTS_SUPPORTED  = 'speechSynthesis' in window && typeof SpeechSynthesisUtterance !== 'undefined';
 const GN_TTS_VOICE_LS_KEY = 'gn-tts-voice-uri';
 const GN_TTS_RATE_LS_KEY  = 'gn-tts-rate';
+const GN_HL_LS_PREFIX     = 'gn-highlights-'; // per-book highlight storage, separate from gn-progress-*
+const GN_HL_COLORS        = ['yellow', 'green', 'blue', 'pink', 'orange'];
 
 // ------------------------------------------------------------
 // State
@@ -74,6 +76,9 @@ const gn = {
     ttsPanelOpen:      false, // whether the read-aloud controls section is expanded (closed by default, per book)
     _ttsProgress:      null, // { page, wordIndex } remembered resume point, persisted per book
     _ttsSaveTimer:     null,
+    // Text highlighter state (novel books only)
+    hlPanelOpen:       false,
+    _hlPending:        null, // { mode: 'create', container, start, end, page, text } | { mode: 'manage', id }
     // DOM refs (populated after modal is built)
     modal:        null,
     refs:         {},
@@ -439,6 +444,16 @@ function gnBuildModal() {
                 </button>
                 <div class="gn-bookmark-dropdown" id="gn-bookmark-dropdown" hidden></div>
               </div>
+              <button class="gn-icon-btn" id="gn-highlights-toggle"
+                      aria-label="Highlights" aria-pressed="false"
+                      data-tooltip="Highlights (H)">
+                <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" fill="none"
+                     stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M8.5 15.5 3 21l1-4.5L15.5 5 19 8.5 8.5 15.5Z"/>
+                  <path d="M14 6.5 17.5 10"/>
+                  <path d="M3 21h5"/>
+                </svg>
+              </button>
               <button class="gn-icon-btn" id="gn-toc-toggle"
                       aria-label="Table of contents" aria-pressed="false"
                       data-tooltip="Table of Contents (T)">
@@ -529,6 +544,26 @@ function gnBuildModal() {
               <div class="gn-toc-list" id="gn-toc-list" role="list"></div>
             </div>
 
+            <!-- Highlights panel -->
+            <div class="gn-hl-panel" id="gn-highlights-panel" hidden
+                 role="complementary" aria-label="Highlights">
+              <div class="gn-hl-panel-header">
+                <span class="gn-hl-panel-title">Highlights</span>
+                <button class="gn-icon-btn" id="gn-highlights-close"
+                        aria-label="Close highlights panel">
+                  <svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true">
+                    <line x1="18" y1="6" x2="6" y2="18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                    <line x1="6" y1="6" x2="18" y2="18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                  </svg>
+                </button>
+              </div>
+              <div class="gn-hl-panel-search">
+                <input type="text" id="gn-highlights-search"
+                       placeholder="Search highlights…" aria-label="Search highlights">
+              </div>
+              <div class="gn-hl-list" id="gn-highlights-list"></div>
+            </div>
+
           </div><!-- end .gn-reader-body -->
 
         </div><!-- end #gn-reader -->
@@ -551,6 +586,7 @@ function gnBuildModal() {
               <li><span class="gn-shortcuts-keys"><kbd>0</kbd></span><span>Reset zoom</span></li>
               <li><span class="gn-shortcuts-keys"><kbd>B</kbd></span><span>Toggle Bookmark, current page</span></li>
               <li><span class="gn-shortcuts-keys"><kbd>T</kbd></span><span>Toggle table of contents</span></li>
+              <li><span class="gn-shortcuts-keys"><kbd>H</kbd></span><span>Toggle highlights panel, (only for text novels)</span></li>
               <li><span class="gn-shortcuts-keys"><kbd>M</kbd></span><span>Toggle magnifier</span></li>
               <li><span class="gn-shortcuts-keys"><kbd>R</kbd></span><span>Read page aloud, (only for text novels)</span></li>
               <li><span class="gn-shortcuts-keys"><kbd>S</kbd></span><span>Toggle fullscreen</span></li>
@@ -558,6 +594,24 @@ function gnBuildModal() {
               <li><span class="gn-shortcuts-keys"><kbd>Esc</kbd></span><span>Close panel / viewer</span></li>
             </ul>
           </div>
+        </div>
+
+        <!-- Highlighter color-picker / manage popup (shown next to a text selection or an existing highlight) -->
+        <div class="gn-hl-popup" id="gn-hl-popup" hidden role="menu" aria-label="Highlight options">
+          <button class="gn-hl-color gn-hl-color--yellow" data-color="yellow" title="Yellow" aria-label="Yellow highlight"></button>
+          <button class="gn-hl-color gn-hl-color--green"  data-color="green"  title="Green"  aria-label="Green highlight"></button>
+          <button class="gn-hl-color gn-hl-color--blue"   data-color="blue"   title="Blue"   aria-label="Blue highlight"></button>
+          <button class="gn-hl-color gn-hl-color--pink"   data-color="pink"   title="Pink"   aria-label="Pink highlight"></button>
+          <button class="gn-hl-color gn-hl-color--orange" data-color="orange" title="Orange" aria-label="Orange highlight"></button>
+          <button class="gn-hl-remove" id="gn-hl-remove-btn" hidden aria-label="Remove highlight" title="Remove highlight">
+            <svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true" fill="none"
+                 stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="3 6 5 6 21 6"/>
+              <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
+              <path d="M10 11v6"/><path d="M14 11v6"/>
+              <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
+            </svg>
+          </button>
         </div>
 
         <!-- Read-from-here context menu (shown on right-click when the mode is active) -->
@@ -630,6 +684,15 @@ function gnCacheRefs() {
         bookmarkWrap:     q('gn-bookmark-wrap'),
         bookmarkDropdown: q('gn-bookmark-dropdown'),
         tocToggle:     q('gn-toc-toggle'),
+        // Highlighter
+        hlToggle:      q('gn-highlights-toggle'),
+        hlPanel:       q('gn-highlights-panel'),
+        hlClose:       q('gn-highlights-close'),
+        hlSearchInput: q('gn-highlights-search'),
+        hlList:        q('gn-highlights-list'),
+        hlPopup:       q('gn-hl-popup'),
+        hlRemoveBtn:   q('gn-hl-remove-btn'),
+        hlColorButtons: gn.modal.querySelectorAll('.gn-hl-color'),
         fullscreen:    q('gn-fullscreen'),
         exportPdf:     q('gn-export-pdf'),
         shortcutsBtn:      q('gn-shortcuts'),
@@ -699,6 +762,7 @@ function gnCloseModal() {
     if (gn.refs.shortcutsOverlay && !gn.refs.shortcutsOverlay.hidden) gn.refs.shortcutsOverlay.hidden = true;
     gnHideTtsContextMenu();
     gnStopTts();
+    gnHideHighlightPopup();
     // Turn off magnifier loupe
     if (gn.magnifyOn) { gn.magnifyOn = false; gnDetachMagnifier(); gn.refs.magnify?.classList.remove('gn-icon-btn--active'); }
     if (gn.lastFocused && typeof gn.lastFocused.focus === 'function') {
@@ -730,6 +794,9 @@ function gnShowLibrary() {
     r.barTitle.textContent = '';
     // Close TOC if open
     if (gn.tocOpen) gnToggleToc();
+    // Close highlights panel if open
+    if (gn.hlPanelOpen) gnToggleHighlightsPanel();
+    gnHideHighlightPopup();
     // Close shortcuts help if open
     if (gn.refs.shortcutsOverlay && !gn.refs.shortcutsOverlay.hidden) gn.refs.shortcutsOverlay.hidden = true;
     gnStopTts();
@@ -845,6 +912,8 @@ function gnOpenBook(bookId, explicitPage) {
     gnStopTts();
     gn.currentBook = book;
 
+    gnHideHighlightPopup();
+
     // Ignore wheel events for a moment after opening — guards against residual
     // trackpad/mouse momentum silently flipping pages in the freshly-opened book
     gn._wheelGraceUntil = Date.now() + 500;
@@ -891,6 +960,8 @@ function gnShowReaderView() {
     gnUpdateBookmarkUI();
     gnUpdateTtsAvailability();
     gnApplyTtsPanelState();
+    gnUpdateHighlightAvailability();
+    if (gn.hlPanelOpen) gnRenderHighlightsPanel();
 
     // Focus the reader area
     r.stage.focus && r.stage.setAttribute('tabindex', '-1');
@@ -964,6 +1035,7 @@ function gnRenderPage() {
     const wrap  = r.pagesWrap;
 
     if (!book) return;
+    gnHideHighlightPopup();
 
     // Page transition
     wrap.classList.add('gn-page-transition');
@@ -1028,6 +1100,7 @@ function gnRenderPage() {
                         gnUpdateNavUI();
                         gnUpdateBookmarkUI();
                         gnUpdateTocHighlight();
+                        gnHideHighlightPopup();
                         // Debounce progress saves so rapid scrolling doesn't spam localStorage,
                         // but still persist the reached page (needed for resume + completion state).
                         clearTimeout(gn._scrollSaveTimer);
@@ -1165,6 +1238,9 @@ function gnBuildTextPageFrame(page, index, book) {
         content.className = 'gn-text-page';
         content.innerHTML = html;
         frame.appendChild(content);
+        // Re-wrap any saved highlight ranges for this page — offsets are relative
+        // to content.textContent and are stable since wrapping never changes text length.
+        gnApplyHighlightsToFrame(content, book.id, index);
         // The fetched fragment's own <img>s (e.g. chapter art) can keep reflowing
         // this frame's height well after the text itself is in the DOM — wait for
         // them too so "ready" actually means "height is stable".
@@ -1188,6 +1264,7 @@ function gnGoToPage(n) {
     if (!book) return;
     gn._ttsPageOffset = 0;
     gnHideTtsContextMenu();
+    gnHideHighlightPopup();
     if (!gn._ttsAutoAdvancing) gnStopTts();
     const total = book.pages.length;
     n = Math.max(0, Math.min(n, total - 1));
@@ -1565,6 +1642,8 @@ function gnOnMagnifierMove(e, glass) {
 function gnToggleToc() {
     gn.tocOpen = !gn.tocOpen;
     const r = gn.refs;
+    // Only one right-side panel (TOC / Highlights) can be open at a time
+    if (gn.tocOpen && gn.hlPanelOpen) gnToggleHighlightsPanel();
     r.tocPanel.hidden = !gn.tocOpen;
     r.readerBody.classList.toggle('gn-toc-open', gn.tocOpen);
     r.tocToggle.setAttribute('aria-pressed', gn.tocOpen ? 'true' : 'false');
@@ -1993,6 +2072,7 @@ function gnHandleKeydown(e) {
 
     switch (e.key) {
         case 'Escape':
+            if (gn.refs.hlPopup && !gn.refs.hlPopup.hidden) { gnHideHighlightPopup(); break; }
             if (gn.refs.ttsContextMenu && !gn.refs.ttsContextMenu.hidden) { gnHideTtsContextMenu(); break; }
             if (gn.refs.shortcutsOverlay && !gn.refs.shortcutsOverlay.hidden) { gnToggleShortcuts(); break; }
             if (gn.tocOpen) { gnToggleToc(); break; }
@@ -2021,6 +2101,10 @@ function gnHandleKeydown(e) {
         case 't':
         case 'T':
             if (!gn.isLibrary) { e.preventDefault(); gnToggleToc(); }
+            break;
+        case 'h':
+        case 'H':
+            if (!gn.isLibrary && gn.currentBook?.type === 'novel') { e.preventDefault(); gnToggleHighlightsPanel(); }
             break;
         case 'm':
         case 'M':
@@ -2626,6 +2710,283 @@ function gnHideTtsContextMenu() {
 }
 
 // ------------------------------------------------------------
+// Text Highlighter (novel books only)
+// ------------------------------------------------------------
+
+const GN_HL_KEY = (bookId) => GN_HL_LS_PREFIX + bookId;
+
+function gnLoadHighlights(bookId) {
+    try {
+        const arr = JSON.parse(localStorage.getItem(GN_HL_KEY(bookId)));
+        return Array.isArray(arr) ? arr : [];
+    } catch { return []; }
+}
+
+function gnSaveHighlights(bookId, arr) {
+    try { localStorage.setItem(GN_HL_KEY(bookId), JSON.stringify(arr)); } catch { /* silent */ }
+}
+
+function gnGenHighlightId() {
+    return `hl-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
+}
+
+/** Shows/hides the toolbar's highlights button — only text novels have anything to highlight. */
+function gnUpdateHighlightAvailability() {
+    const show = gn.currentBook?.type === 'novel';
+    if (gn.refs.hlToggle) gn.refs.hlToggle.hidden = !show;
+    if (!show && gn.hlPanelOpen) gnToggleHighlightsPanel();
+    if (!show) gnHideHighlightPopup();
+}
+
+/** Resolves the character offsets of a Range relative to container's full textContent,
+ *  clamping to container bounds when the selection extends outside of it (e.g. a
+ *  double/triple-page spread where the user dragged across two page frames). */
+function gnGetRangeCharOffsets(container, range) {
+    if (!range) return null;
+    const startInContainer = container.contains(range.startContainer);
+    const endInContainer   = container.contains(range.endContainer);
+    if (!startInContainer && !endInContainer) return null;
+
+    const walker = document.createTreeWalker(container, NodeFilter.SHOW_TEXT, null);
+    let offset = 0, start = null, end = null, node;
+    while ((node = walker.nextNode())) {
+        const len = node.nodeValue.length;
+        if (startInContainer && node === range.startContainer) start = offset + range.startOffset;
+        if (endInContainer && node === range.endContainer)     end   = offset + range.endOffset;
+        offset += len;
+    }
+    if (start === null) start = 0;      // selection began before this container
+    if (end === null)   end   = offset; // selection continues past this container
+    if (end <= start) return null;
+    return { start, end };
+}
+
+/** Wraps the [start, end) character range of container's text in one or more
+ *  <mark class="gn-highlight"> elements (multiple when the range spans several
+ *  underlying text nodes, e.g. across paragraphs or inline elements). */
+function gnApplyHighlightRange(container, start, end, color, id) {
+    if (end <= start) return;
+    const walker = document.createTreeWalker(container, NodeFilter.SHOW_TEXT, null);
+    const targets = [];
+    let offset = 0, node;
+    while ((node = walker.nextNode())) {
+        const len = node.nodeValue.length;
+        const nodeStart = offset, nodeEnd = offset + len;
+        if (nodeEnd > start && nodeStart < end) {
+            targets.push({ node, from: Math.max(0, start - nodeStart), to: Math.min(len, end - nodeStart) });
+        }
+        offset += len;
+        if (offset >= end) break;
+    }
+    targets.forEach(({ node, from, to }) => {
+        if (from >= to || !node.parentNode) return;
+        const range = document.createRange();
+        range.setStart(node, from);
+        range.setEnd(node, to);
+        const mark = document.createElement('mark');
+        mark.className = 'gn-highlight';
+        mark.dataset.color = color;
+        mark.dataset.highlightId = id;
+        try { range.surroundContents(mark); } catch { /* malformed range - skip this segment */ }
+    });
+}
+
+/** Re-applies every saved highlight belonging to a given page onto its freshly-rendered frame. */
+function gnApplyHighlightsToFrame(container, bookId, pageIndex) {
+    gnLoadHighlights(bookId)
+        .filter((h) => h.page === pageIndex)
+        .forEach((h) => gnApplyHighlightRange(container, h.start, h.end, h.color, h.id));
+}
+
+/** Removes every <mark> rendered for a given highlight id (a highlight can render as
+ *  several marks when its range spans multiple text nodes), merging their text back in. */
+function gnUnwrapHighlightMarks(id) {
+    const marks = gn.refs.pagesWrap?.querySelectorAll(`.gn-highlight[data-highlight-id="${CSS.escape(id)}"]`);
+    marks?.forEach((mark) => {
+        const parent = mark.parentNode;
+        if (!parent) return;
+        while (mark.firstChild) parent.insertBefore(mark.firstChild, mark);
+        parent.removeChild(mark);
+        parent.normalize();
+    });
+}
+
+function gnPositionHighlightPopup(rect) {
+    const popup = gn.refs.hlPopup;
+    if (!popup) return;
+    popup.hidden = false;
+    const popRect = popup.getBoundingClientRect();
+    const gap = 8;
+    let left = rect.left + rect.width / 2 - popRect.width / 2;
+    let top  = rect.top - popRect.height - gap;
+    if (top < 8) top = rect.bottom + gap; // flip below the selection if there's no room above
+    left = Math.max(8, Math.min(window.innerWidth - popRect.width - 8, left));
+    top  = Math.max(8, Math.min(window.innerHeight - popRect.height - 8, top));
+    popup.style.left = `${left}px`;
+    popup.style.top  = `${top}px`;
+}
+
+function gnHideHighlightPopup() {
+    const popup = gn.refs.hlPopup;
+    if (!popup || popup.hidden) return;
+    popup.hidden = true;
+    gn._hlPending = null;
+}
+
+/** Checks the live selection after mouseup/keyup and, if it's a non-collapsed
+ *  selection inside a novel's text page, shows the color-picker popup for it. */
+function gnHandleTextSelectionChange() {
+    if (!gn.currentBook || gn.currentBook.type !== 'novel') return;
+    const sel = window.getSelection();
+    if (!sel || sel.isCollapsed || sel.rangeCount === 0) return; // leave any existing popup as-is
+    const range = sel.getRangeAt(0);
+    const anchorEl = range.commonAncestorContainer.nodeType === 1
+        ? range.commonAncestorContainer
+        : range.commonAncestorContainer.parentElement;
+    const textPage = anchorEl?.closest('.gn-text-page');
+    if (!textPage) return;
+    const offsets = gnGetRangeCharOffsets(textPage, range);
+    if (!offsets) return;
+    const frame = textPage.closest('.gn-page-frame');
+    const pageIndex = frame ? Number(frame.dataset.pageIndex) : gn.currentPage;
+
+    gn._hlPending = { mode: 'create', container: textPage, start: offsets.start, end: offsets.end, page: pageIndex, text: sel.toString() };
+    if (gn.refs.hlRemoveBtn) gn.refs.hlRemoveBtn.hidden = true;
+    gnPositionHighlightPopup(range.getBoundingClientRect());
+}
+
+/** Shows the manage popup (change color / remove) when an existing highlight is clicked. */
+function gnHandleHighlightMarkClick(e) {
+    const mark = e.target.closest('.gn-highlight');
+    if (!mark) return;
+    e.stopPropagation();
+    gn._hlPending = { mode: 'manage', id: mark.dataset.highlightId };
+    if (gn.refs.hlRemoveBtn) gn.refs.hlRemoveBtn.hidden = false;
+    gnPositionHighlightPopup(mark.getBoundingClientRect());
+}
+
+function gnHandleHlColorClick(color) {
+    if (!gn._hlPending) return;
+    if (gn._hlPending.mode === 'create') gnCreateHighlightFromSelection(color);
+    else if (gn._hlPending.mode === 'manage') gnChangeHighlightColor(gn._hlPending.id, color);
+    gnHideHighlightPopup();
+}
+
+function gnCreateHighlightFromSelection(color) {
+    if (!gn._hlPending || gn._hlPending.mode !== 'create' || !gn.currentBook) return;
+    const { container, start, end, page, text } = gn._hlPending;
+    const id = gnGenHighlightId();
+    const bookId = gn.currentBook.id;
+    const list = gnLoadHighlights(bookId);
+    list.push({ id, page, start, end, text: text.slice(0, 300), color, ts: Date.now() });
+    gnSaveHighlights(bookId, list);
+    gnApplyHighlightRange(container, start, end, color, id);
+    window.getSelection()?.removeAllRanges();
+    gnRenderHighlightsPanel();
+}
+
+function gnChangeHighlightColor(id, color) {
+    if (!gn.currentBook) return;
+    const bookId = gn.currentBook.id;
+    const list = gnLoadHighlights(bookId);
+    const item = list.find((h) => h.id === id);
+    if (!item) return;
+    item.color = color;
+    gnSaveHighlights(bookId, list);
+    gn.refs.pagesWrap?.querySelectorAll(`.gn-highlight[data-highlight-id="${CSS.escape(id)}"]`)
+        .forEach((m) => { m.dataset.color = color; });
+    gnRenderHighlightsPanel();
+}
+
+function gnRemoveHighlightById(id) {
+    if (!gn.currentBook) return;
+    const bookId = gn.currentBook.id;
+    gnSaveHighlights(bookId, gnLoadHighlights(bookId).filter((h) => h.id !== id));
+    gnUnwrapHighlightMarks(id);
+    gnHideHighlightPopup();
+    gnRenderHighlightsPanel();
+}
+
+/** Opens/closes the right-side highlights panel. Only one right-side panel (TOC or
+ *  Highlights) is shown at a time. */
+function gnToggleHighlightsPanel() {
+    gn.hlPanelOpen = !gn.hlPanelOpen;
+    const r = gn.refs;
+    if (gn.hlPanelOpen && gn.tocOpen) gnToggleToc();
+    r.hlPanel.hidden = !gn.hlPanelOpen;
+    r.readerBody.classList.toggle('gn-hl-open', gn.hlPanelOpen);
+    r.hlToggle.setAttribute('aria-pressed', gn.hlPanelOpen ? 'true' : 'false');
+    r.hlToggle.classList.toggle('gn-icon-btn--active', gn.hlPanelOpen);
+    if (gn.hlPanelOpen) {
+        gnRenderHighlightsPanel();
+        r.hlSearchInput?.focus();
+    }
+}
+
+/** Rebuilds the highlights panel list, filtered by the current search term. */
+function gnRenderHighlightsPanel() {
+    const list = gn.refs.hlList;
+    if (!list || !gn.currentBook) return;
+    const term = (gn.refs.hlSearchInput?.value || '').trim().toLowerCase();
+    const highlights = gnLoadHighlights(gn.currentBook.id)
+        .filter((h) => !term || h.text.toLowerCase().includes(term))
+        .sort((a, b) => a.page - b.page || a.start - b.start);
+
+    list.innerHTML = '';
+    if (!highlights.length) {
+        const msg = term ? 'No highlights match your search.' : 'No highlights yet. Select text in the novel to add one.';
+        list.innerHTML = `<p class="gn-hl-empty">${msg}</p>`;
+        return;
+    }
+    highlights.forEach((h) => {
+        const item = document.createElement('button');
+        item.className = 'gn-hl-item';
+        item.innerHTML = `
+          <span class="gn-hl-dot" data-color="${gnEscHtml(h.color)}"></span>
+          <span class="gn-hl-item-body">
+            <span class="gn-hl-item-text">${gnEscHtml(h.text)}</span>
+            <span class="gn-hl-item-page">Page ${h.page + 1}</span>
+          </span>
+          <span class="gn-hl-item-delete" role="button" aria-label="Remove highlight">
+            <svg viewBox="0 0 24 24" width="13" height="13" aria-hidden="true" fill="none"
+                 stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="3 6 5 6 21 6"/>
+              <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
+              <path d="M10 11v6"/><path d="M14 11v6"/>
+              <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
+            </svg>
+          </span>`;
+        item.addEventListener('click', (e) => {
+            if (e.target.closest('.gn-hl-item-delete')) {
+                e.stopPropagation();
+                gnRemoveHighlightById(h.id);
+                return;
+            }
+            gnGoToHighlight(h);
+        });
+        list.appendChild(item);
+    });
+}
+
+/** Jumps to a highlight's page, then scrolls it into view and flashes it once rendered. */
+function gnGoToHighlight(h) {
+    gnGoToPage(h.page);
+    gnFlashHighlightWhenReady(h.id);
+}
+
+function gnFlashHighlightWhenReady(id, attemptsLeft = 20) {
+    const mark = gn.refs.pagesWrap?.querySelector(`.gn-highlight[data-highlight-id="${CSS.escape(id)}"]`);
+    if (mark) {
+        mark.scrollIntoView({ block: 'center', behavior: 'smooth' });
+        mark.classList.add('gn-highlight--flash');
+        setTimeout(() => mark.classList.remove('gn-highlight--flash'), 1600);
+        return;
+    }
+    if (attemptsLeft <= 0) return;
+    setTimeout(() => gnFlashHighlightWhenReady(id, attemptsLeft - 1), 100);
+}
+
+// ------------------------------------------------------------
 // Export to PDF (browser print dialog)
 // ------------------------------------------------------------
 
@@ -2807,6 +3168,20 @@ function gnBindModalEvents() {
         if (r.ttsContextMenu && !r.ttsContextMenu.hidden && !r.ttsContextMenu.contains(e.target)) {
             gnHideTtsContextMenu();
         }
+    });
+
+    // Text highlighter
+    r.hlToggle?.addEventListener('click', gnToggleHighlightsPanel);
+    r.hlClose?.addEventListener('click', gnToggleHighlightsPanel);
+    r.hlSearchInput?.addEventListener('input', gnRenderHighlightsPanel);
+    r.hlColorButtons?.forEach((btn) => btn.addEventListener('click', () => gnHandleHlColorClick(btn.dataset.color)));
+    r.hlRemoveBtn?.addEventListener('click', () => {
+        if (gn._hlPending?.mode === 'manage') gnRemoveHighlightById(gn._hlPending.id);
+    });
+    r.pagesWrap?.addEventListener('mouseup', () => setTimeout(gnHandleTextSelectionChange, 0));
+    r.pagesWrap?.addEventListener('click', gnHandleHighlightMarkClick);
+    document.addEventListener('mousedown', (e) => {
+        if (r.hlPopup && !r.hlPopup.hidden && !r.hlPopup.contains(e.target)) gnHideHighlightPopup();
     });
 }
 

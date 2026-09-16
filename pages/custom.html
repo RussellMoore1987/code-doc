@@ -156,6 +156,11 @@
     <h4>localStorage / Reading Progress</h4>
     <p>Each book saves its progress under the key <code>gn-progress-{data-book-id}</code>. The stored JSON is <code>{ lastPage, bookmarks, viewMode, zoom }</code>, where <code>bookmarks</code> is an array of 0-indexed bookmarked page numbers. Each book's progress is completely independent. Clearing localStorage resets all reading progress.</p>
 
+    <!-- Text Highlighter section -->
+    <h4>Text Highlighter (Novel Books Only)</h4>
+    <p>For <code>data-book-type="novel"</code> books, selecting text in the reader pops up a small color picker (5 colors) for creating a highlight. Clicking an existing highlight re-opens that popup with a remove option instead. Use the toolbar's highlighter button (or press <kbd>H</kbd>) to open the right-side Highlights panel, which lists every highlight in the current book, lets you search them by text, click one to jump straight to its page, or delete it.</p>
+    <p>Highlights are stored independently from reading progress, under the key <code>gn-highlights-{data-book-id}</code>, as an array of <code>{ id, page, start, end, text, color, ts }</code> objects (<code>start</code>/<code>end</code> are character offsets into that page's text). They persist even if progress is reset via "Read Again".</p>
+
     <p><strong>Note:</strong> The <code>.graphic-novel-book</code> divs are hidden in the normal page layout via CSS. They exist solely to configure the viewer. The Graphic Novel modal is built and managed by <code>custom.js</code>.</p>
 
     <!-- ── BOOK CONFIGURATION HTML ─────────────────────────────── -->
