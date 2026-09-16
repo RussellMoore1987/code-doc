@@ -1167,12 +1167,16 @@ ul.gn-page-cards {
     top: calc(100% + 6px);
     right: 0;
     min-width: 160px;
-    background: #161b22;
-    border: 1px solid #30363d;
+    background: var(--bg-content);
+    border: 1px solid var(--border);
     border-radius: 6px;
     box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
     z-index: 200;
     padding: 4px 0;
+}
+
+[data-theme="light"] .gn-bookmark-dropdown {
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.16);
 }
 
 .gn-bm-item {
@@ -1186,20 +1190,20 @@ ul.gn-page-cards {
     flex: 1;
     background: none;
     border: none;
-    color: #c9d1d9;
+    color: var(--text-base);
     font-size: 13px;
     padding: 6px 12px;
     cursor: pointer;
     text-align: left;
     white-space: nowrap;
 }
-.gn-bm-link:hover { background: #21262d; color: #fff; }
+.gn-bm-link:hover { background: var(--bg-hover); color: var(--text-base); }
 
 .gn-bm-delete {
     flex-shrink: 0;
     background: none;
     border: none;
-    color: #8b949e;
+    color: var(--text-muted);
     cursor: pointer;
     padding: 5px 7px;
     border-radius: 4px;
@@ -1215,7 +1219,7 @@ ul.gn-page-cards {
     min-width: 14px;
     height: 14px;
     padding: 0 3px;
-    background: #309eff;
+    background: var(--primary-color);
     color: #fff;
     font-size: 9px;
     font-weight: 700;

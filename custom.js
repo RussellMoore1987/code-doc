@@ -193,7 +193,7 @@ function gnBuildModal() {
             <!-- Navigation group -->
             <div class="gn-toolbar-group">
               <button class="gn-icon-btn" id="gn-first-page"
-                      aria-label="First page" data-tooltip="First Page" title="First page">
+                      aria-label="First page" data-tooltip="First Page">
                 <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" fill="none"
                      stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                   <line x1="19" y1="20" x2="9" y2="12"/><line x1="9" y1="12" x2="19" y2="4"/>
@@ -201,7 +201,7 @@ function gnBuildModal() {
                 </svg>
               </button>
               <button class="gn-icon-btn" id="gn-prev-page"
-                      aria-label="Previous page" data-tooltip="Previous Page (←)" title="Previous page">
+                      aria-label="Previous page" data-tooltip="Previous Page (←)">
                 <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" fill="none"
                      stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                   <polyline points="15 18 9 12 15 6"/>
@@ -210,20 +210,20 @@ function gnBuildModal() {
 
               <div class="gn-page-counter" aria-live="polite" aria-atomic="true">
                 <input type="text" class="gn-page-input" id="gn-page-input"
-                       min="1" aria-label="Go to page" title="Go to page"/>
+                       min="1" aria-label="Go to page"/>
                 <span>&nbsp;/&nbsp;</span>
                 <span id="gn-total-pages">0</span>
               </div>
 
               <button class="gn-icon-btn" id="gn-next-page"
-                      aria-label="Next page" data-tooltip="Next Page (→)" title="Next page">
+                      aria-label="Next page" data-tooltip="Next Page (→)">
                 <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" fill="none"
                      stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                   <polyline points="9 18 15 12 9 6"/>
                 </svg>
               </button>
               <button class="gn-icon-btn" id="gn-last-page"
-                      aria-label="Last page" data-tooltip="Last Page" title="Last page">
+                      aria-label="Last page" data-tooltip="Last Page">
                 <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" fill="none"
                      stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                   <line x1="5" y1="20" x2="15" y2="12"/><line x1="15" y1="12" x2="5" y2="4"/>
@@ -238,7 +238,7 @@ function gnBuildModal() {
             <div class="gn-toolbar-group">
               <button class="gn-icon-btn" id="gn-view-single"
                       aria-label="Single page" aria-pressed="true"
-                      data-tooltip="Single Page View" title="Single page"
+                      data-tooltip="Single Page View"
                       data-view="single">
                 <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" fill="none"
                      stroke="currentColor" stroke-width="2">
@@ -247,7 +247,7 @@ function gnBuildModal() {
               </button>
               <button class="gn-icon-btn" id="gn-view-double"
                       aria-label="Two-page spread" aria-pressed="false"
-                      data-tooltip="Two-Page Spread" title="Two-page spread"
+                      data-tooltip="Two-Page Spread"
                       data-view="double">
                 <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" fill="none"
                      stroke="currentColor" stroke-width="2">
@@ -257,7 +257,7 @@ function gnBuildModal() {
               </button>
               <button class="gn-icon-btn gn-view-btn-triple" id="gn-view-triple"
                       aria-label="Three-page view" aria-pressed="false"
-                      data-tooltip="Three-Page View" title="Three-page view"
+                      data-tooltip="Three-Page View"
                       data-view="triple">
                 <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" fill="none"
                      stroke="currentColor" stroke-width="2">
@@ -268,7 +268,7 @@ function gnBuildModal() {
               </button>
               <button class="gn-icon-btn" id="gn-view-scroll"
                       aria-label="Scroll / Detail view" aria-pressed="false"
-                      data-tooltip="Scroll / Detail View" title="Scroll view"
+                      data-tooltip="Scroll / Detail View"
                       data-view="scroll">
                 <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" fill="none"
                      stroke="currentColor" stroke-width="2" stroke-linecap="round">
@@ -285,7 +285,7 @@ function gnBuildModal() {
             <!-- Zoom group -->
             <div class="gn-toolbar-group">
               <button class="gn-icon-btn" id="gn-zoom-out"
-                      aria-label="Zoom out" data-tooltip="Zoom Out (−)" title="Zoom out">
+                      aria-label="Zoom out" data-tooltip="Zoom Out (−)">
                 <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" fill="none"
                      stroke="currentColor" stroke-width="2" stroke-linecap="round">
                   <circle cx="11" cy="11" r="7"/>
@@ -295,12 +295,12 @@ function gnBuildModal() {
               </button>
               <div class="gn-page-counter">
                 <input type="text" class="gn-page-input" id="gn-zoom-display"
-                       aria-label="Zoom percentage" title="Zoom percentage"
+                       aria-label="Zoom percentage"
                        value="100" maxlength="3"/>
                 <span>%</span>
               </div>
               <button class="gn-icon-btn" id="gn-zoom-in"
-                      aria-label="Zoom in" data-tooltip="Zoom In (+)" title="Zoom in">
+                      aria-label="Zoom in" data-tooltip="Zoom In (+)">
                 <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" fill="none"
                      stroke="currentColor" stroke-width="2" stroke-linecap="round">
                   <circle cx="11" cy="11" r="7"/>
@@ -310,7 +310,7 @@ function gnBuildModal() {
                 </svg>
               </button>
               <button class="gn-icon-btn" id="gn-zoom-reset"
-                      aria-label="Reset zoom" data-tooltip="Reset Zoom (0)" title="Reset zoom">
+                      aria-label="Reset zoom" data-tooltip="Reset Zoom (0)">
                 <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" fill="none"
                      stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                   <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
@@ -325,7 +325,7 @@ function gnBuildModal() {
             <div class="gn-toolbar-group" id="gn-tts-group">
               <button class="gn-icon-btn" id="gn-tts-section-toggle"
                       aria-label="Show or hide read-aloud controls" aria-pressed="false"
-                      data-tooltip="Show/Hide Read Aloud Controls" title="Read aloud controls">
+                      data-tooltip="Show/Hide Read Aloud Controls">
                 <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" fill="none"
                      stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                   <path d="M3 18v-6a9 9 0 0 1 18 0v6"/>
@@ -334,7 +334,7 @@ function gnBuildModal() {
               </button>
               <div class="gn-toolbar-group gn-tts-controls" id="gn-tts-controls" hidden>
               <button class="gn-icon-btn" id="gn-tts-prev"
-                      aria-label="Read previous page" data-tooltip="Read Previous Page" title="Read previous page">
+                      aria-label="Read previous page" data-tooltip="Read Previous Page">
                 <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" fill="none"
                      stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                   <polygon points="19 20 9 12 19 4 19 20"/>
@@ -342,7 +342,7 @@ function gnBuildModal() {
                 </svg>
               </button>
               <button class="gn-icon-btn" id="gn-tts-skip-back"
-                      aria-label="Skip back 10 words" data-tooltip="Skip Back 10 Words" title="Skip back 10 words">
+                      aria-label="Skip back 10 words" data-tooltip="Skip Back 10 Words">
                 <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" fill="none"
                      stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                   <polygon points="11 19 2 12 11 5 11 19"/>
@@ -351,14 +351,14 @@ function gnBuildModal() {
               </button>
               <button class="gn-icon-btn" id="gn-tts-toggle"
                       aria-label="Read page aloud" aria-pressed="false"
-                      data-tooltip="Read Aloud (R)" title="Read aloud">
+                      data-tooltip="Read Aloud (R)">
                 <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" fill="none"
                      stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                   <polygon points="6 4 18 12 6 20 6 4"/>
                 </svg>
               </button>
               <button class="gn-icon-btn" id="gn-tts-skip-forward"
-                      aria-label="Skip ahead 10 words" data-tooltip="Skip Ahead 10 Words" title="Skip ahead 10 words">
+                      aria-label="Skip ahead 10 words" data-tooltip="Skip Ahead 10 Words">
                 <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" fill="none"
                      stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                   <polygon points="13 19 22 12 13 5 13 19"/>
@@ -366,7 +366,7 @@ function gnBuildModal() {
                 </svg>
               </button>
               <button class="gn-icon-btn" id="gn-tts-next"
-                      aria-label="Read next page" data-tooltip="Read Next Page" title="Read next page">
+                      aria-label="Read next page" data-tooltip="Read Next Page">
                 <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" fill="none"
                      stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                   <polygon points="5 4 15 12 5 20 5 4"/>
@@ -375,7 +375,7 @@ function gnBuildModal() {
               </button>
               <button class="gn-icon-btn" id="gn-tts-autoplay"
                       aria-label="Auto-advance pages while reading" aria-pressed="true"
-                      data-tooltip="Auto-Advance Pages" title="Auto-advance pages">
+                      data-tooltip="Auto-Advance Pages">
                 <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" fill="none"
                      stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                   <polyline points="17 1 21 5 17 9"/>
@@ -386,7 +386,7 @@ function gnBuildModal() {
               </button>
               <button class="gn-icon-btn" id="gn-tts-click-read"
                       aria-label="Toggle read-from-here mode" aria-pressed="false"
-                      data-tooltip="Read From Here (Right-Click Text)" title="Read from here">
+                      data-tooltip="Read From Here (Right-Click Text)">
                 <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" fill="none"
                      stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                   <path d="M9 12V5.5a1.5 1.5 0 0 1 3 0V11"/>
@@ -396,11 +396,11 @@ function gnBuildModal() {
                 </svg>
               </button>
               <select class="gn-tts-voice-select" id="gn-tts-voice-select"
-                      aria-label="Read-aloud voice" title="Read-aloud voice">
+                      aria-label="Read-aloud voice">
                 <option value="">Default Voice</option>
               </select>
               <select class="gn-tts-voice-select" id="gn-tts-rate-select"
-                      aria-label="Read-aloud speed" title="Read-aloud speed">
+                      aria-label="Read-aloud speed">
                 <option value="0.5">0.5x</option>
                 <option value="0.75">0.75x</option>
                 <option value="1" selected>1x</option>
@@ -418,7 +418,7 @@ function gnBuildModal() {
             <!-- Actions group -->
             <div class="gn-toolbar-group">
               <button class="gn-icon-btn" id="gn-magnify"
-                      aria-label="Magnify page" data-tooltip="Magnify / Detail View (M)" title="Magnify">
+                      aria-label="Magnify page" data-tooltip="Magnify / Detail View (M)">
                 <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" fill="none"
                      stroke="currentColor" stroke-width="2" stroke-linecap="round">
                   <circle cx="11" cy="11" r="7"/>
@@ -430,7 +430,7 @@ function gnBuildModal() {
               <div class="gn-bookmark-wrap" id="gn-bookmark-wrap">
                 <button class="gn-icon-btn" id="gn-bookmark"
                         aria-label="Bookmark this page" aria-pressed="false"
-                        data-tooltip="Bookmark (B)" title="Bookmark">
+                        data-tooltip="Bookmark (B)">
                   <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" fill="none"
                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
@@ -441,7 +441,7 @@ function gnBuildModal() {
               </div>
               <button class="gn-icon-btn" id="gn-toc-toggle"
                       aria-label="Table of contents" aria-pressed="false"
-                      data-tooltip="Table of Contents (T)" title="Table of contents">
+                      data-tooltip="Table of Contents (T)">
                 <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" fill="none"
                      stroke="currentColor" stroke-width="2" stroke-linecap="round">
                   <line x1="3" y1="6" x2="21" y2="6"/>
@@ -451,7 +451,7 @@ function gnBuildModal() {
               </button>
               <button class="gn-icon-btn" id="gn-fullscreen"
                       aria-label="Toggle fullscreen" aria-pressed="false"
-                      data-tooltip="Fullscreen (S)" title="Fullscreen">
+                      data-tooltip="Fullscreen (S)">
                 <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" fill="none"
                      stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                   <polyline points="15 3 21 3 21 9"/>
@@ -461,7 +461,7 @@ function gnBuildModal() {
                 </svg>
               </button>
               <button class="gn-icon-btn" id="gn-export-pdf"
-                      aria-label="Export to PDF" data-tooltip="Export to PDF (Print)" title="Export to PDF">
+                      aria-label="Export to PDF" data-tooltip="Export to PDF (Print)">
                 <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" fill="none"
                      stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                   <polyline points="6 9 6 2 18 2 18 9"/>
@@ -471,7 +471,7 @@ function gnBuildModal() {
               </button>
               <button class="gn-icon-btn" id="gn-shortcuts"
                       aria-label="Keyboard shortcuts" aria-pressed="false"
-                      data-tooltip="Keyboard Shortcuts (?)" title="Keyboard shortcuts">
+                      data-tooltip="Keyboard Shortcuts (?)">
                 <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" fill="none"
                      stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                   <rect x="2" y="5" width="20" height="14" rx="2"/>
@@ -494,7 +494,7 @@ function gnBuildModal() {
           <div class="gn-reader-body" id="gn-reader-body">
 
             <button class="gn-nav-arrow gn-nav-arrow--prev" id="gn-stage-prev"
-                    aria-label="Previous page" data-tooltip="Previous Page (←)" title="Previous page">
+                    aria-label="Previous page" data-tooltip="Previous Page (←)">
               <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" fill="none"
                    stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                 <polyline points="15 18 9 12 15 6"/>
@@ -506,7 +506,7 @@ function gnBuildModal() {
             </div>
 
             <button class="gn-nav-arrow gn-nav-arrow--next" id="gn-stage-next"
-                    aria-label="Next page" data-tooltip="Next Page (→)" title="Next page">
+                    aria-label="Next page" data-tooltip="Next Page (→)">
               <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" fill="none"
                    stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                 <polyline points="9 18 15 12 9 6"/>
