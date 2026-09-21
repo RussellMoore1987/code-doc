@@ -1212,7 +1212,9 @@ ul.gn-page-cards {
 }
 .gn-bm-delete:hover { color: #f85149; background: rgba(248, 81, 73, 0.12); }
 
-.gn-bm-badge {
+#gn-highlights-toggle { position: relative; }
+
+.gn-icon-badge {
     position: absolute;
     top: -1px;
     right: -3px;
@@ -1227,6 +1229,7 @@ ul.gn-page-cards {
     border-radius: 7px;
     text-align: center;
     pointer-events: none;
+    z-index: 100;
 }
 
 #gn-magnifier-glass {
@@ -1498,6 +1501,15 @@ mark.gn-highlight--flash {
     color: var(--text-base);
     text-transform: uppercase;
     letter-spacing: 0.06em;
+}
+
+.gn-hl-panel-count {
+    margin-left: 5px;
+    font-size: 11px;
+    font-weight: 400;
+    text-transform: none;
+    letter-spacing: normal;
+    color: var(--text-muted);
 }
 
 .gn-hl-panel .gn-icon-btn {

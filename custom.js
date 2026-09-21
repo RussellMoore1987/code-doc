@@ -441,7 +441,7 @@ function gnBuildModal() {
                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
                   </svg>
-                  <span class="gn-bm-badge" id="gn-bm-badge" hidden></span>
+                  <span class="gn-icon-badge" id="gn-bm-badge" hidden></span>
                 </button>
                 <div class="gn-bookmark-dropdown" id="gn-bookmark-dropdown" hidden></div>
               </div>
@@ -454,6 +454,7 @@ function gnBuildModal() {
                   <path d="M14 6.5 17.5 10"/>
                   <path d="M3 21h5"/>
                 </svg>
+                <span class="gn-icon-badge" id="gn-hl-badge" hidden></span>
               </button>
               <button class="gn-icon-btn" id="gn-toc-toggle"
                       aria-label="Table of contents" aria-pressed="false"
@@ -549,7 +550,7 @@ function gnBuildModal() {
             <div class="gn-hl-panel" id="gn-highlights-panel" hidden
                  role="complementary" aria-label="Highlights">
               <div class="gn-hl-panel-header">
-                <span class="gn-hl-panel-title">Highlights</span>
+                <span class="gn-hl-panel-title">Highlights<span class="gn-hl-panel-count" id="gn-hl-panel-count"></span></span>
                 <button class="gn-icon-btn" id="gn-highlights-close"
                         aria-label="Close highlights panel">
                   <svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true">
@@ -694,7 +695,9 @@ function gnCacheRefs() {
         tocToggle:     q('gn-toc-toggle'),
         // Highlighter
         hlToggle:      q('gn-highlights-toggle'),
+        hlBadge:       q('gn-hl-badge'),
         hlPanel:       q('gn-highlights-panel'),
+        hlPanelCount:  q('gn-hl-panel-count'),
         hlClose:       q('gn-highlights-close'),
         hlSearchInput: q('gn-highlights-search'),
         hlList:        q('gn-highlights-list'),
@@ -2748,6 +2751,18 @@ function gnUpdateHighlightAvailability() {
     if (gn.refs.hlToggle) gn.refs.hlToggle.hidden = !show;
     if (!show && gn.hlPanelOpen) gnToggleHighlightsPanel();
     if (!show) gnHideHighlightPopup();
+    gnUpdateHighlightsCount();
+}
+
+/** Updates the highlight count badge on the toolbar button and next to the panel title. */
+function gnUpdateHighlightsCount() {
+    const r = gn.refs;
+    const count = gn.currentBook?.type === 'novel' ? gnLoadHighlights(gn.currentBook.id).length : 0;
+    if (r.hlBadge) {
+        r.hlBadge.textContent = count;
+        r.hlBadge.hidden = count === 0;
+    }
+    if (r.hlPanelCount) r.hlPanelCount.textContent = count ? `(${count})` : '';
 }
 
 /** Resolves the character offsets of a Range relative to container's full textContent,
@@ -2895,6 +2910,7 @@ function gnCreateHighlightFromSelection(color) {
     gnApplyHighlightRange(container, start, end, color, id);
     window.getSelection()?.removeAllRanges();
     gnRenderHighlightsPanel();
+    gnUpdateHighlightsCount();
 }
 
 function gnChangeHighlightColor(id, color) {
@@ -2917,6 +2933,7 @@ function gnRemoveHighlightById(id) {
     gnUnwrapHighlightMarks(id);
     gnHideHighlightPopup();
     gnRenderHighlightsPanel();
+    gnUpdateHighlightsCount();
 }
 
 /** Opens/closes the right-side highlights panel. Only one right-side panel (TOC or
