@@ -1808,6 +1808,61 @@ p {
   }
 }
 
+/* Vertical modifier - reuses every .tab-panel-* class, just re-flows the nav to a side column */
+.tab-panel--vertical {
+  display: flex;
+  align-items: stretch;
+}
+
+.tab-panel--vertical .tab-panel-nav {
+  flex: 0 0 190px;
+  flex-direction: column;
+  gap: 2px;
+  padding: 8px;
+  border-bottom: 0;
+  border-right: 1px solid var(--border);
+}
+
+.tab-panel--vertical .tab-panel-tab {
+  border-radius: 6px;
+  text-align: left;
+}
+
+.tab-panel--vertical .tab-panel-tab.is-active::after {
+  left: auto;
+  right: -8px;
+  bottom: 0;
+  top: 0;
+  width: 2px;
+  height: auto;
+}
+
+.tab-panel--vertical .tab-panel-panels {
+  flex: 1;
+  min-width: 0;
+}
+
+@container content-body (max-width: 600px) {
+  .tab-panel--vertical {
+    flex-direction: column;
+  }
+  .tab-panel--vertical .tab-panel-nav {
+    flex: 0 0 auto;
+    flex-direction: row;
+    flex-wrap: wrap;
+    border-right: 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .tab-panel--vertical .tab-panel-tab.is-active::after {
+    left: 0;
+    right: 0;
+    top: auto;
+    bottom: -8px;
+    width: auto;
+    height: 2px;
+  }
+}
+
 .content-body strong { font-weight: 700; }
 .content-body em     { font-style: italic; }
 

@@ -161,4 +161,57 @@
             keyboard focus lands only on the active tab.
         </p>
     </div>
+
+    <h3 id="tab-panel-vertical">Vertical Tab Panel</h3>
+    <p>Add the <code>tab-panel--vertical</code> modifier class to stack tabs in a side column instead of a row. It's the exact same <code>.tab-panel-nav</code> / <code>.tab-panel-tab</code> / <code>.tab-panel-panels</code> / <code>.tab-panel-content</code> markup and <code>setupTabPanels()</code> wiring - only CSS changes the layout, and the keyboard handler swaps to <code>ArrowUp</code>/<code>ArrowDown</code> automatically.</p>
+
+    <div class="tab-panel tab-panel--vertical" data-tab-panel>
+        <div class="tab-panel-nav" role="tablist" aria-label="Example vertical tabs">
+            <button type="button" class="tab-panel-tab is-active" role="tab" id="tab-vert-html-btn" aria-controls="tab-vert-html-panel" aria-selected="true" data-tab-target="tab-vert-html-panel">HTML</button>
+            <button type="button" class="tab-panel-tab" role="tab" id="tab-vert-css-btn" aria-controls="tab-vert-css-panel" aria-selected="false" tabindex="-1" data-tab-target="tab-vert-css-panel">CSS</button>
+            <button type="button" class="tab-panel-tab" role="tab" id="tab-vert-js-btn" aria-controls="tab-vert-js-panel" aria-selected="false" tabindex="-1" data-tab-target="tab-vert-js-panel">JavaScript</button>
+        </div>
+        <div class="tab-panel-panels">
+            <div class="tab-panel-content is-active" role="tabpanel" id="tab-vert-html-panel" aria-labelledby="tab-vert-html-btn">
+                <p>Same markup as the horizontal example - just add <code>tab-panel--vertical</code> next to <code>tab-panel</code> on the outer <code>&lt;div&gt;</code>.</p>
+            </div>
+            <div class="tab-panel-content" role="tabpanel" id="tab-vert-css-panel" aria-labelledby="tab-vert-css-btn" hidden>
+                <p>The modifier re-flows <code>.tab-panel-nav</code> into a column and moves the active-tab indicator to the side border.</p>
+            </div>
+            <div class="tab-panel-content" role="tabpanel" id="tab-vert-js-panel" aria-labelledby="tab-vert-js-btn" hidden>
+                <p><code>setupTabPanels()</code> detects <code>tab-panel--vertical</code> and binds <code>ArrowUp</code>/<code>ArrowDown</code> instead of <code>ArrowLeft</code>/<code>ArrowRight</code> for tab navigation.</p>
+            </div>
+        </div>
+    </div>
+
+    <pre><code>&lt;div class="tab-panel tab-panel--vertical" data-tab-panel&gt;
+  &lt;div class="tab-panel-nav" role="tablist" aria-label="Example vertical tabs"&gt;
+    &lt;button type="button" class="tab-panel-tab is-active" role="tab"
+      id="tab-vert-html-btn" aria-controls="tab-vert-html-panel" aria-selected="true"
+      data-tab-target="tab-vert-html-panel"&gt;HTML&lt;/button&gt;
+    &lt;button type="button" class="tab-panel-tab" role="tab"
+      id="tab-vert-css-btn" aria-controls="tab-vert-css-panel" aria-selected="false"
+      tabindex="-1" data-tab-target="tab-vert-css-panel"&gt;CSS&lt;/button&gt;
+  &lt;/div&gt;
+  &lt;div class="tab-panel-panels"&gt;
+    &lt;div class="tab-panel-content is-active" role="tabpanel"
+      id="tab-vert-html-panel" aria-labelledby="tab-vert-html-btn"&gt;
+      &lt;p&gt;First tab's content.&lt;/p&gt;
+    &lt;/div&gt;
+    &lt;div class="tab-panel-content" role="tabpanel" id="tab-vert-css-panel"
+      aria-labelledby="tab-vert-css-btn" hidden&gt;
+      &lt;p&gt;Second tab's content.&lt;/p&gt;
+    &lt;/div&gt;
+  &lt;/div&gt;
+&lt;/div&gt;</code></pre>
+
+    <div class="callout">
+        <div class="callout-title">ℹ Note</div>
+        <p>
+            The vertical variant falls back to a horizontal tab row once the <code>.content-body</code>
+            container itself narrows below 600px - the same container-query breakpoint used by the image
+            galleries above - so it reacts to the content area's actual width (sidebar state included),
+            not just the browser window.
+        </p>
+    </div>
 </div>

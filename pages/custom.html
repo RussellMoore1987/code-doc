@@ -56,135 +56,162 @@
     <!-- graphic novel books configuration section -->
     <h3 id="gn-books-config"><span>Graphic Novel Books Configuration</span></h3>
 
-    <!-- how to add a new graphic novel section -->
-    <h4>How to Add a New Graphic Novel</h4>
-    <ol>
-        <li>Copy one of the <code>.graphic-novel-book</code> blocks in the HTML.</li>
-        <li>Give it a new unique <code>data-book-id</code> value.
-            <ul>
-                <li>Use lowercase letters and hyphens only.</li>
-                <li>Example: <code>"my-new-book"</code></li>
-                <li>This ID is stored in <code>localStorage</code>, so keep it stable.</li>
-            </ul>
-        </li>
-        <li>Update <code>.book-title</code> text.</li>
-        <li>Update <code>.book-description</code> text.</li>
-        <li>Replace the <code>&lt;img&gt;</code> inside <code>.book-cover</code> with your cover image.</li>
-        <li>Replace or add <code>&lt;img&gt;</code> elements inside <code>.book-pages</code>.
-            <ul>
-                <li>Pages display in DOM order (first img = Page 1).</li>
-                <li>Write meaningful <code>alt</code> text for each page.</li>
-            </ul>
-        </li>
-        <li>Update or remove <code>.book-toc</code>.
-            <ul>
-                <li>Each <code>.book-chapter</code> marks a chapter.</li>
-                <li><code>data-page</code> is the 1-based page number where the chapter starts.</li>
-                <li>The element's text is the chapter name shown in the TOC.</li>
-            </ul>
-        </li>
-        <li>Optionally fill in <code>.book-author</code>, <code>.book-year</code>, <code>.book-genre</code>.</li>
-        <li>Save the file. The book appears automatically in the Library. No changes to <code>custom.js</code> or <code>custom.css</code> are needed.</li>
-    </ol>
+    <div class="tab-panel tab-panel--vertical" data-tab-panel>
+        <div class="tab-panel-nav" role="tablist" aria-label="Graphic novel configuration reference">
+            <button type="button" class="tab-panel-tab is-active" role="tab"
+            id="tab-html-btn" aria-controls="how-to-add-panel" aria-selected="true"
+            data-tab-target="how-to-add-panel">How to Add</button>
+            <button type="button" class="tab-panel-tab" role="tab"
+            id="tab-css-btn" aria-controls="element-reference-panel" aria-selected="false"
+            tabindex="-1" data-tab-target="element-reference-panel">Element Reference</button>
+            <button type="button" class="tab-panel-tab" role="tab"
+            id="tab-toolbar-btn" aria-controls="toolbar-shortcuts-panel" aria-selected="false"
+            tabindex="-1" data-tab-target="toolbar-shortcuts-panel">Toolbar &amp; Shortcuts</button>
+            <button type="button" class="tab-panel-tab" role="tab"
+            id="tab-layout-btn" aria-controls="novel-layout-panel" aria-selected="false"
+            tabindex="-1" data-tab-target="novel-layout-panel">Novel Image Layout</button>
+            <button type="button" class="tab-panel-tab" role="tab"
+            id="tab-storage-btn" aria-controls="progress-storage-panel" aria-selected="false"
+            tabindex="-1" data-tab-target="progress-storage-panel">Deep Linking &amp; Storage</button>
+            <button type="button" class="tab-panel-tab" role="tab"
+            id="tab-features-btn" aria-controls="novel-features-panel" aria-selected="false"
+            tabindex="-1" data-tab-target="novel-features-panel">Read-Aloud &amp; Highlights</button>
+        </div>
+        <div class="tab-panel-panels">
+            <div class="tab-panel-content is-active" role="tabpanel"
+            id="how-to-add-panel" aria-labelledby="tab-html-btn">
+                <!-- How to Add a New Graphic Novel -->
+                <h4>How to Add a New Graphic Novel</h4>
+                <ol>
+                    <li>Copy one of the <code>.graphic-novel-book</code> blocks in the HTML.</li>
+                    <li>Give it a new unique <code>data-book-id</code> value.
+                        <ul>
+                            <li>Use lowercase letters and hyphens only.</li>
+                            <li>Example: <code>"my-new-book"</code></li>
+                            <li>This ID is stored in <code>localStorage</code>, so keep it stable.</li>
+                        </ul>
+                    </li>
+                    <li>Update <code>.book-title</code> text.</li>
+                    <li>Update <code>.book-description</code> text.</li>
+                    <li>Replace the <code>&lt;img&gt;</code> inside <code>.book-cover</code> with your cover image.</li>
+                    <li>Replace or add <code>&lt;img&gt;</code> elements inside <code>.book-pages</code>.
+                        <ul>
+                            <li>Pages display in DOM order (first img = Page 1).</li>
+                            <li>Write meaningful <code>alt</code> text for each page.</li>
+                        </ul>
+                    </li>
+                    <li>Update or remove <code>.book-toc</code>.
+                        <ul>
+                            <li>Each <code>.book-chapter</code> marks a chapter.</li>
+                            <li><code>data-page</code> is the 1-based page number where the chapter starts.</li>
+                            <li>The element's text is the chapter name shown in the TOC.</li>
+                        </ul>
+                    </li>
+                    <li>Optionally fill in <code>.book-author</code>, <code>.book-year</code>, <code>.book-genre</code>.</li>
+                    <li>Save the file. The book appears automatically in the Library. No changes to <code>custom.js</code> or <code>custom.css</code> are needed.</li>
+                </ol>
+            </div>
+            <div class="tab-panel-content" role="tabpanel" id="element-reference-panel"
+            aria-labelledby="tab-css-btn" hidden>
+                <!-- Element Reference -->
+                <h4>Element Reference</h4>
+                <table class="table-striped">
+                    <thead>
+                        <tr>
+                            <th>Element / Attribute</th>
+                            <th>Required?</th>
+                            <th>Description</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr><td><code>.graphic-novel-book</code></td><td>Required</td><td>Identifies this div as a book.</td></tr>
+                        <tr><td><code>data-book-id="unique-id"</code></td><td>Required</td><td>Unique ID (used for localStorage).</td></tr>
+                        <tr><td><code>.book-title</code></td><td>Required</td><td>Book title text.</td></tr>
+                        <tr><td><code>.book-description</code></td><td>Required</td><td>Short description text.</td></tr>
+                        <tr><td><code>.book-cover img</code></td><td>Required</td><td>Cover <code>&lt;img src="..." alt="..."&gt;</code>.</td></tr>
+                        <tr><td><code>.book-pages</code></td><td>Required</td><td>Container for page images.</td></tr>
+                        <tr><td><code>.book-pages img</code></td><td>Required</td><td>Page images; top-to-bottom = page order. At least one required.</td></tr>
+                        <tr><td><code>.book-author</code></td><td>Optional</td><td>Author name.</td></tr>
+                        <tr><td><code>.book-year</code></td><td>Optional</td><td>Publication year.</td></tr>
+                        <tr><td><code>.book-genre</code></td><td>Optional</td><td>Genre label (shown as a badge).</td></tr>
+                        <tr><td><code>.book-toc</code></td><td>Optional</td><td>Table of Contents container.</td></tr>
+                        <tr><td><code>.book-chapter[data-page="N"]</code></td><td>Optional</td><td>Chapter entry; text = name, <code>data-page</code> = start page.</td></tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="tab-panel-content" role="tabpanel" id="toolbar-shortcuts-panel"
+            aria-labelledby="tab-toolbar-btn" hidden>
+                <!-- Reader Toolbar & Controls -->
+                <h4>Reader Toolbar &amp; Controls</h4>
+                <p>These controls appear in the reader toolbar for every book. Rows marked "Novel only" only appear for <code>data-book-type="novel"</code> books.</p>
+                <table class="table-striped">
+                    <thead>
+                        <tr>
+                            <th>Control</th>
+                            <th>Availability</th>
+                            <th>Description</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>First / Previous / Next / Last page, page number field</td><td>All books</td><td>Jump to any page directly, or step through the book. Typing a page number and pressing Enter/blur jumps there.</td></tr>
+                        <tr><td>Single / Two-page / Three-page / Scroll view</td><td>All books (three-page hidden for novels)</td><td>Switches how pages are laid out. Scroll mode stacks every page vertically and supports continuous reading/scrolling.</td></tr>
+                        <tr><td>Zoom in / out / reset, zoom % field</td><td>All books</td><td>For image books, zoom only applies in Scroll view (resizes page width). For novels, zoom scales the reading font size instead, in any view.</td></tr>
+                        <tr><td>Magnifier (loupe)</td><td>All books</td><td>Follows the cursor with a zoomed-in preview &mdash; a panning close-up of the image for graphic novels, or an enlarged text clone for novels.</td></tr>
+                        <tr><td>Bookmark</td><td>All books</td><td>Bookmarks the current page/spread. The dropdown next to the button lists every bookmark in the book for quick navigation or removal.</td></tr>
+                        <tr><td>Highlights</td><td>Novel only</td><td>Opens the right-side Highlights panel. See the Read-Aloud &amp; Highlights tab.</td></tr>
+                        <tr><td>Table of Contents</td><td>All books (only useful with <code>.book-chapter</code> entries)</td><td>Opens the right-side chapter list; the active chapter is highlighted based on the current page.</td></tr>
+                        <tr><td>Fullscreen</td><td>All books</td><td>Toggles the browser's fullscreen mode for the reader.</td></tr>
+                        <tr><td>Export to PDF</td><td>All books</td><td>Renders every page into a hidden print layout and opens the browser's print dialog ("Save as PDF" uses the book's title as the suggested filename).</td></tr>
+                        <tr><td>Read Aloud, Skip &plusmn;10 words, Prev/Next page, Auto-advance, Read From Here, Voice, Speed</td><td>Novel only (requires browser speech-synthesis support)</td><td>Text-to-speech playback. See the Read-Aloud &amp; Highlights tab.</td></tr>
+                        <tr><td>Keyboard Shortcuts (<kbd>?</kbd>)</td><td>All books</td><td>Opens a help dialog listing every shortcut below.</td></tr>
+                    </tbody>
+                </table>
 
-    <!--  -->
-    <h4>Element Reference</h4>
-    <table class="table-striped">
-        <thead>
-            <tr>
-                <th>Element / Attribute</th>
-                <th>Required?</th>
-                <th>Description</th>
-            </tr>
-        </thead>
-        <tbody>
-            <tr><td><code>.graphic-novel-book</code></td><td>Required</td><td>Identifies this div as a book.</td></tr>
-            <tr><td><code>data-book-id="unique-id"</code></td><td>Required</td><td>Unique ID (used for localStorage).</td></tr>
-            <tr><td><code>.book-title</code></td><td>Required</td><td>Book title text.</td></tr>
-            <tr><td><code>.book-description</code></td><td>Required</td><td>Short description text.</td></tr>
-            <tr><td><code>.book-cover img</code></td><td>Required</td><td>Cover <code>&lt;img src="..." alt="..."&gt;</code>.</td></tr>
-            <tr><td><code>.book-pages</code></td><td>Required</td><td>Container for page images.</td></tr>
-            <tr><td><code>.book-pages img</code></td><td>Required</td><td>Page images; top-to-bottom = page order. At least one required.</td></tr>
-            <tr><td><code>.book-author</code></td><td>Optional</td><td>Author name.</td></tr>
-            <tr><td><code>.book-year</code></td><td>Optional</td><td>Publication year.</td></tr>
-            <tr><td><code>.book-genre</code></td><td>Optional</td><td>Genre label (shown as a badge).</td></tr>
-            <tr><td><code>.book-toc</code></td><td>Optional</td><td>Table of Contents container.</td></tr>
-            <tr><td><code>.book-chapter[data-page="N"]</code></td><td>Optional</td><td>Chapter entry; text = name, <code>data-page</code> = start page.</td></tr>
-        </tbody>
-    </table>
-
-    <!-- reader toolbar / controls reference -->
-    <h4>Reader Toolbar &amp; Controls</h4>
-    <p>These controls appear in the reader toolbar for every book. Rows marked "Novel only" only appear for <code>data-book-type="novel"</code> books.</p>
-    <table class="table-striped">
-        <thead>
-            <tr>
-                <th>Control</th>
-                <th>Availability</th>
-                <th>Description</th>
-            </tr>
-        </thead>
-        <tbody>
-            <tr><td>First / Previous / Next / Last page, page number field</td><td>All books</td><td>Jump to any page directly, or step through the book. Typing a page number and pressing Enter/blur jumps there.</td></tr>
-            <tr><td>Single / Two-page / Three-page / Scroll view</td><td>All books (three-page hidden for novels)</td><td>Switches how pages are laid out. Scroll mode stacks every page vertically and supports continuous reading/scrolling.</td></tr>
-            <tr><td>Zoom in / out / reset, zoom % field</td><td>All books</td><td>For image books, zoom only applies in Scroll view (resizes page width). For novels, zoom scales the reading font size instead, in any view.</td></tr>
-            <tr><td>Magnifier (loupe)</td><td>All books</td><td>Follows the cursor with a zoomed-in preview &mdash; a panning close-up of the image for graphic novels, or an enlarged text clone for novels.</td></tr>
-            <tr><td>Bookmark</td><td>All books</td><td>Bookmarks the current page/spread. The dropdown next to the button lists every bookmark in the book for quick navigation or removal.</td></tr>
-            <tr><td>Highlights</td><td>Novel only</td><td>Opens the right-side Highlights panel. See the Text Highlighter section below.</td></tr>
-            <tr><td>Table of Contents</td><td>All books (only useful with <code>.book-chapter</code> entries)</td><td>Opens the right-side chapter list; the active chapter is highlighted based on the current page.</td></tr>
-            <tr><td>Fullscreen</td><td>All books</td><td>Toggles the browser's fullscreen mode for the reader.</td></tr>
-            <tr><td>Export to PDF</td><td>All books</td><td>Renders every page into a hidden print layout and opens the browser's print dialog ("Save as PDF" uses the book's title as the suggested filename).</td></tr>
-            <tr><td>Read Aloud, Skip &plusmn;10 words, Prev/Next page, Auto-advance, Read From Here, Voice, Speed</td><td>Novel only (requires browser speech-synthesis support)</td><td>Text-to-speech playback. See the Read-Aloud section below.</td></tr>
-            <tr><td>Keyboard Shortcuts (<kbd>?</kbd>)</td><td>All books</td><td>Opens a help dialog listing every shortcut below.</td></tr>
-        </tbody>
-    </table>
-
-    <!-- keyboard shortcuts reference -->
-    <h4>Keyboard Shortcuts</h4>
-    <table class="table-striped">
-        <thead>
-            <tr>
-                <th>Key</th>
-                <th>Action</th>
-            </tr>
-        </thead>
-        <tbody>
-            <tr><td><kbd>&larr;</kbd> / <kbd>&rarr;</kbd></td><td>Previous / next page</td></tr>
-            <tr><td><kbd>+</kbd> / <kbd>-</kbd></td><td>Zoom in / out</td></tr>
-            <tr><td><kbd>0</kbd></td><td>Reset zoom</td></tr>
-            <tr><td><kbd>B</kbd></td><td>Toggle bookmark on the current page</td></tr>
-            <tr><td><kbd>T</kbd></td><td>Toggle table of contents</td></tr>
-            <tr><td><kbd>H</kbd></td><td>Toggle highlights panel (novel books only)</td></tr>
-            <tr><td><kbd>M</kbd></td><td>Toggle magnifier</td></tr>
-            <tr><td><kbd>R</kbd></td><td>Read page aloud (novel books only)</td></tr>
-            <tr><td><kbd>S</kbd></td><td>Toggle fullscreen</td></tr>
-            <tr><td><kbd>?</kbd></td><td>Toggle the keyboard shortcuts help dialog</td></tr>
-            <tr><td><kbd>Esc</kbd></td><td>Close whatever's open (popup, panel, help dialog) or the whole reader</td></tr>
-        </tbody>
-    </table>
-
-    <!-- deep linking section -->
-    <h4>Deep-Linkable URLs</h4>
-    <p>Opening a book updates the URL's query string to <code>?gnbook=book-id&amp;gnpage=N</code> (1-indexed page). Sharing or reloading a URL with these params automatically opens straight to that book/page; the params are cleared when returning to the library or closing the reader.</p>
-
-    <!-- novel page image layout section -->
-    <h4>Novel Page Image Layout Classes</h4>
-    <p>For <code>data-book-type="novel"</code> books, each page fragment (referenced via <code>data-page-src</code>) renders inside <code>.gn-text-page</code>. Use these classes on the <code>&lt;img&gt;</code> tags and their wrapping <code>&lt;div&gt;</code> within that fragment to lay out images among the prose.</p>
-    <table class="table-striped">
-        <thead>
-            <tr>
-                <th>Class</th>
-                <th>Applies To</th>
-                <th>Description</th>
-            </tr>
-        </thead>
-        <tbody>
-            <tr><td><code>.gn-img-full</code></td><td><code>&lt;img&gt;</code></td><td>Single full-width image with prose spacing.</td></tr>
-            <tr><td><code>.gn-img-row</code></td><td>Wrapping <code>&lt;div&gt;</code></td><td>Flex row container that splits any number of images evenly (2, 3, or more) side by side.</td></tr>
-            <tr><td><code>.gn-flex-10</code> … <code>.gn-flex-90</code></td><td><code>&lt;img&gt;</code> inside <code>.gn-img-row</code></td><td>Flex-grow weight for uneven splits — pair e.g. <code>gn-flex-60</code> with <code>gn-flex-40</code> for a 60/40 split, or <code>gn-flex-20</code> with <code>gn-flex-80</code> for 20/80.</td></tr>
-        </tbody>
-    </table>
-    <pre><code>&lt;!-- full-width image --&gt;
+                
+                <!-- Keyboard Shortcuts -->
+                <h4>Keyboard Shortcuts</h4>
+                <table class="table-striped">
+                    <thead>
+                        <tr>
+                            <th>Key</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr><td><kbd>&larr;</kbd> / <kbd>&rarr;</kbd></td><td>Previous / next page</td></tr>
+                        <tr><td><kbd>+</kbd> / <kbd>-</kbd></td><td>Zoom in / out</td></tr>
+                        <tr><td><kbd>0</kbd></td><td>Reset zoom</td></tr>
+                        <tr><td><kbd>B</kbd></td><td>Toggle bookmark on the current page</td></tr>
+                        <tr><td><kbd>T</kbd></td><td>Toggle table of contents</td></tr>
+                        <tr><td><kbd>H</kbd></td><td>Toggle highlights panel (novel books only)</td></tr>
+                        <tr><td><kbd>M</kbd></td><td>Toggle magnifier</td></tr>
+                        <tr><td><kbd>R</kbd></td><td>Read page aloud (novel books only)</td></tr>
+                        <tr><td><kbd>S</kbd></td><td>Toggle fullscreen</td></tr>
+                        <tr><td><kbd>?</kbd></td><td>Toggle the keyboard shortcuts help dialog</td></tr>
+                        <tr><td><kbd>Esc</kbd></td><td>Close whatever's open (popup, panel, help dialog) or the whole reader</td></tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="tab-panel-content" role="tabpanel" id="novel-layout-panel"
+            aria-labelledby="tab-layout-btn" hidden>
+                <!-- Novel Page Image Layout Classes -->
+                <h4>Novel Page Image Layout Classes</h4>
+                <p>For <code>data-book-type="novel"</code> books, each page fragment (referenced via <code>data-page-src</code>) renders inside <code>.gn-text-page</code>. Use these classes on the <code>&lt;img&gt;</code> tags and their wrapping <code>&lt;div&gt;</code> within that fragment to lay out images among the prose.</p>
+                <table class="table-striped">
+                    <thead>
+                        <tr>
+                            <th>Class</th>
+                            <th>Applies To</th>
+                            <th>Description</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr><td><code>.gn-img-full</code></td><td><code>&lt;img&gt;</code></td><td>Single full-width image with prose spacing.</td></tr>
+                        <tr><td><code>.gn-img-row</code></td><td>Wrapping <code>&lt;div&gt;</code></td><td>Flex row container that splits any number of images evenly (2, 3, or more) side by side.</td></tr>
+                        <tr><td><code>.gn-flex-10</code> … <code>.gn-flex-90</code></td><td><code>&lt;img&gt;</code> inside <code>.gn-img-row</code></td><td>Flex-grow weight for uneven splits - pair e.g. <code>gn-flex-60</code> with <code>gn-flex-40</code> for a 60/40 split, or <code>gn-flex-20</code> with <code>gn-flex-80</code> for 20/80.</td></tr>
+                    </tbody>
+                </table>
+                <pre><code>&lt;!-- full-width image --&gt;
 &lt;img src="..." class="gn-img-full" alt=""&gt;
 
 &lt;!-- 2 equal-width images --&gt;
@@ -205,39 +232,49 @@
     &lt;img src="..." class="gn-flex-60" alt=""&gt;
     &lt;img src="..." class="gn-flex-40" alt=""&gt;
 &lt;/div&gt;</code></pre>
+            </div>
+            <div class="tab-panel-content" role="tabpanel" id="progress-storage-panel"
+            aria-labelledby="tab-storage-btn" hidden>
+                <!-- Progress & Storage -->
+                <h4>Deep-Linkable URLs</h4>
+                <p>Opening a book updates the URL's query string to <code>?gnbook=book-id&amp;gnpage=N</code> (1-indexed page). Sharing or reloading a URL with these params automatically opens straight to that book/page; the params are cleared when returning to the library or closing the reader.</p>
 
-    <!-- localStorage / Reading Progress section -->
-    <h4>localStorage / Reading Progress</h4>
-    <p>Each book saves its progress under the key <code>gn-progress-{data-book-id}</code>. The stored JSON is <code>{ lastPage, bookmarks, viewMode, zoom, ttsProgress, ttsPanelOpen, hlPanelOpen }</code>:</p>
-    <table class="table-striped">
-        <thead>
-            <tr>
-                <th>Field</th>
-                <th>Description</th>
-            </tr>
-        </thead>
-        <tbody>
-            <tr><td><code>lastPage</code></td><td>0-indexed page/spread the reader was last on.</td></tr>
-            <tr><td><code>bookmarks</code></td><td>Array of 0-indexed bookmarked page numbers.</td></tr>
-            <tr><td><code>viewMode</code></td><td><code>single</code> | <code>double</code> | <code>triple</code> | <code>scroll</code>.</td></tr>
-            <tr><td><code>zoom</code></td><td>Current zoom level (font-size multiplier for novels, image-width multiplier for image books in scroll mode).</td></tr>
-            <tr><td><code>ttsProgress</code></td><td>Novel only. <code>{ page, wordIndex }</code> resume point for read-aloud, or <code>null</code>.</td></tr>
-            <tr><td><code>ttsPanelOpen</code></td><td>Novel only. Whether the read-aloud controls row was expanded.</td></tr>
-            <tr><td><code>hlPanelOpen</code></td><td>Novel only. Whether the right-side Highlights panel was open.</td></tr>
-        </tbody>
-    </table>
-    <p>Each book's progress is completely independent. Clearing localStorage resets all reading progress.</p>
+                <h4>localStorage / Reading Progress</h4>
+                <p>Each book saves its progress under the key <code>gn-progress-{data-book-id}</code>. The stored JSON is <code>{ lastPage, bookmarks, viewMode, zoom, ttsProgress, ttsPanelOpen, hlPanelOpen }</code>:</p>
+                <table class="table-striped">
+                    <thead>
+                        <tr>
+                            <th>Field</th>
+                            <th>Description</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr><td><code>lastPage</code></td><td>0-indexed page/spread the reader was last on.</td></tr>
+                        <tr><td><code>bookmarks</code></td><td>Array of 0-indexed bookmarked page numbers.</td></tr>
+                        <tr><td><code>viewMode</code></td><td><code>single</code> | <code>double</code> | <code>triple</code> | <code>scroll</code>.</td></tr>
+                        <tr><td><code>zoom</code></td><td>Current zoom level (font-size multiplier for novels, image-width multiplier for image books in scroll mode).</td></tr>
+                        <tr><td><code>ttsProgress</code></td><td>Novel only. <code>{ page, wordIndex }</code> resume point for read-aloud, or <code>null</code>.</td></tr>
+                        <tr><td><code>ttsPanelOpen</code></td><td>Novel only. Whether the read-aloud controls row was expanded.</td></tr>
+                        <tr><td><code>hlPanelOpen</code></td><td>Novel only. Whether the right-side Highlights panel was open.</td></tr>
+                    </tbody>
+                </table>
+                <p>Each book's progress is completely independent. Clearing localStorage resets all reading progress.</p>
+            </div>
+            <div class="tab-panel-content" role="tabpanel" id="novel-features-panel"
+            aria-labelledby="tab-features-btn" hidden>
+                <!-- Read-Aloud / Text-to-Speech (Novel Books Only) -->
+                <h4>Read-Aloud / Text-to-Speech (Novel Books Only)</h4>
+                <p>For <code>data-book-type="novel"</code> books, the Read Aloud toolbar group (only shown when the browser supports <code>speechSynthesis</code>) reads the current page aloud, highlighting each word as it's spoken and auto-scrolling to keep it in view. Controls include: play/pause (<kbd>R</kbd>), skip back/forward 10 words, jump to the previous/next page and keep reading, an auto-advance toggle (continues into the next page automatically), a voice picker, and a playback speed picker (0.5x&ndash;2x). A &quot;Read From Here&quot; mode lets you right-click any word (or a text selection) to start reading from that exact point.</p>
+                <p>Playback position is remembered per book (resumes where you left off), and a &quot;p{page} ~{N} min read&quot; badge estimates reading time for the current page based on its word count.</p>
 
-    <!-- Read-Aloud section -->
-    <h4>Read-Aloud / Text-to-Speech (Novel Books Only)</h4>
-    <p>For <code>data-book-type="novel"</code> books, the Read Aloud toolbar group (only shown when the browser supports <code>speechSynthesis</code>) reads the current page aloud, highlighting each word as it's spoken and auto-scrolling to keep it in view. Controls include: play/pause (<kbd>R</kbd>), skip back/forward 10 words, jump to the previous/next page and keep reading, an auto-advance toggle (continues into the next page automatically), a voice picker, and a playback speed picker (0.5x&ndash;2x). A &quot;Read From Here&quot; mode lets you right-click any word (or a text selection) to start reading from that exact point.</p>
-    <p>Playback position is remembered per book (resumes where you left off), and a &quot;p{page} ~{N} min read&quot; badge estimates reading time for the current page based on its word count.</p>
-
-    <!-- Text Highlighter section -->
-    <h4>Text Highlighter (Novel Books Only)</h4>
-    <p>For <code>data-book-type="novel"</code> books, selecting text in the reader pops up a small options popup: 5 color swatches to create a highlight, a &quot;Read from highlight&quot; button that starts read-aloud from that spot, and a &quot;Copy highlight text&quot; button that copies the selected text to the clipboard. Clicking an existing highlight re-opens the same popup with a &quot;Remove highlight&quot; button in place of creating a new one &mdash; the read/copy buttons work identically whether the highlight has been saved yet or not.</p>
-    <p>Use the toolbar's highlighter button (or press <kbd>H</kbd>) to open the right-side Highlights panel, which lists every highlight in the current book with a count badge, lets you search them by text or filter by color, click one to jump straight to its page (scrolling to and briefly flashing the exact highlighted text), or delete it.</p>
-    <p>Highlights are stored independently from reading progress, under the key <code>gn-highlights-{data-book-id}</code>, as an array of <code>{ id, page, start, end, text, color, ts }</code> objects (<code>start</code>/<code>end</code> are character offsets into that page's text). They persist even if progress is reset via "Read Again".</p>
+                <!-- Text Highlighter (Novel Books Only) -->
+                <h4>Text Highlighter (Novel Books Only)</h4>
+                <p>For <code>data-book-type="novel"</code> books, selecting text in the reader pops up a small options popup: 5 color swatches to create a highlight, a &quot;Read from highlight&quot; button that starts read-aloud from that spot, and a &quot;Copy highlight text&quot; button that copies the selected text to the clipboard. Clicking an existing highlight re-opens the same popup with a &quot;Remove highlight&quot; button in place of creating a new one &mdash; the read/copy buttons work identically whether the highlight has been saved yet or not.</p>
+                <p>Use the toolbar's highlighter button (or press <kbd>H</kbd>) to open the right-side Highlights panel, which lists every highlight in the current book with a count badge, lets you search them by text or filter by color, click one to jump straight to its page (scrolling to and briefly flashing the exact highlighted text), or delete it.</p>
+                <p>Highlights are stored independently from reading progress, under the key <code>gn-highlights-{data-book-id}</code>, as an array of <code>{ id, page, start, end, text, color, ts }</code> objects (<code>start</code>/<code>end</code> are character offsets into that page's text). They persist even if progress is reset via "Read Again".</p>
+            </div>
+        </div>
+    </div>
 
     <p><strong>Note:</strong> The <code>.graphic-novel-book</code> divs are hidden in the normal page layout via CSS. They exist solely to configure the viewer. The Graphic Novel modal is built and managed by <code>custom.js</code>.</p>
 
