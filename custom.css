@@ -674,6 +674,10 @@ ul.gn-page-cards {
     display: none;
 }
 
+#gn-highlights-toggle[hidden] {
+    display: none;
+}
+
 .gn-toolbar-sep {
     width: 1px;
     height: 20px;
