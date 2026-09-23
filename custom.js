@@ -2016,7 +2016,12 @@ function gnWireOpenLinks() {
         // Clone to drop any listener attached during a previous navigation
         const fresh = el.cloneNode(true);
         el.replaceWith(fresh);
-        fresh.addEventListener('click', () => {
+        fresh.addEventListener('click', (e) => {
+            // For <a href="#">-style triggers: a bare-hash click is a same-document
+            // navigation, which (per spec) fires a real 'popstate' event — and
+            // gnCloseModal()'s own popstate listener (there for browser Back/Forward)
+            // would otherwise close the modal we're about to open almost instantly.
+            e.preventDefault();
             gnOpenBook(bookId);
             gnOpenModal();
         });
