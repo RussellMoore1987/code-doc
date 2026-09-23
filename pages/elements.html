@@ -156,14 +156,14 @@
     <div class="callout">
         <div class="callout-title">ℹ Note</div>
         <p>
-            Exactly one tab should start with <code>is-active</code>/<code>aria-selected="true"</code> and its
+            Exactly one tab should start with <code>.is-active</code>/<code>aria-selected="true"</code> and its
             matching panel without <code>hidden</code>. Every other tab needs <code>tabindex="-1"</code> so
             keyboard focus lands only on the active tab.
         </p>
     </div>
 
     <h3 id="tab-panel-vertical">Vertical Tab Panel</h3>
-    <p>Add the <code>tab-panel--vertical</code> modifier class to stack tabs in a side column instead of a row. It's the exact same <code>.tab-panel-nav</code> / <code>.tab-panel-tab</code> / <code>.tab-panel-panels</code> / <code>.tab-panel-content</code> markup and <code>setupTabPanels()</code> wiring - only CSS changes the layout. All four arrow keys still move between tabs either way.</p>
+    <p>Add the <code>.tab-panel--vertical</code> modifier class to stack tabs in a side column instead of a row. It's the exact same <code>.tab-panel-nav</code> / <code>.tab-panel-tab</code> / <code>.tab-panel-panels</code> / <code>.tab-panel-content</code> markup and <code>setupTabPanels()</code> wiring - only CSS changes the layout. All four arrow keys still move between tabs either way.</p>
 
     <div class="tab-panel tab-panel--vertical" data-tab-panel>
         <div class="tab-panel-nav" role="tablist" aria-label="Example vertical tabs">
