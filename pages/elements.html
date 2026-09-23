@@ -102,4 +102,63 @@
     &lt;tr&gt;&lt;td&gt;label&lt;/td&gt;&lt;td&gt;string&lt;/td&gt;&lt;td&gt;Display name&lt;/td&gt;&lt;/tr&gt;
   &lt;/tbody&gt;
 &lt;/table&gt;</code></pre>
+
+    <!-- Tab Panel section -->
+    <h2 id="tab-panel"><span data-tags="tabs">Tab Panel</span></h2>
+    <p>Use <code>data-tab-panel</code> to group related content into switchable tabs. Tabs are keyboard accessible - use the arrow keys, <code>Home</code>, and <code>End</code> while a tab is focused to move between them.</p>
+
+    <ul>
+      <li><code>ArrowLeft</code> / <code>ArrowRight</code>: Move between tabs</li>
+      <li><code>Home</code>: Move to the first tab</li>
+      <li><code>End</code>: Move to the last tab</li>
+    </ul>
+
+    <div class="tab-panel" data-tab-panel>
+        <div class="tab-panel-nav" role="tablist" aria-label="Example tabs">
+            <button type="button" class="tab-panel-tab is-active" role="tab" id="tab-html-btn" aria-controls="tab-html-panel" aria-selected="true" data-tab-target="tab-html-panel">HTML</button>
+            <button type="button" class="tab-panel-tab" role="tab" id="tab-css-btn" aria-controls="tab-css-panel" aria-selected="false" tabindex="-1" data-tab-target="tab-css-panel">CSS</button>
+            <button type="button" class="tab-panel-tab" role="tab" id="tab-js-btn" aria-controls="tab-js-panel" aria-selected="false" tabindex="-1" data-tab-target="tab-js-panel">JavaScript</button>
+        </div>
+        <div class="tab-panel-panels">
+            <div class="tab-panel-content is-active" role="tabpanel" id="tab-html-panel" aria-labelledby="tab-html-btn">
+                <p>Wrap each tab's markup in a <code>.tab-panel-content</code> element with an <code>id</code> matching its tab's <code>data-tab-target</code>.</p>
+            </div>
+            <div class="tab-panel-content" role="tabpanel" id="tab-css-panel" aria-labelledby="tab-css-btn" hidden>
+                <p>Tab panel styling automatically follows the current light/dark theme, matching the rest of the documentation.</p>
+            </div>
+            <div class="tab-panel-content" role="tabpanel" id="tab-js-panel" aria-labelledby="tab-js-btn" hidden>
+                <p><code>setupTabPanels()</code> in <code>app.js</code> wires click and keyboard navigation for every <code>[data-tab-panel]</code> on the page.</p>
+            </div>
+        </div>
+    </div>
+
+    <pre><code>&lt;div class="tab-panel" data-tab-panel&gt;
+  &lt;div class="tab-panel-nav" role="tablist" aria-label="Example tabs"&gt;
+    &lt;button type="button" class="tab-panel-tab is-active" role="tab"
+      id="tab-html-btn" aria-controls="tab-html-panel" aria-selected="true"
+      data-tab-target="tab-html-panel"&gt;HTML&lt;/button&gt;
+    &lt;button type="button" class="tab-panel-tab" role="tab"
+      id="tab-css-btn" aria-controls="tab-css-panel" aria-selected="false"
+      tabindex="-1" data-tab-target="tab-css-panel"&gt;CSS&lt;/button&gt;
+  &lt;/div&gt;
+  &lt;div class="tab-panel-panels"&gt;
+    &lt;div class="tab-panel-content is-active" role="tabpanel"
+      id="tab-html-panel" aria-labelledby="tab-html-btn"&gt;
+      &lt;p&gt;First tab's content.&lt;/p&gt;
+    &lt;/div&gt;
+    &lt;div class="tab-panel-content" role="tabpanel" id="tab-css-panel"
+      aria-labelledby="tab-css-btn" hidden&gt;
+      &lt;p&gt;Second tab's content.&lt;/p&gt;
+    &lt;/div&gt;
+  &lt;/div&gt;
+&lt;/div&gt;</code></pre>
+
+    <div class="callout">
+        <div class="callout-title">ℹ Note</div>
+        <p>
+            Exactly one tab should start with <code>is-active</code>/<code>aria-selected="true"</code> and its
+            matching panel without <code>hidden</code>. Every other tab needs <code>tabindex="-1"</code> so
+            keyboard focus lands only on the active tab.
+        </p>
+    </div>
 </div>

@@ -2208,6 +2208,7 @@ async function loadPage(url) {
     setupTestimonialSliders(); // Wire testimonial slider controls on the new page
     setupImageSliders(); // Wire image slider controls on the new page
     setupLogoSliders(); // Wire continuous logo slider controls on the new page
+    setupTabPanels(); // Wire tab panel controls on the new page
     setupGallerySystems(); // Enhance gallery layouts before wiring modal triggers
     setupImageModal();     // Wire up .image-modal images on the new page
     setupYoutubeGalleries(); // Enhance YouTube gallery layouts (before modal wiring)
@@ -3411,6 +3412,53 @@ function setupImageSliders() {
           currentSlider.dataset.imageSliderActiveIndex = String(index);
         }
       }
+    });
+  });
+}
+
+function setupTabPanels() {
+  const panels = elContentBody.querySelectorAll('[data-tab-panel]');
+
+  panels.forEach((panel) => {
+    if (panel.dataset.tabPanelInit === 'true') return;
+    panel.dataset.tabPanelInit = 'true';
+
+    const tabs = Array.from(panel.querySelectorAll('.tab-panel-tab'));
+    const contents = Array.from(panel.querySelectorAll('.tab-panel-content'));
+    if (!tabs.length) return;
+
+    function activate(tab, focus = false) {
+      tabs.forEach((t) => {
+        const isActive = t === tab;
+        t.classList.toggle('is-active', isActive);
+        t.setAttribute('aria-selected', isActive ? 'true' : 'false');
+        t.tabIndex = isActive ? 0 : -1;
+      });
+
+      contents.forEach((content) => {
+        const isActive = content.id === tab.dataset.tabTarget;
+        content.classList.toggle('is-active', isActive);
+        content.hidden = !isActive;
+      });
+
+      if (focus) tab.focus();
+    }
+
+    tabs.forEach((tab, index) => {
+      tab.addEventListener('click', () => activate(tab));
+
+      tab.addEventListener('keydown', (e) => {
+        let newIndex = null;
+        if (e.key === 'ArrowRight') newIndex = (index + 1) % tabs.length;
+        else if (e.key === 'ArrowLeft') newIndex = (index - 1 + tabs.length) % tabs.length;
+        else if (e.key === 'Home') newIndex = 0;
+        else if (e.key === 'End') newIndex = tabs.length - 1;
+
+        if (newIndex !== null) {
+          e.preventDefault();
+          activate(tabs[newIndex], true);
+        }
+      });
     });
   });
 }
@@ -4882,6 +4930,9 @@ function init() {
 
   /* Initialize continuous logo sliders for any pre-existing content */
   setupLogoSliders();
+
+  /* Initialize tab panel controls for any pre-existing content */
+  setupTabPanels();
 
   /* Initialize tooltip system (static chrome wired once; content re-scanned per load) */
   initTooltips();

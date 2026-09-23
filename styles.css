@@ -1724,6 +1724,90 @@ p {
   }
 }
 
+/* Tab panel */
+.tab-panel {
+  margin: 20px 0 28px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg-content);
+  overflow: hidden;
+}
+
+.tab-panel-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px;
+  padding: 6px 6px 0;
+  background: var(--bg-sidebar-strip);
+  border-bottom: 1px solid var(--border);
+}
+
+.tab-panel-tab {
+  position: relative;
+  padding: 9px 16px;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--text-muted);
+  border-radius: 6px 6px 0 0;
+  transition: background 0.15s, color 0.15s;
+  white-space: nowrap;
+}
+
+.tab-panel-tab:hover {
+  background: var(--bg-hover);
+  color: var(--text-base);
+}
+
+.tab-panel-tab.is-active {
+  color: var(--text-nav-active);
+  background: var(--bg-content);
+}
+
+.tab-panel-tab.is-active::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -1px;
+  height: 2px;
+  background: var(--primary-color);
+}
+
+.tab-panel-tab:focus-visible {
+  outline: 2px solid var(--border-focus);
+  outline-offset: 2px;
+}
+
+.tab-panel-panels {
+  padding: 18px 20px;
+}
+
+.tab-panel-content > *:last-child {
+  margin-bottom: 0;
+}
+
+@keyframes tab-panel-fade {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.tab-panel-content.is-active {
+  animation: tab-panel-fade 0.15s ease;
+}
+
+@media (max-width: 600px) {
+  .tab-panel-nav {
+    gap: 0;
+  }
+  .tab-panel-tab {
+    padding: 8px 12px;
+    font-size: 13px;
+  }
+  .tab-panel-panels {
+    padding: 14px 16px;
+  }
+}
+
 .content-body strong { font-weight: 700; }
 .content-body em     { font-style: italic; }
 
