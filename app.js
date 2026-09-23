@@ -3423,8 +3423,8 @@ function setupTabPanels() {
     if (panel.dataset.tabPanelInit === 'true') return;
     panel.dataset.tabPanelInit = 'true';
 
-    // .tab-panel--vertical reuses the same markup/classes, just re-flowed via CSS,
-    // so arrow-key direction is the only behavioral difference (WAI-ARIA tabs pattern).
+    // .tab-panel--vertical reuses the same markup/classes, just re-flowed via CSS;
+    // arrow keys work in both axes regardless of orientation, only aria-orientation differs.
     const isVertical = panel.classList.contains('tab-panel--vertical');
     const tabList = panel.querySelector('.tab-panel-nav');
     if (tabList && isVertical) tabList.setAttribute('aria-orientation', 'vertical');
@@ -3450,16 +3450,16 @@ function setupTabPanels() {
       if (focus) tab.focus();
     }
 
-    const nextKey = isVertical ? 'ArrowDown' : 'ArrowRight';
-    const prevKey = isVertical ? 'ArrowUp' : 'ArrowLeft';
+    const nextKey = new Set(['ArrowDown', 'ArrowRight']);
+    const prevKey = new Set(['ArrowUp', 'ArrowLeft']);
 
     tabs.forEach((tab, index) => {
       tab.addEventListener('click', () => activate(tab));
 
       tab.addEventListener('keydown', (e) => {
         let newIndex = null;
-        if (e.key === nextKey) newIndex = (index + 1) % tabs.length;
-        else if (e.key === prevKey) newIndex = (index - 1 + tabs.length) % tabs.length;
+        if (nextKey.has(e.key)) newIndex = (index + 1) % tabs.length;
+        else if (prevKey.has(e.key)) newIndex = (index - 1 + tabs.length) % tabs.length;
         else if (e.key === 'Home') newIndex = 0;
         else if (e.key === 'End') newIndex = tabs.length - 1;
 

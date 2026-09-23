@@ -108,7 +108,7 @@
     <p>Use <code>data-tab-panel</code> to group related content into switchable tabs. Tabs are keyboard accessible - use the arrow keys, <code>Home</code>, and <code>End</code> while a tab is focused to move between them.</p>
 
     <ul>
-      <li><code>ArrowLeft</code> / <code>ArrowRight</code>: Move between tabs</li>
+      <li><code>ArrowLeft</code> / <code>ArrowRight</code> / <code>ArrowUp</code> / <code>ArrowDown</code>: Move between tabs</li>
       <li><code>Home</code>: Move to the first tab</li>
       <li><code>End</code>: Move to the last tab</li>
     </ul>
@@ -163,7 +163,7 @@
     </div>
 
     <h3 id="tab-panel-vertical">Vertical Tab Panel</h3>
-    <p>Add the <code>tab-panel--vertical</code> modifier class to stack tabs in a side column instead of a row. It's the exact same <code>.tab-panel-nav</code> / <code>.tab-panel-tab</code> / <code>.tab-panel-panels</code> / <code>.tab-panel-content</code> markup and <code>setupTabPanels()</code> wiring - only CSS changes the layout, and the keyboard handler swaps to <code>ArrowUp</code>/<code>ArrowDown</code> automatically.</p>
+    <p>Add the <code>tab-panel--vertical</code> modifier class to stack tabs in a side column instead of a row. It's the exact same <code>.tab-panel-nav</code> / <code>.tab-panel-tab</code> / <code>.tab-panel-panels</code> / <code>.tab-panel-content</code> markup and <code>setupTabPanels()</code> wiring - only CSS changes the layout. All four arrow keys still move between tabs either way.</p>
 
     <div class="tab-panel tab-panel--vertical" data-tab-panel>
         <div class="tab-panel-nav" role="tablist" aria-label="Example vertical tabs">
@@ -179,7 +179,7 @@
                 <p>The modifier re-flows <code>.tab-panel-nav</code> into a column and moves the active-tab indicator to the side border.</p>
             </div>
             <div class="tab-panel-content" role="tabpanel" id="tab-vert-js-panel" aria-labelledby="tab-vert-js-btn" hidden>
-                <p><code>setupTabPanels()</code> detects <code>tab-panel--vertical</code> and binds <code>ArrowUp</code>/<code>ArrowDown</code> instead of <code>ArrowLeft</code>/<code>ArrowRight</code> for tab navigation.</p>
+                <p><code>setupTabPanels()</code> binds <code>ArrowLeft</code>/<code>ArrowRight</code>/<code>ArrowUp</code>/<code>ArrowDown</code> for tab navigation regardless of orientation.</p>
             </div>
         </div>
     </div>
