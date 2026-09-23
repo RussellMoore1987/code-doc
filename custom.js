@@ -80,6 +80,8 @@ const gn = {
     hlPanelOpen:       false,
     _hlPending:        null, // { mode: 'create', container, start, end, page, text } | { mode: 'manage', id }
     _hlColorFilter:    new Set(), // active color filters in the highlights panel; empty = show all
+    _hlFocusId:        null, // set while "Go to Highlight" is in flight, so page-nav's own
+                             // scroll-to-page-top doesn't race with/override scrolling to the mark itself
     // DOM refs (populated after modal is built)
     modal:        null,
     refs:         {},
@@ -1134,6 +1136,9 @@ function gnRenderPage() {
                 if (gn.currentBook !== book || gn.viewMode !== 'scroll' || gn.currentPage !== targetPage) return;
                 gnUpdateReadingTime();
                 gnPrepareTtsForCurrentPage();
+                // See the matching guard in gnGoToPage(): a "Go to Highlight" jump owns
+                // the scroll target (the mark itself) when one is in flight.
+                if (gn._hlFocusId) return;
                 const target = wrap.children[targetPage];
                 if (target) target.scrollIntoView({ block: 'start', behavior: 'smooth' });
                 // Backup safety net for any late reflow we didn't account for (fonts, etc.)
@@ -1300,6 +1305,11 @@ function gnGoToPage(n) {
             if (gn.currentBook !== book || gn.viewMode !== 'scroll' || gn.currentPage !== n) return;
             gnUpdateReadingTime();
             gnPrepareTtsForCurrentPage();
+            // A "Go to Highlight" jump is in flight — let gnFlashHighlightWhenReady()
+            // scroll straight to the highlight mark itself instead of the page top,
+            // otherwise this scrollIntoView (and the settle correction below) would
+            // race with/override that more precise scroll.
+            if (gn._hlFocusId) return;
             const target = wrap.children[n];
             if (target) target.scrollIntoView({ block: 'start', behavior: 'smooth' });
             // Backup safety net for any late reflow we didn't account for (fonts, etc.)
@@ -3011,9 +3021,24 @@ function gnRenderHighlightsPanel() {
     });
 }
 
-/** Jumps to a highlight's page, then scrolls it into view and flashes it once rendered. */
+/** Jumps to a highlight's page, then scrolls it into view and flashes it once rendered.
+ *  Skips the actual page navigation entirely when the highlight's page is already the
+ *  one on screen — in non-scroll modes gnGoToPage() would otherwise unconditionally
+ *  tear down and rebuild the page frame(s), destroying the very mark we're about to
+ *  flash (or a mark from an in-flight previous highlight jump) before its flash class
+ *  has a chance to render. */
 function gnGoToHighlight(h) {
-    gnGoToPage(h.page);
+    gn._hlFocusId = h.id;
+    const book = gn.currentBook;
+    let target = h.page;
+    if (book) {
+        target = Math.max(0, Math.min(target, book.pages.length - 1));
+        if (gn.viewMode !== 'scroll') {
+            const step = gnGetStep();
+            target = Math.floor(target / step) * step;
+        }
+    }
+    if (target !== gn.currentPage) gnGoToPage(h.page);
     gnFlashHighlightWhenReady(h.id);
 }
 
@@ -3023,9 +3048,17 @@ function gnFlashHighlightWhenReady(id, attemptsLeft = 20) {
         mark.scrollIntoView({ block: 'center', behavior: 'smooth' });
         mark.classList.add('gn-highlight--flash');
         setTimeout(() => mark.classList.remove('gn-highlight--flash'), 3000);
+        // Clear the focus flag on a fresh macrotask (not right away): gnGoToPage()'s own
+        // scroll-to-page-top runs off a Promise chain that may resolve in a later
+        // microtask than this one — clearing synchronously would let it slip through
+        // and immediately override the scroll we just did to center on the mark.
+        setTimeout(() => { if (gn._hlFocusId === id) gn._hlFocusId = null; }, 50);
         return;
     }
-    if (attemptsLeft <= 0) return;
+    if (attemptsLeft <= 0) {
+        if (gn._hlFocusId === id) gn._hlFocusId = null;
+        return;
+    }
     setTimeout(() => gnFlashHighlightWhenReady(id, attemptsLeft - 1), 100);
 }
 
