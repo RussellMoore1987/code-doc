@@ -1415,10 +1415,14 @@ mark.gn-highlight--flash {
     align-items: center;
     gap: 6px;
     padding: 6px 8px;
-    background: #13161c;
-    border: 1px solid #30363d;
+    background: var(--bg-content);
+    border: 1px solid var(--border);
     border-radius: 20px;
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+}
+
+[data-theme="light"] .gn-hl-popup {
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.16);
 }
 
 .gn-hl-popup[hidden] {
@@ -1429,7 +1433,7 @@ mark.gn-highlight--flash {
     width: 22px;
     height: 22px;
     border-radius: 50%;
-    border: 2px solid rgba(255, 255, 255, 0.5);
+    border: 2px solid var(--border);
     padding: 0;
     cursor: pointer;
     transition: transform 0.12s ease;
@@ -1461,7 +1465,7 @@ mark.gn-highlight--flash {
     border: none;
     border-radius: 50%;
     background: none;
-    color: #8b949e;
+    color: var(--text-muted);
     cursor: pointer;
     flex-shrink: 0;
     transition: background 0.14s, color 0.14s;
