@@ -1480,6 +1480,21 @@ mark.gn-highlight--flash {
     color: #58a6ff;
 }
 
+.gn-hl-copy:hover {
+    background: rgba(88, 166, 255, 0.15);
+    color: #58a6ff;
+}
+
+.gn-hl-copy--success {
+    color: #3fb950;
+    background: rgba(63, 185, 80, 0.15);
+}
+
+.gn-hl-copy--fail {
+    color: #f85149;
+    background: rgba(248, 81, 73, 0.15);
+}
+
 .gn-hl-remove:hover {
     background: rgba(248, 81, 73, 0.15);
     color: #f85149;

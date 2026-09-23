@@ -82,6 +82,7 @@ const gn = {
     _hlColorFilter:    new Set(), // active color filters in the highlights panel; empty = show all
     _hlFocusId:        null, // set while "Go to Highlight" is in flight, so page-nav's own
                              // scroll-to-page-top doesn't race with/override scrolling to the mark itself
+    _hlCopyFeedbackTimer: null,
     // DOM refs (populated after modal is built)
     modal:        null,
     refs:         {},
@@ -620,6 +621,13 @@ function gnBuildModal() {
               <polygon points="6 4 18 12 6 20 6 4"/>
             </svg>
           </button>
+          <button class="gn-hl-action-btn gn-hl-copy" id="gn-hl-copy-btn" aria-label="Copy highlight text" title="Copy highlight text">
+            <svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true" fill="none"
+                 stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="9" y="9" width="12" height="12" rx="2"/>
+              <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+            </svg>
+          </button>
           <button class="gn-hl-action-btn gn-hl-remove" id="gn-hl-remove-btn" hidden aria-label="Remove highlight" title="Remove highlight">
             <svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true" fill="none"
                  stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -715,6 +723,7 @@ function gnCacheRefs() {
         hlColorFilterButtons: gn.modal.querySelectorAll('.gn-hl-color-filter-btn'),
         hlPopup:       q('gn-hl-popup'),
         hlReadBtn:     q('gn-hl-read-btn'),
+        hlCopyBtn:     q('gn-hl-copy-btn'),
         hlRemoveBtn:   q('gn-hl-remove-btn'),
         hlColorButtons: gn.modal.querySelectorAll('.gn-hl-color'),
         fullscreen:    q('gn-fullscreen'),
@@ -2962,6 +2971,70 @@ function gnReadFromHighlightPopup() {
     gnSpeakFromWordIndex(wordIndex);
 }
 
+/** Copies the highlight popup's text to the clipboard — the pending selection's raw
+ *  text in 'create' mode (before saving), or the saved highlight's stored text in
+ *  'manage' mode (after it's in place). Leaves the popup open so the user can still
+ *  pick a color or remove it afterward; briefly swaps the icon to a checkmark instead. */
+function gnCopyHighlightText() {
+    if (!gn._hlPending || !gn.currentBook) return;
+    let text;
+    if (gn._hlPending.mode === 'create') {
+        text = gn._hlPending.text;
+    } else {
+        const entry = gnLoadHighlights(gn.currentBook.id).find((h) => h.id === gn._hlPending.id);
+        text = entry?.text;
+    }
+    if (!text) return;
+    gnCopyTextToClipboard(text).then((ok) => gnFlashCopyButtonFeedback(ok));
+}
+
+/** Copies text via the modern Clipboard API, falling back to a hidden textarea +
+ *  execCommand for older/non-secure contexts. Resolves true/false instead of throwing. */
+async function gnCopyTextToClipboard(text) {
+    try {
+        if (navigator.clipboard && globalThis.isSecureContext) {
+            await navigator.clipboard.writeText(text);
+            return true;
+        }
+    } catch { /* fall through to the fallback below */ }
+    try {
+        const textarea = document.createElement('textarea');
+        textarea.value = text;
+        textarea.style.cssText = 'position:fixed;opacity:0;left:-9999px;';
+        document.body.appendChild(textarea);
+        textarea.select();
+        textarea.setSelectionRange(0, 99999);
+        const ok = document.execCommand('copy');
+        textarea.remove();
+        return ok;
+    } catch {
+        return false;
+    }
+}
+
+/** Briefly swaps the copy button's icon to a checkmark (or an X on failure). */
+function gnFlashCopyButtonFeedback(success) {
+    const btn = gn.refs.hlCopyBtn;
+    if (!btn) return;
+    clearTimeout(gn._hlCopyFeedbackTimer);
+    const original = btn.innerHTML;
+    btn.innerHTML = success
+        ? `<svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true" fill="none"
+               stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+             <polyline points="20 6 9 17 4 12"/>
+           </svg>`
+        : `<svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true" fill="none"
+               stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+             <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+           </svg>`;
+    btn.classList.toggle('gn-hl-copy--success', success);
+    btn.classList.toggle('gn-hl-copy--fail', !success);
+    gn._hlCopyFeedbackTimer = setTimeout(() => {
+        btn.innerHTML = original;
+        btn.classList.remove('gn-hl-copy--success', 'gn-hl-copy--fail');
+    }, 1200);
+}
+
 function gnCreateHighlightFromSelection(color) {
     if (!gn._hlPending || gn._hlPending.mode !== 'create' || !gn.currentBook) return;
     const { container, start, end, page, text } = gn._hlPending;
@@ -3309,6 +3382,7 @@ function gnBindModalEvents() {
         if (gn._hlPending?.mode === 'manage') gnRemoveHighlightById(gn._hlPending.id);
     });
     r.hlReadBtn?.addEventListener('click', gnReadFromHighlightPopup);
+    r.hlCopyBtn?.addEventListener('click', gnCopyHighlightText);
     r.pagesWrap?.addEventListener('mouseup', () => setTimeout(gnHandleTextSelectionChange, 0));
     r.pagesWrap?.addEventListener('click', gnHandleHighlightMarkClick);
     document.addEventListener('mousedown', (e) => {
