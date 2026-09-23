@@ -614,7 +614,13 @@ function gnBuildModal() {
           <button class="gn-hl-color gn-hl-color--blue"   data-color="blue"   title="Blue"   aria-label="Blue highlight"></button>
           <button class="gn-hl-color gn-hl-color--pink"   data-color="pink"   title="Pink"   aria-label="Pink highlight"></button>
           <button class="gn-hl-color gn-hl-color--orange" data-color="orange" title="Orange" aria-label="Orange highlight"></button>
-          <button class="gn-hl-remove" id="gn-hl-remove-btn" hidden aria-label="Remove highlight" title="Remove highlight">
+          <button class="gn-hl-action-btn gn-hl-read" id="gn-hl-read-btn" aria-label="Read from highlight" title="Read from highlight">
+            <svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true" fill="none"
+                 stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polygon points="6 4 18 12 6 20 6 4"/>
+            </svg>
+          </button>
+          <button class="gn-hl-action-btn gn-hl-remove" id="gn-hl-remove-btn" hidden aria-label="Remove highlight" title="Remove highlight">
             <svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true" fill="none"
                  stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <polyline points="3 6 5 6 21 6"/>
@@ -643,6 +649,9 @@ function gnBuildModal() {
     gn.modal = overlay;
     gnCacheRefs();
     gnBindModalEvents();
+
+    // Read-from-highlight is meaningless without speech synthesis support
+    if (gn.refs.hlReadBtn) gn.refs.hlReadBtn.hidden = !GN_TTS_SUPPORTED;
 
     // Populate the voice picker now, and again once the browser finishes loading voices
     gnPopulateTtsVoices();
@@ -705,6 +714,7 @@ function gnCacheRefs() {
         hlList:        q('gn-highlights-list'),
         hlColorFilterButtons: gn.modal.querySelectorAll('.gn-hl-color-filter-btn'),
         hlPopup:       q('gn-hl-popup'),
+        hlReadBtn:     q('gn-hl-read-btn'),
         hlRemoveBtn:   q('gn-hl-remove-btn'),
         hlColorButtons: gn.modal.querySelectorAll('.gn-hl-color'),
         fullscreen:    q('gn-fullscreen'),
@@ -2909,6 +2919,49 @@ function gnHandleHlColorClick(color) {
     gnHideHighlightPopup();
 }
 
+/** Starts read-aloud from the highlight popup's pending selection ('create' mode, before
+ *  the highlight is saved) or its underlying saved highlight ('manage' mode, after it's
+ *  already in place) — works from either popup state since both resolve to a page + a
+ *  character offset to seek the word map to. */
+function gnReadFromHighlightPopup() {
+    if (!GN_TTS_SUPPORTED || !gn._hlPending || !gn.currentBook) return;
+    let container, start, pageIndex;
+    if (gn._hlPending.mode === 'create') {
+        ({ container, start, page: pageIndex } = gn._hlPending);
+    } else {
+        const entry = gnLoadHighlights(gn.currentBook.id).find((h) => h.id === gn._hlPending.id);
+        if (!entry) return;
+        pageIndex = entry.page;
+        start = entry.start;
+        container = gnGetActiveTextPage(pageIndex);
+    }
+    if (!container) return;
+
+    let wordMap;
+    if (gn._ttsWordMap && gn._ttsWordMapPage === container) {
+        wordMap = gn._ttsWordMap;
+    } else {
+        gn._ttsFullText = container.textContent;
+        wordMap = gnWrapWordsForTts(container);
+        gn._ttsWordMap = wordMap;
+        gn._ttsWordMapPage = container;
+    }
+    if (!wordMap.length) return;
+    const wordIndex = gnFindWordIndexForOffset(wordMap, start);
+
+    gnHideHighlightPopup();
+    if (gn.viewMode === 'scroll') {
+        gn.currentPage = pageIndex;
+        gn._ttsPageOffset = 0;
+        gnUpdateNavUI();
+        gnUpdateBookmarkUI();
+        gnUpdateTocHighlight();
+    } else {
+        gn._ttsPageOffset = pageIndex - gn.currentPage;
+    }
+    gnSpeakFromWordIndex(wordIndex);
+}
+
 function gnCreateHighlightFromSelection(color) {
     if (!gn._hlPending || gn._hlPending.mode !== 'create' || !gn.currentBook) return;
     const { container, start, end, page, text } = gn._hlPending;
@@ -3255,6 +3308,7 @@ function gnBindModalEvents() {
     r.hlRemoveBtn?.addEventListener('click', () => {
         if (gn._hlPending?.mode === 'manage') gnRemoveHighlightById(gn._hlPending.id);
     });
+    r.hlReadBtn?.addEventListener('click', gnReadFromHighlightPopup);
     r.pagesWrap?.addEventListener('mouseup', () => setTimeout(gnHandleTextSelectionChange, 0));
     r.pagesWrap?.addEventListener('click', gnHandleHighlightMarkClick);
     document.addEventListener('mousedown', (e) => {

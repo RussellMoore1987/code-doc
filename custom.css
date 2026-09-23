@@ -1448,7 +1448,9 @@ mark.gn-highlight--flash {
 .gn-hl-color--pink   { background: #ff9ecf; }
 .gn-hl-color--orange { background: #ffb066; }
 
-.gn-hl-remove {
+/* Shared shape/layout for the popup's action buttons (read / remove) — only
+   their hover color differs, via the .gn-hl-read / .gn-hl-remove modifiers below. */
+.gn-hl-action-btn {
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -1465,13 +1467,18 @@ mark.gn-highlight--flash {
     transition: background 0.14s, color 0.14s;
 }
 
+.gn-hl-action-btn[hidden] {
+    display: none;
+}
+
+.gn-hl-read:hover {
+    background: rgba(88, 166, 255, 0.15);
+    color: #58a6ff;
+}
+
 .gn-hl-remove:hover {
     background: rgba(248, 81, 73, 0.15);
     color: #f85149;
-}
-
-.gn-hl-remove[hidden] {
-    display: none;
 }
 
 /* Right-side Highlights panel (mirrors .gn-toc-panel) */
