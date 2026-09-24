@@ -1726,10 +1726,12 @@ async function navigateTo(navId, sectionId = null, pushHistory = true, smooth = 
         requestAnimationFrame(() => {
           const target = elContentBody.querySelector(`#${CSS.escape(sectionId)}`);
           if (target) {
+            revealTabPanelAncestors(target); // switch to the tab that contains this heading, if any
             const containerTop  = elContentScroll.getBoundingClientRect().top;
             const targetTop     = target.getBoundingClientRect().top;
-            // In mobile view, leave space so the section isn't covered by the mobile nav buttons.
-            const mobileOffset  = isMobileLayout() ? 64 : 10;
+            // Leave breathing room above the target so it doesn't land flush against
+            // the header/tab-nav; mobile gets extra room to clear the mobile nav buttons.
+            const mobileOffset  = isMobileLayout() ? 64 : 48;
             const scrollOffset  = targetTop - containerTop + elContentScroll.scrollTop - mobileOffset;
             elContentScroll.scrollTo({
               top: Math.max(0, scrollOffset),
@@ -3414,6 +3416,25 @@ function setupImageSliders() {
       }
     });
   });
+}
+
+/**
+ * If the target heading lives inside a currently-hidden .tab-panel-content,
+ * click that content's tab (walking outward through any nested tab panels)
+ * so the section is visible before we measure/scroll to it.
+ */
+function revealTabPanelAncestors(el) {
+  if (!(el instanceof Element)) return;
+
+  let content = el.closest('.tab-panel-content');
+  while (content) {
+    if (content.hidden) {
+      const panel = content.closest('.tab-panel');
+      const tab = panel?.querySelector(`.tab-panel-tab[data-tab-target="${CSS.escape(content.id)}"]`);
+      if (tab) tab.click();
+    }
+    content = content.parentElement?.closest('.tab-panel-content') ?? null;
+  }
 }
 
 function setupTabPanels() {
