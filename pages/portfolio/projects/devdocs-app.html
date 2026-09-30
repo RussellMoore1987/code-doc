@@ -1,0 +1,88 @@
+<div>
+    <h1><span data-tags="JavaScript, Frontend, Internal Tools, UI/UX, Performance">DevDocs Platform</span></h1>
+    <p class="pf-lead">The documentation and portfolio platform you're using right now - a dependency-free,
+    single-page JavaScript application with a custom router, an automatic tagging/search engine, and a full
+    ebook/comic-book reader subsystem.</p>
+
+    <figure class="img-block pf-project-cover">
+        <img src="images/portfolio/cover-devdocs.svg" alt="DevDocs platform cover graphic">
+        <figcaption>Placeholder cover graphic - replace with a real screenshot anytime.</figcaption>
+    </figure>
+
+    <div class="callout">
+        <div class="callout-title">Quick Facts</div>
+        <div class="pf-meta-grid">
+            <div><span class="pf-meta-label">Role</span><span>Sole developer &amp; architect</span></div>
+            <div><span class="pf-meta-label">Context</span><span>Personal documentation &amp; portfolio platform</span></div>
+            <div><span class="pf-meta-label">Tech</span><span>Vanilla JavaScript, CSS custom properties, container queries</span></div>
+            <div><span class="pf-meta-label">Status</span><span>Actively maintained</span></div>
+        </div>
+    </div>
+
+    <h2 id="the-problem">The Problem</h2>
+    <p>I wanted a documentation and portfolio site that felt fast and native - instant page transitions, deep
+    linking, in-page search, and reusable UI components - without adopting a front-end framework, a build step, or
+    a bundler I'd have to maintain forever. Most "quick" documentation sites either ship a heavy framework for a
+    mostly-static site, or fall back to plain multi-page HTML with no shared state or navigation memory.</p>
+
+    <h2 id="my-role">My Role</h2>
+    <p>I designed and built the entire platform myself: the navigation/routing architecture, every reusable UI
+    component (image and video lightboxes, galleries, sliders, tab panels), the tagging and search system, and a
+    separate, fairly large subsystem for reading long-form text and comic-panel content in the browser.</p>
+
+    <h2 id="what-i-built">What I Built</h2>
+    <ul>
+        <li>A hash-based single-page router that AJAX-loads HTML fragments into the page, keeps browser
+        back/forward working, and restores the correct left-navigation state and page outline on every load.</li>
+        <li>An automatic tagging and search engine: every page is scanned for <code>[data-tags]</code> elements at
+        load time, building a searchable index with no manually maintained tag list or sitemap.</li>
+        <li>Reusable content components - image and video galleries with a shared lightbox, testimonial and image
+        sliders, tab panels, tooltips, and copy-to-clipboard code blocks - all wired up generically so any page can
+        opt in just by using the right HTML classes.</li>
+        <li>A full graphic-novel/e-book reader: page-by-page and continuous-scroll reading modes, reading-progress
+        persistence, text-to-speech with word-level highlighting, a text highlighter/annotation tool, and
+        print-to-PDF export.</li>
+        <li>Accessible modal dialogs with proper focus trapping, keyboard navigation, and ARIA labeling throughout.</li>
+    </ul>
+
+    <h2 id="technologies">Technologies &amp; Approach</h2>
+    <p>Plain HTML/CSS/JavaScript with no runtime framework and no build tooling - CSS custom properties drive
+    light/dark theming, and CSS container queries (not viewport media queries) drive responsive layout so
+    components respond correctly to sidebar state, not just window width. Browser APIs used directly include the
+    Web Speech API (text-to-speech), <code>IntersectionObserver</code> and <code>ResizeObserver</code> for
+    on-demand loading and layout-settling, and the History API for deep-linkable routes.</p>
+    <div class="pf-chip-row">
+        <span class="pf-chip">Vanilla JavaScript</span>
+        <span class="pf-chip">CSS Custom Properties</span>
+        <span class="pf-chip">Container Queries</span>
+        <span class="pf-chip">Web Speech API</span>
+        <span class="pf-chip">IntersectionObserver / ResizeObserver</span>
+        <span class="pf-chip">History API</span>
+    </div>
+
+    <h2 id="challenges">Challenges</h2>
+    <p>Two areas stood out. First, the continuous-scroll reading mode: reading progress needed to land on, and
+    stay on, the exact page the reader left off on - even while images above it were still loading in and
+    reflowing the page. Second, text-to-speech playback needed to survive rapid next/previous page clicks without
+    occasionally going silent, a known class of browser bug around cancelling and restarting speech synthesis too
+    quickly.</p>
+
+    <h2 id="solutions">How They Were Solved</h2>
+    <p>For scroll position, I moved from a "scroll, then correct drift" approach to a "wait for every page above the
+    target to finish loading, then scroll once" approach - each page frame exposes a promise that resolves when its
+    own content (and any images inside it) has finished loading, and navigation waits on all of them before
+    scrolling. For speech synthesis, every direct call to cancel playback is paired with synchronously invalidating
+    the current utterance reference first, so a late-arriving "did it end?" callback from the browser can correctly
+    recognize it's stale and do nothing, instead of racing the real navigation.</p>
+
+    <h2 id="outcome">Outcome &amp; Value Created</h2>
+    <p>A fast, fully custom platform with zero framework runtime and no build step to maintain, that still delivers
+    application-grade UX: instant navigation, deep links, an automatically maintained tag/search index, and a
+    genuinely full-featured reading experience - all serving as a live demonstration of front-end architecture,
+    accessibility, and debugging depth rather than a static resume.</p>
+
+    <div class="pf-project-nav">
+        <a href="#portfolio-projects" data-nav="portfolio-projects">← All Projects</a>
+        <a href="#portfolio-project-php-cms" data-nav="portfolio-project-php-cms">Next: PHP CMS →</a>
+    </div>
+</div>

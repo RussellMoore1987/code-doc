@@ -1,0 +1,70 @@
+<div>
+    <h1><span data-tags="PHP, Backend, Database, UI/UX, Legacy Systems">Parent Attributes / Tags System</span></h1>
+    <p class="pf-lead">A dynamic, five-type tagging system built for a real Adilas e-commerce customer, letting
+    products carry flexible, searchable attributes on top of a fixed relational database schema.</p>
+
+    <figure class="img-block pf-project-cover">
+        <img src="images/portfolio/cover-parent-attributes-tags.svg" alt="Parent attributes and tags system cover graphic">
+        <figcaption>Placeholder cover graphic - replace with a real screenshot anytime.</figcaption>
+    </figure>
+
+    <div class="callout">
+        <div class="callout-title">Quick Facts</div>
+        <div class="pf-meta-grid">
+            <div><span class="pf-meta-label">Role</span><span>Sole developer</span></div>
+            <div><span class="pf-meta-label">Context</span><span>Adilas customer e-commerce feature</span></div>
+            <div><span class="pf-meta-label">Tech</span><span>Adilas application stack, SQL database</span></div>
+            <div><span class="pf-meta-label">Complexity</span><span>Most challenging project at the time</span></div>
+        </div>
+    </div>
+
+    <h2 id="the-problem">The Problem</h2>
+    <p>An Adilas e-commerce customer needed a way to attach flexible, customer-defined attributes - "parent
+    attributes," presented to shoppers as tags - to products, so shoppers could filter and search inventory by
+    attributes that didn't exist as fixed database columns and would vary customer to customer.</p>
+
+    <h2 id="my-role">My Role</h2>
+    <p>Sole developer for the feature, from data model design through the e-commerce-facing display and search
+    integration.</p>
+
+    <h2 id="what-i-built">What I Built</h2>
+    <ul>
+        <li>Five distinct tag types - text, text dropdown, number, toggle, and number dropdown - each presenting
+        and validating information differently.</li>
+        <li>Per-tag configuration: sort order, which categories a tag can appear in, whether it's required, and
+        whether it shows and/or is searchable on the public storefront.</li>
+        <li>An e-commerce-facing display and search layer so shoppers could filter inventory directly by these
+        tags once configured and attached to items.</li>
+    </ul>
+
+    <h2 id="technologies">Technologies &amp; Approach</h2>
+    <p>Built on the Adilas application stack against a relational SQL database, where the data model itself had to
+    stay flexible even though the underlying schema wasn't.</p>
+    <div class="pf-chip-row">
+        <span class="pf-chip">Relational Database Design</span>
+        <span class="pf-chip">Dynamic Schema Modeling</span>
+        <span class="pf-chip">E-commerce Search</span>
+    </div>
+
+    <h2 id="challenges">Challenges</h2>
+    <p>Unlike most features up to that point, this one worked against an unknown, variable number of possible
+    database entries per item rather than a fixed set of fields - and displaying that variable data correctly and
+    performantly inside an existing e-commerce UI added a second layer of difficulty. This was, at the time, the
+    most complex project I'd taken on.</p>
+
+    <h2 id="solutions">How They Were Solved</h2>
+    <p>I modeled each tag type's configuration and values separately from the "core" item record, so an item could
+    carry any number of tags without schema changes per customer, and built the storefront display/search logic to
+    read that configuration at render time - the same general idea I later reused (in modern JavaScript) for this
+    DevDocs platform's own <a href="#portfolio-project-devdocs" data-nav="portfolio-project-devdocs">automatic
+    tag/search index</a>.</p>
+
+    <h2 id="outcome">Outcome &amp; Value Created</h2>
+    <p>A reusable, customer-facing product tagging feature that increased searchability on the storefront for the
+    customer it was built for, and measurably leveled up my own comfort with complex, variable-shape data modeling.</p>
+
+    <div class="pf-project-nav">
+        <a href="#portfolio-project-oss-framework" data-nav="portfolio-project-oss-framework">← Previous: Open Source PHP Framework</a>
+        <a href="#portfolio-project-afb-theme" data-nav="portfolio-project-afb-theme">Next: AFB Theme (Snow Owl) →</a>
+    </div>
+</div>

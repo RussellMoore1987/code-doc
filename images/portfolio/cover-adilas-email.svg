@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 500" role="img" aria-label="Adilas E-mail Engine cover graphic">
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#051c2a"/>
+      <stop offset="100%" stop-color="#0284C7"/>
+    </linearGradient>
+  </defs>
+  <rect width="800" height="500" fill="url(#g)"/>
+  <g opacity="0.12" stroke="#ffffff" stroke-width="1">
+    <line x1="0" y1="125" x2="800" y2="125"/><line x1="0" y1="250" x2="800" y2="250"/><line x1="0" y1="375" x2="800" y2="375"/>
+    <line x1="200" y1="0" x2="200" y2="500"/><line x1="400" y1="0" x2="400" y2="500"/><line x1="600" y1="0" x2="600" y2="500"/>
+  </g>
+  <g transform="translate(400,250)" fill="none" stroke="#eaf7ff" stroke-width="12" stroke-linejoin="round" stroke-linecap="round">
+    <rect x="-110" y="-70" width="220" height="140" rx="10"/>
+    <path d="M-110,-65 L0,30 L110,-65"/>
+  </g>
+  <text x="400" y="430" text-anchor="middle" font-family="Consolas, Menlo, monospace" font-size="22" fill="#eaf7ff" opacity="0.85">80+ Settings &#183; 37 Dynamic Variables</text>
+</svg>

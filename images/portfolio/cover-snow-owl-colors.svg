@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 500" role="img" aria-label="Snow Owl Custom Colors cover graphic">
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#2a0a1c"/>
+      <stop offset="100%" stop-color="#DB2777"/>
+    </linearGradient>
+  </defs>
+  <rect width="800" height="500" fill="url(#g)"/>
+  <g opacity="0.12" stroke="#ffffff" stroke-width="1">
+    <line x1="0" y1="125" x2="800" y2="125"/><line x1="0" y1="250" x2="800" y2="250"/><line x1="0" y1="375" x2="800" y2="375"/>
+    <line x1="200" y1="0" x2="200" y2="500"/><line x1="400" y1="0" x2="400" y2="500"/><line x1="600" y1="0" x2="600" y2="500"/>
+  </g>
+  <g transform="translate(400,250)">
+    <path d="M0,-90 A90,90 0 1 1 -85,-28 Z" fill="#fff0f7" opacity="0.95"/>
+    <circle cx="0" cy="-55" r="14" fill="#DB2777"/>
+    <circle cx="48" cy="-10" r="14" fill="#F472B6"/>
+    <circle cx="30" cy="55" r="14" fill="#FBCFE8"/>
+    <circle cx="-38" cy="45" r="14" fill="#FDE68A"/>
+    <circle cx="-62" cy="-20" r="14" fill="#93C5FD"/>
+  </g>
+  <text x="400" y="430" text-anchor="middle" font-family="Consolas, Menlo, monospace" font-size="22" fill="#fff0f7" opacity="0.85">jQuery &#183; Live CSS Overrides</text>
+</svg>

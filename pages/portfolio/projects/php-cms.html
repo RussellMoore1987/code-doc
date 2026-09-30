@@ -1,0 +1,74 @@
+<div>
+    <h1><span data-tags="PHP, Backend, Full Stack, Database, UI/UX">PHP CMS</span></h1>
+    <p class="pf-lead">A full content management system built from scratch in PHP - posts, categories, comments,
+    users, a public site, and an admin dashboard - created as a deep-dive training project with a heavy emphasis on
+    security.</p>
+
+    <figure class="img-block pf-project-cover">
+        <img src="images/portfolio/cover-php-cms.svg" alt="PHP content management system cover graphic">
+        <figcaption>Placeholder cover graphic - replace with a real screenshot anytime.</figcaption>
+    </figure>
+
+    <div class="callout">
+        <div class="callout-title">Quick Facts</div>
+        <div class="pf-meta-grid">
+            <div><span class="pf-meta-label">Role</span><span>Sole developer</span></div>
+            <div><span class="pf-meta-label">Context</span><span>Independent / training project</span></div>
+            <div><span class="pf-meta-label">Tech</span><span>PHP, MySQL, Ajax, jQuery, Bootstrap, Chart.js</span></div>
+            <div><span class="pf-meta-label">Focus</span><span>Security &amp; framework-free architecture</span></div>
+        </div>
+    </div>
+
+    <h2 id="the-problem">The Problem</h2>
+    <p>I wanted to move beyond front-end work and build a genuinely secure, full-featured backend system in PHP
+    without leaning on an existing CMS or framework - including protecting it against the most common real-world
+    attack vectors, not just making the features "work."</p>
+
+    <h2 id="my-role">My Role</h2>
+    <p>Sole developer, end to end: schema design, backend logic, security hardening, and the admin/public front
+    ends.</p>
+
+    <h2 id="what-i-built">What I Built</h2>
+    <ul>
+        <li>A public site with post display, search across categories/authors/tags/latest posts, and a
+        moderated comment system (comments require admin approval before publishing).</li>
+        <li>An admin dashboard with drill-down charts and widgets - a post/comment activity feed built on Chart.js
+        that can be searched by month and year, plus an Ajax/jQuery to-do list widget supporting add, edit,
+        delete, and complete/incomplete states.</li>
+        <li>Full CRUD management for posts, comments, categories, and users.</li>
+        <li>A login system that locks out an account after repeated failed attempts, disabling the form for a
+        cooldown period to blunt brute-force attacks.</li>
+    </ul>
+
+    <h2 id="technologies">Technologies &amp; Approach</h2>
+    <p>Built on plain PHP and MySQL with Ajax/jQuery for dynamic interactions, Chart.js for the dashboard
+    visualizations, and Bootstrap for the public-facing responsive design.</p>
+    <div class="pf-chip-row">
+        <span class="pf-chip">PHP</span>
+        <span class="pf-chip">MySQL</span>
+        <span class="pf-chip">Ajax</span>
+        <span class="pf-chip">jQuery</span>
+        <span class="pf-chip">Bootstrap</span>
+        <span class="pf-chip">Chart.js</span>
+    </div>
+
+    <h2 id="challenges">Challenges</h2>
+    <p>This was my first PHP project, so the central challenge was learning secure backend development practices
+    from the ground up: protecting against SQL injection and cross-site scripting, validating input on both client
+    and server, and enforcing database-level data integrity - all without an existing framework doing it for me.</p>
+
+    <h2 id="solutions">How They Were Solved</h2>
+    <p>I designed security in layer by layer rather than bolting it on afterward: parameterized queries and input
+    sanitization against injection and XSS, server-side validation backed by client-side validation for UX, database
+    constraints for data integrity, and the account lockout logic described above for login attempts.</p>
+
+    <h2 id="outcome">Outcome &amp; Value Created</h2>
+    <p>A working, reasonably sophisticated CMS that gave me hands-on command of Ajax, PHP syntax, date/time
+    handling, and - most importantly - practical security practices that directly carried into the larger
+    ColdFusion/Adilas projects that followed.</p>
+
+    <div class="pf-project-nav">
+        <a href="#portfolio-project-devdocs" data-nav="portfolio-project-devdocs">← Previous: DevDocs Platform</a>
+        <a href="#portfolio-project-oss-framework" data-nav="portfolio-project-oss-framework">Next: Open Source PHP Framework →</a>
+    </div>
+</div>

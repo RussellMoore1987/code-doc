@@ -1,0 +1,66 @@
+<div>
+    <h1><span data-tags="Frontend, Full Stack, Integrations, Legacy Systems">Unified AFB/Adilas Website</span></h1>
+    <p class="pf-lead">A shared-asset, session-based website architecture that let AFB and Adilas present content
+    from the same codebase while each retained their own independent branding and customization.</p>
+
+    <figure class="img-block pf-project-cover">
+        <img src="images/portfolio/cover-afb-adilas-website.svg" alt="Unified AFB and Adilas website cover graphic">
+        <figcaption>Placeholder cover graphic - replace with a real screenshot anytime.</figcaption>
+    </figure>
+
+    <div class="callout">
+        <div class="callout-title">Quick Facts</div>
+        <div class="pf-meta-grid">
+            <div><span class="pf-meta-label">Role</span><span>Sole developer</span></div>
+            <div><span class="pf-meta-label">Client</span><span>AFB &amp; Adilas</span></div>
+            <div><span class="pf-meta-label">Tech</span><span>Session-based rendering, shared asset library</span></div>
+            <div><span class="pf-meta-label">Goal</span><span>One codebase, two independently branded sites</span></div>
+        </div>
+    </div>
+
+    <h2 id="the-problem">The Problem</h2>
+    <p>AFB and Adilas were closely related but separately branded properties that were maintaining largely
+    duplicate websites. They needed to share a base of common content and code while still being able to fully
+    customize their own pages independently.</p>
+
+    <h2 id="my-role">My Role</h2>
+    <p>Sole developer responsible for restructuring AFB's website so it could share infrastructure with Adilas.</p>
+
+    <h2 id="what-i-built">What I Built</h2>
+    <ul>
+        <li>A shared library of commonly used assets and content usable by both properties.</li>
+        <li>Session-based logic so each entity's own code/content changes only affect its own pages, while shared
+        content updates propagate to both automatically.</li>
+        <li>Two live entry points - an AFB entrance and an Adilas entrance - both drawing from the same underlying
+        website.</li>
+    </ul>
+
+    <h2 id="technologies">Technologies &amp; Approach</h2>
+    <p>Session-based conditional rendering layered over a shared asset library, so the same request-handling code
+    could serve either brand correctly depending on which entrance a visitor came through.</p>
+    <div class="pf-chip-row">
+        <span class="pf-chip">Session-Based Rendering</span>
+        <span class="pf-chip">Shared Asset Architecture</span>
+        <span class="pf-chip">Multi-Brand Websites</span>
+    </div>
+
+    <h2 id="challenges">Challenges</h2>
+    <p>The real difficulty wasn't any single piece of code - it was merging two previously separate sets of assets
+    and content into one cohesive whole that both properties could rely on, without either one losing the ability
+    to customize what mattered to them.</p>
+
+    <h2 id="solutions">How They Were Solved</h2>
+    <p>I used session techniques to determine which "entrance" a visitor was in, then built the shared asset layer
+    so common content and code served both, while entity-specific overrides stayed cleanly separated and were
+    layered on top rather than forked into two codebases.</p>
+
+    <h2 id="outcome">Outcome &amp; Value Created</h2>
+    <p>A single, shared website architecture that removed the ongoing cost of maintaining near-duplicate sites for
+    two related brands, while preserving each brand's own identity and customization - directly reducing long-term
+    maintenance overhead.</p>
+
+    <div class="pf-project-nav">
+        <a href="#portfolio-project-adilas-email" data-nav="portfolio-project-adilas-email">← Previous: Adilas E-mail Engine</a>
+        <a href="#portfolio-projects" data-nav="portfolio-projects">All Projects →</a>
+    </div>
+</div>

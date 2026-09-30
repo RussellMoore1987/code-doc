@@ -1,0 +1,68 @@
+<div>
+    <h1><span data-tags="Frontend, JavaScript, UI/UX">Snow Owl Custom Colors</span></h1>
+    <p class="pf-lead">A live color customization tool for the Snow Owl theme, letting each corporation or payee
+    choose their own color scheme from thousands of combinations - built with jQuery, with safe, reversible CSS
+    overrides.</p>
+
+    <figure class="img-block pf-project-cover">
+        <img src="images/portfolio/cover-snow-owl-colors.svg" alt="Snow Owl custom colors cover graphic">
+        <figcaption>Placeholder cover graphic - replace with a real screenshot anytime.</figcaption>
+    </figure>
+
+    <div class="callout">
+        <div class="callout-title">Quick Facts</div>
+        <div class="pf-meta-grid">
+            <div><span class="pf-meta-label">Role</span><span>Sole developer</span></div>
+            <div><span class="pf-meta-label">Client</span><span>Adilas</span></div>
+            <div><span class="pf-meta-label">Tech</span><span>jQuery, CSS override architecture</span></div>
+            <div><span class="pf-meta-label">Related</span>
+                <span><a href="#portfolio-project-afb-theme" data-nav="portfolio-project-afb-theme">AFB Theme (Snow Owl)</a></span>
+            </div>
+        </div>
+    </div>
+
+    <h2 id="the-problem">The Problem</h2>
+    <p>After shipping the Snow Owl theme, corporations and individual payees wanted the ability to personalize its
+    colors to match their own branding or preference, without needing a developer involved for every change.</p>
+
+    <h2 id="my-role">My Role</h2>
+    <p>Sole developer on both the settings UI and the underlying CSS override mechanism.</p>
+
+    <h2 id="what-i-built">What I Built</h2>
+    <ul>
+        <li>A settings page offering thousands of possible color combinations for a corporation or payee's theme.</li>
+        <li>A live, jQuery-driven visual preview that updates as the user picks colors.</li>
+        <li>Safe revert-to-default behavior if a customer removes their custom colors.</li>
+        <li>A training video walking through the feature.</li>
+    </ul>
+
+    <h2 id="technologies">Technologies &amp; Approach</h2>
+    <p>Heavy jQuery and CSS work: overriding the theme's default CSS per account at runtime, driven by a jQuery
+    visual display, without disturbing the rest of the settings page's own styling.</p>
+    <div class="pf-chip-row">
+        <span class="pf-chip">jQuery</span>
+        <span class="pf-chip">CSS Overrides</span>
+        <span class="pf-chip">Live Preview UI</span>
+    </div>
+
+    <div class="youtube-modal" data-video-id="uKsQ4KteRXg" data-title="Snow Owl Custom Colors Walkthrough"></div>
+
+    <h2 id="challenges">Challenges</h2>
+    <p>The visual display had to pull in the theme's current default colors, let the user override them live, and
+    then cleanly revert back to those originals if the custom colors were removed - all without leaking style
+    changes onto other, unrelated elements on the same settings page.</p>
+
+    <h2 id="solutions">How They Were Solved</h2>
+    <p>I scoped the override logic tightly: reading the existing default CSS values first, applying overrides only
+    through a dedicated mechanism the jQuery display controlled, and restoring the original values explicitly on
+    removal rather than assuming a reload would "fix" anything.</p>
+
+    <h2 id="outcome">Outcome &amp; Value Created</h2>
+    <p>A shipped, self-service personalization feature that reduced the need for one-off developer involvement in
+    branding requests, and a deeper, hands-on understanding of safely overriding and reverting CSS at runtime.</p>
+
+    <div class="pf-project-nav">
+        <a href="#portfolio-project-afb-theme" data-nav="portfolio-project-afb-theme">← Previous: AFB Theme (Snow Owl)</a>
+        <a href="#portfolio-project-adilas-ecommerce" data-nav="portfolio-project-adilas-ecommerce">Next: Adilas E-commerce →</a>
+    </div>
+</div>

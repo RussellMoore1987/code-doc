@@ -1,0 +1,425 @@
+/* Portfolio styles for DevDocs */
+
+/* @versioning */
+/* * update CSS with versioning to prevent caching issues. look for '?v=' in index.html */
+
+/* ============================================================
+   PORTFOLIO SECTION
+   Reuses existing theme tokens (--bg-content, --border, --accent,
+   --text-base/--text-muted, .tag-badge, .callout, .row/.col-*) so the
+   portfolio matches the rest of the app instead of introducing a new
+   visual language.
+   BEGIN
+============================================================ */
+
+/* ------------------------------------------------------------
+   Shared helpers
+------------------------------------------------------------ */
+
+.pf-lead {
+  font-size: 17px;
+  line-height: 1.7;
+  color: var(--text-muted);
+  max-width: 62ch;
+}
+
+.pf-section {
+  margin-top: 40px;
+}
+
+.pf-eyebrow {
+  display: inline-block;
+  font-size: 11.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-link);
+  margin-bottom: 8px;
+}
+
+/* ------------------------------------------------------------
+   Buttons (pill buttons matching .tag-badge / slider-control style)
+------------------------------------------------------------ */
+
+.pf-btn-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 18px 0 8px;
+}
+
+.pf-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 18px;
+  border-radius: 999px;
+  font-size: 14px;
+  font-weight: 600;
+  border: 1px solid var(--border);
+  background: var(--bg-content);
+  color: var(--text-base);
+  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
+}
+
+.pf-btn:hover {
+  text-decoration: none;
+  background: var(--bg-hover);
+  border-color: var(--border-focus);
+  transform: translateY(-1px);
+}
+
+.pf-btn--primary {
+  background: var(--primary-color);
+  border-color: var(--primary-color);
+  color: #ffffff;
+}
+
+.pf-btn--primary:hover {
+  background: var(--off-primary-color);
+  border-color: var(--off-primary-color);
+  color: #ffffff;
+}
+
+/* ------------------------------------------------------------
+   Hero (Portfolio Overview)
+------------------------------------------------------------ */
+
+.pf-hero {
+  display: flex;
+  align-items: center;
+  gap: 32px;
+  flex-wrap: wrap;
+  margin: 8px 0 12px;
+}
+
+.pf-hero-avatar {
+  flex: 0 0 auto;
+  width: 132px;
+  height: 132px;
+  border-radius: 50%;
+  overflow: hidden;
+  border: 3px solid var(--border);
+  background: var(--bg-sidebar-strip);
+}
+
+.pf-hero-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.pf-hero-text {
+  flex: 1 1 320px;
+  min-width: 260px;
+}
+
+.pf-hero-text h1 {
+  border-bottom: 0;
+  padding-bottom: 0;
+  margin-bottom: 6px;
+}
+
+.pf-hero-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-link);
+  margin-bottom: 10px;
+}
+
+/* ------------------------------------------------------------
+   Chips (skills / tech stack) - plain, non-interactive display only.
+   Real content tagging still uses [data-tags] + .tag-badge elsewhere.
+------------------------------------------------------------ */
+
+.pf-chip-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 14px 0;
+}
+
+.pf-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 11px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--bg-sidebar-strip);
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+/* Interactive variant used by the Projects-page tag filter bar (portfolio.js) */
+.pf-filter-chip {
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+
+.pf-filter-chip:hover {
+  background: var(--bg-hover);
+  color: var(--text-base);
+}
+
+.pf-filter-chip.is-active {
+  background: var(--primary-color);
+  border-color: var(--primary-color);
+  color: #ffffff;
+}
+
+/* ------------------------------------------------------------
+   Value cards (How I Can Help You)
+------------------------------------------------------------ */
+
+.pf-value-card {
+  height: 100%;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--bg-content);
+  padding: 20px 20px 18px;
+  margin-bottom: 20px;
+}
+
+.pf-value-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  background: var(--accent-light);
+  color: var(--text-link);
+  margin-bottom: 12px;
+}
+
+.pf-value-card h3 {
+  margin-top: 0;
+  font-size: 16px;
+}
+
+.pf-value-card p {
+  font-size: 14px;
+  color: var(--text-muted);
+  margin-bottom: 10px;
+}
+
+.pf-value-proof {
+  font-size: 13px;
+  padding-top: 10px;
+  border-top: 1px dashed var(--border);
+  color: var(--text-base);
+}
+
+.pf-value-proof strong {
+  color: var(--text-link);
+}
+
+/* ------------------------------------------------------------
+   Timeline (Work History)
+------------------------------------------------------------ */
+
+.pf-timeline {
+  position: relative;
+  margin: 24px 0 8px;
+  padding-left: 28px;
+  border-left: 2px solid var(--border);
+}
+
+.pf-timeline-item {
+  position: relative;
+  padding-bottom: 28px;
+}
+
+.pf-timeline-item:last-child {
+  padding-bottom: 4px;
+}
+
+.pf-timeline-item::before {
+  content: '';
+  position: absolute;
+  left: -34px;
+  top: 4px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--primary-color);
+  border: 2px solid var(--bg-content);
+  box-shadow: 0 0 0 2px var(--border);
+}
+
+.pf-timeline-date {
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+  margin-bottom: 2px;
+}
+
+.pf-timeline-item h3 {
+  margin-top: 0;
+  margin-bottom: 6px;
+  font-size: 16px;
+}
+
+.pf-timeline-org {
+  font-size: 13.5px;
+  color: var(--text-link);
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.pf-timeline-item.pf-timeline-item--placeholder::before {
+  background: var(--bg-sidebar-strip);
+  box-shadow: 0 0 0 2px var(--border);
+}
+
+.pf-timeline-item.pf-timeline-item--placeholder {
+  opacity: 0.85;
+}
+
+/* ------------------------------------------------------------
+   Education cards
+------------------------------------------------------------ */
+
+.pf-edu-card {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--bg-content);
+  padding: 18px 20px;
+  margin-bottom: 16px;
+}
+
+.pf-edu-card h3 {
+  margin-top: 0;
+  margin-bottom: 4px;
+  font-size: 15.5px;
+}
+
+.pf-edu-meta {
+  font-size: 12.5px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-weight: 600;
+}
+
+/* ------------------------------------------------------------
+   Project gallery cards (Projects overview page)
+   Built on top of the existing .flex-img-gallery / figure.img-block
+   system - see image-galleries.html for the base component.
+------------------------------------------------------------ */
+
+.pf-project-gallery figure.img-block {
+  cursor: pointer;
+  border-radius: 10px;
+  overflow: hidden;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.pf-project-gallery figure.img-block:hover,
+.pf-project-gallery figure.img-block:focus-within {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.14);
+}
+
+.pf-project-gallery figure.img-block img {
+  aspect-ratio: 8 / 5;
+  object-fit: cover;
+}
+
+.pf-project-gallery figcaption {
+  padding: 12px 14px 14px;
+}
+
+.pf-project-title {
+  display: block;
+  font-size: 14.5px;
+  color: var(--text-base);
+  margin-bottom: 4px;
+}
+
+.pf-project-blurb {
+  display: block;
+  font-size: 13px;
+  color: var(--text-muted);
+  margin-bottom: 8px;
+}
+
+/* ------------------------------------------------------------
+   Individual project pages
+------------------------------------------------------------ */
+
+.pf-meta-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 10px 20px;
+  margin-top: 6px;
+}
+
+.pf-meta-label {
+  display: block;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+  margin-bottom: 2px;
+}
+
+.pf-project-cover {
+  margin: 20px 0 8px;
+}
+
+.pf-project-nav {
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 40px;
+  padding-top: 20px;
+  border-top: 1px solid var(--border);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+/* ------------------------------------------------------------
+   CTA banner (bottom of pages)
+------------------------------------------------------------ */
+
+.pf-cta-banner {
+  margin: 36px 0 12px;
+  padding: 24px 26px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: linear-gradient(135deg, var(--bg-content) 0%, var(--bg-hover) 100%);
+}
+
+.pf-cta-banner h2 {
+  margin-top: 0 !important;
+}
+
+.pf-cta-banner p {
+  color: var(--text-muted);
+  max-width: 60ch;
+}
+
+/* ------------------------------------------------------------
+   Responsive
+------------------------------------------------------------ */
+
+@container content-body (max-width: 600px) {
+  .pf-hero {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 18px;
+  }
+}
+
+/* ============================================================
+   PORTFOLIO SECTION
+   END
+============================================================ */
