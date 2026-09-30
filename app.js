@@ -1157,12 +1157,13 @@ function stripHtmlExceptMark(html) {
 }
 
 /**
- * Escape HTML to prevent XSS
+ * Escape HTML to prevent XSS. Also escapes quote characters so the result is
+ * safe to place inside a quoted HTML attribute, not just text content.
  */
 function escapeHtml(text) {
   const div = document.createElement('div');
   div.textContent = text;
-  return div.innerHTML;
+  return div.innerHTML.replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 }
 
 /**
@@ -2587,6 +2588,17 @@ function shouldShowCitationLinkIcon(el) {
   return override.trim().toLowerCase() !== 'false';
 }
 
+// Blocks javascript:/data:/vbscript: URIs from being written into an href - only
+// real navigations (http/https/mailto, or relative/site-internal links) are allowed.
+const CITATION_SAFE_URL_SCHEMES = new Set(['http:', 'https:', 'mailto:']);
+function isSafeCitationUrl(url) {
+  try {
+    return CITATION_SAFE_URL_SCHEMES.has(new URL(url, window.location.href).protocol.toLowerCase());
+  } catch {
+    return false;
+  }
+}
+
 /**
  * Remove any previously generated citation markers and References section.
  * Keeps the authored .citation source elements untouched.
@@ -2654,7 +2666,7 @@ function renderCitationMarkers(items) {
 
     sup.appendChild(link);
 
-    if (ref.link && shouldShowCitationLinkIcon(el)) {
+    if (ref.link && shouldShowCitationLinkIcon(el) && isSafeCitationUrl(ref.link)) {
       const sourceLink = document.createElement('a');
       sourceLink.className = 'citation-source-link';
       sourceLink.href = ref.link;
@@ -2705,7 +2717,7 @@ function renderReferencesSection(references) {
       li.appendChild(text);
     }
 
-    if (ref.link) {
+    if (ref.link && isSafeCitationUrl(ref.link)) {
       // Link-only citations (no data-citation text) show just the link, nothing else.
       if (ref.text) li.appendChild(document.createElement('br'));
       const anchor = document.createElement('a');

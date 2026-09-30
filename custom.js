@@ -1977,6 +1977,8 @@ async function gnFetchTextPage(src) {
         let html = await resp.text();
         html = html.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '');
         html = html.replace(/\s+on\w+\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]*)/gi, '');
+        // Neutralize javascript: URIs in href/src/action so a stray link/image can't execute script
+        html = html.replace(/((?:href|src|action)\s*=\s*)((["']?)\s*)javascript:/gi, '$1$2');
         gnTextPageCache.set(src, html);
         return html;
     } catch {
