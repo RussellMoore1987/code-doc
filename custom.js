@@ -829,7 +829,7 @@ function gnShowLibrary() {
     if (gn.tocOpen) gnToggleToc();
     // Highlights panel is left as-is (not force-closed): its open/closed state is
     // persisted per book, and the whole #gn-reader (panel included) is already hidden
-    // below — toggling it here would call gnSaveProgress() and overwrite that saved state.
+    // below - toggling it here would call gnSaveProgress() and overwrite that saved state.
     gnHideHighlightPopup();
     // Close shortcuts help if open
     if (gn.refs.shortcutsOverlay && !gn.refs.shortcutsOverlay.hidden) gn.refs.shortcutsOverlay.hidden = true;
@@ -948,7 +948,7 @@ function gnOpenBook(bookId, explicitPage) {
 
     gnHideHighlightPopup();
 
-    // Ignore wheel events for a moment after opening — guards against residual
+    // Ignore wheel events for a moment after opening - guards against residual
     // trackpad/mouse momentum silently flipping pages in the freshly-opened book
     gn._wheelGraceUntil = Date.now() + 500;
 
@@ -1032,7 +1032,7 @@ function gnStartScrollSettle(stage, wrap, targetIndex) {
     // While we're actively re-pinning the scroll position ourselves, the resulting
     // 'scroll' events can hit gn._scrollTracker mid-layout-flux and make it briefly
     // miscompute the current page from geometry, overwriting the page we already
-    // know is correct. Suspend the tracker for the duration of this correction —
+    // know is correct. Suspend the tracker for the duration of this correction -
     // it resumes as soon as the user does any real scrolling/interacting.
     gn._scrollTrackerSuspended = true;
     const rearm = () => {
@@ -1108,7 +1108,7 @@ function gnRenderPage() {
                 ticking = true;
                 requestAnimationFrame(() => {
                     ticking = false;
-                    // While a programmatic scroll-settle correction is in flight, skip —
+                    // While a programmatic scroll-settle correction is in flight, skip -
                     // its own 'scroll' events can hit mid-layout-flux and misread the
                     // page from geometry, overwriting a target we already know is correct.
                     if (gn._scrollTrackerSuspended) return;
@@ -1116,7 +1116,7 @@ function gnRenderPage() {
                     if (!frames.length) return;
                     const stageRect = stage.getBoundingClientRect();
                     // The "current" page is whichever frame's top has scrolled up to (or
-                    // past) the stage's top edge — NOT whichever has the most visible area.
+                    // past) the stage's top edge - NOT whichever has the most visible area.
                     // Using visible area instead misidentifies short pages: right after
                     // landing on one via scrollIntoView({block:'start'}), the next page can
                     // already show more visible height, flipping currentPage forward by one.
@@ -1190,8 +1190,8 @@ function gnRenderPage() {
 }
 
 /** Builds a single page frame element (wrapper + img or fetched text content).
- *  Returns { frame, ready } where ready resolves once the frame's content —
- *  including any embedded images — has fully finished loading. */
+ *  Returns { frame, ready } where ready resolves once the frame's content -
+ *  including any embedded images - has fully finished loading. */
 function gnBuildPageFrame(page, index, book) {
     if (page.type === 'text') return gnBuildTextPageFrame(page, index, book);
 
@@ -1211,7 +1211,7 @@ function gnBuildPageFrame(page, index, book) {
     // Image
     const img = new Image();
     img.className = 'gn-page-img gn-img-loading';
-    img.alt = page.alt || `${book.title} — Page ${index + 1}`;
+    img.alt = page.alt || `${book.title} - Page ${index + 1}`;
     // No loading="lazy" here: this element is detached until onload appends it,
     // and Chrome's viewport-distance heuristic can't evaluate a detached image -
     // it sometimes just defers the fetch forever, deadlocking the placeholder/spinner.
@@ -1276,11 +1276,11 @@ function gnBuildTextPageFrame(page, index, book) {
         content.className = 'gn-text-page';
         content.innerHTML = html;
         frame.appendChild(content);
-        // Re-wrap any saved highlight ranges for this page — offsets are relative
+        // Re-wrap any saved highlight ranges for this page - offsets are relative
         // to content.textContent and are stable since wrapping never changes text length.
         gnApplyHighlightsToFrame(content, book.id, index);
         // The fetched fragment's own <img>s (e.g. chapter art) can keep reflowing
-        // this frame's height well after the text itself is in the DOM — wait for
+        // this frame's height well after the text itself is in the DOM - wait for
         // them too so "ready" actually means "height is stable".
         const imgs = Array.from(content.querySelectorAll('img'));
         return Promise.all(imgs.map((img) => img.complete ? Promise.resolve() : new Promise((resolve) => {
@@ -1312,7 +1312,7 @@ function gnGoToPage(n) {
         n = Math.floor(n / step) * step;
     }
     gn.currentPage = n;
-    // In scroll mode pages are already in the DOM — wait for the target and
+    // In scroll mode pages are already in the DOM - wait for the target and
     // everything above it to fully settle (images/text loaded) before scrolling,
     // same rationale as the initial scroll-mode render in gnRenderPage().
     if (gn.viewMode === 'scroll' && gn.refs.pagesWrap.children.length > 0) {
@@ -1324,7 +1324,7 @@ function gnGoToPage(n) {
             if (gn.currentBook !== book || gn.viewMode !== 'scroll' || gn.currentPage !== n) return;
             gnUpdateReadingTime();
             gnPrepareTtsForCurrentPage();
-            // A "Go to Highlight" jump is in flight — let gnFlashHighlightWhenReady()
+            // A "Go to Highlight" jump is in flight - let gnFlashHighlightWhenReady()
             // scroll straight to the highlight mark itself instead of the page top,
             // otherwise this scrollIntoView (and the settle correction below) would
             // race with/override that more precise scroll.
@@ -1424,7 +1424,7 @@ function gnUpdateNavUI() {
     }
 }
 
-/** Grows/shrinks #gn-page-input's width to fit its current text (e.g. "1" vs "125–126")
+/** Grows/shrinks #gn-page-input's width to fit its current text (e.g. "1" vs "125-126")
  *  instead of clipping at a fixed width. */
 function gnSizePageInput() {
     const input = gn.refs.pageInput;
@@ -1606,7 +1606,7 @@ function gnOnTextMagnifierMove(e, glass) {
         inner = document.createElement('div');
         // Keep the "gn-text-page" class so the real image/row layout rules
         // (max-width, flex ratios, min-width:0, etc.) apply to the mirrored
-        // content — without it, images render at native size and overlap.
+        // content - without it, images render at native size and overlap.
         inner.className = 'gn-text-page gn-text-loupe-inner';
         glass.appendChild(inner);
     }
@@ -1616,7 +1616,7 @@ function gnOnTextMagnifierMove(e, glass) {
     if (inner.dataset.pageIndex !== pageKey) {
         inner.innerHTML = textPage.innerHTML;
         inner.dataset.pageIndex = pageKey;
-        // Carry over computed text styles explicitly (theme-aware — reads the live page's
+        // Carry over computed text styles explicitly (theme-aware - reads the live page's
         // actual colors rather than assuming the dark reader chrome's palette)
         const cs = getComputedStyle(textPage);
         inner.style.cssText = [
@@ -1661,7 +1661,7 @@ function gnOnMagnifierMove(e, glass) {
     const bgW  = rect.width  * ZOOM;
     const bgH  = rect.height * ZOOM;
     // Clamp so the pan never goes negative (leaves a blank leading gap) or past the
-    // far edge (leaves a blank trailing gap) — without this it "sticks" near edges.
+    // far edge (leaves a blank trailing gap) - without this it "sticks" near edges.
     const bgPX = Math.max(0, Math.min(bgW - GLASS_W, relX * bgW - GLASS_W / 2));
     const bgPY = Math.max(0, Math.min(bgH - GLASS_H, relY * bgH - GLASS_H / 2));
 
@@ -2023,7 +2023,7 @@ function gnWireOpenLinks() {
         el.replaceWith(fresh);
         fresh.addEventListener('click', (e) => {
             // For <a href="#">-style triggers: a bare-hash click is a same-document
-            // navigation, which (per spec) fires a real 'popstate' event — and
+            // navigation, which (per spec) fires a real 'popstate' event - and
             // gnCloseModal()'s own popstate listener (there for browser Back/Forward)
             // would otherwise close the modal we're about to open almost instantly.
             e.preventDefault();
@@ -2493,7 +2493,7 @@ function gnSpeakCurrentPage() {
     const wordMap = gnEnsureTtsWordMap();
     if (!wordMap) { gnStopTts(); return; }
     if (!wordMap.length) {
-        // Nothing to read on this page — skip ahead or stop
+        // Nothing to read on this page - skip ahead or stop
         if (gn.ttsAutoAdvance) gnTtsAdvanceToNextPage();
         else gnStopTts();
         return;
@@ -2505,7 +2505,7 @@ function gnSpeakCurrentPage() {
     gnSpeakFromWordIndex(resumeAt);
 }
 
-/** Speaks the current page starting at the given word index — used by skip-forward/back. */
+/** Speaks the current page starting at the given word index - used by skip-forward/back. */
 function gnSpeakFromWordIndex(startIndex) {
     const wordMap = gn._ttsWordMap;
     if (!wordMap || !wordMap.length) { gnStopTts(); return; }
@@ -2570,14 +2570,14 @@ function gnSpeakFromWordIndex(startIndex) {
 }
 
 /** Advances to the next page within the current spread, or to the next spread/page,
- *  and keeps reading — or stops once the book ends. */
+ *  and keeps reading - or stops once the book ends. */
 function gnTtsAdvanceToNextPage() {
     const book  = gn.currentBook;
     const total = book?.pages.length || 0;
     if (!book) { gnStopTts(); return; }
     const step = gn.viewMode === 'scroll' ? 1 : gnGetStep();
 
-    // Double/triple-page spreads show several pages at once — read each one in turn
+    // Double/triple-page spreads show several pages at once - read each one in turn
     // before flipping to the next spread.
     const nextOffset = (gn._ttsPageOffset || 0) + 1;
     if (gn.viewMode !== 'scroll' && nextOffset < step && gn.currentPage + nextOffset < total) {
@@ -2587,7 +2587,7 @@ function gnTtsAdvanceToNextPage() {
     }
 
     if (gn.currentPage + step >= total) {
-        gn._ttsProgress = null; // finished the book — start over next time
+        gn._ttsProgress = null; // finished the book - start over next time
         gnStopTts();
         return;
     }
@@ -2784,7 +2784,7 @@ function gnGenHighlightId() {
     return `hl-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
 }
 
-/** Shows/hides the toolbar's highlights button — only text novels have anything to highlight. */
+/** Shows/hides the toolbar's highlights button - only text novels have anything to highlight. */
 function gnUpdateHighlightAvailability() {
     const show = gn.currentBook?.type === 'novel';
     if (gn.refs.hlToggle) gn.refs.hlToggle.hidden = !show;
@@ -2940,7 +2940,7 @@ function gnHandleHlColorClick(color) {
 
 /** Starts read-aloud from the highlight popup's pending selection ('create' mode, before
  *  the highlight is saved) or its underlying saved highlight ('manage' mode, after it's
- *  already in place) — works from either popup state since both resolve to a page + a
+ *  already in place) - works from either popup state since both resolve to a page + a
  *  character offset to seek the word map to. */
 function gnReadFromHighlightPopup() {
     if (!GN_TTS_SUPPORTED || !gn._hlPending || !gn.currentBook) return;
@@ -2981,7 +2981,7 @@ function gnReadFromHighlightPopup() {
     gnSpeakFromWordIndex(wordIndex);
 }
 
-/** Copies the highlight popup's text to the clipboard — the pending selection's raw
+/** Copies the highlight popup's text to the clipboard - the pending selection's raw
  *  text in 'create' mode (before saving), or the saved highlight's stored text in
  *  'manage' mode (after it's in place). Leaves the popup open so the user can still
  *  pick a color or remove it afterward; briefly swaps the icon to a checkmark instead. */
@@ -3092,7 +3092,7 @@ function gnToggleHighlightsPanel() {
     gnSaveProgress();
 }
 
-/** Reflects gn.hlPanelOpen onto the DOM without toggling it — used both by
+/** Reflects gn.hlPanelOpen onto the DOM without toggling it - used both by
  *  gnToggleHighlightsPanel() and to restore a book's saved panel state on open. */
 function gnApplyHighlightsPanelState() {
     const r = gn.refs;
@@ -3159,7 +3159,7 @@ function gnRenderHighlightsPanel() {
 
 /** Jumps to a highlight's page, then scrolls it into view and flashes it once rendered.
  *  Skips the actual page navigation entirely when the highlight's page is already the
- *  one on screen — in non-scroll modes gnGoToPage() would otherwise unconditionally
+ *  one on screen - in non-scroll modes gnGoToPage() would otherwise unconditionally
  *  tear down and rebuild the page frame(s), destroying the very mark we're about to
  *  flash (or a mark from an in-flight previous highlight jump) before its flash class
  *  has a chance to render. */
@@ -3186,7 +3186,7 @@ function gnFlashHighlightWhenReady(id, attemptsLeft = 20) {
         setTimeout(() => mark.classList.remove('gn-highlight--flash'), 3000);
         // Clear the focus flag on a fresh macrotask (not right away): gnGoToPage()'s own
         // scroll-to-page-top runs off a Promise chain that may resolve in a later
-        // microtask than this one — clearing synchronously would let it slip through
+        // microtask than this one - clearing synchronously would let it slip through
         // and immediately override the scroll we just did to center on the mark.
         setTimeout(() => { if (gn._hlFocusId === id) gn._hlFocusId = null; }, 50);
         return;
@@ -3314,7 +3314,7 @@ function gnBindModalEvents() {
     r.zoomOut.addEventListener('click',   gnZoomOut);
     r.zoomReset.addEventListener('click', gnZoomReset);
 
-    // Zoom input: commit on blur/enter, arrow keys ±5%
+    // Zoom input: commit on blur/enter, arrow keys -/+5%
     r.zoomDisplay.addEventListener('change', () => {
         const val = parseInt(r.zoomDisplay.value, 10);
         gnSetZoom(isNaN(val) ? gn.zoom : val / 100);
