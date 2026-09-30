@@ -908,6 +908,16 @@ function hasError(message) {
   showSearchError(message);
 }
 
+// Static - hoisted out of performSearch so it isn't reallocated on every keystroke
+const SEARCH_DANGEROUS_PATTERNS = [
+  /<script/i,
+  /javascript:/i,
+  /data:text\/html/i,
+  /on\w+\s*=/i, // onload=, onclick=, etc.
+  /\beval\s*\(/i,
+  /\bexec\s*\(/i
+];
+
 /**
  * Perform search query with comprehensive validation
  */
@@ -939,16 +949,7 @@ function performSearch(query) {
   }  
   
   // Check for potentially malicious patterns
-  const dangerousPatterns = [
-    /<script/i,
-    /javascript:/i,
-    /data:text\/html/i,
-    /on\w+\s*=/i, // onload=, onclick=, etc.
-    /\beval\s*\(/i,
-    /\bexec\s*\(/i
-  ];
-  
-  for (const pattern of dangerousPatterns) {
+  for (const pattern of SEARCH_DANGEROUS_PATTERNS) {
     if (pattern.test(query)) {
       console.log('query***', query);
       hasError('Search query contains invalid words');
@@ -1244,16 +1245,20 @@ function highlightSearchTermsOnPage(query, instanceIndex) {
     textNodes.push(node);
   }
   
+  // Compiled once (not per text node) - lastIndex is reset before each .test() below,
+  // and String.prototype.split() resets it internally too, so reuse is safe here.
+  const highlightRegex = new RegExp(`(${escapeRegex(searchTerms)})`, 'gi');
+
   // Process text nodes to add highlights
   textNodes.forEach(textNode => {
     const text = textNode.textContent;
-    const regex = new RegExp(`(${escapeRegex(searchTerms)})`, 'gi');
-    
-    if (regex.test(text)) {
+    highlightRegex.lastIndex = 0;
+
+    if (highlightRegex.test(text)) {
       // Split on matches and build DOM nodes - never use innerHTML here,
       // because textContent of <pre><code> nodes contains decoded characters
       // (e.g. "<img>") that would be re-parsed as real HTML if set via innerHTML.
-      const parts = text.split(new RegExp(`(${escapeRegex(searchTerms)})`, 'gi'));
+      const parts = text.split(highlightRegex);
       const fragment = document.createDocumentFragment();
 
       parts.forEach(part => {

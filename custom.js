@@ -1786,7 +1786,10 @@ function gnSaveProgress() {
 function gnRefreshAllCards() {
     gnRenderPageCards();
     gnRenderInlineCards();
-    gnRenderLibrary();
+    // Skip rebuilding the library grid while it's hidden behind the reader - it's
+    // already rebuilt fresh by gnShowLibrary() every time it becomes visible, so
+    // doing it here too would just redo that work on every page turn/zoom/bookmark.
+    if (gn.isLibrary) gnRenderLibrary();
 }
 
 // ------------------------------------------------------------
