@@ -4159,7 +4159,7 @@ function onImageModalMagnifierMove(e, glass) {
   const bgW  = rect.width  * ZOOM;
   const bgH  = rect.height * ZOOM;
   // Clamp so the pan never goes negative (leaves a blank leading gap) or past the
-  // far edge (leaves a blank trailing gap) — without this it "sticks" near edges.
+  // far edge (leaves a blank trailing gap) - without this it "sticks" near edges.
   const bgPX = Math.max(0, Math.min(bgW - GLASS_W, relX * bgW - GLASS_W / 2));
   const bgPY = Math.max(0, Math.min(bgH - GLASS_H, relY * bgH - GLASS_H / 2));
 
