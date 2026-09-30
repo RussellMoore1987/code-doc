@@ -9,7 +9,7 @@
 ============================================================ */
 
 /* ------------------------------------------------------------
-   Book Configuration — Hidden in Normal Page Layout
+   Book Configuration - Hidden in Normal Page Layout
    These divs are pure data-source elements used only by JS.
 ------------------------------------------------------------ */
 
@@ -18,7 +18,7 @@
 }
 
 /* ------------------------------------------------------------
-   Gallery Section — inline on custom.html
+   Gallery Section - inline on custom.html
 ------------------------------------------------------------ */
 
 .gn-gallery-section {
@@ -202,7 +202,7 @@ ul.gn-page-cards {
 }
 
 /* ------------------------------------------------------------
-   Modal Overlay — Full-screen, fixed position
+   Modal Overlay - Full-screen, fixed position
    (appended to <body> by custom.js)
 ------------------------------------------------------------ */
 
@@ -344,7 +344,7 @@ ul.gn-page-cards {
     pointer-events: none;
 }
 
-/* Modal close button — always visible in top-right */
+/* Modal close button - always visible in top-right */
 .gn-modal-close {
     width: 36px;
     height: 36px;
@@ -450,7 +450,7 @@ ul.gn-page-cards {
     backdrop-filter: blur(4px);
 }
 
-/* Dark theme (default) badge colors — opaque bg for reliable contrast */
+/* Dark theme (default) badge colors - opaque bg for reliable contrast */
 .gn-book-card-badge--new {
     background: #162b3e;
     color: #60b4ff;
@@ -614,7 +614,7 @@ ul.gn-page-cards {
 }
 
 /* ------------------------------------------------------------
-   Reader View — Dark cinema-style reading area
+   Reader View - Dark cinema-style reading area
 ------------------------------------------------------------ */
 
 .gn-reader {
@@ -758,7 +758,7 @@ ul.gn-page-cards {
 }
 
 /* ------------------------------------------------------------
-   Reader Body — Stage + optional TOC panel
+   Reader Body - Stage + optional TOC panel
 ------------------------------------------------------------ */
 
 .gn-reader-body {
@@ -768,7 +768,7 @@ ul.gn-page-cards {
     position: relative;
 }
 
-/* Stage — where pages live */
+/* Stage - where pages live */
 .gn-stage {
     flex: 1;
     display: flex;
@@ -789,7 +789,7 @@ ul.gn-page-cards {
 }
 
 /* ------------------------------------------------------------
-   Hover-reveal Prev/Next Arrows — overlaid on the reader body,
+   Hover-reveal Prev/Next Arrows - overlaid on the reader body,
    shown only while hovering (mouse/trackpad devices).
 ------------------------------------------------------------ */
 
@@ -1089,7 +1089,7 @@ ul.gn-page-cards {
     margin: 1.5em 0;
 }
 
-/* Row container — place 2 or 3 <img> (or wrapper) children inside */
+/* Row container - place 2 or 3 <img> (or wrapper) children inside */
 .gn-text-page .gn-img-row {
     display: flex;
     gap: 12px;
@@ -1250,7 +1250,7 @@ ul.gn-page-cards {
     display: none;
 }
 
-/* Text magnifier inner content — paragraph and image row styles */
+/* Text magnifier inner content - paragraph and image row styles */
 .gn-text-loupe-inner p {
     margin: 0 0 1em;
 }
@@ -1395,7 +1395,7 @@ mark.gn-highlight--flash {
 
 @keyframes gn-hl-flash {
     0% { box-shadow: none; }
-    /* Snap on quickly, hold at full visibility, then fade only near the very end —
+    /* Snap on quickly, hold at full visibility, then fade only near the very end -
        interpolating box-shadow the whole 20%→100% span made it visually fade out
        within ~1-2s regardless of the total duration, since the color/opacity ramps
        down continuously across that whole range instead of staying held. */
@@ -1452,7 +1452,7 @@ mark.gn-highlight--flash {
 .gn-hl-color--pink   { background: #ff9ecf; }
 .gn-hl-color--orange { background: #ffb066; }
 
-/* Shared shape/layout for the popup's action buttons (read / remove) — only
+/* Shared shape/layout for the popup's action buttons (read / remove) - only
    their hover color differs, via the .gn-hl-read / .gn-hl-remove modifiers below. */
 .gn-hl-action-btn {
     display: inline-flex;
@@ -1853,13 +1853,13 @@ mark.gn-highlight--flash {
     }
 }
 
-/* Fullscreen reading — hide non-essential chrome */
+/* Fullscreen reading - hide non-essential chrome */
 .gn-overlay.gn-fullscreen .gn-modal-bar {
     display: none;
 }
 
 /* ------------------------------------------------------------
-   Book Grid — container queries (mirrors image gallery pattern)
+   Book Grid - container queries (mirrors image gallery pattern)
    Page cards use @container content-body; library uses @container gn-library.
 ------------------------------------------------------------ */
 
@@ -1887,13 +1887,13 @@ mark.gn-highlight--flash {
     .gn-book-grid { --gn-book-cols: 1; }
 }
 
-/* Export to PDF button — spin the icon while pages are being prepared for print */
+/* Export to PDF button - spin the icon while pages are being prepared for print */
 .gn-icon-btn--busy svg {
     animation: gn-spin 0.8s linear infinite;
 }
 
 /* ------------------------------------------------------------
-   Export to PDF — hidden print-only view of the current book.
+   Export to PDF - hidden print-only view of the current book.
    Populated by gnBuildPrintArea() in custom.js, then window.print()
    is invoked so the user can "Save as PDF" from their print dialog.
 ------------------------------------------------------------ */

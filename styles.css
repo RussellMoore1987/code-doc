@@ -2991,7 +2991,7 @@ body.is-resizing {
   outline-offset: 2px;
 }
 
-/* Magnify toggle button — sits just left of the close button */
+/* Magnify toggle button - sits just left of the close button */
 .image-modal-magnify {
   position: fixed;
   top: 14px;
@@ -3025,7 +3025,7 @@ body.is-resizing {
   cursor: zoom-in;
 }
 
-/* Magnifier glass — fixed floating loupe that follows the cursor */
+/* Magnifier glass - fixed floating loupe that follows the cursor */
 #gallery-magnifier-glass {
   position: fixed;
   width: 260px;
