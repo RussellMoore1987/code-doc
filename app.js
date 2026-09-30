@@ -995,22 +995,6 @@ function performSearch(query) {
 }
 
 /**
- * Safely strip HTML tags and preserve readable spacing
- * Uses DOMPurify-like approach for security
- */
-function stripHtml(text) {
-  if (!text) return '';
-  if (typeof text !== 'string') return '';
-
-  // Strip HTML comments first, then tags, then normalise whitespace
-  return text
-    .replace(/<!--[\s\S]*?-->/g, ' ')
-    .replace(/<[^>]*>/g, ' ')
-    .replace(/\s+/g, ' ')
-    .trim();
-}
-
-/**
  * Generate snippet with highlighted query terms
  */
 function getSnippet(text, query, maxLength = 150) {
@@ -2128,24 +2112,6 @@ function collapseAllNavItems() {
   elLeftNav.querySelectorAll('.nav-item').forEach(item => {
     item.classList.remove('is-open');
   });
-}
-
-/* Expand only the navigation path to the active item */
-function expandActiveNavPath(activeId) {
-  if (!activeId) return;
-
-  const activeRow = elLeftNav.querySelector(`.nav-row[data-id="${activeId}"]`);
-  if (!activeRow) return;
-
-  // First, collapse everything
-  collapseAllNavItems();
-
-  // Then expand only the parent chain for the active item
-  let parent = activeRow.closest('.nav-item')?.parentElement?.closest('.nav-item');
-  while (parent) {
-    parent.classList.add('is-open');
-    parent = parent.parentElement?.closest('.nav-item');
-  }
 }
 
 /* ═══════════════════════════════════════════════════════════════
